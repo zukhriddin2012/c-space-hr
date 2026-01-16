@@ -12,86 +12,86 @@ import {
   Users,
   TrendingUp,
 } from 'lucide-react';
-import { EMPLOYEES, BRANCHES, getEmployeesByBranch } from '@/lib/employee-data';
+import { getBranches, getEmployees, getAttendanceByDate } from '@/lib/db';
 
-// Generate attendance data for today based on real employees
-function generateTodayAttendance() {
-  const today = new Date();
-  const todayStr = today.toISOString().split('T')[0];
-
-  const activeEmployees = EMPLOYEES.filter(e => e.status !== 'terminated');
-
-  return activeEmployees.map((employee, index) => {
-    // Simulate different attendance statuses
-    const random = Math.random();
-    let status: 'present' | 'late' | 'absent' | 'early_leave';
-    let checkInTime: string | null = null;
-    let checkOutTime: string | null = null;
-
-    if (random < 0.75) {
-      // 75% present on time
-      status = 'present';
-      const hour = 8 + Math.floor(Math.random() * 2); // 8-9 AM
-      const minute = Math.floor(Math.random() * 60);
-      checkInTime = `${todayStr}T${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}:00`;
-
-      // 60% have checked out
-      if (Math.random() < 0.6) {
-        const outHour = 17 + Math.floor(Math.random() * 2); // 5-6 PM
-        const outMinute = Math.floor(Math.random() * 60);
-        checkOutTime = `${todayStr}T${outHour.toString().padStart(2, '0')}:${outMinute.toString().padStart(2, '0')}:00`;
-      }
-    } else if (random < 0.88) {
-      // 13% late
-      status = 'late';
-      const hour = 9 + Math.floor(Math.random() * 2); // 9-10 AM (after 9)
-      const minute = 15 + Math.floor(Math.random() * 45); // At least 15 min late
-      checkInTime = `${todayStr}T${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}:00`;
-
-      if (Math.random() < 0.4) {
-        const outHour = 17 + Math.floor(Math.random() * 2);
-        const outMinute = Math.floor(Math.random() * 60);
-        checkOutTime = `${todayStr}T${outHour.toString().padStart(2, '0')}:${outMinute.toString().padStart(2, '0')}:00`;
-      }
-    } else if (random < 0.95) {
-      // 7% absent
-      status = 'absent';
-    } else {
-      // 5% early leave
-      status = 'early_leave';
-      const hour = 8 + Math.floor(Math.random() * 1);
-      const minute = Math.floor(Math.random() * 60);
-      checkInTime = `${todayStr}T${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}:00`;
-
-      const outHour = 14 + Math.floor(Math.random() * 2); // Left early 2-4 PM
-      const outMinute = Math.floor(Math.random() * 60);
-      checkOutTime = `${todayStr}T${outHour.toString().padStart(2, '0')}:${outMinute.toString().padStart(2, '0')}:00`;
-    }
-
-    const branch = BRANCHES.find(b => b.id === employee.branchId);
-
-    return {
-      id: `att-${index + 1}`,
-      employeeId: employee.employeeId,
-      employeeName: employee.fullName,
-      position: employee.position,
-      branchId: employee.branchId,
-      branchName: branch?.name || employee.branchId,
-      checkInTime,
-      checkOutTime,
-      status,
-      source: checkInTime ? (Math.random() > 0.3 ? 'telegram' : 'web') as 'telegram' | 'web' | 'manual' : null,
-    };
-  });
+interface AttendanceRecord {
+  id: string;
+  employeeId: string;
+  employeeName: string;
+  position: string;
+  branchId: string | null;
+  branchName: string;
+  checkInTime: string | null;
+  checkOutTime: string | null;
+  status: 'present' | 'late' | 'absent' | 'early_leave';
+  source: 'telegram' | 'web' | 'manual' | null;
+  totalHours: number | null;
 }
 
-// Generate weekly attendance summary
-function generateWeeklySummary() {
-  const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-  const totalEmployees = EMPLOYEES.filter(e => e.status !== 'terminated').length;
+interface Branch {
+  id: string;
+  name: string;
+}
 
-  return days.map((day, index) => {
-    const presentRate = 75 + Math.floor(Math.random() * 20); // 75-95%
+// Fetch real attendance data from Supabase
+async function getTodayAttendance(): Promise<AttendanceRecord[]> {
+  const today = new Date().toISOString().split('T')[0];
+
+  const [attendance, employees, branches] = await Promise.all([
+    getAttendanceByDate(today),
+    getEmployees(),
+    getBranches(),
+  ]);
+
+  const branchMap = new Map(branches.map(b => [b.id, b.name]));
+  const employeeMap = new Map(employees.map(e => [e.id, e]));
+
+  // Create attendance records for employees who checked in
+  const attendanceRecords: AttendanceRecord[] = attendance.map((a: any) => {
+    const employee = employeeMap.get(a.employee_id) || a.employees;
+    return {
+      id: a.id,
+      employeeId: employee?.employee_id || a.employee_id,
+      employeeName: employee?.full_name || 'Unknown',
+      position: employee?.position || '',
+      branchId: a.check_in_branch_id,
+      branchName: a.check_in_branch?.name || branchMap.get(a.check_in_branch_id) || '-',
+      checkInTime: a.check_in ? `${today}T${a.check_in}` : null,
+      checkOutTime: a.check_out ? `${today}T${a.check_out}` : null,
+      status: a.status as 'present' | 'late' | 'absent' | 'early_leave',
+      source: 'telegram' as const,
+      totalHours: a.total_hours,
+    };
+  });
+
+  // Add absent employees (those not in attendance)
+  const checkedInIds = new Set(attendance.map((a: any) => a.employee_id));
+  const absentEmployees = employees
+    .filter(e => !checkedInIds.has(e.id))
+    .map(e => ({
+      id: `absent-${e.id}`,
+      employeeId: e.employee_id,
+      employeeName: e.full_name,
+      position: e.position,
+      branchId: e.branch_id,
+      branchName: branchMap.get(e.branch_id || '') || '-',
+      checkInTime: null,
+      checkOutTime: null,
+      status: 'absent' as const,
+      source: null,
+      totalHours: null,
+    }));
+
+  return [...attendanceRecords, ...absentEmployees];
+}
+
+// Generate weekly attendance summary (could be enhanced to use real data)
+async function getWeeklySummary(totalEmployees: number) {
+  const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+  // For now, generate placeholder data - could be enhanced to query historical data
+  return days.map((day) => {
+    const presentRate = 75 + Math.floor(Math.random() * 20);
     const present = Math.floor(totalEmployees * presentRate / 100);
     const late = Math.floor(totalEmployees * (5 + Math.random() * 10) / 100);
     const absent = totalEmployees - present - late;
@@ -105,9 +105,6 @@ function generateWeeklySummary() {
     };
   });
 }
-
-const todayAttendance = generateTodayAttendance();
-const weeklySummary = generateWeeklySummary();
 
 function StatusBadge({ status }: { status: string }) {
   const statusConfig: Record<
@@ -187,8 +184,16 @@ function calculateHours(checkIn: string | null, checkOut: string | null) {
   return `${hours.toFixed(1)}h`;
 }
 
-function BranchAttendanceCard({ branchId, branchName }: { branchId: string; branchName: string }) {
-  const branchAttendance = todayAttendance.filter(a => a.branchId === branchId);
+function BranchAttendanceCard({
+  branchId,
+  branchName,
+  attendance
+}: {
+  branchId: string;
+  branchName: string;
+  attendance: AttendanceRecord[];
+}) {
+  const branchAttendance = attendance.filter(a => a.branchId === branchId);
   const present = branchAttendance.filter(a => a.status === 'present' || a.status === 'late').length;
   const total = branchAttendance.length;
   const percentage = total > 0 ? Math.round((present / total) * 100) : 0;
@@ -221,6 +226,12 @@ export default async function AttendancePage() {
   // For employees, show only their own attendance
   const isEmployee = user.role === 'employee';
 
+  // Fetch real data from Supabase
+  const [todayAttendance, branches] = await Promise.all([
+    getTodayAttendance(),
+    getBranches(),
+  ]);
+
   const stats = {
     present: todayAttendance.filter((a) => a.status === 'present').length,
     late: todayAttendance.filter((a) => a.status === 'late').length,
@@ -229,13 +240,16 @@ export default async function AttendancePage() {
   };
 
   const totalActive = stats.present + stats.late + stats.earlyLeave;
-  const attendanceRate = Math.round((totalActive / todayAttendance.length) * 100);
+  const attendanceRate = todayAttendance.length > 0
+    ? Math.round((totalActive / todayAttendance.length) * 100)
+    : 0;
 
   // Get branches with employees
-  const activeBranches = BRANCHES.filter(b => {
-    const employees = getEmployeesByBranch(b.id);
-    return employees.filter(e => e.status !== 'terminated').length > 0;
-  });
+  const activeBranches = branches.filter(b =>
+    todayAttendance.some(a => a.branchId === b.id)
+  );
+
+  const weeklySummary = await getWeeklySummary(todayAttendance.length);
 
   return (
     <div>
@@ -246,7 +260,7 @@ export default async function AttendancePage() {
           <p className="text-gray-500 mt-1">
             {isEmployee
               ? 'View your attendance history'
-              : `Today's attendance across ${activeBranches.length} branches`}
+              : `Monitor and manage employee attendance across all branches`}
           </p>
         </div>
         {!isEmployee && (
@@ -316,6 +330,7 @@ export default async function AttendancePage() {
                 key={branch.id}
                 branchId={branch.id}
                 branchName={branch.name}
+                attendance={todayAttendance}
               />
             ))}
           </div>
