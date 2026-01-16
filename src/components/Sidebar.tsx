@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
 import {
   LayoutDashboard,
@@ -115,9 +116,13 @@ export default function Sidebar({ user }: SidebarProps) {
       {/* Logo */}
       <div className="p-4 border-b border-gray-200">
         <Link href="/dashboard" className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-purple-600 rounded-full flex items-center justify-center">
-            <span className="text-white text-lg font-bold">C</span>
-          </div>
+          <Image
+            src="/logo.svg"
+            alt="C-Space Logo"
+            width={40}
+            height={40}
+            className="rounded-xl"
+          />
           <div>
             <h1 className="font-semibold text-gray-900">C-Space HR</h1>
             <p className="text-xs text-gray-500">Human Resources</p>

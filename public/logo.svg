@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 50" fill="none">
+  <rect width="50" height="50" rx="12" fill="#9333EA"/>
+  <text x="25" y="35" font-family="Arial, sans-serif" font-size="28" font-weight="bold" fill="white" text-anchor="middle">C</text>
+  <text x="65" y="32" font-family="Arial, sans-serif" font-size="24" font-weight="600" fill="#1F2937">C-Space</text>
+</svg>

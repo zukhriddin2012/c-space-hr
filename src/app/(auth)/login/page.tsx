@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
 
 export default function LoginPage() {
@@ -57,9 +58,13 @@ export default function LoginPage() {
     <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
       {/* Logo */}
       <div className="mb-8 flex flex-col items-center">
-        <div className="w-16 h-16 bg-purple-600 rounded-full flex items-center justify-center mb-4">
-          <span className="text-white text-2xl font-bold">C</span>
-        </div>
+        <Image
+          src="/logo.svg"
+          alt="C-Space Logo"
+          width={64}
+          height={64}
+          className="mb-4 rounded-2xl"
+        />
         <h1 className="text-2xl font-semibold text-gray-900">C-Space HR</h1>
         <p className="text-gray-500 mt-1">Human Resources Platform</p>
       </div>
