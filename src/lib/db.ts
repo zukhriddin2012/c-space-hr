@@ -17,13 +17,13 @@ export async function getEmployees(): Promise<Employee[]> {
       level: e.level,
       branch_id: e.branchId,
       salary: e.salary,
-      phone: e.phone,
-      email: e.email,
+      phone: e.phone || null,
+      email: e.email || null,
       telegram_id: null,
       default_shift: 'day',
       can_rotate: false,
       status: 'active',
-      hire_date: e.hireDate,
+      hire_date: e.hireDate || new Date().toISOString().split('T')[0],
     }));
   }
 
@@ -54,13 +54,13 @@ export async function getEmployeeById(id: string): Promise<Employee | null> {
       level: emp.level,
       branch_id: emp.branchId,
       salary: emp.salary,
-      phone: emp.phone,
-      email: emp.email,
+      phone: emp.phone || null,
+      email: emp.email || null,
       telegram_id: null,
       default_shift: 'day',
       can_rotate: false,
       status: 'active',
-      hire_date: emp.hireDate,
+      hire_date: emp.hireDate || new Date().toISOString().split('T')[0],
     };
   }
 
@@ -91,13 +91,13 @@ export async function getEmployeesByBranch(branchId: string): Promise<Employee[]
         level: e.level,
         branch_id: e.branchId,
         salary: e.salary,
-        phone: e.phone,
-        email: e.email,
+        phone: e.phone || null,
+        email: e.email || null,
         telegram_id: null,
         default_shift: 'day',
         can_rotate: false,
         status: 'active',
-        hire_date: e.hireDate,
+        hire_date: e.hireDate || new Date().toISOString().split('T')[0],
       }));
   }
 
