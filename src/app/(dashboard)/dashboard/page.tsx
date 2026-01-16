@@ -10,36 +10,51 @@ import {
   AlertCircle,
   CheckCircle,
   UserCheck,
+  Briefcase,
 } from 'lucide-react';
+import {
+  EMPLOYEES,
+  BRANCHES,
+  getActiveEmployeesCount,
+  getTotalSalaryBudget,
+  getEmployeesByBranch,
+} from '@/lib/employee-data';
 
-// Demo data for the dashboard
-const demoStats = {
-  totalEmployees: 47,
-  activeEmployees: 45,
-  presentToday: 38,
-  lateToday: 3,
-  absentToday: 4,
-  pendingPayroll: 12,
-  totalBranches: 7,
-  totalWageBudget: 125000000, // UZS
+// Calculate real stats from employee data
+const realStats = {
+  totalEmployees: getActiveEmployeesCount(),
+  fullTimeEmployees: EMPLOYEES.filter(e => e.employmentType === 'full_time' && e.status !== 'terminated').length,
+  partTimeEmployees: EMPLOYEES.filter(e => e.employmentType === 'part_time' && e.status !== 'terminated').length,
+  totalBranches: BRANCHES.length,
+  totalWageBudget: getTotalSalaryBudget(),
+  juniorCount: EMPLOYEES.filter(e => e.level === 'junior' && e.status !== 'terminated').length,
+  middleCount: EMPLOYEES.filter(e => e.level === 'middle' && e.status !== 'terminated').length,
+  seniorCount: EMPLOYEES.filter(e => e.level === 'senior' && e.status !== 'terminated').length,
+  executiveCount: EMPLOYEES.filter(e => e.level === 'executive' && e.status !== 'terminated').length,
+  probationCount: EMPLOYEES.filter(e => e.status === 'probation').length,
 };
 
-const demoBranches = [
-  { id: '1', name: 'C-Space Airport', present: 8, total: 10 },
-  { id: '2', name: 'C-Space Beruniy', present: 6, total: 7 },
-  { id: '3', name: 'C-Space Chust', present: 5, total: 6 },
-  { id: '4', name: 'C-Space Labzak', present: 4, total: 5 },
-  { id: '5', name: 'C-Space Muqumiy', present: 7, total: 8 },
-  { id: '6', name: 'C-Space Yunusabad', present: 5, total: 6 },
-  { id: '7', name: 'C-Space Elbek', present: 3, total: 5 },
-];
+// Real branch data with employee counts
+const branchPresenceData = BRANCHES.map(branch => {
+  const employees = getEmployeesByBranch(branch.id);
+  // Simulate ~80% present today
+  const presentCount = Math.floor(employees.length * 0.8);
+  return {
+    id: branch.id,
+    name: branch.name,
+    present: presentCount,
+    total: employees.length,
+  };
+}).filter(b => b.total > 0);
 
+// Recent activity with real employee names
 const recentActivity = [
-  { id: '1', type: 'check_in', employee: 'Aziz Karimov', branch: 'C-Space Airport', time: '09:02' },
-  { id: '2', type: 'check_in', employee: 'Dilnoza Rustamova', branch: 'C-Space Beruniy', time: '09:05' },
-  { id: '3', type: 'late', employee: 'Bobur Aliyev', branch: 'C-Space Labzak', time: '09:18' },
-  { id: '4', type: 'check_in', employee: 'Madina Tosheva', branch: 'C-Space Muqumiy', time: '09:00' },
-  { id: '5', type: 'check_out', employee: 'Jasur Normatov', branch: 'C-Space Chust', time: '18:05' },
+  { id: '1', type: 'check_in', employee: 'Nodir Mahmudov', branch: 'C-Space Yunusabad', time: '09:02' },
+  { id: '2', type: 'check_in', employee: 'Sulhiya Aminova', branch: 'C-Space Labzak', time: '09:05' },
+  { id: '3', type: 'late', employee: 'Xushbaxt Abdusalomov', branch: 'C-Space Yunusabad', time: '09:18' },
+  { id: '4', type: 'check_in', employee: 'Zuxriddin Abduraxmonov', branch: 'C-Space Labzak', time: '09:00' },
+  { id: '5', type: 'check_out', employee: 'Durbek Shaymardanov', branch: 'C-Space Chust', time: '18:05' },
+  { id: '6', type: 'check_in', employee: 'Ubaydullo Pulat', branch: 'C-Space Maksim Gorkiy', time: '08:55' },
 ];
 
 function StatCard({
@@ -82,20 +97,20 @@ function StatCard({
 function BranchPresenceCard({
   branches,
 }: {
-  branches: typeof demoBranches;
+  branches: typeof branchPresenceData;
 }) {
   return (
     <div className="bg-white rounded-xl border border-gray-200 p-5">
-      <h3 className="text-lg font-semibold text-gray-900 mb-4">Branch Presence</h3>
+      <h3 className="text-lg font-semibold text-gray-900 mb-4">Branch Staffing</h3>
       <div className="space-y-3">
         {branches.map((branch) => {
-          const percentage = Math.round((branch.present / branch.total) * 100);
+          const percentage = branch.total > 0 ? Math.round((branch.present / branch.total) * 100) : 0;
           return (
             <div key={branch.id}>
               <div className="flex items-center justify-between text-sm mb-1">
                 <span className="text-gray-700">{branch.name}</span>
                 <span className="text-gray-500">
-                  {branch.present}/{branch.total}
+                  {branch.total} employees
                 </span>
               </div>
               <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
@@ -165,6 +180,42 @@ function RecentActivityCard({
   );
 }
 
+function LevelDistributionCard() {
+  const levels = [
+    { label: 'Junior', count: realStats.juniorCount, color: 'bg-blue-500' },
+    { label: 'Middle', count: realStats.middleCount, color: 'bg-purple-500' },
+    { label: 'Senior', count: realStats.seniorCount, color: 'bg-indigo-500' },
+    { label: 'Executive', count: realStats.executiveCount, color: 'bg-pink-500' },
+  ];
+
+  const total = levels.reduce((sum, l) => sum + l.count, 0);
+
+  return (
+    <div className="bg-white rounded-xl border border-gray-200 p-5">
+      <h3 className="text-lg font-semibold text-gray-900 mb-4">Employee Levels</h3>
+      <div className="space-y-3">
+        {levels.map((level) => {
+          const percentage = total > 0 ? Math.round((level.count / total) * 100) : 0;
+          return (
+            <div key={level.label}>
+              <div className="flex items-center justify-between text-sm mb-1">
+                <span className="text-gray-700">{level.label}</span>
+                <span className="text-gray-500">{level.count} ({percentage}%)</span>
+              </div>
+              <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                <div
+                  className={`h-full ${level.color} rounded-full transition-all`}
+                  style={{ width: `${percentage}%` }}
+                />
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 export default async function DashboardPage() {
   const user = await getSession();
 
@@ -175,6 +226,11 @@ export default async function DashboardPage() {
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('uz-UZ').format(amount) + ' UZS';
   };
+
+  // Calculate simulated present/late/absent for demo
+  const presentToday = Math.floor(realStats.totalEmployees * 0.8);
+  const lateToday = Math.floor(realStats.totalEmployees * 0.05);
+  const absentToday = realStats.totalEmployees - presentToday - lateToday;
 
   return (
     <div>
@@ -190,28 +246,28 @@ export default async function DashboardPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <StatCard
           title="Total Employees"
-          value={demoStats.totalEmployees}
+          value={realStats.totalEmployees}
           icon={Users}
-          trend="+2 this month"
+          trend={`${realStats.fullTimeEmployees} full-time, ${realStats.partTimeEmployees} part-time`}
           color="purple"
         />
         <StatCard
           title="Present Today"
-          value={demoStats.presentToday}
+          value={presentToday}
           icon={UserCheck}
           color="green"
         />
         <StatCard
           title="Late Today"
-          value={demoStats.lateToday}
+          value={lateToday}
           icon={AlertCircle}
           color="orange"
         />
         {(user.role === 'general_manager' || user.role === 'ceo' || user.role === 'hr') && (
           <StatCard
-            title="Pending Payroll"
-            value={demoStats.pendingPayroll}
-            icon={Wallet}
+            title="On Probation"
+            value={realStats.probationCount}
+            icon={Briefcase}
             color="blue"
           />
         )}
@@ -222,19 +278,19 @@ export default async function DashboardPage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
           <StatCard
             title="Active Branches"
-            value={demoStats.totalBranches}
+            value={realStats.totalBranches}
             icon={MapPin}
             color="purple"
           />
           <StatCard
             title="Monthly Wage Budget"
-            value={formatCurrency(demoStats.totalWageBudget)}
+            value={formatCurrency(realStats.totalWageBudget)}
             icon={TrendingUp}
             color="green"
           />
           <StatCard
             title="Absent Today"
-            value={demoStats.absentToday}
+            value={absentToday}
             icon={AlertCircle}
             color="red"
           />
@@ -242,9 +298,43 @@ export default async function DashboardPage() {
       )}
 
       {/* Main Content Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <BranchPresenceCard branches={branchPresenceData} />
+        <LevelDistributionCard />
+      </div>
+
+      {/* Recent Activity */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <BranchPresenceCard branches={demoBranches} />
         <RecentActivityCard activities={recentActivity} />
+
+        {/* Top Salaries Card for GM/CEO */}
+        {(user.role === 'general_manager' || user.role === 'ceo') && (
+          <div className="bg-white rounded-xl border border-gray-200 p-5">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Top Positions by Salary</h3>
+            <div className="space-y-3">
+              {EMPLOYEES
+                .filter(e => e.status !== 'terminated')
+                .sort((a, b) => b.baseSalary - a.baseSalary)
+                .slice(0, 5)
+                .map((emp, index) => (
+                  <div key={emp.id} className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center text-sm font-medium text-purple-700">
+                        {index + 1}
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-gray-900">{emp.fullName}</p>
+                        <p className="text-xs text-gray-500">{emp.position}</p>
+                      </div>
+                    </div>
+                    <p className="text-sm font-medium text-gray-900">
+                      {formatCurrency(emp.baseSalary)}
+                    </p>
+                  </div>
+                ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Employee Self-Service View */}
