@@ -1,100 +1,43 @@
 import { getSession } from '@/lib/auth-server';
 import { hasPermission } from '@/lib/auth';
 import { redirect } from 'next/navigation';
-import { Plus, MapPin, Users, Settings, CheckCircle, Clock } from 'lucide-react';
+import { Plus, MapPin, Users, Settings, CheckCircle, Clock, Wallet } from 'lucide-react';
 import Link from 'next/link';
+import { BRANCHES, EMPLOYEES, getEmployeesByBranch } from '@/lib/employee-data';
 
-// Demo branch data
-const demoBranches = [
-  {
-    id: '1',
-    name: 'C-Space Airport',
-    address: 'Tashkent International Airport, Terminal 2',
-    latitude: 41.2574,
-    longitude: 69.2814,
-    geofenceRadius: 100,
-    totalEmployees: 10,
-    presentToday: 8,
-    isActive: true,
-  },
-  {
-    id: '2',
-    name: 'C-Space Beruniy',
-    address: '15 Beruniy Street, Tashkent',
-    latitude: 41.3123,
-    longitude: 69.2796,
-    geofenceRadius: 80,
-    totalEmployees: 7,
-    presentToday: 6,
-    isActive: true,
-  },
-  {
-    id: '3',
-    name: 'C-Space Chust',
-    address: '23 Chust Street, Tashkent',
-    latitude: 41.2989,
-    longitude: 69.2432,
-    geofenceRadius: 75,
-    totalEmployees: 6,
-    presentToday: 5,
-    isActive: true,
-  },
-  {
-    id: '4',
-    name: 'C-Space Labzak',
-    address: '45 Labzak Street, Mirzo Ulugbek',
-    latitude: 41.3456,
-    longitude: 69.3012,
-    geofenceRadius: 80,
-    totalEmployees: 5,
-    presentToday: 4,
-    isActive: true,
-  },
-  {
-    id: '5',
-    name: 'C-Space Muqumiy',
-    address: '78 Muqumiy Street, Yunusabad',
-    latitude: 41.3567,
-    longitude: 69.2845,
-    geofenceRadius: 90,
-    totalEmployees: 8,
-    presentToday: 7,
-    isActive: true,
-  },
-  {
-    id: '6',
-    name: 'C-Space Yunusabad',
-    address: '12 Yunusabad District, Block C',
-    latitude: 41.3678,
-    longitude: 69.2956,
-    geofenceRadius: 85,
-    totalEmployees: 6,
-    presentToday: 5,
-    isActive: true,
-  },
-  {
-    id: '7',
-    name: 'C-Space Elbek',
-    address: '34 Elbek Street, Yakkasaray',
-    latitude: 41.2876,
-    longitude: 69.2654,
-    geofenceRadius: 70,
-    totalEmployees: 5,
-    presentToday: 3,
-    isActive: true,
-  },
-];
+// Build branch data with real employee counts and salary budgets
+const branchesWithStats = BRANCHES.map(branch => {
+  const employees = getEmployeesByBranch(branch.id);
+  const activeEmployees = employees.filter(e => e.status !== 'terminated');
+  const salaryBudget = activeEmployees.reduce((sum, e) => sum + e.baseSalary, 0);
+  // Simulate ~80% present for demo
+  const presentToday = Math.floor(activeEmployees.length * 0.8);
+
+  return {
+    ...branch,
+    totalEmployees: activeEmployees.length,
+    presentToday,
+    salaryBudget,
+  };
+});
+
+function formatSalary(amount: number): string {
+  if (amount === 0) return '-';
+  return new Intl.NumberFormat('uz-UZ').format(amount) + ' UZS';
+}
 
 function BranchCard({
   branch,
   canManage,
+  showSalary,
 }: {
-  branch: (typeof demoBranches)[0];
+  branch: (typeof branchesWithStats)[0];
   canManage: boolean;
+  showSalary: boolean;
 }) {
-  const presencePercentage = Math.round(
-    (branch.presentToday / branch.totalEmployees) * 100
-  );
+  const presencePercentage = branch.totalEmployees > 0
+    ? Math.round((branch.presentToday / branch.totalEmployees) * 100)
+    : 0;
 
   return (
     <div className="bg-white rounded-xl border border-gray-200 p-5 hover:shadow-md transition-shadow">
@@ -121,7 +64,7 @@ function BranchCard({
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 gap-4 mb-4">
+      <div className={`grid ${showSalary ? 'grid-cols-3' : 'grid-cols-2'} gap-3 mb-4`}>
         <div className="bg-gray-50 rounded-lg p-3">
           <div className="flex items-center gap-2 text-gray-500 text-sm mb-1">
             <Users size={16} />
@@ -140,6 +83,17 @@ function BranchCard({
             {branch.presentToday}
           </p>
         </div>
+        {showSalary && (
+          <div className="bg-gray-50 rounded-lg p-3">
+            <div className="flex items-center gap-2 text-gray-500 text-sm mb-1">
+              <Wallet size={16} />
+              <span>Budget</span>
+            </div>
+            <p className="text-sm font-semibold text-gray-900">
+              {formatSalary(branch.salaryBudget)}
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Presence Bar */}
@@ -198,9 +152,13 @@ export default async function BranchesPage() {
   }
 
   const canManageBranches = hasPermission(user.role, 'manage_branches');
+  const canViewSalaries = user.role === 'general_manager' || user.role === 'ceo';
 
-  const totalEmployees = demoBranches.reduce((sum, b) => sum + b.totalEmployees, 0);
-  const totalPresent = demoBranches.reduce((sum, b) => sum + b.presentToday, 0);
+  // Filter to only show branches with employees
+  const activeBranches = branchesWithStats.filter(b => b.totalEmployees > 0);
+  const totalEmployees = activeBranches.reduce((sum, b) => sum + b.totalEmployees, 0);
+  const totalPresent = activeBranches.reduce((sum, b) => sum + b.presentToday, 0);
+  const totalSalaryBudget = activeBranches.reduce((sum, b) => sum + b.salaryBudget, 0);
 
   return (
     <div>
@@ -224,15 +182,15 @@ export default async function BranchesPage() {
       </div>
 
       {/* Summary Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+      <div className={`grid grid-cols-1 md:grid-cols-${canViewSalaries ? '5' : '4'} gap-4 mb-6`}>
         <div className="bg-white rounded-xl border border-gray-200 p-4">
           <p className="text-sm text-gray-500">Total Branches</p>
-          <p className="text-2xl font-semibold text-gray-900 mt-1">{demoBranches.length}</p>
+          <p className="text-2xl font-semibold text-gray-900 mt-1">{BRANCHES.length}</p>
         </div>
         <div className="bg-white rounded-xl border border-gray-200 p-4">
-          <p className="text-sm text-gray-500">Active Branches</p>
+          <p className="text-sm text-gray-500">With Staff</p>
           <p className="text-2xl font-semibold text-gray-900 mt-1">
-            {demoBranches.filter((b) => b.isActive).length}
+            {activeBranches.length}
           </p>
         </div>
         <div className="bg-white rounded-xl border border-gray-200 p-4">
@@ -243,12 +201,23 @@ export default async function BranchesPage() {
           <p className="text-sm text-gray-500">Present Now</p>
           <p className="text-2xl font-semibold text-green-600 mt-1">{totalPresent}</p>
         </div>
+        {canViewSalaries && (
+          <div className="bg-white rounded-xl border border-gray-200 p-4">
+            <p className="text-sm text-gray-500">Monthly Budget</p>
+            <p className="text-lg font-semibold text-gray-900 mt-1">{formatSalary(totalSalaryBudget)}</p>
+          </div>
+        )}
       </div>
 
       {/* Branch Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {demoBranches.map((branch) => (
-          <BranchCard key={branch.id} branch={branch} canManage={canManageBranches} />
+        {activeBranches.map((branch) => (
+          <BranchCard
+            key={branch.id}
+            branch={branch}
+            canManage={canManageBranches}
+            showSalary={canViewSalaries}
+          />
         ))}
       </div>
     </div>
