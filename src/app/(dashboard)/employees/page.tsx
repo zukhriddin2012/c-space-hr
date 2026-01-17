@@ -1,5 +1,5 @@
 import { getSession } from '@/lib/auth-server';
-import { hasPermission } from '@/lib/auth';
+import { hasPermission, PERMISSIONS } from '@/lib/permissions';
 import { redirect } from 'next/navigation';
 import { Plus, Search, Briefcase, MapPin, Clock, Eye } from 'lucide-react';
 import Link from 'next/link';
@@ -91,12 +91,12 @@ export default async function EmployeesPage({
   }
 
   // Check permission
-  if (!hasPermission(user.role, 'view_all_employees')) {
+  if (!hasPermission(user.role, PERMISSIONS.EMPLOYEES_VIEW_ALL)) {
     redirect('/dashboard');
   }
 
-  const canCreateEmployee = hasPermission(user.role, 'create_employee');
-  const canViewSalary = user.role === 'general_manager' || user.role === 'ceo';
+  const canCreateEmployee = hasPermission(user.role, PERMISSIONS.EMPLOYEES_CREATE);
+  const canViewSalary = hasPermission(user.role, PERMISSIONS.EMPLOYEES_VIEW_SALARY);
 
   // Get filter params
   const params = await searchParams;

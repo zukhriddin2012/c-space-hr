@@ -1,0 +1,174 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
+import { verifyToken } from './auth';
+import { hasPermission, hasAnyPermission, Permission } from './permissions';
+import type { User, UserRole } from '@/types';
+
+const COOKIE_NAME = 'c-space-auth';
+
+export interface AuthenticatedRequest extends NextRequest {
+  user: User;
+}
+
+type ApiHandler = (
+  request: NextRequest,
+  context: { user: User; params?: Record<string, string> }
+) => Promise<NextResponse>;
+
+interface ProtectOptions {
+  permission?: Permission;
+  permissions?: Permission[];
+  requireAll?: boolean;
+  roles?: UserRole[];
+}
+
+/**
+ * Middleware to protect API routes
+ *
+ * Usage:
+ *
+ * // Basic auth check
+ * export const GET = withAuth(async (request, { user }) => {
+ *   return NextResponse.json({ user });
+ * });
+ *
+ * // With permission check
+ * export const POST = withAuth(
+ *   async (request, { user }) => {
+ *     return NextResponse.json({ success: true });
+ *   },
+ *   { permission: 'employees:create' }
+ * );
+ *
+ * // With multiple permissions (any)
+ * export const PUT = withAuth(
+ *   async (request, { user }) => {
+ *     return NextResponse.json({ success: true });
+ *   },
+ *   { permissions: ['employees:edit', 'employees:delete'] }
+ * );
+ *
+ * // With role restriction
+ * export const DELETE = withAuth(
+ *   async (request, { user }) => {
+ *     return NextResponse.json({ success: true });
+ *   },
+ *   { roles: ['general_manager'] }
+ * );
+ */
+export function withAuth(
+  handler: ApiHandler,
+  options?: ProtectOptions
+) {
+  return async (
+    request: NextRequest,
+    context?: { params?: Promise<Record<string, string>> }
+  ): Promise<NextResponse> => {
+    try {
+      // Get token from cookie
+      const cookieStore = await cookies();
+      const token = cookieStore.get(COOKIE_NAME)?.value;
+
+      if (!token) {
+        return NextResponse.json(
+          { error: 'Authentication required' },
+          { status: 401 }
+        );
+      }
+
+      // Verify token
+      const user = await verifyToken(token);
+
+      if (!user) {
+        return NextResponse.json(
+          { error: 'Invalid or expired token' },
+          { status: 401 }
+        );
+      }
+
+      // Check permissions if specified
+      if (options) {
+        const { permission, permissions, requireAll, roles } = options;
+
+        // Check single permission
+        if (permission && !hasPermission(user.role, permission)) {
+          return NextResponse.json(
+            { error: 'Insufficient permissions', required: permission },
+            { status: 403 }
+          );
+        }
+
+        // Check multiple permissions
+        if (permissions && permissions.length > 0) {
+          const hasPerms = requireAll
+            ? permissions.every((p) => hasPermission(user.role, p))
+            : hasAnyPermission(user.role, permissions);
+
+          if (!hasPerms) {
+            return NextResponse.json(
+              { error: 'Insufficient permissions', required: permissions },
+              { status: 403 }
+            );
+          }
+        }
+
+        // Check roles
+        if (roles && roles.length > 0 && !roles.includes(user.role)) {
+          return NextResponse.json(
+            { error: 'Access denied for this role', allowedRoles: roles },
+            { status: 403 }
+          );
+        }
+      }
+
+      // Resolve params if they exist
+      const resolvedParams = context?.params ? await context.params : undefined;
+
+      // Call the handler with authenticated user
+      return handler(request, { user, params: resolvedParams });
+    } catch (error) {
+      console.error('API auth error:', error);
+      return NextResponse.json(
+        { error: 'Authentication error' },
+        { status: 500 }
+      );
+    }
+  };
+}
+
+/**
+ * Get current user from request (for routes that don't need protection)
+ */
+export async function getCurrentUser(): Promise<User | null> {
+  try {
+    const cookieStore = await cookies();
+    const token = cookieStore.get(COOKIE_NAME)?.value;
+    if (!token) return null;
+    return verifyToken(token);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Check if current user has permission (for use in server components/actions)
+ */
+export async function checkPermission(permission: Permission): Promise<boolean> {
+  const user = await getCurrentUser();
+  if (!user) return false;
+  return hasPermission(user.role, permission);
+}
+
+/**
+ * Require permission or throw (for server actions)
+ */
+export async function requirePermission(permission: Permission): Promise<User> {
+  const user = await getCurrentUser();
+  if (!user) {
+    throw new Error('Authentication required');
+  }
+  if (!hasPermission(user.role, permission)) {
+    throw new Error(`Permission denied: ${permission}`);
+  }
+  return user;
+}

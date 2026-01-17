@@ -1,36 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getSession } from '@/lib/auth-server';
-import { hasPermission } from '@/lib/auth';
+import { withAuth } from '@/lib/api-auth';
+import { PERMISSIONS } from '@/lib/permissions';
 import { getBranches, createBranch } from '@/lib/db';
 
 // GET /api/branches - List all branches
-export async function GET() {
+export const GET = withAuth(async () => {
   try {
-    const user = await getSession();
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
     const branches = await getBranches();
     return NextResponse.json({ branches });
   } catch (error) {
     console.error('Error fetching branches:', error);
     return NextResponse.json({ error: 'Failed to fetch branches' }, { status: 500 });
   }
-}
+}, { permission: PERMISSIONS.BRANCHES_VIEW });
 
 // POST /api/branches - Create a new branch
-export async function POST(request: NextRequest) {
+export const POST = withAuth(async (request: NextRequest) => {
   try {
-    const user = await getSession();
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    if (!hasPermission(user.role, 'manage_branches')) {
-      return NextResponse.json({ error: 'Permission denied' }, { status: 403 });
-    }
-
     const body = await request.json();
     const { name, address, latitude, longitude, geofence_radius } = body;
 
@@ -55,4 +41,4 @@ export async function POST(request: NextRequest) {
     console.error('Error creating branch:', error);
     return NextResponse.json({ error: 'Failed to create branch' }, { status: 500 });
   }
-}
+}, { permission: PERMISSIONS.BRANCHES_CREATE });

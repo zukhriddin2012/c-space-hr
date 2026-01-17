@@ -1,20 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getSession } from '@/lib/auth-server';
-import { hasPermission } from '@/lib/auth';
+import { withAuth } from '@/lib/api-auth';
+import { PERMISSIONS } from '@/lib/permissions';
 import { getBranchById, updateBranch, deleteBranch } from '@/lib/db';
 
 // GET /api/branches/[id] - Get a single branch
-export async function GET(
+export const GET = withAuth(async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+  { params }
+) => {
   try {
-    const user = await getSession();
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const id = params?.id;
+    if (!id) {
+      return NextResponse.json({ error: 'Branch ID required' }, { status: 400 });
     }
 
-    const { id } = await params;
     const branch = await getBranchById(id);
 
     if (!branch) {
@@ -26,24 +25,19 @@ export async function GET(
     console.error('Error fetching branch:', error);
     return NextResponse.json({ error: 'Failed to fetch branch' }, { status: 500 });
   }
-}
+}, { permission: PERMISSIONS.BRANCHES_VIEW });
 
 // PUT /api/branches/[id] - Update a branch
-export async function PUT(
+export const PUT = withAuth(async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+  { params }
+) => {
   try {
-    const user = await getSession();
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const id = params?.id;
+    if (!id) {
+      return NextResponse.json({ error: 'Branch ID required' }, { status: 400 });
     }
 
-    if (!hasPermission(user.role, 'manage_branches')) {
-      return NextResponse.json({ error: 'Permission denied' }, { status: 403 });
-    }
-
-    const { id } = await params;
     const body = await request.json();
     const { name, address, latitude, longitude, geofence_radius } = body;
 
@@ -72,24 +66,19 @@ export async function PUT(
     console.error('Error updating branch:', error);
     return NextResponse.json({ error: 'Failed to update branch' }, { status: 500 });
   }
-}
+}, { permission: PERMISSIONS.BRANCHES_EDIT });
 
 // DELETE /api/branches/[id] - Delete a branch
-export async function DELETE(
+export const DELETE = withAuth(async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+  { params }
+) => {
   try {
-    const user = await getSession();
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const id = params?.id;
+    if (!id) {
+      return NextResponse.json({ error: 'Branch ID required' }, { status: 400 });
     }
 
-    if (!hasPermission(user.role, 'manage_branches')) {
-      return NextResponse.json({ error: 'Permission denied' }, { status: 403 });
-    }
-
-    const { id } = await params;
     const result = await deleteBranch(id);
 
     if (!result.success) {
@@ -101,4 +90,4 @@ export async function DELETE(
     console.error('Error deleting branch:', error);
     return NextResponse.json({ error: 'Failed to delete branch' }, { status: 500 });
   }
-}
+}, { permission: PERMISSIONS.BRANCHES_DELETE });
