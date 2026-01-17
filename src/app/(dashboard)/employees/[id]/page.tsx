@@ -229,7 +229,7 @@ export default async function EmployeeDetailPage({ params, searchParams }: PageP
               {canViewSalary && (employee.salary ?? 0) > 0 && (
                 <div className="flex items-center gap-2">
                   <span className="text-gray-500">Salary:</span>
-                  <span className="font-medium text-gray-900">{formatSalary(employee.salary)}/month</span>
+                  <span className="font-medium text-gray-900">{formatSalary(employee.salary ?? 0)}/month</span>
                 </div>
               )}
             </div>
