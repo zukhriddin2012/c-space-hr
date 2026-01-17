@@ -41,6 +41,7 @@ export interface Employee {
   default_shift: string;
   can_rotate: boolean;
   status: string;
+  employment_type: string; // 'full-time' | 'part-time' | 'internship' | 'probation'
   hire_date: string;
   branches?: Branch;
 }

@@ -38,6 +38,7 @@ interface Employee {
   phone: string | null;
   email: string | null;
   status: string;
+  employment_type?: string;
   hire_date: string;
   branches?: { name: string };
 }
@@ -70,6 +71,7 @@ export default function EditEmployeeModal({
     phone: employee.phone || '',
     email: employee.email || '',
     status: employee.status,
+    employment_type: employee.employment_type || 'full-time',
   });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -296,6 +298,22 @@ export default function EditEmployeeModal({
                   <option value="terminated">Terminated</option>
                 </select>
               </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Employment Type
+              </label>
+              <select
+                value={formData.employment_type}
+                onChange={(e) => setFormData({ ...formData, employment_type: e.target.value })}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none"
+              >
+                <option value="full-time">Full-time</option>
+                <option value="part-time">Part-time</option>
+                <option value="internship">Internship</option>
+                <option value="probation">Probation Period</option>
+              </select>
             </div>
 
             <div className="grid grid-cols-2 gap-4">

@@ -17,6 +17,7 @@ interface Employee {
   phone: string | null;
   email: string | null;
   status: string;
+  employment_type?: string;
   hire_date: string;
   branches?: { name: string };
 }

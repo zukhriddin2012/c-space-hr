@@ -16,6 +16,7 @@ interface Employee {
   phone: string | null;
   email: string | null;
   status: string;
+  employment_type?: string;
   hire_date: string;
   branches?: { name: string };
 }
@@ -76,6 +77,32 @@ function LevelBadge({ level }: { level: string }) {
       }`}
     >
       {level.charAt(0).toUpperCase() + level.slice(1)}
+    </span>
+  );
+}
+
+function EmploymentTypeBadge({ type }: { type: string }) {
+  const typeStyles: Record<string, string> = {
+    'full-time': 'bg-emerald-50 text-emerald-700',
+    'part-time': 'bg-orange-50 text-orange-700',
+    'internship': 'bg-cyan-50 text-cyan-700',
+    'probation': 'bg-amber-50 text-amber-700',
+  };
+
+  const typeLabels: Record<string, string> = {
+    'full-time': 'Full-time',
+    'part-time': 'Part-time',
+    'internship': 'Internship',
+    'probation': 'Probation',
+  };
+
+  return (
+    <span
+      className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
+        typeStyles[type] || typeStyles['full-time']
+      }`}
+    >
+      {typeLabels[type] || type}
     </span>
   );
 }
@@ -233,6 +260,9 @@ export default function EmployeesTable({
                 </th>
               )}
               <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Type
+              </th>
+              <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Status
               </th>
               <th className="text-right px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -286,6 +316,9 @@ export default function EmployeesTable({
                     <span className="font-medium text-gray-900">{formatSalary(employee.salary ?? 0)}</span>
                   </td>
                 )}
+                <td className="px-6 py-4">
+                  <EmploymentTypeBadge type={employee.employment_type || 'full-time'} />
+                </td>
                 <td className="px-6 py-4">
                   <EmployeeStatusBadge status={employee.status} />
                 </td>

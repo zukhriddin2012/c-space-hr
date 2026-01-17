@@ -23,6 +23,7 @@ export async function getEmployees(): Promise<Employee[]> {
       default_shift: 'day',
       can_rotate: false,
       status: 'active',
+      employment_type: 'full-time',
       hire_date: e.hireDate || new Date().toISOString().split('T')[0],
     }));
   }
@@ -60,6 +61,7 @@ export async function getEmployeeById(id: string): Promise<Employee | null> {
       default_shift: 'day',
       can_rotate: false,
       status: 'active',
+      employment_type: 'full-time',
       hire_date: emp.hireDate || new Date().toISOString().split('T')[0],
     };
   }
@@ -97,6 +99,7 @@ export async function getEmployeesByBranch(branchId: string): Promise<Employee[]
         default_shift: 'day',
         can_rotate: false,
         status: 'active',
+        employment_type: 'full-time',
         hire_date: e.hireDate || new Date().toISOString().split('T')[0],
       }));
   }
@@ -127,6 +130,7 @@ export async function updateEmployee(
     phone?: string | null;
     email?: string | null;
     status?: string;
+    employment_type?: string;
   }
 ): Promise<{ success: boolean; employee?: Employee; error?: string }> {
   if (!isSupabaseAdminConfigured()) {
@@ -157,6 +161,7 @@ export async function createEmployee(employeeData: {
   phone?: string | null;
   email?: string | null;
   status?: string;
+  employment_type?: string;
   hire_date?: string;
 }): Promise<{ success: boolean; employee?: Employee; error?: string }> {
   if (!isSupabaseAdminConfigured()) {
@@ -187,6 +192,7 @@ export async function createEmployee(employeeData: {
       phone: employeeData.phone || null,
       email: employeeData.email || null,
       status: employeeData.status || 'active',
+      employment_type: employeeData.employment_type || 'full-time',
       hire_date: employeeData.hire_date || new Date().toISOString().split('T')[0],
     })
     .select('*, branches(name)')
@@ -651,6 +657,7 @@ export async function getEmployeeByEmail(email: string): Promise<Employee | null
       default_shift: 'day',
       can_rotate: false,
       status: 'active',
+      employment_type: 'full-time',
       hire_date: emp.hireDate || new Date().toISOString().split('T')[0],
     };
   }
