@@ -33,4 +33,4 @@ export const POST = withAuth(async (request: NextRequest) => {
     console.error('Error running SQL:', error);
     return NextResponse.json({ error: 'Failed to run SQL' }, { status: 500 });
   }
-}, { permission: PERMISSIONS.ADMIN });
+}, { permission: PERMISSIONS.DASHBOARD_ADMIN });

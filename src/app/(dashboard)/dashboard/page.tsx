@@ -5,50 +5,34 @@ import {
   Users,
   Clock,
   MapPin,
-  Wallet,
-  TrendingUp,
   AlertCircle,
   CheckCircle,
   UserCheck,
   Briefcase,
+  TrendingUp,
+  Building2,
 } from 'lucide-react';
-import {
-  EMPLOYEES,
-  BRANCHES,
-  getActiveEmployeesCount,
-  getTotalSalaryBudget,
-  getEmployeesByBranch,
-} from '@/lib/employee-data';
 import { getTodayAttendance, getBranches, getEmployees, getAttendanceStats } from '@/lib/db';
 
-// Calculate real stats from employee data
-const realStats = {
-  totalEmployees: getActiveEmployeesCount(),
-  fullTimeEmployees: EMPLOYEES.filter(e => e.employmentType === 'full_time' && e.status !== 'terminated').length,
-  partTimeEmployees: EMPLOYEES.filter(e => e.employmentType === 'part_time' && e.status !== 'terminated').length,
-  totalBranches: BRANCHES.length,
-  totalWageBudget: getTotalSalaryBudget(),
-  juniorCount: EMPLOYEES.filter(e => e.level === 'junior' && e.status !== 'terminated').length,
-  middleCount: EMPLOYEES.filter(e => e.level === 'middle' && e.status !== 'terminated').length,
-  seniorCount: EMPLOYEES.filter(e => e.level === 'senior' && e.status !== 'terminated').length,
-  executiveCount: EMPLOYEES.filter(e => e.level === 'executive' && e.status !== 'terminated').length,
-  probationCount: EMPLOYEES.filter(e => e.status === 'probation').length,
-};
+// Interfaces
+interface Employee {
+  id: string;
+  employee_id: string;
+  full_name: string;
+  position: string;
+  level: string;
+  branch_id: string | null;
+  salary: number | null;
+  status: string;
+  employment_type?: string;
+  branches?: { name: string };
+}
 
-// Real branch data with employee counts
-const branchPresenceData = BRANCHES.map(branch => {
-  const employees = getEmployeesByBranch(branch.id);
-  // Simulate ~80% present today
-  const presentCount = Math.floor(employees.length * 0.8);
-  return {
-    id: branch.id,
-    name: branch.name,
-    present: presentCount,
-    total: employees.length,
-  };
-}).filter(b => b.total > 0);
+interface Branch {
+  id: string;
+  name: string;
+}
 
-// Recent activity interface
 interface RecentActivityItem {
   id: string;
   type: 'check_in' | 'check_out' | 'late';
@@ -57,17 +41,21 @@ interface RecentActivityItem {
   time: string;
 }
 
+interface BranchStats {
+  id: string;
+  name: string;
+  employeeCount: number;
+}
+
 // Function to fetch recent activity from database
 async function getRecentActivity(): Promise<RecentActivityItem[]> {
   const attendance = await getTodayAttendance();
 
-  // Convert attendance records to activity items
   const activities: RecentActivityItem[] = [];
 
   attendance.forEach((record: any) => {
     const employeeName = record.employees?.full_name || 'Unknown';
 
-    // Add check-in activity
     if (record.check_in) {
       const checkInBranch = record.check_in_branch?.name || '-';
       activities.push({
@@ -79,7 +67,6 @@ async function getRecentActivity(): Promise<RecentActivityItem[]> {
       });
     }
 
-    // Add check-out activity
     if (record.check_out) {
       const checkOutBranch = record.check_out_branch?.name || record.check_in_branch?.name || '-';
       activities.push({
@@ -92,10 +79,66 @@ async function getRecentActivity(): Promise<RecentActivityItem[]> {
     }
   });
 
-  // Sort by time descending and take first 6
   return activities
     .sort((a, b) => b.time.localeCompare(a.time))
     .slice(0, 6);
+}
+
+// Calculate dashboard stats from real database data
+async function getDashboardStats() {
+  const [employees, branches] = await Promise.all([
+    getEmployees(),
+    getBranches(),
+  ]);
+
+  const activeEmployees = employees.filter((e: Employee) => e.status === 'active' || e.status === 'probation');
+
+  // Employment type counts
+  const fullTimeCount = activeEmployees.filter((e: Employee) => e.employment_type === 'full-time' || !e.employment_type).length;
+  const partTimeCount = activeEmployees.filter((e: Employee) => e.employment_type === 'part-time').length;
+  const internshipCount = activeEmployees.filter((e: Employee) => e.employment_type === 'internship').length;
+  const probationTypeCount = activeEmployees.filter((e: Employee) => e.employment_type === 'probation').length;
+
+  // Level counts
+  const juniorCount = activeEmployees.filter((e: Employee) => e.level === 'junior').length;
+  const middleCount = activeEmployees.filter((e: Employee) => e.level === 'middle').length;
+  const seniorCount = activeEmployees.filter((e: Employee) => e.level === 'senior').length;
+  const executiveCount = activeEmployees.filter((e: Employee) => e.level === 'executive').length;
+
+  // Status counts
+  const probationStatusCount = employees.filter((e: Employee) => e.status === 'probation').length;
+
+  // Total salary budget
+  const totalSalaryBudget = activeEmployees.reduce((sum: number, e: Employee) => sum + (e.salary || 0), 0);
+
+  // Branch stats
+  const branchStats: BranchStats[] = branches.map((branch: Branch) => ({
+    id: branch.id,
+    name: branch.name,
+    employeeCount: activeEmployees.filter((e: Employee) => e.branch_id === branch.id).length,
+  })).filter((b: BranchStats) => b.employeeCount > 0);
+
+  // Top earners
+  const topEarners = [...activeEmployees]
+    .sort((a: Employee, b: Employee) => (b.salary || 0) - (a.salary || 0))
+    .slice(0, 5);
+
+  return {
+    totalEmployees: activeEmployees.length,
+    fullTimeCount,
+    partTimeCount,
+    internshipCount,
+    probationTypeCount,
+    juniorCount,
+    middleCount,
+    seniorCount,
+    executiveCount,
+    probationStatusCount,
+    totalSalaryBudget,
+    totalBranches: branches.length,
+    branchStats,
+    topEarners,
+  };
 }
 
 function StatCard({
@@ -137,21 +180,26 @@ function StatCard({
 
 function BranchPresenceCard({
   branches,
+  totalEmployees,
 }: {
-  branches: typeof branchPresenceData;
+  branches: BranchStats[];
+  totalEmployees: number;
 }) {
   return (
     <div className="bg-white rounded-xl border border-gray-200 p-5">
-      <h3 className="text-lg font-semibold text-gray-900 mb-4">Branch Staffing</h3>
+      <div className="flex items-center gap-2 mb-4">
+        <Building2 size={20} className="text-purple-600" />
+        <h3 className="text-lg font-semibold text-gray-900">Branch Staffing</h3>
+      </div>
       <div className="space-y-3">
         {branches.map((branch) => {
-          const percentage = branch.total > 0 ? Math.round((branch.present / branch.total) * 100) : 0;
+          const percentage = totalEmployees > 0 ? Math.round((branch.employeeCount / totalEmployees) * 100) : 0;
           return (
             <div key={branch.id}>
               <div className="flex items-center justify-between text-sm mb-1">
                 <span className="text-gray-700">{branch.name}</span>
                 <span className="text-gray-500">
-                  {branch.total} employees
+                  {branch.employeeCount} employees ({percentage}%)
                 </span>
               </div>
               <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
@@ -163,6 +211,9 @@ function BranchPresenceCard({
             </div>
           );
         })}
+        {branches.length === 0 && (
+          <p className="text-sm text-gray-500 text-center py-4">No branch data available</p>
+        )}
       </div>
     </div>
   );
@@ -203,30 +254,44 @@ function RecentActivityCard({
     <div className="bg-white rounded-xl border border-gray-200 p-5">
       <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Activity</h3>
       <div className="space-y-3">
-        {activities.map((activity) => (
-          <div key={activity.id} className="flex items-start gap-3">
-            <div className="mt-0.5">{getActivityIcon(activity.type)}</div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm text-gray-900">
-                <span className="font-medium">{activity.employee}</span>{' '}
-                <span className="text-gray-500">{getActivityLabel(activity.type)}</span>{' '}
-                <span className="text-gray-700">{activity.branch}</span>
-              </p>
-              <p className="text-xs text-gray-400 mt-0.5">{activity.time}</p>
+        {activities.length > 0 ? (
+          activities.map((activity) => (
+            <div key={activity.id} className="flex items-start gap-3">
+              <div className="mt-0.5">{getActivityIcon(activity.type)}</div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm text-gray-900">
+                  <span className="font-medium">{activity.employee}</span>{' '}
+                  <span className="text-gray-500">{getActivityLabel(activity.type)}</span>{' '}
+                  <span className="text-gray-700">{activity.branch}</span>
+                </p>
+                <p className="text-xs text-gray-400 mt-0.5">{activity.time}</p>
+              </div>
             </div>
-          </div>
-        ))}
+          ))
+        ) : (
+          <p className="text-sm text-gray-500 text-center py-4">No activity today</p>
+        )}
       </div>
     </div>
   );
 }
 
-function LevelDistributionCard() {
+function LevelDistributionCard({
+  juniorCount,
+  middleCount,
+  seniorCount,
+  executiveCount,
+}: {
+  juniorCount: number;
+  middleCount: number;
+  seniorCount: number;
+  executiveCount: number;
+}) {
   const levels = [
-    { label: 'Junior', count: realStats.juniorCount, color: 'bg-blue-500' },
-    { label: 'Middle', count: realStats.middleCount, color: 'bg-purple-500' },
-    { label: 'Senior', count: realStats.seniorCount, color: 'bg-indigo-500' },
-    { label: 'Executive', count: realStats.executiveCount, color: 'bg-pink-500' },
+    { label: 'Junior', count: juniorCount, color: 'bg-blue-500' },
+    { label: 'Middle', count: middleCount, color: 'bg-purple-500' },
+    { label: 'Senior', count: seniorCount, color: 'bg-indigo-500' },
+    { label: 'Executive', count: executiveCount, color: 'bg-pink-500' },
   ];
 
   const total = levels.reduce((sum, l) => sum + l.count, 0);
@@ -257,6 +322,88 @@ function LevelDistributionCard() {
   );
 }
 
+function EmploymentTypeCard({
+  fullTime,
+  partTime,
+  internship,
+  probation,
+}: {
+  fullTime: number;
+  partTime: number;
+  internship: number;
+  probation: number;
+}) {
+  const types = [
+    { label: 'Full-time', count: fullTime, color: 'bg-emerald-500' },
+    { label: 'Part-time', count: partTime, color: 'bg-orange-500' },
+    { label: 'Internship', count: internship, color: 'bg-cyan-500' },
+    { label: 'Probation', count: probation, color: 'bg-amber-500' },
+  ];
+
+  const total = types.reduce((sum, t) => sum + t.count, 0);
+
+  return (
+    <div className="bg-white rounded-xl border border-gray-200 p-5">
+      <h3 className="text-lg font-semibold text-gray-900 mb-4">Employment Types</h3>
+      <div className="space-y-3">
+        {types.map((type) => {
+          const percentage = total > 0 ? Math.round((type.count / total) * 100) : 0;
+          return (
+            <div key={type.label}>
+              <div className="flex items-center justify-between text-sm mb-1">
+                <span className="text-gray-700">{type.label}</span>
+                <span className="text-gray-500">{type.count} ({percentage}%)</span>
+              </div>
+              <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                <div
+                  className={`h-full ${type.color} rounded-full transition-all`}
+                  style={{ width: `${percentage}%` }}
+                />
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function TopEarnersCard({
+  employees,
+  formatCurrency,
+}: {
+  employees: Employee[];
+  formatCurrency: (amount: number) => string;
+}) {
+  return (
+    <div className="bg-white rounded-xl border border-gray-200 p-5">
+      <h3 className="text-lg font-semibold text-gray-900 mb-4">Top Salaries</h3>
+      <div className="space-y-3">
+        {employees.length > 0 ? (
+          employees.map((emp, index) => (
+            <div key={emp.id} className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center text-sm font-medium text-purple-700">
+                  {index + 1}
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-900">{emp.full_name}</p>
+                  <p className="text-xs text-gray-500">{emp.position}</p>
+                </div>
+              </div>
+              <p className="text-sm font-medium text-gray-900">
+                {formatCurrency(emp.salary || 0)}
+              </p>
+            </div>
+          ))
+        ) : (
+          <p className="text-sm text-gray-500 text-center py-4">No salary data available</p>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default async function DashboardPage() {
   const user = await getSession();
 
@@ -268,13 +415,13 @@ export default async function DashboardPage() {
     return new Intl.NumberFormat('uz-UZ').format(amount) + ' UZS';
   };
 
-  // Fetch real attendance data from Supabase
-  const [attendanceStats, recentActivity] = await Promise.all([
+  // Fetch all data from Supabase
+  const [stats, attendanceStats, recentActivity] = await Promise.all([
+    getDashboardStats(),
     getAttendanceStats(),
     getRecentActivity(),
   ]);
 
-  // Use real stats from database
   const presentToday = attendanceStats.present;
   const lateToday = attendanceStats.late;
   const absentToday = attendanceStats.absent;
@@ -293,9 +440,9 @@ export default async function DashboardPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <StatCard
           title="Total Employees"
-          value={realStats.totalEmployees}
+          value={stats.totalEmployees}
           icon={Users}
-          trend={`${realStats.fullTimeEmployees} full-time, ${realStats.partTimeEmployees} part-time`}
+          trend={`${stats.fullTimeCount} full-time, ${stats.partTimeCount} part-time`}
           color="purple"
         />
         <StatCard
@@ -313,7 +460,7 @@ export default async function DashboardPage() {
         {(user.role === 'general_manager' || user.role === 'ceo' || user.role === 'hr') && (
           <StatCard
             title="On Probation"
-            value={realStats.probationCount}
+            value={stats.probationStatusCount}
             icon={Briefcase}
             color="blue"
           />
@@ -325,13 +472,13 @@ export default async function DashboardPage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
           <StatCard
             title="Active Branches"
-            value={realStats.totalBranches}
+            value={stats.totalBranches}
             icon={MapPin}
             color="purple"
           />
           <StatCard
             title="Monthly Wage Budget"
-            value={formatCurrency(realStats.totalWageBudget)}
+            value={formatCurrency(stats.totalSalaryBudget)}
             icon={TrendingUp}
             color="green"
           />
@@ -346,43 +493,38 @@ export default async function DashboardPage() {
 
       {/* Main Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-        <BranchPresenceCard branches={branchPresenceData} />
-        <LevelDistributionCard />
+        <BranchPresenceCard
+          branches={stats.branchStats}
+          totalEmployees={stats.totalEmployees}
+        />
+        <LevelDistributionCard
+          juniorCount={stats.juniorCount}
+          middleCount={stats.middleCount}
+          seniorCount={stats.seniorCount}
+          executiveCount={stats.executiveCount}
+        />
       </div>
 
-      {/* Recent Activity */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* Employment Types and Recent Activity */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <EmploymentTypeCard
+          fullTime={stats.fullTimeCount}
+          partTime={stats.partTimeCount}
+          internship={stats.internshipCount}
+          probation={stats.probationTypeCount}
+        />
         <RecentActivityCard activities={recentActivity} />
-
-        {/* Top Salaries Card for GM/CEO */}
-        {(user.role === 'general_manager' || user.role === 'ceo') && (
-          <div className="bg-white rounded-xl border border-gray-200 p-5">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Top Positions by Salary</h3>
-            <div className="space-y-3">
-              {EMPLOYEES
-                .filter(e => e.status !== 'terminated')
-                .sort((a, b) => b.baseSalary - a.baseSalary)
-                .slice(0, 5)
-                .map((emp, index) => (
-                  <div key={emp.id} className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center text-sm font-medium text-purple-700">
-                        {index + 1}
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-gray-900">{emp.fullName}</p>
-                        <p className="text-xs text-gray-500">{emp.position}</p>
-                      </div>
-                    </div>
-                    <p className="text-sm font-medium text-gray-900">
-                      {formatCurrency(emp.baseSalary)}
-                    </p>
-                  </div>
-                ))}
-            </div>
-          </div>
-        )}
       </div>
+
+      {/* Top Salaries Card for GM/CEO */}
+      {(user.role === 'general_manager' || user.role === 'ceo') && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <TopEarnersCard
+            employees={stats.topEarners}
+            formatCurrency={formatCurrency}
+          />
+        </div>
+      )}
 
       {/* Employee Self-Service View */}
       {user.role === 'employee' && (

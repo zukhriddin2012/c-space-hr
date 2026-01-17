@@ -45,4 +45,4 @@ export const POST = withAuth(async () => {
     console.error('Error adding employment_type:', error);
     return NextResponse.json({ error: 'Failed to add employment_type' }, { status: 500 });
   }
-}, { permission: PERMISSIONS.ADMIN });
+}, { permission: PERMISSIONS.DASHBOARD_ADMIN });

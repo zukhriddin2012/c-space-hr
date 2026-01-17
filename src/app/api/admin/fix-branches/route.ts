@@ -78,7 +78,7 @@ export const POST = withAuth(async () => {
     console.error('Error fixing branches:', error);
     return NextResponse.json({ error: 'Failed to fix branches' }, { status: 500 });
   }
-}, { permission: PERMISSIONS.ADMIN });
+}, { permission: PERMISSIONS.DASHBOARD_ADMIN });
 
 // GET - Show current branch status
 export const GET = withAuth(async () => {
@@ -129,4 +129,4 @@ export const GET = withAuth(async () => {
     console.error('Error getting branch status:', error);
     return NextResponse.json({ error: 'Failed to get branch status' }, { status: 500 });
   }
-}, { permission: PERMISSIONS.ADMIN });
+}, { permission: PERMISSIONS.DASHBOARD_ADMIN });
