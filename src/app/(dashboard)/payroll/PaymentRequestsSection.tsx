@@ -171,20 +171,21 @@ export default function PaymentRequestsSection({
   const advancePaid = summary.advance.paidAmount;
   const wagePaid = summary.wage.paidAmount;
 
-  // Handle sort
+  // Handle sort - cycle through: null -> asc -> desc -> null
   const handleSort = (field: SortField) => {
-    if (sortField === field) {
-      // Cycle through: asc -> desc -> null
-      if (sortDirection === 'asc') {
-        setSortDirection('desc');
-      } else if (sortDirection === 'desc') {
-        setSortField(null);
-        setSortDirection(null);
-      } else {
-        setSortDirection('asc');
-      }
-    } else {
+    if (sortField !== field) {
+      // New field - start with ascending
       setSortField(field);
+      setSortDirection('asc');
+    } else if (sortDirection === 'asc') {
+      // Same field, currently asc - switch to desc
+      setSortDirection('desc');
+    } else if (sortDirection === 'desc') {
+      // Same field, currently desc - clear sort
+      setSortField(null);
+      setSortDirection(null);
+    } else {
+      // Same field but no direction (shouldn't happen) - set to asc
       setSortDirection('asc');
     }
   };
@@ -207,41 +208,30 @@ export default function PaymentRequestsSection({
     // Apply sorting
     if (sortField && sortDirection) {
       result.sort((a, b) => {
-        let aVal: string | number;
-        let bVal: string | number;
+        let comparison = 0;
 
         switch (sortField) {
           case 'name':
-            aVal = a.employee_name.toLowerCase();
-            bVal = b.employee_name.toLowerCase();
+            comparison = (a.employee_name || '').localeCompare(b.employee_name || '');
             break;
           case 'position':
-            aVal = a.employee_position.toLowerCase();
-            bVal = b.employee_position.toLowerCase();
+            comparison = (a.employee_position || '').localeCompare(b.employee_position || '');
             break;
           case 'entity':
-            aVal = a.legal_entity.toLowerCase();
-            bVal = b.legal_entity.toLowerCase();
+            comparison = (a.legal_entity || '').localeCompare(b.legal_entity || '');
             break;
           case 'salary':
-            aVal = a.net_salary;
-            bVal = b.net_salary;
+            comparison = (a.net_salary || 0) - (b.net_salary || 0);
             break;
           case 'advance':
-            aVal = advanceAmounts[a.employee_id] || 0;
-            bVal = advanceAmounts[b.employee_id] || 0;
+            comparison = (advanceAmounts[a.employee_id] || 0) - (advanceAmounts[b.employee_id] || 0);
             break;
           case 'wage':
-            aVal = wageAmounts[a.employee_id] || 0;
-            bVal = wageAmounts[b.employee_id] || 0;
+            comparison = (wageAmounts[a.employee_id] || 0) - (wageAmounts[b.employee_id] || 0);
             break;
-          default:
-            return 0;
         }
 
-        if (aVal < bVal) return sortDirection === 'asc' ? -1 : 1;
-        if (aVal > bVal) return sortDirection === 'asc' ? 1 : -1;
-        return 0;
+        return sortDirection === 'desc' ? -comparison : comparison;
       });
     }
 
