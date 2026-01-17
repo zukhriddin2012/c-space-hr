@@ -321,7 +321,7 @@ export default async function EmployeesPage({
                 </td>
                 {canViewSalary && (
                   <td className="px-6 py-4 text-right">
-                    <span className="font-medium text-gray-900">{formatSalary(employee.salary)}</span>
+                    <span className="font-medium text-gray-900">{formatSalary(employee.salary ?? 0)}</span>
                   </td>
                 )}
                 <td className="px-6 py-4">
