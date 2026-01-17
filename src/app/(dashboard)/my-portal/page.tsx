@@ -317,23 +317,17 @@ export default async function MyPortalPage() {
               </span>
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 gap-4">
               <div className="p-3 bg-gray-50 rounded-lg">
-                <p className="text-sm text-gray-500">Base Salary</p>
+                <p className="text-sm text-gray-500">Monthly Salary</p>
                 <p className="font-medium text-gray-900">{formatCurrency(latestPayslip.base_salary)}</p>
               </div>
-              <div className="p-3 bg-gray-50 rounded-lg">
-                <p className="text-sm text-gray-500">Overtime ({latestPayslip.overtime_hours}h)</p>
-                <p className="font-medium text-green-600">+{formatCurrency(latestPayslip.overtime_pay)}</p>
-              </div>
-              <div className="p-3 bg-gray-50 rounded-lg">
-                <p className="text-sm text-gray-500">Bonuses</p>
-                <p className="font-medium text-green-600">+{formatCurrency(latestPayslip.bonuses)}</p>
-              </div>
-              <div className="p-3 bg-gray-50 rounded-lg">
-                <p className="text-sm text-gray-500">Deductions</p>
-                <p className="font-medium text-red-600">-{formatCurrency(latestPayslip.deductions)}</p>
-              </div>
+              {latestPayslip.bonuses > 0 && (
+                <div className="p-3 bg-green-50 rounded-lg">
+                  <p className="text-sm text-gray-500">Bonus</p>
+                  <p className="font-medium text-green-600">+{formatCurrency(latestPayslip.bonuses)}</p>
+                </div>
+              )}
             </div>
           </div>
         ) : (

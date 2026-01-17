@@ -7,11 +7,11 @@ import {
   Download,
   Calendar,
   TrendingUp,
-  TrendingDown,
   ArrowLeft,
   FileText,
   CheckCircle2,
   Clock,
+  Gift,
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -20,9 +20,6 @@ interface Payslip {
   month: number;
   year: number;
   base_salary: number;
-  overtime_hours: number;
-  overtime_pay: number;
-  deductions: number;
   bonuses: number;
   net_salary: number;
   status: 'draft' | 'approved' | 'paid';
@@ -133,10 +130,10 @@ export default function MyPayslipsPage() {
         <div className="bg-white rounded-xl border border-gray-200 p-5">
           <div className="flex items-center gap-3 mb-2">
             <Calendar size={24} className="text-blue-600" />
-            <span className="text-gray-600">Average Salary</span>
+            <span className="text-gray-600">Monthly Salary</span>
           </div>
           <p className="text-2xl font-bold text-gray-900">{formatCurrency(avgSalary)}</p>
-          <p className="text-gray-500 text-sm mt-1">Per month</p>
+          <p className="text-gray-500 text-sm mt-1">Fixed monthly</p>
         </div>
       </div>
 
@@ -230,60 +227,53 @@ export default function MyPayslipsPage() {
                 </span>
               </div>
 
-              {/* Earnings */}
+              {/* Salary Breakdown */}
               <div>
-                <p className="text-xs font-medium text-gray-500 uppercase mb-2">Earnings</p>
-                <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Base Salary</span>
-                    <span className="font-medium text-gray-900">
+                <p className="text-xs font-medium text-gray-500 uppercase mb-3">Salary Breakdown</p>
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <Wallet size={18} className="text-gray-500" />
+                      <span className="text-gray-700">Monthly Salary</span>
+                    </div>
+                    <span className="font-semibold text-gray-900">
                       {formatCurrency(selectedPayslip.base_salary)}
                     </span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">
-                      Overtime ({selectedPayslip.overtime_hours}h)
-                    </span>
-                    <span className="font-medium text-green-600">
-                      +{formatCurrency(selectedPayslip.overtime_pay)}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Bonuses</span>
-                    <span className="font-medium text-green-600">
-                      +{formatCurrency(selectedPayslip.bonuses)}
-                    </span>
-                  </div>
-                </div>
-              </div>
 
-              {/* Deductions */}
-              <div>
-                <p className="text-xs font-medium text-gray-500 uppercase mb-2">Deductions</p>
-                <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Tax & Other</span>
-                    <span className="font-medium text-red-600">
-                      -{formatCurrency(selectedPayslip.deductions)}
-                    </span>
-                  </div>
+                  {selectedPayslip.bonuses > 0 && (
+                    <div className="flex justify-between items-center p-3 bg-green-50 rounded-lg">
+                      <div className="flex items-center gap-2">
+                        <Gift size={18} className="text-green-600" />
+                        <span className="text-gray-700">Bonus</span>
+                      </div>
+                      <span className="font-semibold text-green-600">
+                        +{formatCurrency(selectedPayslip.bonuses)}
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
 
               {/* Total */}
               <div className="pt-4 border-t border-gray-200">
                 <div className="flex justify-between items-center">
-                  <span className="font-semibold text-gray-900">Net Salary</span>
-                  <span className="text-xl font-bold text-purple-600">
+                  <span className="font-semibold text-gray-900">Total Payment</span>
+                  <span className="text-2xl font-bold text-purple-600">
                     {formatCurrency(selectedPayslip.net_salary)}
                   </span>
                 </div>
               </div>
 
               {selectedPayslip.payment_date && (
-                <div className="pt-2 text-center">
+                <div className="pt-3 text-center">
                   <p className="text-sm text-gray-500">
-                    Paid on {new Date(selectedPayslip.payment_date).toLocaleDateString()}
+                    Paid on {new Date(selectedPayslip.payment_date).toLocaleDateString('en-US', {
+                      weekday: 'long',
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric',
+                    })}
                   </p>
                 </div>
               )}

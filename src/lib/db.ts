@@ -554,9 +554,6 @@ export interface Payslip {
   month: number;
   year: number;
   base_salary: number;
-  overtime_hours: number;
-  overtime_pay: number;
-  deductions: number;
   bonuses: number;
   net_salary: number;
   status: 'draft' | 'approved' | 'paid';
@@ -567,25 +564,28 @@ export interface Payslip {
 export async function getPayslipsByEmployee(employeeId: string): Promise<Payslip[]> {
   if (!isSupabaseAdminConfigured()) {
     // Return demo payslips for static data
+    // Fixed monthly salary - no deductions or overtime calculations
     const currentYear = new Date().getFullYear();
     const currentMonth = new Date().getMonth() + 1;
+    const baseSalary = 8000000; // Fixed monthly salary
 
     return Array.from({ length: 6 }, (_, i) => {
       const month = currentMonth - i;
       const year = month <= 0 ? currentYear - 1 : currentYear;
       const adjustedMonth = month <= 0 ? month + 12 : month;
 
+      // Occasional bonus (every 3rd month or so)
+      const hasBonus = i % 3 === 0 && i > 0;
+      const bonuses = hasBonus ? 1000000 : 0;
+
       return {
         id: `payslip-${i}`,
         employee_id: employeeId,
         month: adjustedMonth,
         year: year,
-        base_salary: 8000000,
-        overtime_hours: Math.floor(Math.random() * 20),
-        overtime_pay: Math.floor(Math.random() * 500000),
-        deductions: Math.floor(Math.random() * 300000) + 200000,
-        bonuses: Math.floor(Math.random() * 1000000),
-        net_salary: 7500000 + Math.floor(Math.random() * 1000000),
+        base_salary: baseSalary,
+        bonuses: bonuses,
+        net_salary: baseSalary + bonuses,
         status: i === 0 ? 'approved' : 'paid',
         payment_date: i === 0 ? null : `${year}-${String(adjustedMonth).padStart(2, '0')}-25`,
         created_at: new Date().toISOString(),
