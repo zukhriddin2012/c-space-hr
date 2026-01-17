@@ -359,6 +359,41 @@ export async function getAttendanceStats(date?: string) {
   };
 }
 
+// Get attendance for an employee within a date range (for monthly reports)
+export async function getAttendanceByEmployeeAndMonth(
+  employeeId: string,
+  year: number,
+  month: number
+): Promise<Attendance[]> {
+  if (!isSupabaseAdminConfigured()) {
+    return [];
+  }
+
+  // Calculate start and end of month
+  const startDate = `${year}-${String(month).padStart(2, '0')}-01`;
+  const lastDay = new Date(year, month, 0).getDate();
+  const endDate = `${year}-${String(month).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+
+  const { data, error } = await supabaseAdmin!
+    .from('attendance')
+    .select(`
+      *,
+      check_in_branch:branches!attendance_check_in_branch_id_fkey(name),
+      check_out_branch:branches!attendance_check_out_branch_id_fkey(name)
+    `)
+    .eq('employee_id', employeeId)
+    .gte('date', startDate)
+    .lte('date', endDate)
+    .order('date', { ascending: true });
+
+  if (error) {
+    console.error('Error fetching monthly attendance:', error);
+    return [];
+  }
+
+  return data || [];
+}
+
 // ============================================
 // LEAVE REQUESTS
 // ============================================

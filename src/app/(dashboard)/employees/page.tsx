@@ -1,19 +1,34 @@
 import { getSession } from '@/lib/auth-server';
 import { hasPermission } from '@/lib/auth';
 import { redirect } from 'next/navigation';
-import { Plus, Search, Filter, MoreVertical, Briefcase, MapPin } from 'lucide-react';
+import { Plus, Search, Briefcase, MapPin, Clock, Eye } from 'lucide-react';
 import Link from 'next/link';
-import { EMPLOYEES, BRANCHES, getActiveEmployeesCount, getTotalSalaryBudget } from '@/lib/employee-data';
+import { getEmployees, getBranches } from '@/lib/db';
+
+interface Employee {
+  id: string;
+  employee_id: string;
+  full_name: string;
+  position: string;
+  level: string;
+  branch_id: string | null;
+  salary: number;
+  phone: string | null;
+  email: string | null;
+  status: string;
+  hire_date: string;
+  branches?: { name: string };
+}
 
 function EmployeeStatusBadge({ status }: { status: string }) {
-  const statusStyles = {
+  const statusStyles: Record<string, string> = {
     active: 'bg-green-50 text-green-700',
     inactive: 'bg-gray-50 text-gray-700',
     terminated: 'bg-red-50 text-red-700',
     probation: 'bg-yellow-50 text-yellow-700',
   };
 
-  const statusLabels = {
+  const statusLabels: Record<string, string> = {
     active: 'Active',
     inactive: 'Inactive',
     terminated: 'Terminated',
@@ -23,16 +38,16 @@ function EmployeeStatusBadge({ status }: { status: string }) {
   return (
     <span
       className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-        statusStyles[status as keyof typeof statusStyles] || statusStyles.inactive
+        statusStyles[status] || statusStyles.inactive
       }`}
     >
-      {statusLabels[status as keyof typeof statusLabels] || status}
+      {statusLabels[status] || status}
     </span>
   );
 }
 
 function LevelBadge({ level }: { level: string }) {
-  const levelStyles = {
+  const levelStyles: Record<string, string> = {
     junior: 'bg-blue-50 text-blue-700',
     middle: 'bg-purple-50 text-purple-700',
     senior: 'bg-indigo-50 text-indigo-700',
@@ -42,7 +57,7 @@ function LevelBadge({ level }: { level: string }) {
   return (
     <span
       className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
-        levelStyles[level as keyof typeof levelStyles] || levelStyles.junior
+        levelStyles[level] || levelStyles.junior
       }`}
     >
       {level.charAt(0).toUpperCase() + level.slice(1)}
@@ -51,11 +66,24 @@ function LevelBadge({ level }: { level: string }) {
 }
 
 function formatSalary(amount: number): string {
-  if (amount === 0) return '-';
+  if (!amount || amount === 0) return '-';
   return new Intl.NumberFormat('uz-UZ').format(amount) + ' UZS';
 }
 
-export default async function EmployeesPage() {
+function formatDate(dateString: string | null): string {
+  if (!dateString) return '-';
+  return new Date(dateString).toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+  });
+}
+
+export default async function EmployeesPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ branch?: string; level?: string; status?: string; search?: string }>;
+}) {
   const user = await getSession();
 
   if (!user) {
@@ -68,18 +96,53 @@ export default async function EmployeesPage() {
   }
 
   const canCreateEmployee = hasPermission(user.role, 'create_employee');
-  const canEditEmployee = hasPermission(user.role, 'edit_employee');
+  const canViewSalary = user.role === 'general_manager' || user.role === 'ceo';
 
-  // Filter out terminated employees by default
-  const activeEmployees = EMPLOYEES.filter(emp => emp.status !== 'terminated');
-  const totalEmployees = getActiveEmployeesCount();
-  const totalBudget = getTotalSalaryBudget();
+  // Get filter params
+  const params = await searchParams;
+  const selectedBranch = params.branch || '';
+  const selectedLevel = params.level || '';
+  const selectedStatus = params.status || 'active';
+  const searchQuery = params.search || '';
 
-  // Get branch name helper
-  const getBranchName = (branchId: string) => {
-    const branch = BRANCHES.find(b => b.id === branchId);
-    return branch?.name || branchId;
-  };
+  // Fetch real data from Supabase
+  const [employees, branches] = await Promise.all([
+    getEmployees(),
+    getBranches(),
+  ]);
+
+  // Create branch map
+  const branchMap = new Map(branches.map(b => [b.id, b.name]));
+
+  // Apply filters
+  let filteredEmployees = employees.filter((emp: Employee) => {
+    // Status filter (default to active)
+    if (selectedStatus && emp.status !== selectedStatus) return false;
+
+    // Branch filter
+    if (selectedBranch && emp.branch_id !== selectedBranch) return false;
+
+    // Level filter
+    if (selectedLevel && emp.level !== selectedLevel) return false;
+
+    // Search filter
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      return (
+        emp.full_name.toLowerCase().includes(query) ||
+        emp.employee_id.toLowerCase().includes(query) ||
+        emp.position.toLowerCase().includes(query)
+      );
+    }
+
+    return true;
+  });
+
+  // Calculate totals
+  const totalEmployees = employees.filter((e: Employee) => e.status === 'active').length;
+  const totalBudget = employees
+    .filter((e: Employee) => e.status === 'active')
+    .reduce((sum: number, e: Employee) => sum + (e.salary || 0), 0);
 
   return (
     <div>
@@ -88,7 +151,8 @@ export default async function EmployeesPage() {
         <div>
           <h1 className="text-2xl font-semibold text-gray-900">Employees</h1>
           <p className="text-gray-500 mt-1">
-            {totalEmployees} active employees • Total budget: {formatSalary(totalBudget)}/month
+            {totalEmployees} active employees
+            {canViewSalary && ` • Total budget: ${formatSalary(totalBudget)}/month`}
           </p>
         </div>
         {canCreateEmployee && (
@@ -103,9 +167,10 @@ export default async function EmployeesPage() {
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-xl border border-gray-200 p-4 mb-6">
-        <div className="flex flex-wrap gap-4">
+      <form className="bg-white rounded-xl border border-gray-200 p-4 mb-6">
+        <div className="flex flex-wrap gap-4 items-end">
           <div className="flex-1 min-w-[200px]">
+            <label className="block text-xs font-medium text-gray-500 mb-1">Search</label>
             <div className="relative">
               <Search
                 size={20}
@@ -113,41 +178,75 @@ export default async function EmployeesPage() {
               />
               <input
                 type="text"
-                placeholder="Search employees..."
+                name="search"
+                defaultValue={searchQuery}
+                placeholder="Search by name, ID, or position..."
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none"
               />
             </div>
           </div>
-          <select className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none">
-            <option value="">All Branches</option>
-            {BRANCHES.map(branch => (
-              <option key={branch.id} value={branch.id}>{branch.name}</option>
-            ))}
-          </select>
-          <select className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none">
-            <option value="">All Levels</option>
-            <option value="junior">Junior</option>
-            <option value="middle">Middle</option>
-            <option value="senior">Senior</option>
-            <option value="executive">Executive</option>
-          </select>
-          <select className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none">
-            <option value="">All Types</option>
-            <option value="full_time">Full-time</option>
-            <option value="part_time">Part-time</option>
-          </select>
-          <select className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none">
-            <option value="">All Status</option>
-            <option value="active">Active</option>
-            <option value="probation">Probation</option>
-            <option value="inactive">Inactive</option>
-          </select>
-          <button className="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
-            <Filter size={18} />
-            More Filters
-          </button>
+
+          <div>
+            <label className="block text-xs font-medium text-gray-500 mb-1">Branch</label>
+            <select
+              name="branch"
+              defaultValue={selectedBranch}
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none min-w-[160px]"
+            >
+              <option value="">All Branches</option>
+              {branches.map((branch) => (
+                <option key={branch.id} value={branch.id}>{branch.name}</option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-xs font-medium text-gray-500 mb-1">Level</label>
+            <select
+              name="level"
+              defaultValue={selectedLevel}
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none"
+            >
+              <option value="">All Levels</option>
+              <option value="junior">Junior</option>
+              <option value="middle">Middle</option>
+              <option value="senior">Senior</option>
+              <option value="executive">Executive</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-xs font-medium text-gray-500 mb-1">Status</label>
+            <select
+              name="status"
+              defaultValue={selectedStatus}
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none"
+            >
+              <option value="">All Status</option>
+              <option value="active">Active</option>
+              <option value="probation">Probation</option>
+              <option value="inactive">Inactive</option>
+              <option value="terminated">Terminated</option>
+            </select>
+          </div>
+
+          <div className="flex gap-2">
+            <button
+              type="submit"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium"
+            >
+              <Search size={16} />
+              Apply
+            </button>
+            <Link
+              href="/employees"
+              className="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+            >
+              Reset
+            </Link>
+          </div>
         </div>
-      </div>
+      </form>
 
       {/* Employee List */}
       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
@@ -164,34 +263,34 @@ export default async function EmployeesPage() {
                 Branch
               </th>
               <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Type
+                Hire Date
               </th>
-              <th className="text-right px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Base Salary
-              </th>
+              {canViewSalary && (
+                <th className="text-right px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Salary
+                </th>
+              )}
               <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Status
               </th>
-              {canEditEmployee && (
-                <th className="text-right px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Actions
-                </th>
-              )}
+              <th className="text-right px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Actions
+              </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
-            {activeEmployees.map((employee) => (
+            {filteredEmployees.map((employee: Employee) => (
               <tr key={employee.id} className="hover:bg-gray-50 transition-colors">
                 <td className="px-6 py-4">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
                       <span className="text-purple-700 font-medium">
-                        {employee.fullName.charAt(0)}
+                        {employee.full_name.charAt(0)}
                       </span>
                     </div>
                     <div>
-                      <p className="font-medium text-gray-900">{employee.fullName}</p>
-                      <p className="text-sm text-gray-500">{employee.employeeId}</p>
+                      <p className="font-medium text-gray-900">{employee.full_name}</p>
+                      <p className="text-sm text-gray-500">{employee.employee_id}</p>
                     </div>
                   </div>
                 </td>
@@ -201,52 +300,59 @@ export default async function EmployeesPage() {
                     <span className="text-gray-900">{employee.position}</span>
                   </div>
                   <div className="mt-1">
-                    <LevelBadge level={employee.level} />
+                    <LevelBadge level={employee.level || 'junior'} />
                   </div>
                 </td>
                 <td className="px-6 py-4">
                   <div className="flex items-center gap-2">
                     <MapPin size={14} className="text-gray-400" />
-                    <span className="text-gray-900">{getBranchName(employee.branchId)}</span>
+                    <span className="text-gray-900">
+                      {employee.branches?.name || branchMap.get(employee.branch_id || '') || '-'}
+                    </span>
                   </div>
-                  {employee.branchLocation && employee.branchLocation !== 'All' && (
-                    <p className="text-sm text-gray-500 mt-0.5">{employee.branchLocation}</p>
-                  )}
                 </td>
                 <td className="px-6 py-4">
-                  <span className={`text-sm ${employee.employmentType === 'full_time' ? 'text-gray-900' : 'text-gray-500'}`}>
-                    {employee.employmentType === 'full_time' ? 'Full-time' : 'Part-time'}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <Clock size={14} className="text-gray-400" />
+                    <span className="text-gray-900 text-sm">
+                      {formatDate(employee.hire_date)}
+                    </span>
+                  </div>
                 </td>
-                <td className="px-6 py-4 text-right">
-                  <span className="font-medium text-gray-900">{formatSalary(employee.baseSalary)}</span>
-                </td>
-                <td className="px-6 py-4">
-                  <EmployeeStatusBadge status={employee.status} />
-                  {employee.notes && (
-                    <p className="text-xs text-gray-500 mt-1 max-w-[150px] truncate" title={employee.notes}>
-                      {employee.notes}
-                    </p>
-                  )}
-                </td>
-                {canEditEmployee && (
+                {canViewSalary && (
                   <td className="px-6 py-4 text-right">
-                    <button className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
-                      <MoreVertical size={18} />
-                    </button>
+                    <span className="font-medium text-gray-900">{formatSalary(employee.salary)}</span>
                   </td>
                 )}
+                <td className="px-6 py-4">
+                  <EmployeeStatusBadge status={employee.status} />
+                </td>
+                <td className="px-6 py-4 text-right">
+                  <Link
+                    href={`/employees/${employee.id}`}
+                    className="inline-flex items-center gap-1 px-3 py-1.5 text-sm text-purple-600 bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors"
+                  >
+                    <Eye size={14} />
+                    View
+                  </Link>
+                </td>
               </tr>
             ))}
           </tbody>
         </table>
 
+        {filteredEmployees.length === 0 && (
+          <div className="text-center py-12">
+            <p className="text-gray-500">No employees found matching your filters.</p>
+          </div>
+        )}
+
         {/* Pagination */}
         <div className="flex items-center justify-between px-6 py-4 border-t border-gray-200 bg-gray-50">
           <p className="text-sm text-gray-500">
             Showing <span className="font-medium">1</span> to{' '}
-            <span className="font-medium">{activeEmployees.length}</span> of{' '}
-            <span className="font-medium">{activeEmployees.length}</span> employees
+            <span className="font-medium">{filteredEmployees.length}</span> of{' '}
+            <span className="font-medium">{filteredEmployees.length}</span> employees
           </p>
           <div className="flex gap-2">
             <button

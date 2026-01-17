@@ -6,13 +6,12 @@ import {
   AlertCircle,
   XCircle,
   Download,
-  Filter,
-  Calendar,
   MapPin,
   Users,
   TrendingUp,
 } from 'lucide-react';
 import { getBranches, getEmployees, getAttendanceByDate } from '@/lib/db';
+import AttendanceFilters from './AttendanceFilters';
 
 interface AttendanceRecord {
   id: string;
@@ -33,12 +32,10 @@ interface Branch {
   name: string;
 }
 
-// Fetch real attendance data from Supabase
-async function getTodayAttendance(): Promise<AttendanceRecord[]> {
-  const today = new Date().toISOString().split('T')[0];
-
+// Fetch attendance data for a specific date
+async function getAttendanceForDate(date: string): Promise<AttendanceRecord[]> {
   const [attendance, employees, branches] = await Promise.all([
-    getAttendanceByDate(today),
+    getAttendanceByDate(date),
     getEmployees(),
     getBranches(),
   ]);
@@ -56,8 +53,8 @@ async function getTodayAttendance(): Promise<AttendanceRecord[]> {
       position: employee?.position || '',
       branchId: a.check_in_branch_id,
       branchName: a.check_in_branch?.name || branchMap.get(a.check_in_branch_id) || '-',
-      checkInTime: a.check_in ? `${today}T${a.check_in}` : null,
-      checkOutTime: a.check_out ? `${today}T${a.check_out}` : null,
+      checkInTime: a.check_in ? `${date}T${a.check_in}` : null,
+      checkOutTime: a.check_out ? `${date}T${a.check_out}` : null,
       status: a.status as 'present' | 'late' | 'absent' | 'early_leave',
       source: 'telegram' as const,
       totalHours: a.total_hours,
@@ -216,7 +213,11 @@ function BranchAttendanceCard({
   );
 }
 
-export default async function AttendancePage() {
+export default async function AttendancePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ date?: string; branch?: string; status?: string }>;
+}) {
   const user = await getSession();
 
   if (!user) {
@@ -226,30 +227,47 @@ export default async function AttendancePage() {
   // For employees, show only their own attendance
   const isEmployee = user.role === 'employee';
 
+  // Get filter params
+  const params = await searchParams;
+  const selectedDate = params.date || new Date().toISOString().split('T')[0];
+  const selectedBranch = params.branch || '';
+  const selectedStatus = params.status || '';
+
   // Fetch real data from Supabase
-  const [todayAttendance, branches] = await Promise.all([
-    getTodayAttendance(),
+  const [allAttendance, branches] = await Promise.all([
+    getAttendanceForDate(selectedDate),
     getBranches(),
   ]);
 
+  // Apply filters
+  let filteredAttendance = allAttendance;
+
+  if (selectedBranch) {
+    filteredAttendance = filteredAttendance.filter(a => a.branchId === selectedBranch);
+  }
+
+  if (selectedStatus) {
+    filteredAttendance = filteredAttendance.filter(a => a.status === selectedStatus);
+  }
+
   const stats = {
-    present: todayAttendance.filter((a) => a.status === 'present').length,
-    late: todayAttendance.filter((a) => a.status === 'late').length,
-    absent: todayAttendance.filter((a) => a.status === 'absent').length,
-    earlyLeave: todayAttendance.filter((a) => a.status === 'early_leave').length,
+    present: allAttendance.filter((a) => a.status === 'present').length,
+    late: allAttendance.filter((a) => a.status === 'late').length,
+    absent: allAttendance.filter((a) => a.status === 'absent').length,
+    earlyLeave: allAttendance.filter((a) => a.status === 'early_leave').length,
   };
 
   const totalActive = stats.present + stats.late + stats.earlyLeave;
-  const attendanceRate = todayAttendance.length > 0
-    ? Math.round((totalActive / todayAttendance.length) * 100)
+  const attendanceRate = allAttendance.length > 0
+    ? Math.round((totalActive / allAttendance.length) * 100)
     : 0;
 
   // Get branches with employees
   const activeBranches = branches.filter(b =>
-    todayAttendance.some(a => a.branchId === b.id)
+    allAttendance.some(a => a.branchId === b.id)
   );
 
-  const weeklySummary = await getWeeklySummary(todayAttendance.length);
+  const weeklySummary = await getWeeklySummary(allAttendance.length);
 
   return (
     <div>
@@ -279,7 +297,7 @@ export default async function AttendancePage() {
               <Users size={20} />
               <span className="text-sm font-medium">Total</span>
             </div>
-            <p className="text-2xl font-semibold text-gray-900">{todayAttendance.length}</p>
+            <p className="text-2xl font-semibold text-gray-900">{allAttendance.length}</p>
             <p className="text-xs text-gray-500 mt-1">employees</p>
           </div>
           <div className="bg-white rounded-xl border border-gray-200 p-4">
@@ -318,7 +336,7 @@ export default async function AttendancePage() {
       )}
 
       {/* Branch Attendance Overview */}
-      {!isEmployee && (
+      {!isEmployee && activeBranches.length > 0 && (
         <div className="bg-white rounded-xl border border-gray-200 p-5 mb-6">
           <div className="flex items-center gap-2 mb-4">
             <MapPin size={20} className="text-purple-600" />
@@ -330,7 +348,7 @@ export default async function AttendancePage() {
                 key={branch.id}
                 branchId={branch.id}
                 branchName={branch.name}
-                attendance={todayAttendance}
+                attendance={allAttendance}
               />
             ))}
           </div>
@@ -384,40 +402,11 @@ export default async function AttendancePage() {
         </div>
       )}
 
-      {/* Filters */}
-      <div className="bg-white rounded-xl border border-gray-200 p-4 mb-6">
-        <div className="flex flex-wrap gap-4">
-          <div className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg">
-            <Calendar size={18} className="text-gray-400" />
-            <input
-              type="date"
-              defaultValue={new Date().toISOString().split('T')[0]}
-              className="outline-none text-sm"
-            />
-          </div>
-          {!isEmployee && (
-            <>
-              <select className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none text-sm">
-                <option value="">All Branches</option>
-                {activeBranches.map(branch => (
-                  <option key={branch.id} value={branch.id}>{branch.name}</option>
-                ))}
-              </select>
-              <select className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none text-sm">
-                <option value="">All Status</option>
-                <option value="present">Present</option>
-                <option value="late">Late</option>
-                <option value="absent">Absent</option>
-                <option value="early_leave">Early Leave</option>
-              </select>
-            </>
-          )}
-          <button className="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm">
-            <Filter size={16} />
-            More Filters
-          </button>
-        </div>
-      </div>
+      {/* Filters - Now with Apply button */}
+      <AttendanceFilters
+        branches={activeBranches.map(b => ({ id: b.id, name: b.name }))}
+        isEmployee={isEmployee}
+      />
 
       {/* Attendance Table */}
       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
@@ -448,7 +437,7 @@ export default async function AttendancePage() {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
-            {todayAttendance.map((record) => (
+            {filteredAttendance.map((record) => (
               <tr key={record.id} className="hover:bg-gray-50 transition-colors">
                 <td className="px-6 py-4">
                   <div className="flex items-center gap-3">
@@ -480,7 +469,7 @@ export default async function AttendancePage() {
                   </span>
                 </td>
                 <td className="px-6 py-4 text-sm text-gray-900">
-                  {calculateHours(record.checkInTime, record.checkOutTime)}
+                  {record.totalHours ? `${record.totalHours}h` : calculateHours(record.checkInTime, record.checkOutTime)}
                 </td>
                 <td className="px-6 py-4">
                   <StatusBadge status={record.status} />
@@ -493,12 +482,18 @@ export default async function AttendancePage() {
           </tbody>
         </table>
 
+        {filteredAttendance.length === 0 && (
+          <div className="text-center py-12">
+            <p className="text-gray-500">No attendance records found for the selected filters.</p>
+          </div>
+        )}
+
         {/* Pagination */}
         <div className="flex items-center justify-between px-6 py-4 border-t border-gray-200 bg-gray-50">
           <p className="text-sm text-gray-500">
             Showing <span className="font-medium">1</span> to{' '}
-            <span className="font-medium">{todayAttendance.length}</span> of{' '}
-            <span className="font-medium">{todayAttendance.length}</span> records
+            <span className="font-medium">{filteredAttendance.length}</span> of{' '}
+            <span className="font-medium">{filteredAttendance.length}</span> records
           </p>
           <div className="flex gap-2">
             <button
