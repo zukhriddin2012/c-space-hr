@@ -110,9 +110,13 @@ export default function Sidebar({ user }: SidebarProps) {
 
   const handleLogout = async () => {
     try {
-      await fetch('/api/auth/logout', { method: 'POST' });
-      router.push('/login');
-      router.refresh();
+      const response = await fetch('/api/auth/logout', { method: 'POST' });
+      if (response.ok) {
+        // Use window.location for a full page reload to clear all state
+        window.location.href = '/login';
+      } else {
+        console.error('Logout failed');
+      }
     } catch (error) {
       console.error('Logout error:', error);
     }
