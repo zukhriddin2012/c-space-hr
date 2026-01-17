@@ -224,10 +224,10 @@ export default function PaymentRequestsSection({
             comparison = (a.net_salary || 0) - (b.net_salary || 0);
             break;
           case 'advance':
-            comparison = (advanceAmounts[a.employee_id] || 0) - (advanceAmounts[b.employee_id] || 0);
+            comparison = (advanceAmounts[a.id] || 0) - (advanceAmounts[b.id] || 0);
             break;
           case 'wage':
-            comparison = (wageAmounts[a.employee_id] || 0) - (wageAmounts[b.employee_id] || 0);
+            comparison = (wageAmounts[a.id] || 0) - (wageAmounts[b.id] || 0);
             break;
         }
 
@@ -254,11 +254,11 @@ export default function PaymentRequestsSection({
     setWageAmounts(prev => ({ ...prev, [employeeId]: amount }));
   };
 
-  // Quick fill functions
+  // Quick fill functions - use record ID (employee + entity)
   const fillAllAdvance = (percentage: number) => {
     const newAmounts: Record<string, number> = {};
     payroll.forEach(p => {
-      newAmounts[p.employee_id] = Math.round(p.net_salary * percentage);
+      newAmounts[p.id] = Math.round(p.net_salary * percentage);
     });
     setAdvanceAmounts(newAmounts);
   };
@@ -266,9 +266,9 @@ export default function PaymentRequestsSection({
   const fillAllWage = () => {
     const newAmounts: Record<string, number> = {};
     payroll.forEach(p => {
-      // Wage = Net salary - advance amount for this employee
-      const advance = advanceAmounts[p.employee_id] || 0;
-      newAmounts[p.employee_id] = Math.max(0, p.net_salary - advance);
+      // Wage = Net salary - advance amount for this record
+      const advance = advanceAmounts[p.id] || 0;
+      newAmounts[p.id] = Math.max(0, p.net_salary - advance);
     });
     setWageAmounts(newAmounts);
   };
@@ -280,10 +280,11 @@ export default function PaymentRequestsSection({
     const amounts = type === 'advance' ? advanceAmounts : wageAmounts;
     const items = Object.entries(amounts)
       .filter(([, amount]) => amount > 0)
-      .map(([employeeId, amount]) => {
-        const emp = payroll.find(p => p.employee_id === employeeId);
+      .map(([recordId, amount]) => {
+        // recordId is the unique record ID (p.id), find the payroll entry
+        const emp = payroll.find(p => p.id === recordId);
         return {
-          employee_id: employeeId,
+          employee_id: emp?.employee_id || recordId,
           amount,
           net_salary: emp?.net_salary || 0,
         };
@@ -557,11 +558,13 @@ export default function PaymentRequestsSection({
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {filteredAndSortedPayroll.map(employee => {
-                  const advance = advanceAmounts[employee.employee_id] || 0;
-                  const wage = wageAmounts[employee.employee_id] || 0;
+                  // Use the unique record ID for tracking amounts (employee_id + entity)
+                  const recordKey = employee.id;
+                  const advance = advanceAmounts[recordKey] || 0;
+                  const wage = wageAmounts[recordKey] || 0;
 
                   return (
-                    <tr key={employee.employee_id} className="hover:bg-gray-50">
+                    <tr key={recordKey} className="hover:bg-gray-50">
                       <td className="px-4 py-2">
                         <p className="font-medium text-gray-900 text-sm">{employee.employee_name}</p>
                       </td>
@@ -574,7 +577,7 @@ export default function PaymentRequestsSection({
                         <input
                           type="text"
                           value={advance > 0 ? formatNumber(advance) : ''}
-                          onChange={(e) => handleAdvanceChange(employee.employee_id, e.target.value)}
+                          onChange={(e) => handleAdvanceChange(recordKey, e.target.value)}
                           placeholder="0"
                           className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm text-right focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                         />
@@ -583,7 +586,7 @@ export default function PaymentRequestsSection({
                         <input
                           type="text"
                           value={wage > 0 ? formatNumber(wage) : ''}
-                          onChange={(e) => handleWageChange(employee.employee_id, e.target.value)}
+                          onChange={(e) => handleWageChange(recordKey, e.target.value)}
                           placeholder="0"
                           className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm text-right focus:ring-2 focus:ring-green-500 focus:border-green-500"
                         />

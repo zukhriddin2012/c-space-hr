@@ -804,8 +804,18 @@ export async function getPayrollByMonth(year: number, month: number): Promise<Pa
   const payslipMap = new Map((payslips || []).map(p => [p.employee_id, p]));
   const employeeMap = new Map(employees.map(e => [e.id, e]));
 
-  // Build payroll records from wages
-  const payrollRecords: PayrollRecord[] = (allWages || []).map(wage => {
+  // Build payroll records from wages - deduplicate by employee_id + legal_entity_id
+  const seenKeys = new Set<string>();
+  const uniqueWages = (allWages || []).filter(wage => {
+    const key = `${wage.employee_id}-${wage.legal_entity_id}`;
+    if (seenKeys.has(key)) {
+      return false;
+    }
+    seenKeys.add(key);
+    return true;
+  });
+
+  const payrollRecords: PayrollRecord[] = uniqueWages.map(wage => {
     const employee = employeeMap.get(wage.employee_id);
     const payslip = payslipMap.get(wage.employee_id);
     const netSalary = wage.wage_amount || 0;
