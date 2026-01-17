@@ -6,6 +6,7 @@ import {
   Wallet,
   Clock,
   CheckCircle,
+  CheckCircle2,
   XCircle,
   Loader2,
   ArrowRight,
@@ -61,11 +62,12 @@ interface PaymentRequestsSectionProps {
   month: number;
   payroll: PayrollRecord[];
   summary: Summary;
+  paidAdvances: Record<string, number>;
   canProcess: boolean;
   canApprove: boolean;
 }
 
-type SortField = 'name' | 'position' | 'entity' | 'salary' | 'advance' | 'wage';
+type SortField = 'name' | 'position' | 'entity' | 'salary' | 'advancePaid' | 'advance' | 'wage';
 type SortDirection = 'asc' | 'desc' | null;
 
 function formatCurrency(amount: number) {
@@ -152,6 +154,7 @@ export default function PaymentRequestsSection({
   month,
   payroll,
   summary,
+  paidAdvances,
   canProcess,
   canApprove,
 }: PaymentRequestsSectionProps) {
@@ -223,6 +226,9 @@ export default function PaymentRequestsSection({
           case 'salary':
             comparison = (a.net_salary || 0) - (b.net_salary || 0);
             break;
+          case 'advancePaid':
+            comparison = (paidAdvances[a.employee_id] || 0) - (paidAdvances[b.employee_id] || 0);
+            break;
           case 'advance':
             comparison = (advanceAmounts[a.id] || 0) - (advanceAmounts[b.id] || 0);
             break;
@@ -236,7 +242,7 @@ export default function PaymentRequestsSection({
     }
 
     return result;
-  }, [payroll, searchQuery, sortField, sortDirection, advanceAmounts, wageAmounts]);
+  }, [payroll, searchQuery, sortField, sortDirection, advanceAmounts, wageAmounts, paidAdvances]);
 
   // Calculate totals for input amounts
   const totalAdvanceInput = Object.values(advanceAmounts).reduce((sum, amt) => sum + (amt || 0), 0);
@@ -537,6 +543,15 @@ export default function PaymentRequestsSection({
                     align="right"
                   />
                   <SortableHeader
+                    label="Paid"
+                    field="advancePaid"
+                    currentSort={sortField}
+                    currentDirection={sortDirection}
+                    onSort={handleSort}
+                    icon={<CheckCircle size={14} className="text-blue-500" />}
+                    align="right"
+                  />
+                  <SortableHeader
                     label="Advance"
                     field="advance"
                     currentSort={sortField}
@@ -562,6 +577,7 @@ export default function PaymentRequestsSection({
                   const recordKey = employee.id;
                   const advance = advanceAmounts[recordKey] || 0;
                   const wage = wageAmounts[recordKey] || 0;
+                  const advancePaid = paidAdvances[employee.employee_id] || 0;
 
                   return (
                     <tr key={recordKey} className="hover:bg-gray-50">
@@ -572,6 +588,13 @@ export default function PaymentRequestsSection({
                       <td className="px-4 py-2 text-sm text-gray-600">{employee.legal_entity}</td>
                       <td className="px-4 py-2 text-sm text-gray-900 text-right font-medium">
                         {formatCurrency(employee.net_salary)}
+                      </td>
+                      <td className="px-4 py-2 text-sm text-right">
+                        {advancePaid > 0 ? (
+                          <span className="text-blue-600 font-medium">{formatNumber(advancePaid)}</span>
+                        ) : (
+                          <span className="text-gray-300">-</span>
+                        )}
                       </td>
                       <td className="px-4 py-2 w-36">
                         <input
@@ -602,6 +625,9 @@ export default function PaymentRequestsSection({
                   </td>
                   <td className="px-4 py-3 text-sm text-gray-900 text-right">
                     {formatCurrency(totalNetSalary)}
+                  </td>
+                  <td className="px-4 py-3 text-sm text-blue-600 text-right">
+                    {formatCurrency(summary.advance.paidAmount)}
                   </td>
                   <td className="px-4 py-3 text-sm text-orange-600 text-right">
                     {formatCurrency(totalAdvanceInput)}

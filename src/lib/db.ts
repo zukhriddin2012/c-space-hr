@@ -1584,3 +1584,44 @@ export async function getPaymentRequestsSummary(year: number, month: number) {
     requests,
   };
 }
+
+// Get paid advance amounts per employee for a given month
+export async function getPaidAdvancesByEmployee(year: number, month: number): Promise<Record<string, number>> {
+  if (!isSupabaseAdminConfigured()) {
+    return {};
+  }
+
+  // Get all paid advance requests for this month
+  const { data: requests, error: reqError } = await supabaseAdmin!
+    .from('payment_requests')
+    .select('id')
+    .eq('year', year)
+    .eq('month', month)
+    .eq('request_type', 'advance')
+    .eq('status', 'paid');
+
+  if (reqError || !requests || requests.length === 0) {
+    return {};
+  }
+
+  const requestIds = requests.map(r => r.id);
+
+  // Get all items from paid advance requests
+  const { data: items, error: itemsError } = await supabaseAdmin!
+    .from('payment_request_items')
+    .select('employee_id, amount')
+    .in('payment_request_id', requestIds);
+
+  if (itemsError || !items) {
+    return {};
+  }
+
+  // Sum amounts per employee
+  const paidAdvances: Record<string, number> = {};
+  for (const item of items) {
+    const empId = item.employee_id;
+    paidAdvances[empId] = (paidAdvances[empId] || 0) + Number(item.amount);
+  }
+
+  return paidAdvances;
+}
