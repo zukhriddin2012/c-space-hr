@@ -116,6 +116,38 @@ export async function getEmployeesByBranch(branchId: string): Promise<Employee[]
   return data || [];
 }
 
+export async function updateEmployee(
+  id: string,
+  updates: {
+    full_name?: string;
+    position?: string;
+    level?: string;
+    branch_id?: string | null;
+    salary?: number;
+    phone?: string | null;
+    email?: string | null;
+    status?: string;
+  }
+): Promise<{ success: boolean; employee?: Employee; error?: string }> {
+  if (!isSupabaseAdminConfigured()) {
+    return { success: false, error: 'Database not configured' };
+  }
+
+  const { data, error } = await supabaseAdmin!
+    .from('employees')
+    .update(updates)
+    .eq('id', id)
+    .select('*, branches(name)')
+    .single();
+
+  if (error) {
+    console.error('Error updating employee:', error);
+    return { success: false, error: error.message };
+  }
+
+  return { success: true, employee: data };
+}
+
 // ============================================
 // BRANCHES
 // ============================================

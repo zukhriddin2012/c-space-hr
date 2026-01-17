@@ -1,0 +1,75 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { withAuth } from '@/lib/api-auth';
+import { PERMISSIONS } from '@/lib/permissions';
+import { getEmployeeById, updateEmployee } from '@/lib/db';
+
+// GET /api/employees/[id] - Get a single employee
+export const GET = withAuth(async (
+  request: NextRequest,
+  { params }
+) => {
+  try {
+    const id = params?.id;
+    if (!id) {
+      return NextResponse.json({ error: 'Employee ID required' }, { status: 400 });
+    }
+
+    const employee = await getEmployeeById(id);
+
+    if (!employee) {
+      return NextResponse.json({ error: 'Employee not found' }, { status: 404 });
+    }
+
+    return NextResponse.json({ employee });
+  } catch (error) {
+    console.error('Error fetching employee:', error);
+    return NextResponse.json({ error: 'Failed to fetch employee' }, { status: 500 });
+  }
+}, { permission: PERMISSIONS.EMPLOYEES_VIEW_ALL });
+
+// PUT /api/employees/[id] - Update an employee
+export const PUT = withAuth(async (
+  request: NextRequest,
+  { params }
+) => {
+  try {
+    const id = params?.id;
+    if (!id) {
+      return NextResponse.json({ error: 'Employee ID required' }, { status: 400 });
+    }
+
+    const body = await request.json();
+    const { full_name, position, level, branch_id, salary, phone, email, status } = body;
+
+    const updates: {
+      full_name?: string;
+      position?: string;
+      level?: string;
+      branch_id?: string | null;
+      salary?: number;
+      phone?: string | null;
+      email?: string | null;
+      status?: string;
+    } = {};
+
+    if (full_name !== undefined) updates.full_name = full_name;
+    if (position !== undefined) updates.position = position;
+    if (level !== undefined) updates.level = level;
+    if (branch_id !== undefined) updates.branch_id = branch_id || null;
+    if (salary !== undefined) updates.salary = parseFloat(salary) || 0;
+    if (phone !== undefined) updates.phone = phone || null;
+    if (email !== undefined) updates.email = email || null;
+    if (status !== undefined) updates.status = status;
+
+    const result = await updateEmployee(id, updates);
+
+    if (!result.success) {
+      return NextResponse.json({ error: result.error }, { status: 400 });
+    }
+
+    return NextResponse.json({ employee: result.employee });
+  } catch (error) {
+    console.error('Error updating employee:', error);
+    return NextResponse.json({ error: 'Failed to update employee' }, { status: 500 });
+  }
+}, { permission: PERMISSIONS.EMPLOYEES_EDIT });
