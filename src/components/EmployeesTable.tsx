@@ -1,8 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import { Briefcase, MapPin, Clock, Pencil } from 'lucide-react';
+import { Briefcase, MapPin, Clock, Pencil, Trash2, Plus, AlertTriangle } from 'lucide-react';
 import EditEmployeeModal from './EditEmployeeModal';
+import AddEmployeeModal from './AddEmployeeModal';
 
 interface Employee {
   id: string;
@@ -31,6 +32,7 @@ interface EmployeesTableProps {
   canViewSalary: boolean;
   canEditEmployee: boolean;
   canEditSalary: boolean;
+  canCreateEmployee?: boolean;
 }
 
 function EmployeeStatusBadge({ status }: { status: string }) {
@@ -92,6 +94,57 @@ function formatDate(dateString: string | null): string {
   });
 }
 
+// Delete Confirmation Modal
+function DeleteConfirmModal({
+  employee,
+  onConfirm,
+  onCancel,
+  deleting,
+}: {
+  employee: Employee;
+  onConfirm: () => void;
+  onCancel: () => void;
+  deleting: boolean;
+}) {
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-xl shadow-xl w-full max-w-md mx-4 p-6">
+        <div className="flex items-center gap-4 mb-4">
+          <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+            <AlertTriangle size={24} className="text-red-600" />
+          </div>
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900">Delete Employee</h3>
+            <p className="text-sm text-gray-500">This action cannot be undone</p>
+          </div>
+        </div>
+
+        <p className="text-gray-600 mb-6">
+          Are you sure you want to delete <strong>{employee.full_name}</strong> ({employee.employee_id})?
+          All associated wage entries will also be deleted.
+        </p>
+
+        <div className="flex gap-3">
+          <button
+            onClick={onCancel}
+            disabled={deleting}
+            className="flex-1 px-4 py-2.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium disabled:opacity-50"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={onConfirm}
+            disabled={deleting}
+            className="flex-1 px-4 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium disabled:opacity-50"
+          >
+            {deleting ? 'Deleting...' : 'Delete'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function EmployeesTable({
   employees: initialEmployees,
   branches,
@@ -99,9 +152,13 @@ export default function EmployeesTable({
   canViewSalary,
   canEditEmployee,
   canEditSalary,
+  canCreateEmployee = false,
 }: EmployeesTableProps) {
   const [employees, setEmployees] = useState(initialEmployees);
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [deletingEmployee, setDeletingEmployee] = useState<Employee | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const handleSave = (updatedEmployee: Employee) => {
     setEmployees(employees.map(emp =>
@@ -110,9 +167,51 @@ export default function EmployeesTable({
     setEditingEmployee(null);
   };
 
+  const handleAdd = (newEmployee: Employee) => {
+    setEmployees([...employees, newEmployee]);
+    setShowAddModal(false);
+  };
+
+  const handleDelete = async () => {
+    if (!deletingEmployee) return;
+
+    setIsDeleting(true);
+    try {
+      const response = await fetch(`/api/employees/${deletingEmployee.id}`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        setEmployees(employees.filter(emp => emp.id !== deletingEmployee.id));
+        setDeletingEmployee(null);
+      } else {
+        const data = await response.json();
+        alert(data.error || 'Failed to delete employee');
+      }
+    } catch (error) {
+      console.error('Error deleting employee:', error);
+      alert('Failed to delete employee');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   return (
     <>
       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+        {/* Add Employee Button inside table header */}
+        {canCreateEmployee && (
+          <div className="px-6 py-4 border-b border-gray-200 bg-gray-50 flex justify-end">
+            <button
+              onClick={() => setShowAddModal(true)}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg font-medium hover:bg-purple-700 transition-colors text-sm"
+            >
+              <Plus size={16} />
+              Add Employee
+            </button>
+          </div>
+        )}
+
         <table className="w-full">
           <thead>
             <tr className="border-b border-gray-200 bg-gray-50">
@@ -191,13 +290,25 @@ export default function EmployeesTable({
                   <EmployeeStatusBadge status={employee.status} />
                 </td>
                 <td className="px-6 py-4 text-right">
-                  <button
-                    onClick={() => setEditingEmployee(employee)}
-                    className="inline-flex items-center gap-1 px-3 py-1.5 text-sm text-purple-600 bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors"
-                  >
-                    <Pencil size={14} />
-                    Edit
-                  </button>
+                  <div className="flex items-center justify-end gap-2">
+                    {canEditEmployee && (
+                      <button
+                        onClick={() => setEditingEmployee(employee)}
+                        className="inline-flex items-center gap-1 px-3 py-1.5 text-sm text-purple-600 bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors"
+                      >
+                        <Pencil size={14} />
+                        Edit
+                      </button>
+                    )}
+                    {canEditEmployee && (
+                      <button
+                        onClick={() => setDeletingEmployee(employee)}
+                        className="inline-flex items-center gap-1 px-3 py-1.5 text-sm text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition-colors"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    )}
+                  </div>
                 </td>
               </tr>
             ))}
@@ -207,6 +318,15 @@ export default function EmployeesTable({
         {employees.length === 0 && (
           <div className="text-center py-12">
             <p className="text-gray-500">No employees found matching your filters.</p>
+            {canCreateEmployee && (
+              <button
+                onClick={() => setShowAddModal(true)}
+                className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg font-medium hover:bg-purple-700 transition-colors text-sm"
+              >
+                <Plus size={16} />
+                Add First Employee
+              </button>
+            )}
           </div>
         )}
 
@@ -234,6 +354,15 @@ export default function EmployeesTable({
         </div>
       </div>
 
+      {/* Add Modal */}
+      {showAddModal && (
+        <AddEmployeeModal
+          branches={branches}
+          onClose={() => setShowAddModal(false)}
+          onAdd={handleAdd}
+        />
+      )}
+
       {/* Edit Modal */}
       {editingEmployee && (
         <EditEmployeeModal
@@ -242,6 +371,16 @@ export default function EmployeesTable({
           onClose={() => setEditingEmployee(null)}
           onSave={handleSave}
           canEditSalary={canEditSalary}
+        />
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deletingEmployee && (
+        <DeleteConfirmModal
+          employee={deletingEmployee}
+          onConfirm={handleDelete}
+          onCancel={() => setDeletingEmployee(null)}
+          deleting={isDeleting}
         />
       )}
     </>

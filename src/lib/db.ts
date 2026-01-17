@@ -148,6 +148,83 @@ export async function updateEmployee(
   return { success: true, employee: data };
 }
 
+export async function createEmployee(employeeData: {
+  full_name: string;
+  position: string;
+  level?: string;
+  branch_id?: string | null;
+  salary?: number;
+  phone?: string | null;
+  email?: string | null;
+  status?: string;
+  hire_date?: string;
+}): Promise<{ success: boolean; employee?: Employee; error?: string }> {
+  if (!isSupabaseAdminConfigured()) {
+    return { success: false, error: 'Database not configured' };
+  }
+
+  // Generate employee_id based on name (e.g., "John Doe" -> "JD001")
+  const nameParts = employeeData.full_name.trim().split(' ');
+  const initials = nameParts.map(p => p.charAt(0).toUpperCase()).join('');
+
+  // Get count of existing employees with similar initials
+  const { count } = await supabaseAdmin!
+    .from('employees')
+    .select('*', { count: 'exact', head: true })
+    .ilike('employee_id', `${initials}%`);
+
+  const employeeId = `${initials}${String((count || 0) + 1).padStart(3, '0')}`;
+
+  const { data, error } = await supabaseAdmin!
+    .from('employees')
+    .insert({
+      employee_id: employeeId,
+      full_name: employeeData.full_name,
+      position: employeeData.position,
+      level: employeeData.level || 'junior',
+      branch_id: employeeData.branch_id || null,
+      salary: employeeData.salary || 0,
+      phone: employeeData.phone || null,
+      email: employeeData.email || null,
+      status: employeeData.status || 'active',
+      hire_date: employeeData.hire_date || new Date().toISOString().split('T')[0],
+    })
+    .select('*, branches(name)')
+    .single();
+
+  if (error) {
+    console.error('Error creating employee:', error);
+    return { success: false, error: error.message };
+  }
+
+  return { success: true, employee: data };
+}
+
+export async function deleteEmployee(id: string): Promise<{ success: boolean; error?: string }> {
+  if (!isSupabaseAdminConfigured()) {
+    return { success: false, error: 'Database not configured' };
+  }
+
+  // First, delete related wage entries
+  await supabaseAdmin!
+    .from('employee_wages')
+    .delete()
+    .eq('employee_id', id);
+
+  // Then delete the employee
+  const { error } = await supabaseAdmin!
+    .from('employees')
+    .delete()
+    .eq('id', id);
+
+  if (error) {
+    console.error('Error deleting employee:', error);
+    return { success: false, error: error.message };
+  }
+
+  return { success: true };
+}
+
 // ============================================
 // BRANCHES
 // ============================================

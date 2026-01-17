@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth } from '@/lib/api-auth';
 import { PERMISSIONS } from '@/lib/permissions';
-import { getEmployeeById, updateEmployee } from '@/lib/db';
+import { getEmployeeById, updateEmployee, deleteEmployee } from '@/lib/db';
 
 // GET /api/employees/[id] - Get a single employee
 export const GET = withAuth(async (
@@ -71,5 +71,29 @@ export const PUT = withAuth(async (
   } catch (error) {
     console.error('Error updating employee:', error);
     return NextResponse.json({ error: 'Failed to update employee' }, { status: 500 });
+  }
+}, { permission: PERMISSIONS.EMPLOYEES_EDIT });
+
+// DELETE /api/employees/[id] - Delete an employee
+export const DELETE = withAuth(async (
+  request: NextRequest,
+  { params }
+) => {
+  try {
+    const id = params?.id;
+    if (!id) {
+      return NextResponse.json({ error: 'Employee ID required' }, { status: 400 });
+    }
+
+    const result = await deleteEmployee(id);
+
+    if (!result.success) {
+      return NextResponse.json({ error: result.error }, { status: 400 });
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('Error deleting employee:', error);
+    return NextResponse.json({ error: 'Failed to delete employee' }, { status: 500 });
   }
 }, { permission: PERMISSIONS.EMPLOYEES_EDIT });

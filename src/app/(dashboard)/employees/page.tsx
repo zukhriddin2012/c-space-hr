@@ -1,7 +1,7 @@
 import { getSession } from '@/lib/auth-server';
 import { hasPermission, PERMISSIONS } from '@/lib/permissions';
 import { redirect } from 'next/navigation';
-import { Plus, Search } from 'lucide-react';
+import { Search } from 'lucide-react';
 import Link from 'next/link';
 import { getEmployees, getBranches } from '@/lib/db';
 import EmployeesTable from '@/components/EmployeesTable';
@@ -107,15 +107,6 @@ export default async function EmployeesPage({
             {canViewSalary && ` • Total budget: ${formatSalary(totalBudget)}/month`}
           </p>
         </div>
-        {canCreateEmployee && (
-          <Link
-            href="/employees/new"
-            className="inline-flex items-center gap-2 px-4 py-2.5 bg-purple-600 text-white rounded-lg font-medium hover:bg-purple-700 transition-colors"
-          >
-            <Plus size={20} />
-            Add Employee
-          </Link>
-        )}
       </div>
 
       {/* Filters */}
@@ -208,6 +199,7 @@ export default async function EmployeesPage({
         canViewSalary={canViewSalary}
         canEditEmployee={canEditEmployee}
         canEditSalary={canEditSalary}
+        canCreateEmployee={canCreateEmployee}
       />
     </div>
   );
