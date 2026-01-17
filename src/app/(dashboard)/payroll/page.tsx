@@ -1,9 +1,10 @@
 import { getSession } from '@/lib/auth-server';
 import { hasPermission } from '@/lib/auth';
 import { redirect } from 'next/navigation';
-import { Wallet, Download, CheckCircle, Clock, AlertCircle, FileText, Building2 } from 'lucide-react';
+import { CheckCircle, Clock, AlertCircle, FileText, Building2 } from 'lucide-react';
 import { getPayrollByMonth, getPayrollStats } from '@/lib/db';
 import PayrollFilters from './PayrollFilters';
+import PayrollActions from './PayrollActions';
 
 function PaymentStatusBadge({ status }: { status: string }) {
   const statusConfig: Record<
@@ -117,18 +118,12 @@ export default async function PayrollPage({
             Manage employee wages and payment processing for {getMonthName(selectedMonth, selectedYear)}
           </p>
         </div>
-        <div className="flex gap-3">
-          <button className="inline-flex items-center gap-2 px-4 py-2.5 border border-gray-300 rounded-lg font-medium hover:bg-gray-50 transition-colors">
-            <Download size={20} />
-            Export
-          </button>
-          {canProcessPayroll && (
-            <button className="inline-flex items-center gap-2 px-4 py-2.5 bg-purple-600 text-white rounded-lg font-medium hover:bg-purple-700 transition-colors">
-              <Wallet size={20} />
-              Process Payroll
-            </button>
-          )}
-        </div>
+        <PayrollActions
+          payroll={payroll}
+          year={selectedYear}
+          month={selectedMonth}
+          canProcess={canProcessPayroll}
+        />
       </div>
 
       {/* Summary Stats */}
