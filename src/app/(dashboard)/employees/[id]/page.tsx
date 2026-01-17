@@ -1,9 +1,10 @@
 import { getSession } from '@/lib/auth-server';
-import { hasPermission } from '@/lib/auth';
+import { hasPermission, PERMISSIONS } from '@/lib/permissions';
 import { redirect, notFound } from 'next/navigation';
 import { ArrowLeft, User, Briefcase, MapPin, Clock, Phone, Mail, Calendar, CheckCircle, AlertCircle, XCircle } from 'lucide-react';
 import Link from 'next/link';
 import { getEmployeeById, getBranches, getAttendanceByEmployeeAndMonth } from '@/lib/db';
+import EmployeeWagesSection from '@/components/EmployeeWagesSection';
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -93,11 +94,12 @@ export default async function EmployeeDetailPage({ params, searchParams }: PageP
   }
 
   // Check permission
-  if (!hasPermission(user.role, 'view_all_employees')) {
+  if (!hasPermission(user.role, PERMISSIONS.EMPLOYEES_VIEW_ALL)) {
     redirect('/dashboard');
   }
 
-  const canViewSalary = user.role === 'general_manager' || user.role === 'ceo';
+  const canViewSalary = hasPermission(user.role, PERMISSIONS.EMPLOYEES_VIEW_SALARY);
+  const canEditSalary = hasPermission(user.role, PERMISSIONS.EMPLOYEES_EDIT_SALARY);
 
   // Get params
   const { id } = await params;
@@ -236,6 +238,14 @@ export default async function EmployeeDetailPage({ params, searchParams }: PageP
           </div>
         </div>
       </div>
+
+      {/* Wage Distribution Section - only for users who can view salary */}
+      {canViewSalary && (
+        <EmployeeWagesSection
+          employeeId={id}
+          canEdit={canEditSalary}
+        />
+      )}
 
       {/* Monthly Work Hours Section */}
       <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
