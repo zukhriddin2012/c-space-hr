@@ -1,8 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Briefcase, MapPin, Clock, Eye, Pencil } from 'lucide-react';
-import Link from 'next/link';
+import { Briefcase, MapPin, Clock, Pencil } from 'lucide-react';
 import EditEmployeeModal from './EditEmployeeModal';
 
 interface Employee {
@@ -192,24 +191,13 @@ export default function EmployeesTable({
                   <EmployeeStatusBadge status={employee.status} />
                 </td>
                 <td className="px-6 py-4 text-right">
-                  <div className="flex items-center justify-end gap-2">
-                    {canEditEmployee && (
-                      <button
-                        onClick={() => setEditingEmployee(employee)}
-                        className="inline-flex items-center gap-1 px-3 py-1.5 text-sm text-gray-600 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
-                      >
-                        <Pencil size={14} />
-                        Edit
-                      </button>
-                    )}
-                    <Link
-                      href={`/employees/${employee.id}`}
-                      className="inline-flex items-center gap-1 px-3 py-1.5 text-sm text-purple-600 bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors"
-                    >
-                      <Eye size={14} />
-                      View
-                    </Link>
-                  </div>
+                  <button
+                    onClick={() => setEditingEmployee(employee)}
+                    className="inline-flex items-center gap-1 px-3 py-1.5 text-sm text-purple-600 bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors"
+                  >
+                    <Pencil size={14} />
+                    Edit
+                  </button>
                 </td>
               </tr>
             ))}
