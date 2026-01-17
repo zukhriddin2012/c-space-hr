@@ -69,6 +69,13 @@ export default async function PayrollPage({
         />
       </div>
 
+      {/* Filters */}
+      <PayrollFilters
+        currentYear={selectedYear}
+        currentMonth={selectedMonth}
+        currentStatus={selectedStatus}
+      />
+
       {/* Summary Stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <div className="bg-white rounded-xl border border-gray-200 p-5">
@@ -116,13 +123,6 @@ export default async function PayrollPage({
         paidAdvances={paidAdvances}
         canProcess={canProcessPayroll}
         canApprove={canApprovePayroll}
-      />
-
-      {/* Filters */}
-      <PayrollFilters
-        currentYear={selectedYear}
-        currentMonth={selectedMonth}
-        currentStatus={selectedStatus}
       />
     </div>
   );
