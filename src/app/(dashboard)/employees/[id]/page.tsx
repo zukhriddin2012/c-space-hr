@@ -323,7 +323,7 @@ export default async function EmployeeDetailPage({ params, searchParams }: PageP
                     <td className="px-4 py-3 text-sm text-gray-900">{formatTime(record.check_in)}</td>
                     <td className="px-4 py-3 text-sm text-gray-900">{formatTime(record.check_out)}</td>
                     <td className="px-4 py-3 text-sm text-gray-900">
-                      {record.check_in_branch?.name || branchMap.get(record.check_in_branch_id) || '-'}
+                      {record.check_in_branch?.name || (record.check_in_branch_id ? branchMap.get(record.check_in_branch_id) : null) || '-'}
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-900 text-right font-medium">
                       {record.total_hours ? `${Math.round(record.total_hours * 10) / 10}h` : '-'}
