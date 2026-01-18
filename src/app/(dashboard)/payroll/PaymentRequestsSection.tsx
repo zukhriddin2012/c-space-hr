@@ -17,6 +17,7 @@ import {
   Download,
   FileSpreadsheet,
 } from 'lucide-react';
+import ConfirmationDialog, { InputDialog } from '@/components/ConfirmationDialog';
 
 interface PayrollRecord {
   id: string;
@@ -170,6 +171,22 @@ export default function PaymentRequestsSection({
   // Sorting state
   const [sortField, setSortField] = useState<SortField | null>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>(null);
+
+  // Confirmation dialog state
+  const [confirmDialog, setConfirmDialog] = useState<{
+    isOpen: boolean;
+    requestId: string;
+    action: 'submit' | 'approve' | 'pay';
+    type: 'advance' | 'wage';
+    amount: number;
+    employeeCount: number;
+  } | null>(null);
+  const [rejectDialog, setRejectDialog] = useState<{
+    isOpen: boolean;
+    requestId: string;
+    type: 'advance' | 'wage';
+    amount: number;
+  } | null>(null);
 
   // Calculate totals
   const totalNetSalary = payroll.reduce((sum, p) => sum + p.net_salary, 0);
@@ -335,20 +352,32 @@ export default function PaymentRequestsSection({
     }
   };
 
-  const handleAction = async (requestId: string, action: 'submit' | 'approve' | 'reject' | 'pay') => {
+  // Open confirmation dialog for an action
+  const openConfirmDialog = (requestId: string, action: 'submit' | 'approve' | 'pay', request: PaymentRequest) => {
+    setConfirmDialog({
+      isOpen: true,
+      requestId,
+      action,
+      type: request.request_type,
+      amount: request.total_amount,
+      employeeCount: request.employee_count,
+    });
+  };
+
+  // Open reject dialog
+  const openRejectDialog = (requestId: string, request: PaymentRequest) => {
+    setRejectDialog({
+      isOpen: true,
+      requestId,
+      type: request.request_type,
+      amount: request.total_amount,
+    });
+  };
+
+  // Execute the confirmed action
+  const executeAction = async (requestId: string, action: 'submit' | 'approve' | 'pay', body: object = {}) => {
     setActionLoading(`${requestId}-${action}`);
     try {
-      let body = {};
-
-      if (action === 'reject') {
-        const reason = prompt('Please enter rejection reason:');
-        if (!reason) {
-          setActionLoading(null);
-          return;
-        }
-        body = { reason };
-      }
-
       const response = await fetch(`/api/payment-requests/${requestId}/${action}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -365,6 +394,61 @@ export default function PaymentRequestsSection({
       alert('An error occurred');
     } finally {
       setActionLoading(null);
+      setConfirmDialog(null);
+    }
+  };
+
+  // Execute rejection with reason
+  const executeReject = async (requestId: string, reason: string) => {
+    setActionLoading(`${requestId}-reject`);
+    try {
+      const response = await fetch(`/api/payment-requests/${requestId}/reject`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reason }),
+      });
+
+      if (response.ok) {
+        window.location.reload();
+      } else {
+        const data = await response.json();
+        alert(data.error || 'Failed to reject request');
+      }
+    } catch {
+      alert('An error occurred');
+    } finally {
+      setActionLoading(null);
+      setRejectDialog(null);
+    }
+  };
+
+  // Get dialog configuration based on action
+  const getDialogConfig = (action: 'submit' | 'approve' | 'pay', type: 'advance' | 'wage', amount: number, employeeCount: number) => {
+    const typeLabel = type === 'advance' ? 'Advance' : 'Wage';
+    const amountFormatted = formatCurrency(amount);
+
+    switch (action) {
+      case 'submit':
+        return {
+          title: `Submit ${typeLabel} Request?`,
+          message: `You are about to submit a ${typeLabel.toLowerCase()} payment request for ${employeeCount} employee${employeeCount > 1 ? 's' : ''} totaling ${amountFormatted}. This will send it for approval.`,
+          confirmText: 'Submit for Approval',
+          variant: 'info' as const,
+        };
+      case 'approve':
+        return {
+          title: `Approve ${typeLabel} Request?`,
+          message: `You are about to approve a ${typeLabel.toLowerCase()} payment request for ${employeeCount} employee${employeeCount > 1 ? 's' : ''} totaling ${amountFormatted}. Once approved, it can be marked as paid.`,
+          confirmText: 'Approve Request',
+          variant: 'success' as const,
+        };
+      case 'pay':
+        return {
+          title: `Mark as Paid?`,
+          message: `You are about to mark this ${typeLabel.toLowerCase()} payment request as paid. This confirms that ${amountFormatted} has been disbursed to ${employeeCount} employee${employeeCount > 1 ? 's' : ''}. This action cannot be undone.`,
+          confirmText: 'Confirm Payment',
+          variant: 'warning' as const,
+        };
     }
   };
 
@@ -432,7 +516,7 @@ export default function PaymentRequestsSection({
                   <RequestStatusBadge status={request.status} />
                   {request.status === 'draft' && canProcess && (
                     <button
-                      onClick={() => handleAction(request.id, 'submit')}
+                      onClick={() => openConfirmDialog(request.id, 'submit', request)}
                       disabled={!!actionLoading}
                       className="px-2 py-1 bg-purple-600 text-white text-xs rounded hover:bg-purple-700 disabled:opacity-50"
                     >
@@ -442,14 +526,14 @@ export default function PaymentRequestsSection({
                   {request.status === 'pending_approval' && canApprove && (
                     <>
                       <button
-                        onClick={() => handleAction(request.id, 'approve')}
+                        onClick={() => openConfirmDialog(request.id, 'approve', request)}
                         disabled={!!actionLoading}
                         className="px-2 py-1 bg-green-600 text-white text-xs rounded hover:bg-green-700 disabled:opacity-50"
                       >
                         {actionLoading === `${request.id}-approve` ? <Loader2 size={12} className="animate-spin" /> : 'Approve'}
                       </button>
                       <button
-                        onClick={() => handleAction(request.id, 'reject')}
+                        onClick={() => openRejectDialog(request.id, request)}
                         disabled={!!actionLoading}
                         className="px-2 py-1 bg-red-600 text-white text-xs rounded hover:bg-red-700 disabled:opacity-50"
                       >
@@ -459,7 +543,7 @@ export default function PaymentRequestsSection({
                   )}
                   {request.status === 'approved' && canProcess && (
                     <button
-                      onClick={() => handleAction(request.id, 'pay')}
+                      onClick={() => openConfirmDialog(request.id, 'pay', request)}
                       disabled={!!actionLoading}
                       className="px-2 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700 disabled:opacity-50"
                     >
@@ -690,6 +774,31 @@ export default function PaymentRequestsSection({
             </button>
           </div>
         </div>
+      )}
+
+      {/* Confirmation Dialog */}
+      {confirmDialog && (
+        <ConfirmationDialog
+          isOpen={confirmDialog.isOpen}
+          onClose={() => setConfirmDialog(null)}
+          onConfirm={() => executeAction(confirmDialog.requestId, confirmDialog.action)}
+          isLoading={!!actionLoading}
+          {...getDialogConfig(confirmDialog.action, confirmDialog.type, confirmDialog.amount, confirmDialog.employeeCount)}
+        />
+      )}
+
+      {/* Reject Dialog with Input */}
+      {rejectDialog && (
+        <InputDialog
+          isOpen={rejectDialog.isOpen}
+          onClose={() => setRejectDialog(null)}
+          onConfirm={(reason) => executeReject(rejectDialog.requestId, reason)}
+          title="Reject Payment Request?"
+          message={`Please provide a reason for rejecting this ${rejectDialog.type} payment request of ${formatCurrency(rejectDialog.amount)}.`}
+          placeholder="Enter rejection reason..."
+          confirmText="Reject Request"
+          isLoading={!!actionLoading}
+        />
       )}
     </div>
   );

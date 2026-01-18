@@ -165,12 +165,14 @@ function StatCard({
   icon: Icon,
   trend,
   color = 'purple',
+  href,
 }: {
   title: string;
   value: string | number;
   icon: React.ComponentType<{ size?: number; className?: string }>;
   trend?: string;
   color?: 'purple' | 'green' | 'red' | 'blue' | 'orange';
+  href?: string;
 }) {
   const colorClasses = {
     purple: 'bg-purple-50 text-purple-600',
@@ -180,18 +182,33 @@ function StatCard({
     orange: 'bg-orange-50 text-orange-600',
   };
 
+  const content = (
+    <div className="flex items-start justify-between">
+      <div>
+        <p className="text-sm text-gray-500">{title}</p>
+        <p className="text-2xl font-semibold text-gray-900 mt-1">{value}</p>
+        {trend && <p className="text-xs text-green-600 mt-1">{trend}</p>}
+      </div>
+      <div className={`p-2.5 rounded-lg ${colorClasses[color]}`}>
+        <Icon size={20} />
+      </div>
+    </div>
+  );
+
+  if (href) {
+    return (
+      <Link
+        href={href}
+        className="bg-white rounded-xl border border-gray-200 p-5 hover:border-purple-300 hover:shadow-md transition-all block"
+      >
+        {content}
+      </Link>
+    );
+  }
+
   return (
     <div className="bg-white rounded-xl border border-gray-200 p-5">
-      <div className="flex items-start justify-between">
-        <div>
-          <p className="text-sm text-gray-500">{title}</p>
-          <p className="text-2xl font-semibold text-gray-900 mt-1">{value}</p>
-          {trend && <p className="text-xs text-green-600 mt-1">{trend}</p>}
-        </div>
-        <div className={`p-2.5 rounded-lg ${colorClasses[color]}`}>
-          <Icon size={20} />
-        </div>
-      </div>
+      {content}
     </div>
   );
 }
@@ -609,18 +626,21 @@ export default async function DashboardPage() {
           icon={Users}
           trend={`${stats.fullTimeCount} full-time, ${stats.partTimeCount} part-time`}
           color="purple"
+          href="/employees"
         />
         <StatCard
           title="Present Today"
           value={presentToday}
           icon={UserCheck}
           color="green"
+          href="/attendance"
         />
         <StatCard
           title="Late Today"
           value={lateToday}
           icon={AlertCircle}
           color="orange"
+          href="/attendance"
         />
         {(user.role === 'general_manager' || user.role === 'ceo' || user.role === 'hr') && (
           <StatCard
@@ -628,6 +648,7 @@ export default async function DashboardPage() {
             value={stats.probationStatusCount}
             icon={Briefcase}
             color="blue"
+            href="/employees?status=probation"
           />
         )}
         {user.role === 'branch_manager' && (
@@ -636,6 +657,7 @@ export default async function DashboardPage() {
             value={absentToday}
             icon={XCircle}
             color="red"
+            href="/attendance"
           />
         )}
       </div>
@@ -648,18 +670,21 @@ export default async function DashboardPage() {
             value={stats.totalBranches}
             icon={MapPin}
             color="purple"
+            href="/branches"
           />
           <StatCard
             title="Monthly Wage Budget"
             value={formatCurrency(stats.totalSalaryBudget)}
             icon={TrendingUp}
             color="green"
+            href="/reports"
           />
           <StatCard
             title="Absent Today"
             value={absentToday}
             icon={AlertCircle}
             color="red"
+            href="/attendance"
           />
         </div>
       )}
