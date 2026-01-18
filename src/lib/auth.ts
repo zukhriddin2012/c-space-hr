@@ -818,9 +818,18 @@ export const ROLE_PERMISSIONS: Record<UserRole, string[]> = {
     'view_presence',
     'view_hiring_pipeline',
   ],
+  branch_manager: [
+    'view_branch_employees',
+    'view_branch_attendance',
+    'view_branch_presence',
+    'approve_branch_leaves',
+    'view_own_profile',
+    'view_own_attendance',
+    'view_own_payslips',
+    'check_in_out',
+  ],
   employee: [
     'view_own_profile',
-    'view_own_tasks',
     'view_own_attendance',
     'view_own_payslips',
     'check_in_out',
@@ -837,6 +846,7 @@ export function getRoleLabel(role: UserRole): string {
     ceo: 'CEO',
     hr: 'HR Staff',
     recruiter: 'Recruiter',
+    branch_manager: 'Branch Manager',
     employee: 'Employee',
   };
   return labels[role];

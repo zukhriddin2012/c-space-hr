@@ -74,6 +74,7 @@ export const ROLE_HIERARCHY: Record<UserRole, number> = {
   general_manager: 100,
   ceo: 90,
   hr: 70,
+  branch_manager: 60,
   recruiter: 50,
   employee: 10,
 };
@@ -182,6 +183,22 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     PERMISSIONS.DASHBOARD_VIEW,
   ],
 
+  branch_manager: [
+    // Branch-level access - can view and manage their own branch
+    PERMISSIONS.EMPLOYEES_VIEW,
+    PERMISSIONS.ATTENDANCE_VIEW,
+    PERMISSIONS.ATTENDANCE_VIEW_ALL, // For their branch only
+    PERMISSIONS.BRANCHES_VIEW,
+    PERMISSIONS.LEAVE_VIEW,
+    PERMISSIONS.LEAVE_REQUEST,
+    PERMISSIONS.LEAVE_APPROVE, // For their branch employees
+    PERMISSIONS.PAYROLL_VIEW,
+    PERMISSIONS.REPORTS_VIEW,
+    PERMISSIONS.TASKS_VIEW,
+    PERMISSIONS.TASKS_CREATE,
+    PERMISSIONS.DASHBOARD_VIEW,
+  ],
+
   recruiter: [
     // Recruitment focused
     PERMISSIONS.EMPLOYEES_VIEW,
@@ -237,6 +254,7 @@ export function getRoleLabel(role: UserRole): string {
     general_manager: 'General Manager',
     ceo: 'CEO',
     hr: 'HR Manager',
+    branch_manager: 'Branch Manager',
     recruiter: 'Recruiter',
     employee: 'Employee',
   };
@@ -249,6 +267,7 @@ export function getRoleBadgeColor(role: UserRole): string {
     general_manager: 'bg-purple-100 text-purple-800 border-purple-200',
     ceo: 'bg-amber-100 text-amber-800 border-amber-200',
     hr: 'bg-blue-100 text-blue-800 border-blue-200',
+    branch_manager: 'bg-teal-100 text-teal-800 border-teal-200',
     recruiter: 'bg-green-100 text-green-800 border-green-200',
     employee: 'bg-gray-100 text-gray-800 border-gray-200',
   };
@@ -257,7 +276,7 @@ export function getRoleBadgeColor(role: UserRole): string {
 
 // Get all available roles
 export function getAllRoles(): UserRole[] {
-  return ['general_manager', 'ceo', 'hr', 'recruiter', 'employee'];
+  return ['general_manager', 'ceo', 'hr', 'branch_manager', 'recruiter', 'employee'];
 }
 
 // Permission groups for UI display
