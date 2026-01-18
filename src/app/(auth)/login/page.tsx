@@ -62,8 +62,8 @@ export default function LoginPage() {
           height={80}
           className="mb-4"
         />
-        <h1 className="text-2xl font-semibold text-gray-900">C-Space HR</h1>
-        <p className="text-gray-500 mt-1">Human Resources Platform</p>
+        <h1 className="text-2xl font-semibold text-gray-900">C-Space People</h1>
+        <p className="text-gray-500 mt-1">People Management Platform</p>
       </div>
 
       {/* Login Form */}

@@ -127,8 +127,8 @@ export default function Sidebar({ user }: SidebarProps) {
             className="flex-shrink-0"
           />
           <div>
-            <h1 className="font-semibold text-gray-900">C-Space HR</h1>
-            <p className="text-xs text-gray-500">Human Resources</p>
+            <h1 className="font-semibold text-gray-900">C-Space People</h1>
+            <p className="text-xs text-gray-500">People Management</p>
           </div>
         </Link>
       </div>

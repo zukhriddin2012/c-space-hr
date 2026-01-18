@@ -3,8 +3,8 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "C-Space HR Platform",
-  description: "Human Resources Management System for C-Space Coworking",
+  title: "C-Space People Platform",
+  description: "People Management System for C-Space Coworking",
   icons: {
     icon: "/favicon.svg",
     apple: "/logo.svg",

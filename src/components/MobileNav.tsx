@@ -145,7 +145,7 @@ export default function MobileNav({ user }: MobileNavProps) {
               height={35}
               className="flex-shrink-0"
             />
-            <span className="font-semibold text-gray-900">C-Space HR</span>
+            <span className="font-semibold text-gray-900">C-Space People</span>
           </Link>
           <button
             onClick={() => setIsOpen(!isOpen)}
