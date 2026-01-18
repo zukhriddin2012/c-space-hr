@@ -1,8 +1,20 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { getSession } from '@/lib/auth-server';
 import { getBranches, getEmployees } from '@/lib/db';
 import { DEMO_USERS } from '@/lib/auth';
 import type { UserRole } from '@/types';
+
+// Extended employee type with optional system fields
+interface EmployeeWithSystemFields {
+  id: string;
+  employee_id: string;
+  full_name: string;
+  position: string;
+  branch_id: string | null;
+  email: string | null;
+  system_role?: UserRole;
+  department?: string;
+}
 
 export interface UserWithRole {
   id: string;
@@ -17,7 +29,7 @@ export interface UserWithRole {
 }
 
 // GET /api/users - Get all users with their roles
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const user = await getSession();
     if (!user) {
@@ -39,11 +51,13 @@ export async function GET(request: NextRequest) {
 
     // Map employees to users with roles
     const users: UserWithRole[] = employees.map(emp => {
+      const empWithFields = emp as EmployeeWithSystemFields;
+
       // Use database system_role if available, otherwise fall back to DEMO_USERS or 'employee'
-      let role: UserRole = (emp as any).system_role || 'employee';
+      let role: UserRole = empWithFields.system_role || 'employee';
 
       // Fall back to DEMO_USERS if no database role set
-      if (!(emp as any).system_role) {
+      if (!empWithFields.system_role) {
         const demoUser = DEMO_USERS.find(u => u.email.toLowerCase() === emp.email?.toLowerCase());
         if (demoUser) {
           role = demoUser.role;
@@ -58,7 +72,7 @@ export async function GET(request: NextRequest) {
         branchId: emp.branch_id || undefined,
         branchName: emp.branch_id ? branchMap.get(emp.branch_id) : undefined,
         position: emp.position,
-        department: (emp as any).department,
+        department: empWithFields.department,
         employeeId: emp.employee_id,
       };
     });

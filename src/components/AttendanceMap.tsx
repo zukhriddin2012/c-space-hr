@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { MapPin, Users, Clock, Activity } from 'lucide-react';
+import { MapPin, Activity } from 'lucide-react';
 
 interface BranchAttendance {
   id: string;
@@ -38,7 +38,6 @@ export default function AttendanceMap({ branches, height = '350px', selectedDate
   const totalPresent = branches.reduce((sum, b) => sum + b.present, 0);
   const totalLate = branches.reduce((sum, b) => sum + b.late, 0);
   const totalAbsent = branches.reduce((sum, b) => sum + b.absent, 0);
-  const totalEmployees = branches.reduce((sum, b) => sum + b.total, 0);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;

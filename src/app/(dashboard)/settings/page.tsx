@@ -1,8 +1,8 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import {
-  Users,
   Shield,
   Building2,
   Bell,
@@ -11,7 +11,6 @@ import {
   Check,
   X,
 } from 'lucide-react';
-import { useAuth } from '@/contexts/AuthContext';
 import { RoleGuard, PageGuard } from '@/components/RoleGuard';
 import { PERMISSIONS } from '@/lib/permissions';
 import type { UserRole } from '@/types';
@@ -26,7 +25,6 @@ import {
 type SettingsTab = 'roles' | 'branches' | 'notifications' | 'security';
 
 export default function SettingsPage() {
-  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<SettingsTab>('roles');
   const [selectedRole, setSelectedRole] = useState<UserRole | null>(null);
 
@@ -184,9 +182,9 @@ export default function SettingsPage() {
                 <div className="text-center py-12 text-gray-500">
                   <Building2 size={48} className="mx-auto mb-4 text-gray-300" />
                   <p>Branch settings are managed in the Branches section.</p>
-                  <a href="/branches" className="text-purple-600 hover:underline mt-2 inline-block">
+                  <Link href="/branches" className="text-purple-600 hover:underline mt-2 inline-block">
                     Go to Branches →
-                  </a>
+                  </Link>
                 </div>
               </div>
             )}

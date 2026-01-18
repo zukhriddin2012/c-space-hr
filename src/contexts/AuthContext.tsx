@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useCallback } from 'react';
 import type { User, UserRole } from '@/types';
 import { usePermissions } from '@/hooks/usePermissions';
 import type { Permission } from '@/lib/permissions';
