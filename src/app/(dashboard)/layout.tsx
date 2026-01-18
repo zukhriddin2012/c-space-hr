@@ -4,6 +4,7 @@ import Sidebar from '@/components/Sidebar';
 import MobileNav from '@/components/MobileNav';
 import { AuthProvider } from '@/contexts/AuthContext';
 import NotificationBell from '@/components/NotificationBell';
+import TestBannerWrapper from '@/components/TestBannerWrapper';
 
 export default async function DashboardLayout({
   children,
@@ -20,6 +21,7 @@ export default async function DashboardLayout({
 
   return (
     <AuthProvider initialUser={user}>
+      <TestBannerWrapper />
       <div className="flex min-h-screen bg-gray-50">
         {/* Desktop Sidebar - hidden on mobile */}
         <div className="hidden lg:block">

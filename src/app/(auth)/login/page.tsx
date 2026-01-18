@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
+import TestBanner from '@/components/TestBanner';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -12,6 +13,14 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isTestEnv, setIsTestEnv] = useState(false);
+
+  useEffect(() => {
+    fetch('/api/config')
+      .then(res => res.json())
+      .then(data => setIsTestEnv(data.isTestEnv))
+      .catch(() => {});
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,7 +50,9 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
+    <div className="min-h-screen bg-gray-50 flex flex-col">
+      <TestBanner isTestEnv={isTestEnv} />
+      <div className="flex-1 flex flex-col items-center justify-center p-4">
       {/* Logo */}
       <div className="mb-8 flex flex-col items-center">
         <Image
@@ -135,6 +146,7 @@ export default function LoginPage() {
       <p className="mt-8 text-sm text-gray-500">
         © 2026 C-Space Coworking. All rights reserved.
       </p>
+      </div>
     </div>
   );
 }
