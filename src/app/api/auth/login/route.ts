@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createToken, validateCredentials } from '@/lib/auth';
 import { setSession } from '@/lib/auth-server';
-import { getEmployeeByEmail } from '@/lib/db';
-import type { UserRole } from '@/types';
+import { authenticateEmployee } from '@/lib/db';
+import type { User, UserRole } from '@/types';
 
 export async function POST(request: NextRequest) {
   try {
@@ -15,30 +15,33 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const user = validateCredentials(email, password);
+    let user: User | null = null;
+
+    // Try database authentication first
+    const employee = await authenticateEmployee(email, password);
+    if (employee) {
+      // Create user from database employee
+      user = {
+        id: employee.id,
+        email: employee.email || email,
+        name: employee.full_name,
+        role: (employee.system_role || 'employee') as UserRole,
+        employeeId: employee.employee_id,
+        department: employee.position,
+        branchId: employee.branch_id || undefined,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+    } else {
+      // Fallback to DEMO_USERS for development/testing
+      user = validateCredentials(email, password);
+    }
 
     if (!user) {
       return NextResponse.json(
         { success: false, message: 'Invalid email or password' },
         { status: 401 }
       );
-    }
-
-    // Check if the employee has an updated role in the database
-    // This ensures role changes made by GM take effect on next login
-    try {
-      const employee = await getEmployeeByEmail(email);
-      if (employee) {
-        // Employee record may have system_role field from database
-        const dbRole = (employee as unknown as { system_role?: UserRole }).system_role;
-        if (dbRole) {
-          // Use the database role instead of the hardcoded one
-          user.role = dbRole;
-        }
-      }
-    } catch (dbError) {
-      // If database check fails, continue with the default role
-      console.warn('Could not fetch employee role from database:', dbError);
     }
 
     const token = await createToken(user);

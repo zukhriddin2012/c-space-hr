@@ -43,6 +43,8 @@ export interface Employee {
   status: string;
   employment_type: string; // 'full-time' | 'part-time' | 'internship' | 'probation'
   hire_date: string;
+  system_role?: string; // Role for access control: general_manager, ceo, hr, branch_manager, recruiter, employee
+  password?: string; // For authentication (demo only - use hashing in production)
   branches?: Branch;
 }
 

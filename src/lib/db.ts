@@ -727,6 +727,29 @@ export async function getEmployeeByEmail(email: string): Promise<Employee | null
   return data;
 }
 
+// Authenticate employee with email and password from database
+export async function authenticateEmployee(email: string, password: string): Promise<Employee | null> {
+  if (!isSupabaseAdminConfigured()) {
+    // Fallback: no database configured
+    return null;
+  }
+
+  const { data, error } = await supabaseAdmin!
+    .from('employees')
+    .select('*, branches(name)')
+    .eq('email', email)
+    .eq('password', password)
+    .eq('status', 'active')
+    .single();
+
+  if (error) {
+    // No matching employee found or other error
+    return null;
+  }
+
+  return data;
+}
+
 // ============================================
 // PAYSLIPS
 // ============================================
