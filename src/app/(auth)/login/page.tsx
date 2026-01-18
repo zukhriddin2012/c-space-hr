@@ -96,9 +96,18 @@ export default function LoginPage() {
           </div>
 
           <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1.5">
-              Password
-            </label>
+            <div className="flex items-center justify-between mb-1.5">
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                Password
+              </label>
+              <button
+                type="button"
+                onClick={() => alert('Please contact HR at hr@cspace.uz to reset your password.')}
+                className="text-sm text-purple-600 hover:text-purple-700 hover:underline"
+              >
+                Forgot password?
+              </button>
+            </div>
             <div className="relative">
               <input
                 id="password"
