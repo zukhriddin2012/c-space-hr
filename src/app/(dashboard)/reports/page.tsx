@@ -96,18 +96,21 @@ export default function ReportsPage() {
   };
 
   return (
-    <div className="p-6">
+    <div>
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4 lg:mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Reports</h1>
-          <p className="text-gray-600 mt-1">Generate and export HR analytics reports</p>
+          <h1 className="text-xl lg:text-2xl font-bold text-gray-900">Reports</h1>
+          <p className="text-sm lg:text-base text-gray-600 mt-1">
+            <span className="hidden sm:inline">Generate and export HR analytics reports</span>
+            <span className="sm:hidden">HR analytics reports</span>
+          </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center">
           <select
             value={dateRange}
             onChange={(e) => setDateRange(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+            className="w-full sm:w-auto px-3 lg:px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent"
           >
             <option value="this_week">This Week</option>
             <option value="this_month">This Month</option>
@@ -119,7 +122,7 @@ export default function ReportsPage() {
       </div>
 
       {/* Report Cards Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:gap-6 mb-6 lg:mb-8">
         {reportCards.map((report) => {
           const Icon = report.icon;
           const isPositive = (report.stats.change ?? 0) >= 0;
@@ -127,14 +130,15 @@ export default function ReportsPage() {
           return (
             <div
               key={report.id}
-              className={`bg-white rounded-xl border border-gray-200 p-6 hover:shadow-lg transition-all cursor-pointer ${
+              className={`bg-white rounded-xl border border-gray-200 p-4 lg:p-6 hover:shadow-lg transition-all cursor-pointer ${
                 selectedReport === report.id ? 'ring-2 ring-purple-500' : ''
               }`}
               onClick={() => setSelectedReport(report.id)}
             >
-              <div className="flex items-start justify-between mb-4">
-                <div className={`p-3 rounded-lg ${report.bgColor}`}>
-                  <Icon size={24} className={report.color} />
+              <div className="flex items-start justify-between mb-3 lg:mb-4">
+                <div className={`p-2 lg:p-3 rounded-lg ${report.bgColor}`}>
+                  <Icon size={20} className={`lg:hidden ${report.color}`} />
+                  <Icon size={24} className={`hidden lg:block ${report.color}`} />
                 </div>
                 <button
                   onClick={(e) => {
@@ -144,24 +148,26 @@ export default function ReportsPage() {
                   className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
                   title="Export Report"
                 >
-                  <Download size={18} />
+                  <Download size={16} className="lg:hidden" />
+                  <Download size={18} className="hidden lg:block" />
                 </button>
               </div>
 
-              <h3 className="text-lg font-semibold text-gray-900 mb-1">{report.title}</h3>
-              <p className="text-sm text-gray-500 mb-4">{report.description}</p>
+              <h3 className="text-base lg:text-lg font-semibold text-gray-900 mb-1">{report.title}</h3>
+              <p className="text-xs lg:text-sm text-gray-500 mb-3 lg:mb-4 line-clamp-2">{report.description}</p>
 
-              <div className="pt-4 border-t border-gray-100">
+              <div className="pt-3 lg:pt-4 border-t border-gray-100">
                 <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-xs text-gray-500 uppercase tracking-wide">{report.stats.label}</p>
-                    <p className="text-2xl font-bold text-gray-900 mt-1">{report.stats.value}</p>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs text-gray-500 uppercase tracking-wide truncate">{report.stats.label}</p>
+                    <p className="text-xl lg:text-2xl font-bold text-gray-900 mt-1">{report.stats.value}</p>
                   </div>
                   {report.stats.change !== undefined && (
-                    <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-sm font-medium ${
+                    <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs lg:text-sm font-medium flex-shrink-0 ${
                       isPositive ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'
                     }`}>
-                      {isPositive ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />}
+                      {isPositive ? <ArrowUpRight size={12} className="lg:hidden" /> : <ArrowDownRight size={12} className="lg:hidden" />}
+                      {isPositive ? <ArrowUpRight size={14} className="hidden lg:block" /> : <ArrowDownRight size={14} className="hidden lg:block" />}
                       {Math.abs(report.stats.change)}%
                     </div>
                   )}
@@ -173,18 +179,19 @@ export default function ReportsPage() {
       </div>
 
       {/* Quick Export Section */}
-      <div className="bg-white rounded-xl border border-gray-200 p-6">
-        <div className="flex items-center gap-3 mb-6">
+      <div className="bg-white rounded-xl border border-gray-200 p-4 lg:p-6">
+        <div className="flex items-center gap-3 mb-4 lg:mb-6">
           <div className="p-2 bg-purple-50 rounded-lg">
-            <FileSpreadsheet size={20} className="text-purple-600" />
+            <FileSpreadsheet size={18} className="lg:hidden text-purple-600" />
+            <FileSpreadsheet size={20} className="hidden lg:block text-purple-600" />
           </div>
           <div>
-            <h2 className="text-lg font-semibold text-gray-900">Quick Export</h2>
-            <p className="text-sm text-gray-500">Download pre-configured reports</p>
+            <h2 className="text-base lg:text-lg font-semibold text-gray-900">Quick Export</h2>
+            <p className="text-xs lg:text-sm text-gray-500">Download pre-configured reports</p>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
           {[
             { name: 'Employee Directory', icon: Users, description: 'All employees with contact info' },
             { name: 'Monthly Payroll', icon: DollarSign, description: 'Current month salary data' },
@@ -195,13 +202,13 @@ export default function ReportsPage() {
             return (
               <button
                 key={item.name}
-                className="flex items-start gap-3 p-4 border border-gray-200 rounded-lg hover:border-purple-300 hover:bg-purple-50 transition-all text-left group"
+                className="flex items-start gap-2 lg:gap-3 p-3 lg:p-4 border border-gray-200 rounded-lg hover:border-purple-300 hover:bg-purple-50 transition-all text-left group"
                 onClick={() => alert(`Exporting ${item.name}...`)}
               >
-                <Icon size={18} className="text-gray-400 group-hover:text-purple-600 mt-0.5" />
-                <div>
-                  <p className="font-medium text-gray-900 text-sm">{item.name}</p>
-                  <p className="text-xs text-gray-500 mt-0.5">{item.description}</p>
+                <Icon size={16} className="text-gray-400 group-hover:text-purple-600 mt-0.5 flex-shrink-0" />
+                <div className="min-w-0">
+                  <p className="font-medium text-gray-900 text-xs lg:text-sm truncate">{item.name}</p>
+                  <p className="text-xs text-gray-500 mt-0.5 line-clamp-2 hidden sm:block">{item.description}</p>
                 </div>
               </button>
             );
@@ -210,15 +217,17 @@ export default function ReportsPage() {
       </div>
 
       {/* Coming Soon Notice */}
-      <div className="mt-6 bg-gradient-to-r from-purple-50 to-indigo-50 rounded-xl p-6 border border-purple-100">
-        <div className="flex items-center gap-4">
-          <div className="p-3 bg-white rounded-lg shadow-sm">
-            <BarChart3 size={24} className="text-purple-600" />
+      <div className="mt-4 lg:mt-6 bg-gradient-to-r from-purple-50 to-indigo-50 rounded-xl p-4 lg:p-6 border border-purple-100">
+        <div className="flex items-start lg:items-center gap-3 lg:gap-4">
+          <div className="p-2 lg:p-3 bg-white rounded-lg shadow-sm flex-shrink-0">
+            <BarChart3 size={20} className="lg:hidden text-purple-600" />
+            <BarChart3 size={24} className="hidden lg:block text-purple-600" />
           </div>
           <div>
-            <h3 className="font-semibold text-gray-900">Advanced Analytics Coming Soon</h3>
-            <p className="text-sm text-gray-600 mt-1">
-              Interactive charts, custom date ranges, and scheduled report delivery are being developed.
+            <h3 className="font-semibold text-gray-900 text-sm lg:text-base">Advanced Analytics Coming Soon</h3>
+            <p className="text-xs lg:text-sm text-gray-600 mt-1">
+              <span className="hidden sm:inline">Interactive charts, custom date ranges, and scheduled report delivery are being developed.</span>
+              <span className="sm:hidden">Interactive charts and scheduled reports coming soon.</span>
             </p>
           </div>
         </div>

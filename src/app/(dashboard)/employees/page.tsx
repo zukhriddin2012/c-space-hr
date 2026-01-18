@@ -101,94 +101,98 @@ export default async function EmployeesPage({
   return (
     <div>
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-4 lg:mb-6">
         <div>
-          <h1 className="text-2xl font-semibold text-gray-900">Employees</h1>
-          <p className="text-gray-500 mt-1">
-            {totalEmployees} active employees
-            {canViewSalary && ` • Total budget: ${formatSalary(totalBudget)}/month`}
+          <h1 className="text-xl lg:text-2xl font-semibold text-gray-900">Employees</h1>
+          <p className="text-sm lg:text-base text-gray-500 mt-1">
+            {totalEmployees} active
+            {canViewSalary && <span className="hidden sm:inline"> • Budget: {formatSalary(totalBudget)}/mo</span>}
           </p>
         </div>
       </div>
 
       {/* Filters */}
-      <form className="bg-white rounded-xl border border-gray-200 p-4 mb-6">
-        <div className="flex flex-wrap gap-4 items-end">
-          <div className="flex-1 min-w-[200px]">
+      <form className="bg-white rounded-xl border border-gray-200 p-3 lg:p-4 mb-4 lg:mb-6">
+        <div className="flex flex-col gap-3 lg:gap-4">
+          {/* Search - full width on mobile */}
+          <div className="w-full">
             <label className="block text-xs font-medium text-gray-500 mb-1">Search</label>
             <div className="relative">
               <Search
-                size={20}
+                size={18}
                 className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
               />
               <input
                 type="text"
                 name="search"
                 defaultValue={searchQuery}
-                placeholder="Search by name, ID, or position..."
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none"
+                placeholder="Search name, ID, position..."
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none text-sm"
               />
             </div>
           </div>
 
-          <div>
-            <label className="block text-xs font-medium text-gray-500 mb-1">Branch</label>
-            <select
-              name="branch"
-              defaultValue={selectedBranch}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none min-w-[160px]"
-            >
-              <option value="">All Branches</option>
-              {branches.map((branch) => (
-                <option key={branch.id} value={branch.id}>{branch.name}</option>
-              ))}
-            </select>
-          </div>
+          {/* Filters row */}
+          <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-3 lg:gap-4 items-end">
+            <div className="col-span-1">
+              <label className="block text-xs font-medium text-gray-500 mb-1">Branch</label>
+              <select
+                name="branch"
+                defaultValue={selectedBranch}
+                className="w-full sm:w-auto px-3 lg:px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none text-sm sm:min-w-[140px]"
+              >
+                <option value="">All Branches</option>
+                {branches.map((branch) => (
+                  <option key={branch.id} value={branch.id}>{branch.name}</option>
+                ))}
+              </select>
+            </div>
 
-          <div>
-            <label className="block text-xs font-medium text-gray-500 mb-1">Level</label>
-            <select
-              name="level"
-              defaultValue={selectedLevel}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none"
-            >
-              <option value="">All Levels</option>
-              <option value="junior">Junior</option>
-              <option value="middle">Middle</option>
-              <option value="senior">Senior</option>
-              <option value="executive">Executive</option>
-            </select>
-          </div>
+            <div className="col-span-1">
+              <label className="block text-xs font-medium text-gray-500 mb-1">Level</label>
+              <select
+                name="level"
+                defaultValue={selectedLevel}
+                className="w-full sm:w-auto px-3 lg:px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none text-sm"
+              >
+                <option value="">All Levels</option>
+                <option value="junior">Junior</option>
+                <option value="middle">Middle</option>
+                <option value="senior">Senior</option>
+                <option value="executive">Executive</option>
+              </select>
+            </div>
 
-          <div>
-            <label className="block text-xs font-medium text-gray-500 mb-1">Status</label>
-            <select
-              name="status"
-              defaultValue={selectedStatus}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none"
-            >
-              <option value="">All Status</option>
-              <option value="active">Active</option>
-              <option value="probation">Probation</option>
-              <option value="inactive">Inactive</option>
-              <option value="terminated">Terminated</option>
-            </select>
-          </div>
+            <div className="col-span-1">
+              <label className="block text-xs font-medium text-gray-500 mb-1">Status</label>
+              <select
+                name="status"
+                defaultValue={selectedStatus}
+                className="w-full sm:w-auto px-3 lg:px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none text-sm"
+              >
+                <option value="">All Status</option>
+                <option value="active">Active</option>
+                <option value="probation">Probation</option>
+                <option value="inactive">Inactive</option>
+                <option value="terminated">Terminated</option>
+              </select>
+            </div>
 
-          <div className="flex gap-2">
-            <button
-              type="submit"
-              className="inline-flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium"
-            >
-              <Search size={16} />
-              Apply
-            </button>
-            <Link
-              href="/employees"
-              className="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-            >
-              Reset
-            </Link>
+            <div className="col-span-1 flex gap-2">
+              <button
+                type="submit"
+                className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-3 lg:px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium text-sm"
+              >
+                <Search size={16} />
+                <span className="hidden sm:inline">Apply</span>
+              </button>
+              <Link
+                href="/employees"
+                className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-3 lg:px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm"
+              >
+                Reset
+              </Link>
+            </div>
           </div>
         </div>
       </form>

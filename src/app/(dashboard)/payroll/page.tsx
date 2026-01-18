@@ -54,11 +54,13 @@ export default async function PayrollPage({
   return (
     <div>
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4 lg:mb-6">
         <div>
-          <h1 className="text-2xl font-semibold text-gray-900">Payroll</h1>
-          <p className="text-gray-500 mt-1">
-            Manage employee wages and payment processing for {getMonthName(selectedMonth, selectedYear)}
+          <h1 className="text-xl lg:text-2xl font-semibold text-gray-900">Payroll</h1>
+          <p className="text-sm lg:text-base text-gray-500 mt-1">
+            <span className="hidden sm:inline">Manage employee wages and payment processing for </span>
+            <span className="sm:hidden">Wages for </span>
+            {getMonthName(selectedMonth, selectedYear)}
           </p>
         </div>
         <PayrollActions
@@ -77,38 +79,38 @@ export default async function PayrollPage({
       />
 
       {/* Summary Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <div className="bg-white rounded-xl border border-gray-200 p-5">
-          <p className="text-sm text-gray-500 mb-1">Total Gross</p>
-          <p className="text-xl font-semibold text-gray-900">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4 mb-4 lg:mb-6">
+        <div className="bg-white rounded-xl border border-gray-200 p-3 lg:p-5">
+          <p className="text-xs lg:text-sm text-gray-500 mb-1">Total Gross</p>
+          <p className="text-base lg:text-xl font-semibold text-gray-900">
             {formatCurrency(stats.totalGross)}
           </p>
-          <p className="text-xs text-gray-400 mt-1">{stats.totalEmployees} employees</p>
+          <p className="text-xs text-gray-400 mt-1 hidden sm:block">{stats.totalEmployees} employees</p>
         </div>
-        <div className="bg-white rounded-xl border border-gray-200 p-5">
-          <p className="text-sm text-gray-500 mb-1">Total Deductions</p>
-          <p className="text-xl font-semibold text-red-600">
+        <div className="bg-white rounded-xl border border-gray-200 p-3 lg:p-5">
+          <p className="text-xs lg:text-sm text-gray-500 mb-1">Deductions</p>
+          <p className="text-base lg:text-xl font-semibold text-red-600">
             -{formatCurrency(stats.totalDeductions)}
           </p>
-          <p className="text-xs text-gray-400 mt-1">~12% tax rate</p>
+          <p className="text-xs text-gray-400 mt-1 hidden sm:block">~12% tax rate</p>
         </div>
-        <div className="bg-white rounded-xl border border-gray-200 p-5">
-          <p className="text-sm text-gray-500 mb-1">Total Net Payable</p>
-          <p className="text-xl font-semibold text-green-600">
+        <div className="bg-white rounded-xl border border-gray-200 p-3 lg:p-5">
+          <p className="text-xs lg:text-sm text-gray-500 mb-1">Net Payable</p>
+          <p className="text-base lg:text-xl font-semibold text-green-600">
             {formatCurrency(stats.totalNet)}
           </p>
         </div>
-        <div className="bg-white rounded-xl border border-gray-200 p-5">
-          <p className="text-sm text-gray-500 mb-1">Payment Status</p>
-          <div className="flex items-center gap-4 mt-1">
-            <span className="text-sm">
-              <span className="font-semibold text-green-600">{stats.paid}</span> Paid
+        <div className="bg-white rounded-xl border border-gray-200 p-3 lg:p-5">
+          <p className="text-xs lg:text-sm text-gray-500 mb-1">Status</p>
+          <div className="flex flex-wrap items-center gap-2 lg:gap-4 mt-1">
+            <span className="text-xs lg:text-sm">
+              <span className="font-semibold text-green-600">{stats.paid}</span> <span className="hidden lg:inline">Paid</span><span className="lg:hidden">P</span>
             </span>
-            <span className="text-sm">
-              <span className="font-semibold text-blue-600">{stats.approved}</span> Approved
+            <span className="text-xs lg:text-sm">
+              <span className="font-semibold text-blue-600">{stats.approved}</span> <span className="hidden lg:inline">Approved</span><span className="lg:hidden">A</span>
             </span>
-            <span className="text-sm">
-              <span className="font-semibold text-yellow-600">{stats.draft}</span> Draft
+            <span className="text-xs lg:text-sm">
+              <span className="font-semibold text-yellow-600">{stats.draft}</span> <span className="hidden lg:inline">Draft</span><span className="lg:hidden">D</span>
             </span>
           </div>
         </div>

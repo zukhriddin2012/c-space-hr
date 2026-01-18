@@ -39,53 +39,83 @@ export default function SettingsPage() {
     <PageGuard permission={PERMISSIONS.SETTINGS_VIEW}>
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
-          <p className="text-gray-600 mt-1">Manage roles, permissions, and system configuration</p>
+        <div className="mb-4 lg:mb-8">
+          <h1 className="text-xl lg:text-2xl font-bold text-gray-900">Settings</h1>
+          <p className="text-sm lg:text-base text-gray-600 mt-1">
+            <span className="hidden sm:inline">Manage roles, permissions, and system configuration</span>
+            <span className="sm:hidden">System configuration</span>
+          </p>
         </div>
 
-        <div className="flex gap-6">
-          {/* Sidebar Tabs */}
-          <div className="w-64 flex-shrink-0">
+        <div className="flex flex-col lg:flex-row gap-4 lg:gap-6">
+          {/* Tabs - Horizontal scroll on mobile, sidebar on desktop */}
+          <div className="lg:w-64 lg:flex-shrink-0">
             <nav className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-              {tabs.map((tab) => {
-                const Icon = tab.icon;
-                const isActive = activeTab === tab.id;
+              {/* Mobile: Horizontal scroll tabs */}
+              <div className="lg:hidden flex overflow-x-auto">
+                {tabs.map((tab) => {
+                  const Icon = tab.icon;
+                  const isActive = activeTab === tab.id;
 
-                return (
-                  <RoleGuard key={tab.id} permission={tab.permission}>
-                    <button
-                      onClick={() => setActiveTab(tab.id)}
-                      className={`w-full flex items-center gap-3 px-4 py-3 text-left text-sm font-medium transition-colors ${
-                        isActive
-                          ? 'bg-purple-50 text-purple-700 border-r-2 border-purple-600'
-                          : 'text-gray-600 hover:bg-gray-50'
-                      }`}
-                    >
-                      <Icon size={20} className={isActive ? 'text-purple-600' : 'text-gray-400'} />
-                      {tab.name}
-                      <ChevronRight
-                        size={16}
-                        className={`ml-auto ${isActive ? 'text-purple-600' : 'text-gray-300'}`}
-                      />
-                    </button>
-                  </RoleGuard>
-                );
-              })}
+                  return (
+                    <RoleGuard key={tab.id} permission={tab.permission}>
+                      <button
+                        onClick={() => setActiveTab(tab.id)}
+                        className={`flex items-center gap-2 px-4 py-3 text-sm font-medium whitespace-nowrap transition-colors border-b-2 ${
+                          isActive
+                            ? 'text-purple-700 border-purple-600 bg-purple-50'
+                            : 'text-gray-600 border-transparent hover:bg-gray-50'
+                        }`}
+                      >
+                        <Icon size={18} className={isActive ? 'text-purple-600' : 'text-gray-400'} />
+                        <span className="hidden sm:inline">{tab.name}</span>
+                        <span className="sm:hidden">{tab.name.split(' ')[0]}</span>
+                      </button>
+                    </RoleGuard>
+                  );
+                })}
+              </div>
+              {/* Desktop: Vertical sidebar */}
+              <div className="hidden lg:block">
+                {tabs.map((tab) => {
+                  const Icon = tab.icon;
+                  const isActive = activeTab === tab.id;
+
+                  return (
+                    <RoleGuard key={tab.id} permission={tab.permission}>
+                      <button
+                        onClick={() => setActiveTab(tab.id)}
+                        className={`w-full flex items-center gap-3 px-4 py-3 text-left text-sm font-medium transition-colors ${
+                          isActive
+                            ? 'bg-purple-50 text-purple-700 border-r-2 border-purple-600'
+                            : 'text-gray-600 hover:bg-gray-50'
+                        }`}
+                      >
+                        <Icon size={20} className={isActive ? 'text-purple-600' : 'text-gray-400'} />
+                        {tab.name}
+                        <ChevronRight
+                          size={16}
+                          className={`ml-auto ${isActive ? 'text-purple-600' : 'text-gray-300'}`}
+                        />
+                      </button>
+                    </RoleGuard>
+                  );
+                })}
+              </div>
             </nav>
           </div>
 
           {/* Content Area */}
           <div className="flex-1">
             {activeTab === 'roles' && (
-              <div className="space-y-6">
+              <div className="space-y-4 lg:space-y-6">
                 {/* Role Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-2 gap-3 lg:gap-4">
                   {getAllRoles().map((role) => (
                     <button
                       key={role}
                       onClick={() => setSelectedRole(selectedRole === role ? null : role)}
-                      className={`p-4 bg-white rounded-xl border text-left transition-all ${
+                      className={`p-3 lg:p-4 bg-white rounded-xl border text-left transition-all ${
                         selectedRole === role
                           ? 'border-purple-500 ring-2 ring-purple-100'
                           : 'border-gray-200 hover:border-gray-300'
@@ -93,18 +123,18 @@ export default function SettingsPage() {
                     >
                       <div className="flex items-center justify-between mb-2">
                         <span
-                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getRoleBadgeColor(
+                          className={`inline-flex items-center px-2 lg:px-2.5 py-0.5 rounded-full text-xs font-medium border ${getRoleBadgeColor(
                             role
                           )}`}
                         >
                           {getRoleLabel(role)}
                         </span>
                         <Shield
-                          size={20}
-                          className={selectedRole === role ? 'text-purple-600' : 'text-gray-400'}
+                          size={18}
+                          className={`hidden sm:block ${selectedRole === role ? 'text-purple-600' : 'text-gray-400'}`}
                         />
                       </div>
-                      <p className="text-sm text-gray-500">
+                      <p className="text-xs lg:text-sm text-gray-500">
                         {ROLE_PERMISSIONS[role].length} permissions
                       </p>
                     </button>
@@ -113,18 +143,18 @@ export default function SettingsPage() {
 
                 {/* Permission Details */}
                 {selectedRole && (
-                  <div className="bg-white rounded-xl border border-gray-200 p-6">
-                    <div className="flex items-center justify-between mb-6">
+                  <div className="bg-white rounded-xl border border-gray-200 p-4 lg:p-6">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4 lg:mb-6">
                       <div>
-                        <h3 className="text-lg font-semibold text-gray-900">
+                        <h3 className="text-base lg:text-lg font-semibold text-gray-900">
                           {getRoleLabel(selectedRole)} Permissions
                         </h3>
-                        <p className="text-sm text-gray-500">
+                        <p className="text-xs lg:text-sm text-gray-500">
                           View permissions assigned to this role
                         </p>
                       </div>
                       <span
-                        className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border ${getRoleBadgeColor(
+                        className={`inline-flex items-center px-3 py-1 rounded-full text-xs lg:text-sm font-medium border self-start sm:self-auto ${getRoleBadgeColor(
                           selectedRole
                         )}`}
                       >
@@ -132,7 +162,7 @@ export default function SettingsPage() {
                       </span>
                     </div>
 
-                    <div className="space-y-6">
+                    <div className="space-y-4 lg:space-y-6">
                       {Object.entries(PERMISSION_GROUPS).map(([group, permissions]) => {
                         const rolePerms = ROLE_PERMISSIONS[selectedRole];
                         const hasAny = permissions.some((p) => rolePerms.includes(p.key));
@@ -141,25 +171,25 @@ export default function SettingsPage() {
 
                         return (
                           <div key={group}>
-                            <h4 className="text-sm font-medium text-gray-700 mb-3">{group}</h4>
-                            <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                            <h4 className="text-xs lg:text-sm font-medium text-gray-700 mb-2 lg:mb-3">{group}</h4>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
                               {permissions.map((perm) => {
                                 const hasPermission = rolePerms.includes(perm.key);
                                 return (
                                   <div
                                     key={perm.key}
-                                    className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm ${
+                                    className={`flex items-center gap-2 px-2 lg:px-3 py-1.5 lg:py-2 rounded-lg text-xs lg:text-sm ${
                                       hasPermission
                                         ? 'bg-green-50 text-green-700'
                                         : 'bg-gray-50 text-gray-400'
                                     }`}
                                   >
                                     {hasPermission ? (
-                                      <Check size={16} className="text-green-600" />
+                                      <Check size={14} className="text-green-600 flex-shrink-0" />
                                     ) : (
-                                      <X size={16} className="text-gray-300" />
+                                      <X size={14} className="text-gray-300 flex-shrink-0" />
                                     )}
-                                    {perm.label}
+                                    <span className="truncate">{perm.label}</span>
                                   </div>
                                 );
                               })}
@@ -174,15 +204,15 @@ export default function SettingsPage() {
             )}
 
             {activeTab === 'branches' && (
-              <div className="bg-white rounded-xl border border-gray-200 p-6">
-                <h2 className="text-lg font-semibold text-gray-900 mb-2">Branch Settings</h2>
-                <p className="text-gray-500 mb-6">
+              <div className="bg-white rounded-xl border border-gray-200 p-4 lg:p-6">
+                <h2 className="text-base lg:text-lg font-semibold text-gray-900 mb-2">Branch Settings</h2>
+                <p className="text-sm text-gray-500 mb-4 lg:mb-6">
                   Configure branch-specific settings and geofencing options.
                 </p>
-                <div className="text-center py-12 text-gray-500">
-                  <Building2 size={48} className="mx-auto mb-4 text-gray-300" />
-                  <p>Branch settings are managed in the Branches section.</p>
-                  <Link href="/branches" className="text-purple-600 hover:underline mt-2 inline-block">
+                <div className="text-center py-8 lg:py-12 text-gray-500">
+                  <Building2 size={40} className="mx-auto mb-4 text-gray-300 lg:w-12 lg:h-12" />
+                  <p className="text-sm lg:text-base">Branch settings are managed in the Branches section.</p>
+                  <Link href="/branches" className="text-purple-600 hover:underline mt-2 inline-block text-sm lg:text-base">
                     Go to Branches →
                   </Link>
                 </div>
@@ -190,11 +220,11 @@ export default function SettingsPage() {
             )}
 
             {activeTab === 'notifications' && (
-              <div className="bg-white rounded-xl border border-gray-200 p-6">
-                <h2 className="text-lg font-semibold text-gray-900 mb-2">Notification Settings</h2>
-                <p className="text-gray-500 mb-6">Configure how and when you receive notifications.</p>
+              <div className="bg-white rounded-xl border border-gray-200 p-4 lg:p-6">
+                <h2 className="text-base lg:text-lg font-semibold text-gray-900 mb-2">Notification Settings</h2>
+                <p className="text-sm text-gray-500 mb-4 lg:mb-6">Configure how and when you receive notifications.</p>
 
-                <div className="space-y-4">
+                <div className="space-y-3 lg:space-y-4">
                   {[
                     { label: 'Late arrival alerts', description: 'Get notified when employees arrive late' },
                     { label: 'Leave requests', description: 'Notifications for new leave requests' },
@@ -203,15 +233,15 @@ export default function SettingsPage() {
                   ].map((setting, i) => (
                     <div
                       key={i}
-                      className="flex items-center justify-between p-4 border border-gray-200 rounded-lg"
+                      className="flex items-center justify-between p-3 lg:p-4 border border-gray-200 rounded-lg gap-3"
                     >
-                      <div>
-                        <p className="font-medium text-gray-900">{setting.label}</p>
-                        <p className="text-sm text-gray-500">{setting.description}</p>
+                      <div className="min-w-0 flex-1">
+                        <p className="font-medium text-gray-900 text-sm lg:text-base">{setting.label}</p>
+                        <p className="text-xs lg:text-sm text-gray-500 truncate">{setting.description}</p>
                       </div>
-                      <label className="relative inline-flex items-center cursor-pointer">
+                      <label className="relative inline-flex items-center cursor-pointer flex-shrink-0">
                         <input type="checkbox" className="sr-only peer" defaultChecked={i < 2} />
-                        <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-100 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+                        <div className="w-10 lg:w-11 h-5 lg:h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-100 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 lg:after:h-5 after:w-4 lg:after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
                       </label>
                     </div>
                   ))}
@@ -220,51 +250,51 @@ export default function SettingsPage() {
             )}
 
             {activeTab === 'security' && (
-              <div className="bg-white rounded-xl border border-gray-200 p-6">
-                <h2 className="text-lg font-semibold text-gray-900 mb-2">Security Settings</h2>
-                <p className="text-gray-500 mb-6">Configure security and authentication options.</p>
+              <div className="bg-white rounded-xl border border-gray-200 p-4 lg:p-6">
+                <h2 className="text-base lg:text-lg font-semibold text-gray-900 mb-2">Security Settings</h2>
+                <p className="text-sm text-gray-500 mb-4 lg:mb-6">Configure security and authentication options.</p>
 
-                <div className="space-y-6">
-                  <div className="p-4 border border-gray-200 rounded-lg">
-                    <div className="flex items-center justify-between mb-2">
-                      <h3 className="font-medium text-gray-900">Two-Factor Authentication</h3>
-                      <span className="px-2 py-1 bg-yellow-100 text-yellow-700 text-xs rounded-full">
+                <div className="space-y-4 lg:space-y-6">
+                  <div className="p-3 lg:p-4 border border-gray-200 rounded-lg">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
+                      <h3 className="font-medium text-gray-900 text-sm lg:text-base">Two-Factor Authentication</h3>
+                      <span className="px-2 py-1 bg-yellow-100 text-yellow-700 text-xs rounded-full self-start sm:self-auto">
                         Coming Soon
                       </span>
                     </div>
-                    <p className="text-sm text-gray-500">
+                    <p className="text-xs lg:text-sm text-gray-500">
                       Add an extra layer of security to your account
                     </p>
                   </div>
 
-                  <div className="p-4 border border-gray-200 rounded-lg">
-                    <div className="flex items-center justify-between mb-2">
-                      <h3 className="font-medium text-gray-900">Session Timeout</h3>
-                      <select className="border border-gray-200 rounded-lg px-3 py-1 text-sm">
+                  <div className="p-3 lg:p-4 border border-gray-200 rounded-lg">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
+                      <h3 className="font-medium text-gray-900 text-sm lg:text-base">Session Timeout</h3>
+                      <select className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm w-full sm:w-auto">
                         <option>30 minutes</option>
                         <option>1 hour</option>
                         <option>4 hours</option>
                         <option>8 hours</option>
                       </select>
                     </div>
-                    <p className="text-sm text-gray-500">
+                    <p className="text-xs lg:text-sm text-gray-500">
                       Automatically log out after period of inactivity
                     </p>
                   </div>
 
-                  <div className="p-4 border border-gray-200 rounded-lg">
-                    <h3 className="font-medium text-gray-900 mb-2">Password Requirements</h3>
-                    <div className="space-y-2 text-sm text-gray-600">
+                  <div className="p-3 lg:p-4 border border-gray-200 rounded-lg">
+                    <h3 className="font-medium text-gray-900 text-sm lg:text-base mb-2">Password Requirements</h3>
+                    <div className="space-y-2 text-xs lg:text-sm text-gray-600">
                       <div className="flex items-center gap-2">
-                        <Check size={16} className="text-green-600" />
+                        <Check size={14} className="text-green-600 flex-shrink-0" />
                         Minimum 8 characters
                       </div>
                       <div className="flex items-center gap-2">
-                        <Check size={16} className="text-green-600" />
+                        <Check size={14} className="text-green-600 flex-shrink-0" />
                         At least one uppercase letter
                       </div>
                       <div className="flex items-center gap-2">
-                        <Check size={16} className="text-green-600" />
+                        <Check size={14} className="text-green-600 flex-shrink-0" />
                         At least one number
                       </div>
                     </div>

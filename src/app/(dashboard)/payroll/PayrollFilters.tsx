@@ -64,16 +64,16 @@ export default function PayrollFilters({
   };
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-4 mb-6">
-      <div className="flex flex-wrap gap-4 items-end">
-        <div>
+    <div className="bg-white rounded-xl border border-gray-200 p-3 lg:p-4 mb-4 lg:mb-6">
+      <div className="flex flex-col sm:flex-row flex-wrap gap-3 lg:gap-4 items-stretch sm:items-end">
+        <div className="flex-1 sm:flex-initial">
           <label className="block text-xs font-medium text-gray-500 mb-1">Period</label>
-          <div className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg">
-            <Calendar size={18} className="text-gray-400" />
+          <div className="flex items-center gap-2 px-3 lg:px-4 py-2 border border-gray-300 rounded-lg">
+            <Calendar size={18} className="text-gray-400 flex-shrink-0" />
             <select
               value={`${year}-${month}`}
               onChange={(e) => handleMonthChange(e.target.value)}
-              className="outline-none text-sm bg-transparent min-w-[150px]"
+              className="outline-none text-sm bg-transparent w-full sm:min-w-[150px]"
             >
               {monthOptions.map((opt) => (
                 <option key={`${opt.year}-${opt.month}`} value={`${opt.year}-${opt.month}`}>
@@ -84,12 +84,12 @@ export default function PayrollFilters({
           </div>
         </div>
 
-        <div>
+        <div className="flex-1 sm:flex-initial">
           <label className="block text-xs font-medium text-gray-500 mb-1">Status</label>
           <select
             value={status}
             onChange={(e) => setStatus(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none text-sm min-w-[140px]"
+            className="w-full sm:w-auto px-3 lg:px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none text-sm sm:min-w-[140px]"
           >
             <option value="">All Status</option>
             <option value="paid">Paid</option>
@@ -98,17 +98,17 @@ export default function PayrollFilters({
           </select>
         </div>
 
-        <div className="flex gap-2">
+        <div className="flex gap-2 w-full sm:w-auto mt-1 sm:mt-0">
           <button
             onClick={handleApply}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium"
+            className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-3 lg:px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium"
           >
             <Search size={16} />
             Apply
           </button>
           <button
             onClick={handleReset}
-            className="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm"
+            className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-3 lg:px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm"
           >
             Reset
           </button>
