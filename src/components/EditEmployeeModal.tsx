@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { X, Building2, Plus, Trash2, Shield, MessageCircle, Unlink, Calendar, User, FileText } from 'lucide-react';
+import { X, Building2, Plus, Trash2, Shield, MessageCircle, Unlink, Calendar, User, FileText, MapPin, Banknote, Wallet } from 'lucide-react';
 import type { UserRole } from '@/types';
 
 const SYSTEM_ROLES: { value: UserRole; label: string; description: string }[] = [
@@ -35,6 +35,16 @@ interface EmployeeWage {
   notes: string | null;
   is_active: boolean;
   legal_entities?: LegalEntity;
+}
+
+interface EmployeeBranchWage {
+  id: string;
+  employee_id: string;
+  branch_id: string;
+  wage_amount: number;
+  notes: string | null;
+  is_active: boolean;
+  branches?: Branch;
 }
 
 interface Employee {
@@ -100,28 +110,41 @@ export default function EditEmployeeModal({
   const [telegramId, setTelegramId] = useState<string | null>(employee.telegram_id || null);
   const [disconnectingTelegram, setDisconnectingTelegram] = useState(false);
 
-  // Wage management state
+  // Primary wages (bank/legal entities) state
   const [wages, setWages] = useState<EmployeeWage[]>([]);
   const [legalEntities, setLegalEntities] = useState<LegalEntity[]>([]);
   const [loadingWages, setLoadingWages] = useState(true);
   const [showAddWage, setShowAddWage] = useState(false);
   const [newWage, setNewWage] = useState({ entity_id: '', amount: '' });
 
-  // Calculate total salary from wages
-  const totalSalary = wages.reduce((sum, w) => sum + (w.wage_amount || 0), 0);
+  // Additional wages (cash/branches) state
+  const [branchWages, setBranchWages] = useState<EmployeeBranchWage[]>([]);
+  const [showAddBranchWage, setShowAddBranchWage] = useState(false);
+  const [newBranchWage, setNewBranchWage] = useState({ branch_id: '', amount: '' });
 
-  // Fetch wages and legal entities
+  // Calculate totals
+  const primaryTotal = wages.reduce((sum, w) => sum + (w.wage_amount || 0), 0);
+  const additionalTotal = branchWages.reduce((sum, w) => sum + (w.wage_amount || 0), 0);
+  const totalSalary = primaryTotal + additionalTotal;
+
+  // Fetch wages, branch wages, and legal entities
   useEffect(() => {
     async function fetchData() {
       try {
-        const [wagesRes, entitiesRes] = await Promise.all([
+        const [wagesRes, branchWagesRes, entitiesRes] = await Promise.all([
           fetch(`/api/employees/${employee.id}/wages`),
+          fetch(`/api/employees/${employee.id}/branch-wages`),
           fetch('/api/legal-entities'),
         ]);
 
         if (wagesRes.ok) {
           const data = await wagesRes.json();
           setWages(data.wages || []);
+        }
+
+        if (branchWagesRes.ok) {
+          const data = await branchWagesRes.json();
+          setBranchWages(data.wages || []);
         }
 
         if (entitiesRes.ok) {
@@ -248,6 +271,52 @@ export default function EditEmployeeModal({
   const availableEntities = legalEntities.filter(
     e => !wages.some(w => w.legal_entity_id === e.id)
   );
+
+  // Get available branches for additional wages (not already assigned)
+  const availableBranches = branches.filter(
+    b => !branchWages.some(w => w.branch_id === b.id)
+  );
+
+  const handleAddBranchWage = async () => {
+    if (!newBranchWage.branch_id || !newBranchWage.amount) return;
+
+    try {
+      const response = await fetch(`/api/employees/${employee.id}/branch-wages`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          branch_id: newBranchWage.branch_id,
+          wage_amount: parseFloat(newBranchWage.amount),
+        }),
+      });
+
+      if (response.ok) {
+        const branchWagesRes = await fetch(`/api/employees/${employee.id}/branch-wages`);
+        if (branchWagesRes.ok) {
+          const data = await branchWagesRes.json();
+          setBranchWages(data.wages || []);
+        }
+        setNewBranchWage({ branch_id: '', amount: '' });
+        setShowAddBranchWage(false);
+      }
+    } catch (err) {
+      console.error('Error adding branch wage:', err);
+    }
+  };
+
+  const handleRemoveBranchWage = async (wageId: string) => {
+    try {
+      const response = await fetch(`/api/employees/${employee.id}/branch-wages?wage_id=${wageId}`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        setBranchWages(branchWages.filter(w => w.id !== wageId));
+      }
+    } catch (err) {
+      console.error('Error removing branch wage:', err);
+    }
+  };
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
@@ -546,45 +615,71 @@ export default function EditEmployeeModal({
             </div>
           )}
 
-          {/* Wage Distribution Section */}
+          {/* Salary Summary Section */}
+          {canEditSalary && (
+            <div className="space-y-4 pt-4 border-t border-gray-200">
+              <div className="flex items-center gap-2">
+                <Wallet size={18} className="text-purple-600" />
+                <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wider">Salary Summary</h3>
+              </div>
+
+              {/* Total Salary Display with breakdown */}
+              <div className="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-lg p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm text-purple-600">Total Monthly Salary</span>
+                  <span className="text-xl font-bold text-purple-700">{formatSalary(totalSalary)}</span>
+                </div>
+                <div className="flex items-center justify-between text-xs text-gray-500 pt-2 border-t border-purple-200">
+                  <div className="flex items-center gap-4">
+                    <span className="flex items-center gap-1">
+                      <Banknote size={12} className="text-indigo-500" />
+                      Primary: {formatSalary(primaryTotal)}
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <MapPin size={12} className="text-emerald-500" />
+                      Additional: {formatSalary(additionalTotal)}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Primary Wages Section (Bank/Legal Entities) */}
           {canEditSalary && (
             <div className="space-y-4 pt-4 border-t border-gray-200">
               <div className="flex items-center justify-between">
-                <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wider">
-                  Wage Distribution by Legal Entity
-                </h3>
+                <div className="flex items-center gap-2">
+                  <Banknote size={18} className="text-indigo-600" />
+                  <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wider">
+                    Primary Wages (Bank)
+                  </h3>
+                </div>
                 <button
                   type="button"
                   onClick={() => setShowAddWage(true)}
-                  className="inline-flex items-center gap-1 px-3 py-1.5 text-sm text-purple-600 bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors"
+                  className="inline-flex items-center gap-1 px-3 py-1.5 text-sm text-indigo-600 bg-indigo-50 rounded-lg hover:bg-indigo-100 transition-colors"
                 >
                   <Plus size={14} />
                   Add
                 </button>
               </div>
 
-              {/* Total Salary Display */}
-              <div className="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-lg p-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-purple-600">Total Monthly Salary</span>
-                  <span className="text-xl font-bold text-purple-700">{formatSalary(totalSalary)}</span>
-                </div>
-              </div>
-
-              {/* Wages List */}
+              {/* Primary Wages List */}
               {loadingWages ? (
                 <div className="text-center py-4 text-gray-500">Loading wages...</div>
               ) : wages.length === 0 ? (
                 <div className="text-center py-4 text-gray-500 bg-gray-50 rounded-lg">
                   <Building2 size={24} className="mx-auto mb-2 text-gray-300" />
-                  <p className="text-sm">No wages assigned yet</p>
+                  <p className="text-sm">No primary wages assigned</p>
+                  <p className="text-xs text-gray-400">Add wages from legal entities</p>
                 </div>
               ) : (
                 <div className="space-y-2">
                   {wages.map((wage) => (
                     <div
                       key={wage.id}
-                      className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                      className="flex items-center justify-between p-3 bg-indigo-50 rounded-lg"
                     >
                       <div className="flex items-center gap-3">
                         <Building2 size={16} className="text-indigo-500" />
@@ -612,16 +707,16 @@ export default function EditEmployeeModal({
                 </div>
               )}
 
-              {/* Add Wage Form */}
+              {/* Add Primary Wage Form */}
               {showAddWage && (
-                <div className="p-4 bg-blue-50 rounded-lg space-y-3">
+                <div className="p-4 bg-indigo-50 rounded-lg space-y-3 border border-indigo-200">
                   <div className="grid grid-cols-2 gap-3">
                     <select
                       value={newWage.entity_id}
                       onChange={(e) => setNewWage({ ...newWage, entity_id: e.target.value })}
-                      className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none"
+                      className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none bg-white"
                     >
-                      <option value="">Select entity...</option>
+                      <option value="">Select legal entity...</option>
                       {availableEntities.map((entity) => (
                         <option key={entity.id} value={entity.id}>
                           {entity.short_name || entity.name}
@@ -633,7 +728,7 @@ export default function EditEmployeeModal({
                       value={newWage.amount}
                       onChange={(e) => setNewWage({ ...newWage, amount: e.target.value })}
                       placeholder="Amount (UZS)"
-                      className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none"
+                      className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
                       min="0"
                       step="100000"
                     />
@@ -650,9 +745,116 @@ export default function EditEmployeeModal({
                       type="button"
                       onClick={handleAddWage}
                       disabled={!newWage.entity_id || !newWage.amount}
-                      className="flex-1 px-3 py-1.5 text-sm bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50"
+                      className="flex-1 px-3 py-1.5 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50"
                     >
-                      Add Wage
+                      Add Primary Wage
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Additional Wages Section (Cash/Branches) */}
+          {canEditSalary && (
+            <div className="space-y-4 pt-4 border-t border-gray-200">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <MapPin size={18} className="text-emerald-600" />
+                  <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wider">
+                    Additional Wages (Cash)
+                  </h3>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowAddBranchWage(true)}
+                  className="inline-flex items-center gap-1 px-3 py-1.5 text-sm text-emerald-600 bg-emerald-50 rounded-lg hover:bg-emerald-100 transition-colors"
+                >
+                  <Plus size={14} />
+                  Add
+                </button>
+              </div>
+
+              {/* Additional Wages List */}
+              {loadingWages ? (
+                <div className="text-center py-4 text-gray-500">Loading wages...</div>
+              ) : branchWages.length === 0 ? (
+                <div className="text-center py-4 text-gray-500 bg-gray-50 rounded-lg">
+                  <MapPin size={24} className="mx-auto mb-2 text-gray-300" />
+                  <p className="text-sm">No additional wages assigned</p>
+                  <p className="text-xs text-gray-400">Add cash wages from branches</p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {branchWages.map((wage) => (
+                    <div
+                      key={wage.id}
+                      className="flex items-center justify-between p-3 bg-emerald-50 rounded-lg"
+                    >
+                      <div className="flex items-center gap-3">
+                        <MapPin size={16} className="text-emerald-500" />
+                        <div>
+                          <p className="text-sm font-medium text-gray-900">
+                            {wage.branches?.name || wage.branch_id}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <span className="font-semibold text-gray-900">{formatSalary(wage.wage_amount)}</span>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveBranchWage(wage.id)}
+                          className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Add Additional Wage Form */}
+              {showAddBranchWage && (
+                <div className="p-4 bg-emerald-50 rounded-lg space-y-3 border border-emerald-200">
+                  <div className="grid grid-cols-2 gap-3">
+                    <select
+                      value={newBranchWage.branch_id}
+                      onChange={(e) => setNewBranchWage({ ...newBranchWage, branch_id: e.target.value })}
+                      className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none bg-white"
+                    >
+                      <option value="">Select branch...</option>
+                      {availableBranches.map((branch) => (
+                        <option key={branch.id} value={branch.id}>
+                          {branch.name}
+                        </option>
+                      ))}
+                    </select>
+                    <input
+                      type="number"
+                      value={newBranchWage.amount}
+                      onChange={(e) => setNewBranchWage({ ...newBranchWage, amount: e.target.value })}
+                      placeholder="Amount (UZS)"
+                      className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
+                      min="0"
+                      step="100000"
+                    />
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setShowAddBranchWage(false)}
+                      className="flex-1 px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleAddBranchWage}
+                      disabled={!newBranchWage.branch_id || !newBranchWage.amount}
+                      className="flex-1 px-3 py-1.5 text-sm bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors disabled:opacity-50"
+                    >
+                      Add Additional Wage
                     </button>
                   </div>
                 </div>
