@@ -281,3 +281,62 @@ export async function sendBulkNotifications(
 
   return { success, failed };
 }
+
+// ============================================
+// FEEDBACK NOTIFICATIONS
+// ============================================
+
+const FEEDBACK_CATEGORY_LABELS: Record<string, string> = {
+  work_environment: 'Ish muhiti',
+  management: 'Rahbariyat',
+  career: 'Karyera rivojlanishi',
+  compensation: 'Maosh va imtiyozlar',
+  suggestion: 'Taklif',
+  other: 'Boshqa',
+};
+
+/**
+ * Generate star rating display
+ */
+function renderStars(rating: number | undefined | null): string {
+  if (!rating) return '';
+  const filled = '⭐'.repeat(rating);
+  const empty = '☆'.repeat(5 - rating);
+  return `\nBaho: ${filled}${empty}`;
+}
+
+/**
+ * Notify GM about new feedback submission
+ */
+export async function notifyNewFeedback(data: {
+  gmTelegramId: string;
+  feedbackId: string;
+  category: string;
+  isAnonymous: boolean;
+  employeeName?: string;
+  rating?: number | null;
+  feedbackText: string;
+}): Promise<boolean> {
+  const categoryLabel = FEEDBACK_CATEGORY_LABELS[data.category] || data.category;
+  const fromText = data.isAnonymous ? 'Anonim' : data.employeeName || 'Noma\'lum';
+  const stars = renderStars(data.rating);
+
+  // Truncate feedback text if too long for Telegram
+  const maxLength = 500;
+  const truncatedText = data.feedbackText.length > maxLength
+    ? data.feedbackText.substring(0, maxLength) + '...'
+    : data.feedbackText;
+
+  const message = `
+📝 <b>Yangi fikr-mulohaza!</b>
+
+📂 Turkum: ${categoryLabel}
+👤 Kimdan: ${fromText}${stars}
+
+💬 <i>"${truncatedText}"</i>
+
+HR tizimida to'liq ko'rish mumkin.
+`.trim();
+
+  return sendTelegramMessage(data.gmTelegramId, message);
+}

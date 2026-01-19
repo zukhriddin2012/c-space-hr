@@ -65,6 +65,10 @@ export const PERMISSIONS = {
   // Dashboard
   DASHBOARD_VIEW: 'dashboard:view',
   DASHBOARD_ADMIN: 'dashboard:admin',
+
+  // Feedback
+  FEEDBACK_SUBMIT: 'feedback:submit',
+  FEEDBACK_VIEW_ALL: 'feedback:view_all',
 } as const;
 
 export type Permission = typeof PERMISSIONS[keyof typeof PERMISSIONS];
@@ -125,6 +129,8 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     PERMISSIONS.SETTINGS_EDIT,
     PERMISSIONS.DASHBOARD_VIEW,
     PERMISSIONS.DASHBOARD_ADMIN,
+    PERMISSIONS.FEEDBACK_SUBMIT,
+    PERMISSIONS.FEEDBACK_VIEW_ALL,
   ],
 
   ceo: [
@@ -150,6 +156,8 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     PERMISSIONS.SETTINGS_VIEW,
     PERMISSIONS.DASHBOARD_VIEW,
     PERMISSIONS.DASHBOARD_ADMIN,
+    PERMISSIONS.FEEDBACK_SUBMIT,
+    PERMISSIONS.FEEDBACK_VIEW_ALL,
   ],
 
   hr: [
@@ -181,6 +189,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     PERMISSIONS.RECRUITMENT_VIEW,
     PERMISSIONS.RECRUITMENT_MANAGE,
     PERMISSIONS.DASHBOARD_VIEW,
+    PERMISSIONS.FEEDBACK_SUBMIT,
   ],
 
   branch_manager: [
@@ -197,6 +206,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     PERMISSIONS.TASKS_VIEW,
     PERMISSIONS.TASKS_CREATE,
     PERMISSIONS.DASHBOARD_VIEW,
+    PERMISSIONS.FEEDBACK_SUBMIT,
   ],
 
   recruiter: [
@@ -209,6 +219,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     PERMISSIONS.RECRUITMENT_VIEW,
     PERMISSIONS.RECRUITMENT_MANAGE,
     PERMISSIONS.DASHBOARD_VIEW,
+    PERMISSIONS.FEEDBACK_SUBMIT,
   ],
 
   employee: [
@@ -220,6 +231,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     PERMISSIONS.TASKS_VIEW, // Own tasks
     PERMISSIONS.PAYROLL_VIEW, // Own payslips
     PERMISSIONS.DASHBOARD_VIEW,
+    PERMISSIONS.FEEDBACK_SUBMIT,
   ],
 };
 
@@ -330,5 +342,13 @@ export const PERMISSION_GROUPS = {
   'Settings': [
     { key: PERMISSIONS.SETTINGS_VIEW, label: 'View Settings' },
     { key: PERMISSIONS.SETTINGS_EDIT, label: 'Edit Settings' },
+  ],
+  'Feedback': [
+    { key: PERMISSIONS.FEEDBACK_SUBMIT, label: 'Submit Feedback' },
+    { key: PERMISSIONS.FEEDBACK_VIEW_ALL, label: 'View All Feedback' },
+  ],
+  'Recruitment': [
+    { key: PERMISSIONS.RECRUITMENT_VIEW, label: 'View Recruitment Pipeline' },
+    { key: PERMISSIONS.RECRUITMENT_MANAGE, label: 'Manage Candidates' },
   ],
 };

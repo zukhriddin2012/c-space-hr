@@ -15,6 +15,8 @@ import {
   ArrowRight,
   CheckCircle2,
   XCircle,
+  MessageSquare,
+  Inbox,
 } from 'lucide-react';
 import {
   getTodayAttendance,
@@ -25,6 +27,7 @@ import {
   getAttendanceByEmployee,
   getLeaveRequestsByEmployee,
   getEmployeeAttendanceSummary,
+  getUnreadFeedbackCount,
 } from '@/lib/db';
 import Link from 'next/link';
 
@@ -563,6 +566,16 @@ async function EmployeeDashboard({ userEmail }: { userEmail: string }) {
           </div>
           <p className="font-medium text-gray-900">Payments</p>
         </Link>
+
+        <Link
+          href="/feedback"
+          className="bg-white rounded-xl border border-gray-200 p-4 hover:border-indigo-300 hover:bg-indigo-50 transition-colors text-center"
+        >
+          <div className="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center mx-auto mb-2">
+            <MessageSquare size={20} className="text-indigo-600" />
+          </div>
+          <p className="font-medium text-gray-900">Give Feedback</p>
+        </Link>
       </div>
     </div>
   );
@@ -596,10 +609,11 @@ export default async function DashboardPage() {
   const branchId = user.role === 'branch_manager' ? user.branchId : undefined;
 
   // Fetch all data from Supabase
-  const [stats, attendanceStats, recentActivity] = await Promise.all([
+  const [stats, attendanceStats, recentActivity, unreadFeedbackCount] = await Promise.all([
     getDashboardStats(branchId),
     getAttendanceStats(),
     getRecentActivity(branchId),
+    (user.role === 'general_manager' || user.role === 'ceo') ? getUnreadFeedbackCount() : Promise.resolve(0),
   ]);
 
   const presentToday = attendanceStats.present;
@@ -666,7 +680,7 @@ export default async function DashboardPage() {
 
       {/* Additional Stats for GM/CEO */}
       {(user.role === 'general_manager' || user.role === 'ceo') && (
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 lg:gap-4 mb-4 lg:mb-6">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 lg:gap-4 mb-4 lg:mb-6">
           <StatCard
             title="Active Branches"
             value={stats.totalBranches}
@@ -687,6 +701,13 @@ export default async function DashboardPage() {
             icon={AlertCircle}
             color="red"
             href="/attendance"
+          />
+          <StatCard
+            title="Unread Feedback"
+            value={unreadFeedbackCount}
+            icon={Inbox}
+            color="blue"
+            href="/feedback/review"
           />
         </div>
       )}

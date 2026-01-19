@@ -2815,3 +2815,797 @@ export async function cancelWageChangeRequest(
 
   return { success: true };
 }
+
+// ============================================
+// FEEDBACK SUBMISSIONS
+// ============================================
+
+export const FEEDBACK_CATEGORIES = [
+  { value: 'work_environment', label: 'Work Environment' },
+  { value: 'management', label: 'Management & Leadership' },
+  { value: 'career', label: 'Career Development' },
+  { value: 'compensation', label: 'Compensation & Benefits' },
+  { value: 'suggestion', label: 'Suggestion / Idea' },
+  { value: 'other', label: 'Other' },
+] as const;
+
+export type FeedbackCategory = typeof FEEDBACK_CATEGORIES[number]['value'];
+export type FeedbackStatus = 'submitted' | 'read' | 'acknowledged';
+
+export interface FeedbackSubmission {
+  id: string;
+  employee_id: string;
+  is_anonymous: boolean;
+  category: FeedbackCategory;
+  feedback_text: string;
+  rating: number | null;
+  status: FeedbackStatus;
+  read_by: string | null;
+  read_at: string | null;
+  acknowledged_by: string | null;
+  acknowledged_at: string | null;
+  response_note: string | null;
+  created_at: string;
+  updated_at: string;
+  // Joined data (only visible if not anonymous)
+  employee?: {
+    full_name: string;
+    employee_id: string;
+    position: string;
+  };
+  reader?: { full_name: string };
+  acknowledger?: { full_name: string };
+}
+
+export async function createFeedback(data: {
+  employee_id: string;
+  is_anonymous: boolean;
+  category: FeedbackCategory;
+  feedback_text: string;
+  rating?: number | null;
+}): Promise<{ success: boolean; feedback?: FeedbackSubmission; error?: string }> {
+  if (!isSupabaseAdminConfigured()) {
+    return { success: false, error: 'Database not configured' };
+  }
+
+  const { data: feedback, error } = await supabaseAdmin!
+    .from('feedback_submissions')
+    .insert({
+      employee_id: data.employee_id,
+      is_anonymous: data.is_anonymous,
+      category: data.category,
+      feedback_text: data.feedback_text,
+      rating: data.rating || null,
+      status: 'submitted',
+    })
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error creating feedback:', error);
+    return { success: false, error: error.message };
+  }
+
+  return { success: true, feedback };
+}
+
+export async function getAllFeedback(status?: FeedbackStatus): Promise<FeedbackSubmission[]> {
+  if (!isSupabaseAdminConfigured()) {
+    return [];
+  }
+
+  let query = supabaseAdmin!
+    .from('feedback_submissions')
+    .select(`
+      *,
+      employee:employees!feedback_submissions_employee_id_fkey(full_name, employee_id, position),
+      reader:employees!feedback_submissions_read_by_fkey(full_name),
+      acknowledger:employees!feedback_submissions_acknowledged_by_fkey(full_name)
+    `)
+    .order('created_at', { ascending: false });
+
+  if (status) {
+    query = query.eq('status', status);
+  }
+
+  const { data, error } = await query;
+
+  if (error) {
+    console.error('Error fetching feedback:', error);
+    return [];
+  }
+
+  // Hide employee info for anonymous feedback
+  return (data || []).map(f => {
+    if (f.is_anonymous) {
+      return { ...f, employee: undefined };
+    }
+    return f;
+  });
+}
+
+export async function getFeedbackById(id: string): Promise<FeedbackSubmission | null> {
+  if (!isSupabaseAdminConfigured()) {
+    return null;
+  }
+
+  const { data, error } = await supabaseAdmin!
+    .from('feedback_submissions')
+    .select(`
+      *,
+      employee:employees!feedback_submissions_employee_id_fkey(full_name, employee_id, position),
+      reader:employees!feedback_submissions_read_by_fkey(full_name),
+      acknowledger:employees!feedback_submissions_acknowledged_by_fkey(full_name)
+    `)
+    .eq('id', id)
+    .single();
+
+  if (error) {
+    console.error('Error fetching feedback:', error);
+    return null;
+  }
+
+  // Hide employee info for anonymous feedback
+  if (data && data.is_anonymous) {
+    return { ...data, employee: undefined };
+  }
+
+  return data;
+}
+
+export async function markFeedbackRead(
+  id: string,
+  userId: string
+): Promise<{ success: boolean; error?: string }> {
+  if (!isSupabaseAdminConfigured()) {
+    return { success: false, error: 'Database not configured' };
+  }
+
+  const { error } = await supabaseAdmin!
+    .from('feedback_submissions')
+    .update({
+      status: 'read',
+      read_by: userId,
+      read_at: new Date().toISOString(),
+    })
+    .eq('id', id)
+    .eq('status', 'submitted');
+
+  if (error) {
+    console.error('Error marking feedback as read:', error);
+    return { success: false, error: error.message };
+  }
+
+  return { success: true };
+}
+
+export async function acknowledgeFeedback(
+  id: string,
+  userId: string,
+  responseNote?: string
+): Promise<{ success: boolean; error?: string }> {
+  if (!isSupabaseAdminConfigured()) {
+    return { success: false, error: 'Database not configured' };
+  }
+
+  const { error } = await supabaseAdmin!
+    .from('feedback_submissions')
+    .update({
+      status: 'acknowledged',
+      acknowledged_by: userId,
+      acknowledged_at: new Date().toISOString(),
+      response_note: responseNote || null,
+    })
+    .eq('id', id)
+    .in('status', ['submitted', 'read']);
+
+  if (error) {
+    console.error('Error acknowledging feedback:', error);
+    return { success: false, error: error.message };
+  }
+
+  return { success: true };
+}
+
+export async function getMyFeedback(employeeId: string): Promise<FeedbackSubmission[]> {
+  if (!isSupabaseAdminConfigured()) {
+    return [];
+  }
+
+  const { data, error } = await supabaseAdmin!
+    .from('feedback_submissions')
+    .select('*')
+    .eq('employee_id', employeeId)
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error('Error fetching my feedback:', error);
+    return [];
+  }
+
+  return data || [];
+}
+
+export async function getUnreadFeedbackCount(): Promise<number> {
+  if (!isSupabaseAdminConfigured()) {
+    return 0;
+  }
+
+  const { count, error } = await supabaseAdmin!
+    .from('feedback_submissions')
+    .select('*', { count: 'exact', head: true })
+    .eq('status', 'submitted');
+
+  if (error) {
+    console.error('Error fetching unread feedback count:', error);
+    return 0;
+  }
+
+  return count || 0;
+}
+
+// Get GM's telegram_id for notifications
+export async function getGMTelegramId(): Promise<string | null> {
+  if (!isSupabaseAdminConfigured()) {
+    return null;
+  }
+
+  const { data, error } = await supabaseAdmin!
+    .from('employees')
+    .select('telegram_id')
+    .eq('system_role', 'general_manager')
+    .eq('status', 'active')
+    .not('telegram_id', 'is', null)
+    .limit(1)
+    .single();
+
+  if (error) {
+    console.error('Error fetching GM telegram ID:', error);
+    return null;
+  }
+
+  return data?.telegram_id || null;
+}
+
+// ============================================
+// CANDIDATES (Recruitment Pipeline)
+// ============================================
+
+export type CandidateStage = 'screening' | 'interview_1' | 'interview_2' | 'under_review' | 'probation' | 'hired' | 'rejected';
+
+export interface ChecklistItem {
+  id: string;
+  text: string;
+  completed: boolean;
+  required: boolean;
+}
+
+export interface Candidate {
+  id: string;
+  full_name: string;
+  email: string;
+  phone: string | null;
+  iq_score: number | null;
+  mbti_type: string | null;
+  applied_role: string;
+  about: string | null;
+  resume_file_name: string | null;
+  resume_file_path: string | null;
+  resume_file_size: number | null;
+  stage: CandidateStage;
+  probation_employee_id: string | null;
+  probation_start_date: string | null;
+  probation_end_date: string | null;
+  checklist: ChecklistItem[];
+  source: string | null;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+  stage_changed_at: string;
+  // Joined
+  probation_employee?: { full_name: string; employee_id: string };
+}
+
+// Default checklist items for probation
+const DEFAULT_PROBATION_CHECKLIST: ChecklistItem[] = [
+  { id: '1', text: 'Create Term Sheet', completed: false, required: true },
+  { id: '2', text: 'Sign Term Sheet', completed: false, required: true },
+  { id: '3', text: 'Create temporary employee account', completed: false, required: true },
+  { id: '4', text: 'Setup workspace/equipment', completed: false, required: false },
+];
+
+// Additional checklist items for Community Manager role
+const CM_CHECKLIST_ITEMS: ChecklistItem[] = [
+  { id: 'cm1', text: 'Week 1: Platform familiarization', completed: false, required: true },
+  { id: 'cm2', text: 'Week 1: Review community guidelines', completed: false, required: true },
+  { id: 'cm3', text: 'Week 2: Supervised community engagement', completed: false, required: true },
+  { id: 'cm4', text: 'Week 2: Complete CM program assessment', completed: false, required: true },
+];
+
+function getProbationChecklist(role: string): ChecklistItem[] {
+  const checklist = [...DEFAULT_PROBATION_CHECKLIST];
+
+  // Add CM-specific items if role matches
+  if (role.toLowerCase().includes('community manager') || role.toLowerCase() === 'cm') {
+    checklist.push(...CM_CHECKLIST_ITEMS);
+  }
+
+  return checklist;
+}
+
+export async function getCandidates(stage?: CandidateStage): Promise<Candidate[]> {
+  if (!isSupabaseAdminConfigured()) {
+    return [];
+  }
+
+  let query = supabaseAdmin!
+    .from('candidates')
+    .select(`
+      *,
+      probation_employee:employees!probation_employee_id(full_name, employee_id)
+    `)
+    .order('created_at', { ascending: false });
+
+  if (stage) {
+    query = query.eq('stage', stage);
+  }
+
+  const { data, error } = await query;
+
+  if (error) {
+    console.error('Error fetching candidates:', error);
+    return [];
+  }
+
+  return data || [];
+}
+
+export async function getCandidateById(id: string): Promise<Candidate | null> {
+  if (!isSupabaseAdminConfigured()) {
+    return null;
+  }
+
+  const { data, error } = await supabaseAdmin!
+    .from('candidates')
+    .select(`
+      *,
+      probation_employee:employees!probation_employee_id(full_name, employee_id)
+    `)
+    .eq('id', id)
+    .single();
+
+  if (error) {
+    console.error('Error fetching candidate:', error);
+    return null;
+  }
+
+  return data;
+}
+
+export async function createCandidate(candidateData: {
+  full_name: string;
+  email: string;
+  phone?: string | null;
+  iq_score?: number | null;
+  mbti_type?: string | null;
+  applied_role: string;
+  about?: string | null;
+  resume_file_name?: string | null;
+  resume_file_path?: string | null;
+  resume_file_size?: number | null;
+  source?: string | null;
+  notes?: string | null;
+}): Promise<{ success: boolean; candidate?: Candidate; error?: string }> {
+  if (!isSupabaseAdminConfigured()) {
+    return { success: false, error: 'Database not configured' };
+  }
+
+  const { data, error } = await supabaseAdmin!
+    .from('candidates')
+    .insert({
+      ...candidateData,
+      stage: 'screening',
+      checklist: [],
+    })
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error creating candidate:', error);
+    return { success: false, error: error.message };
+  }
+
+  return { success: true, candidate: data };
+}
+
+export async function updateCandidate(
+  id: string,
+  updates: {
+    full_name?: string;
+    email?: string;
+    phone?: string | null;
+    iq_score?: number | null;
+    mbti_type?: string | null;
+    applied_role?: string;
+    about?: string | null;
+    resume_file_name?: string | null;
+    resume_file_path?: string | null;
+    resume_file_size?: number | null;
+    source?: string | null;
+    notes?: string | null;
+  }
+): Promise<{ success: boolean; candidate?: Candidate; error?: string }> {
+  if (!isSupabaseAdminConfigured()) {
+    return { success: false, error: 'Database not configured' };
+  }
+
+  const { data, error } = await supabaseAdmin!
+    .from('candidates')
+    .update(updates)
+    .eq('id', id)
+    .select(`
+      *,
+      probation_employee:employees!probation_employee_id(full_name, employee_id)
+    `)
+    .single();
+
+  if (error) {
+    console.error('Error updating candidate:', error);
+    return { success: false, error: error.message };
+  }
+
+  return { success: true, candidate: data };
+}
+
+export async function updateCandidateStage(
+  id: string,
+  newStage: CandidateStage
+): Promise<{ success: boolean; candidate?: Candidate; error?: string }> {
+  if (!isSupabaseAdminConfigured()) {
+    return { success: false, error: 'Database not configured' };
+  }
+
+  // Get current candidate to check role for checklist
+  const candidate = await getCandidateById(id);
+  if (!candidate) {
+    return { success: false, error: 'Candidate not found' };
+  }
+
+  const updates: Record<string, unknown> = {
+    stage: newStage,
+    stage_changed_at: new Date().toISOString(),
+  };
+
+  // If moving to probation, populate the checklist
+  if (newStage === 'probation' && candidate.stage !== 'probation') {
+    updates.checklist = getProbationChecklist(candidate.applied_role);
+    updates.probation_start_date = new Date().toISOString().split('T')[0];
+    // Set end date to 2 weeks from now by default
+    const endDate = new Date();
+    endDate.setDate(endDate.getDate() + 14);
+    updates.probation_end_date = endDate.toISOString().split('T')[0];
+  }
+
+  const { data, error } = await supabaseAdmin!
+    .from('candidates')
+    .update(updates)
+    .eq('id', id)
+    .select(`
+      *,
+      probation_employee:employees!probation_employee_id(full_name, employee_id)
+    `)
+    .single();
+
+  if (error) {
+    console.error('Error updating candidate stage:', error);
+    return { success: false, error: error.message };
+  }
+
+  return { success: true, candidate: data };
+}
+
+export async function updateCandidateChecklist(
+  id: string,
+  checklist: ChecklistItem[]
+): Promise<{ success: boolean; error?: string }> {
+  if (!isSupabaseAdminConfigured()) {
+    return { success: false, error: 'Database not configured' };
+  }
+
+  const { error } = await supabaseAdmin!
+    .from('candidates')
+    .update({ checklist })
+    .eq('id', id);
+
+  if (error) {
+    console.error('Error updating candidate checklist:', error);
+    return { success: false, error: error.message };
+  }
+
+  return { success: true };
+}
+
+export async function deleteCandidate(id: string): Promise<{ success: boolean; error?: string }> {
+  if (!isSupabaseAdminConfigured()) {
+    return { success: false, error: 'Database not configured' };
+  }
+
+  const { error } = await supabaseAdmin!
+    .from('candidates')
+    .delete()
+    .eq('id', id);
+
+  if (error) {
+    console.error('Error deleting candidate:', error);
+    return { success: false, error: error.message };
+  }
+
+  return { success: true };
+}
+
+export async function convertCandidateToEmployee(
+  candidateId: string,
+  approvedBy: string,
+  employmentType: string = 'full-time'
+): Promise<{ success: boolean; employee?: Employee; error?: string }> {
+  if (!isSupabaseAdminConfigured()) {
+    return { success: false, error: 'Database not configured' };
+  }
+
+  // Get candidate
+  const candidate = await getCandidateById(candidateId);
+  if (!candidate) {
+    return { success: false, error: 'Candidate not found' };
+  }
+
+  // Check if candidate is in probation stage
+  if (candidate.stage !== 'probation') {
+    return { success: false, error: 'Candidate must be in probation stage to be hired' };
+  }
+
+  // Check if all required checklist items are completed
+  const incompleteRequired = candidate.checklist.filter(
+    item => item.required && !item.completed
+  );
+  if (incompleteRequired.length > 0) {
+    return {
+      success: false,
+      error: `Please complete all required checklist items: ${incompleteRequired.map(i => i.text).join(', ')}`
+    };
+  }
+
+  // If there's already a probation employee, just update their status
+  if (candidate.probation_employee_id) {
+    const { data: employee, error: updateError } = await supabaseAdmin!
+      .from('employees')
+      .update({
+        status: 'active',
+        employment_type: employmentType,
+      })
+      .eq('id', candidate.probation_employee_id)
+      .select('*, branches(name)')
+      .single();
+
+    if (updateError) {
+      console.error('Error updating employee status:', updateError);
+      return { success: false, error: updateError.message };
+    }
+
+    // Update candidate stage to hired
+    await updateCandidateStage(candidateId, 'hired');
+
+    return { success: true, employee };
+  }
+
+  // Create new employee from candidate
+  const employeeResult = await createEmployee({
+    full_name: candidate.full_name,
+    position: candidate.applied_role,
+    level: 'junior',
+    phone: candidate.phone,
+    email: candidate.email,
+    status: 'active',
+    employment_type: employmentType,
+    hire_date: new Date().toISOString().split('T')[0],
+  });
+
+  if (!employeeResult.success || !employeeResult.employee) {
+    return { success: false, error: employeeResult.error || 'Failed to create employee' };
+  }
+
+  // Update candidate with the new employee ID and stage
+  await supabaseAdmin!
+    .from('candidates')
+    .update({
+      stage: 'hired',
+      probation_employee_id: employeeResult.employee.id,
+      stage_changed_at: new Date().toISOString(),
+    })
+    .eq('id', candidateId);
+
+  return { success: true, employee: employeeResult.employee };
+}
+
+export async function getCandidateStats(): Promise<{
+  total: number;
+  byStage: Record<CandidateStage, number>;
+  thisMonth: number;
+}> {
+  if (!isSupabaseAdminConfigured()) {
+    return {
+      total: 0,
+      byStage: {
+        screening: 0,
+        interview_1: 0,
+        interview_2: 0,
+        under_review: 0,
+        probation: 0,
+        hired: 0,
+        rejected: 0,
+      },
+      thisMonth: 0,
+    };
+  }
+
+  // Get all candidates
+  const { data: candidates, error } = await supabaseAdmin!
+    .from('candidates')
+    .select('stage, created_at');
+
+  if (error) {
+    console.error('Error fetching candidate stats:', error);
+    return {
+      total: 0,
+      byStage: {
+        screening: 0,
+        interview_1: 0,
+        interview_2: 0,
+        under_review: 0,
+        probation: 0,
+        hired: 0,
+        rejected: 0,
+      },
+      thisMonth: 0,
+    };
+  }
+
+  const byStage: Record<CandidateStage, number> = {
+    screening: 0,
+    interview_1: 0,
+    interview_2: 0,
+    under_review: 0,
+    probation: 0,
+    hired: 0,
+    rejected: 0,
+  };
+
+  const now = new Date();
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  let thisMonth = 0;
+
+  candidates?.forEach(c => {
+    byStage[c.stage as CandidateStage]++;
+    if (new Date(c.created_at) >= startOfMonth) {
+      thisMonth++;
+    }
+  });
+
+  return {
+    total: candidates?.length || 0,
+    byStage,
+    thisMonth,
+  };
+}
+
+// ============================================
+// RECRUITMENT FILES
+// ============================================
+
+export interface RecruitmentFile {
+  id: string;
+  file_name: string;
+  file_path: string;
+  file_size: number;
+  mime_type: string | null;
+  category: string;
+  role: string | null;
+  description: string | null;
+  uploaded_by: string | null;
+  created_at: string;
+  // Joined
+  uploader?: { full_name: string };
+}
+
+export async function getRecruitmentFiles(category?: string): Promise<RecruitmentFile[]> {
+  if (!isSupabaseAdminConfigured()) {
+    return [];
+  }
+
+  let query = supabaseAdmin!
+    .from('recruitment_files')
+    .select(`
+      *,
+      uploader:employees!uploaded_by(full_name)
+    `)
+    .order('created_at', { ascending: false });
+
+  if (category) {
+    query = query.eq('category', category);
+  }
+
+  const { data, error } = await query;
+
+  if (error) {
+    console.error('Error fetching recruitment files:', error);
+    return [];
+  }
+
+  return data || [];
+}
+
+export async function createRecruitmentFile(fileData: {
+  file_name: string;
+  file_path: string;
+  file_size: number;
+  mime_type?: string | null;
+  category: string;
+  role?: string | null;
+  description?: string | null;
+  uploaded_by?: string | null;
+}): Promise<{ success: boolean; file?: RecruitmentFile; error?: string }> {
+  if (!isSupabaseAdminConfigured()) {
+    return { success: false, error: 'Database not configured' };
+  }
+
+  const { data, error } = await supabaseAdmin!
+    .from('recruitment_files')
+    .insert(fileData)
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error creating recruitment file:', error);
+    return { success: false, error: error.message };
+  }
+
+  return { success: true, file: data };
+}
+
+export async function deleteRecruitmentFile(id: string): Promise<{ success: boolean; error?: string }> {
+  if (!isSupabaseAdminConfigured()) {
+    return { success: false, error: 'Database not configured' };
+  }
+
+  const { error } = await supabaseAdmin!
+    .from('recruitment_files')
+    .delete()
+    .eq('id', id);
+
+  if (error) {
+    console.error('Error deleting recruitment file:', error);
+    return { success: false, error: error.message };
+  }
+
+  return { success: true };
+}
+
+export async function linkProbationEmployee(
+  candidateId: string,
+  employeeId: string
+): Promise<{ success: boolean; error?: string }> {
+  if (!isSupabaseAdminConfigured()) {
+    return { success: false, error: 'Database not configured' };
+  }
+
+  const { error } = await supabaseAdmin!
+    .from('candidates')
+    .update({ probation_employee_id: employeeId })
+    .eq('id', candidateId);
+
+  if (error) {
+    console.error('Error linking probation employee:', error);
+    return { success: false, error: error.message };
+  }
+
+  return { success: true };
+}

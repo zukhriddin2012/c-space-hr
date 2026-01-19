@@ -15,6 +15,8 @@ import {
   UserPlus,
   BarChart3,
   UserCircle,
+  MessageSquare,
+  Inbox,
 } from 'lucide-react';
 import type { User, UserRole } from '@/types';
 import { getRoleLabel } from '@/lib/auth';
@@ -84,6 +86,18 @@ const navItems: NavItem[] = [
     href: '/departments',
     icon: Building2,
     roles: ['general_manager', 'hr'],
+  },
+  {
+    name: 'Feedback',
+    href: '/feedback',
+    icon: MessageSquare,
+    roles: ['employee', 'branch_manager', 'recruiter', 'hr'],
+  },
+  {
+    name: 'Feedback Inbox',
+    href: '/feedback/review',
+    icon: Inbox,
+    roles: ['general_manager', 'ceo'],
   },
   {
     name: 'Settings',
