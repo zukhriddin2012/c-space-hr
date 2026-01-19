@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Briefcase, MapPin, Clock, Pencil, Trash2, Plus, AlertTriangle } from 'lucide-react';
+import { Briefcase, MapPin, Clock, Pencil, Trash2, Plus, AlertTriangle, MessageCircle } from 'lucide-react';
 import EditEmployeeModal from './EditEmployeeModal';
 import AddEmployeeModal from './AddEmployeeModal';
 
@@ -18,6 +18,10 @@ interface Employee {
   status: string;
   employment_type?: string;
   hire_date: string;
+  date_of_birth?: string | null;
+  gender?: string | null;
+  notes?: string | null;
+  telegram_id?: string | null;
   branches?: { name: string };
 }
 
@@ -104,6 +108,20 @@ function EmploymentTypeBadge({ type }: { type: string }) {
       }`}
     >
       {typeLabels[type] || type}
+    </span>
+  );
+}
+
+function TelegramBadge({ connected }: { connected: boolean }) {
+  return (
+    <span
+      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium ${
+        connected ? 'bg-blue-50 text-blue-700' : 'bg-gray-50 text-gray-400'
+      }`}
+      title={connected ? 'Connected to Telegram Bot' : 'Not connected to Telegram'}
+    >
+      <MessageCircle size={12} />
+      {connected ? 'Bot' : '-'}
     </span>
   );
 }
@@ -266,6 +284,9 @@ export default function EmployeesTable({
                 <th className="text-left px-4 lg:px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Type
                 </th>
+                <th className="text-center px-4 lg:px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Bot
+                </th>
                 <th className="text-left px-4 lg:px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Status
                 </th>
@@ -322,6 +343,9 @@ export default function EmployeesTable({
                   )}
                   <td className="px-4 lg:px-6 py-4">
                     <EmploymentTypeBadge type={employee.employment_type || 'full-time'} />
+                  </td>
+                  <td className="px-4 lg:px-6 py-4 text-center">
+                    <TelegramBadge connected={!!employee.telegram_id} />
                   </td>
                   <td className="px-4 lg:px-6 py-4">
                     <EmployeeStatusBadge status={employee.status} />
@@ -440,10 +464,14 @@ export default function EmployeesTable({
               </div>
 
               {/* Stats Grid */}
-              <div className={`grid ${canViewSalary ? 'grid-cols-3' : 'grid-cols-2'} gap-3 text-center bg-gray-50 rounded-lg p-3 mb-3`}>
+              <div className={`grid ${canViewSalary ? 'grid-cols-4' : 'grid-cols-3'} gap-3 text-center bg-gray-50 rounded-lg p-3 mb-3`}>
                 <div>
                   <p className="text-xs text-gray-500 mb-1">Type</p>
                   <EmploymentTypeBadge type={employee.employment_type || 'full-time'} />
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500 mb-1">Bot</p>
+                  <TelegramBadge connected={!!employee.telegram_id} />
                 </div>
                 <div>
                   <p className="text-xs text-gray-500 mb-1">Hired</p>

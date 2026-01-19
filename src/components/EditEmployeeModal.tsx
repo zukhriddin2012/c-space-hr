@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { X, Building2, Plus, Trash2, Shield } from 'lucide-react';
+import { X, Building2, Plus, Trash2, Shield, MessageCircle, Unlink, Calendar, User, FileText } from 'lucide-react';
 import type { UserRole } from '@/types';
 
 const SYSTEM_ROLES: { value: UserRole; label: string; description: string }[] = [
@@ -50,6 +50,10 @@ interface Employee {
   status: string;
   employment_type?: string;
   hire_date: string;
+  date_of_birth?: string | null;
+  gender?: string | null;
+  notes?: string | null;
+  telegram_id?: string | null;
   branches?: { name: string };
   system_role?: UserRole;
 }
@@ -86,9 +90,15 @@ export default function EditEmployeeModal({
     status: employee.status,
     employment_type: employee.employment_type || 'full-time',
     system_role: (employee.system_role || 'employee') as UserRole,
+    hire_date: employee.hire_date || '',
+    date_of_birth: employee.date_of_birth || '',
+    gender: employee.gender || '',
+    notes: employee.notes || '',
   });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [telegramId, setTelegramId] = useState<string | null>(employee.telegram_id || null);
+  const [disconnectingTelegram, setDisconnectingTelegram] = useState(false);
 
   // Wage management state
   const [wages, setWages] = useState<EmployeeWage[]>([]);
@@ -143,6 +153,10 @@ export default function EditEmployeeModal({
           branch_id: formData.branch_id || null,
           salary: totalSalary, // Update salary to match total wages
           system_role: canAssignRoles ? formData.system_role : undefined,
+          hire_date: formData.hire_date || null,
+          date_of_birth: formData.date_of_birth || null,
+          gender: formData.gender || null,
+          notes: formData.notes || null,
         }),
       });
 
@@ -152,12 +166,39 @@ export default function EditEmployeeModal({
       }
 
       const data = await response.json();
-      // Update employee with new total salary and role
-      onSave({ ...data.employee, salary: totalSalary, system_role: formData.system_role });
+      // Update employee with new total salary, role, and telegram_id
+      onSave({
+        ...data.employee,
+        salary: totalSalary,
+        system_role: formData.system_role,
+        telegram_id: telegramId,
+      });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to update employee');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleDisconnectTelegram = async () => {
+    if (!telegramId) return;
+
+    setDisconnectingTelegram(true);
+    try {
+      const response = await fetch(`/api/employees/${employee.id}/telegram`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        setTelegramId(null);
+      } else {
+        const data = await response.json();
+        setError(data.error || 'Failed to disconnect Telegram');
+      }
+    } catch (err) {
+      setError('Failed to disconnect Telegram');
+    } finally {
+      setDisconnectingTelegram(false);
     }
   };
 
@@ -357,6 +398,108 @@ export default function EditEmployeeModal({
                 />
               </div>
             </div>
+          </div>
+
+          {/* Personal Information Section */}
+          <div className="space-y-4 pt-4 border-t border-gray-200">
+            <div className="flex items-center gap-2">
+              <User size={18} className="text-indigo-600" />
+              <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wider">Personal Information</h3>
+            </div>
+
+            <div className="grid grid-cols-3 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Hire Date
+                </label>
+                <input
+                  type="date"
+                  value={formData.hire_date}
+                  onChange={(e) => setFormData({ ...formData, hire_date: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Date of Birth
+                </label>
+                <input
+                  type="date"
+                  value={formData.date_of_birth}
+                  onChange={(e) => setFormData({ ...formData, date_of_birth: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Gender
+                </label>
+                <select
+                  value={formData.gender}
+                  onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none"
+                >
+                  <option value="">Not specified</option>
+                  <option value="male">Male</option>
+                  <option value="female">Female</option>
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                <div className="flex items-center gap-1">
+                  <FileText size={14} />
+                  Notes
+                </div>
+              </label>
+              <textarea
+                value={formData.notes}
+                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                rows={2}
+                placeholder="Any special notes about this employee (e.g., termination date, special conditions)"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none resize-none"
+              />
+            </div>
+          </div>
+
+          {/* Telegram Bot Connection Section */}
+          <div className="space-y-4 pt-4 border-t border-gray-200">
+            <div className="flex items-center gap-2">
+              <MessageCircle size={18} className="text-blue-600" />
+              <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wider">Telegram Bot Connection</h3>
+            </div>
+
+            {telegramId ? (
+              <div className="flex items-center justify-between p-4 bg-blue-50 rounded-lg">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                    <MessageCircle size={20} className="text-blue-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-blue-900">Connected to C-Space Time Bot</p>
+                    <p className="text-xs text-blue-600">Telegram ID: {telegramId}</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleDisconnectTelegram}
+                  disabled={disconnectingTelegram}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition-colors disabled:opacity-50"
+                >
+                  <Unlink size={14} />
+                  {disconnectingTelegram ? 'Disconnecting...' : 'Disconnect'}
+                </button>
+              </div>
+            ) : (
+              <div className="p-4 bg-gray-50 rounded-lg text-center">
+                <MessageCircle size={24} className="mx-auto mb-2 text-gray-300" />
+                <p className="text-sm text-gray-500">Not connected to Telegram Bot</p>
+                <p className="text-xs text-gray-400 mt-1">Employee can connect via /register command in the bot</p>
+              </div>
+            )}
           </div>
 
           {/* System Role Section - only for users who can assign roles */}
