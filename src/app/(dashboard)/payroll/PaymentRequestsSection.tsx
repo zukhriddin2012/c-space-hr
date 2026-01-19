@@ -266,6 +266,20 @@ export default function PaymentRequestsSection({
     return result;
   }, [payroll, searchQuery, sortField, sortDirection, advanceAmounts, wageAmounts, paidAdvances]);
 
+  // Split payroll into Primary and Additional
+  const primaryPayroll = useMemo(() =>
+    filteredAndSortedPayroll.filter(p => p.wage_category === 'primary'),
+    [filteredAndSortedPayroll]
+  );
+  const additionalPayroll = useMemo(() =>
+    filteredAndSortedPayroll.filter(p => p.wage_category === 'additional'),
+    [filteredAndSortedPayroll]
+  );
+
+  // Calculate totals by category
+  const primaryNetTotal = primaryPayroll.reduce((sum, p) => sum + p.net_salary, 0);
+  const additionalNetTotal = additionalPayroll.reduce((sum, p) => sum + p.net_salary, 0);
+
   // Calculate totals for input amounts
   const totalAdvanceInput = Object.values(advanceAmounts).reduce((sum, amt) => sum + (amt || 0), 0);
   const totalWageInput = Object.values(wageAmounts).reduce((sum, amt) => sum + (amt || 0), 0);
@@ -560,7 +574,7 @@ export default function PaymentRequestsSection({
         </div>
       )}
 
-      {/* Main Payment Table */}
+      {/* Search and Quick Actions Bar */}
       {canProcess && (
         <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
           <div className="px-4 py-3 border-b border-gray-200 bg-gray-50 flex items-center justify-between">
@@ -605,153 +619,8 @@ export default function PaymentRequestsSection({
             </div>
           </div>
 
-          {/* Table */}
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-gray-200 bg-gray-50">
-                  <SortableHeader
-                    label="Employee"
-                    field="name"
-                    currentSort={sortField}
-                    currentDirection={sortDirection}
-                    onSort={handleSort}
-                  />
-                  <SortableHeader
-                    label="Position"
-                    field="position"
-                    currentSort={sortField}
-                    currentDirection={sortDirection}
-                    onSort={handleSort}
-                  />
-                  <SortableHeader
-                    label="Source"
-                    field="entity"
-                    currentSort={sortField}
-                    currentDirection={sortDirection}
-                    onSort={handleSort}
-                  />
-                  <SortableHeader
-                    label="Net Salary"
-                    field="salary"
-                    currentSort={sortField}
-                    currentDirection={sortDirection}
-                    onSort={handleSort}
-                    align="right"
-                  />
-                  <SortableHeader
-                    label="Paid"
-                    field="advancePaid"
-                    currentSort={sortField}
-                    currentDirection={sortDirection}
-                    onSort={handleSort}
-                    icon={<CheckCircle size={14} className="text-blue-500" />}
-                    align="right"
-                  />
-                  <SortableHeader
-                    label="Advance"
-                    field="advance"
-                    currentSort={sortField}
-                    currentDirection={sortDirection}
-                    onSort={handleSort}
-                    icon={<Banknote size={14} className="text-orange-500" />}
-                    align="right"
-                  />
-                  <SortableHeader
-                    label="Wage"
-                    field="wage"
-                    currentSort={sortField}
-                    currentDirection={sortDirection}
-                    onSort={handleSort}
-                    icon={<Wallet size={14} className="text-green-500" />}
-                    align="right"
-                  />
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {filteredAndSortedPayroll.map(employee => {
-                  // Use the unique record ID for tracking amounts (employee_id + entity)
-                  const recordKey = employee.id;
-                  const advance = advanceAmounts[recordKey] || 0;
-                  const wage = wageAmounts[recordKey] || 0;
-                  const advancePaid = paidAdvances[employee.employee_id] || 0;
-
-                  return (
-                    <tr key={recordKey} className="hover:bg-gray-50">
-                      <td className="px-4 py-2">
-                        <p className="font-medium text-gray-900 text-sm">{employee.employee_name}</p>
-                      </td>
-                      <td className="px-4 py-2 text-sm text-gray-500">{employee.employee_position}</td>
-                      <td className="px-4 py-2 text-sm text-gray-600">
-                        <div className="flex items-center gap-1.5">
-                          <span title={employee.wage_category === 'primary' ? 'Primary (Bank)' : 'Additional (Cash)'}>
-                            {employee.wage_category === 'primary' ? (
-                              <Building2 size={14} className="text-indigo-500 flex-shrink-0" />
-                            ) : (
-                              <MapPin size={14} className="text-emerald-500 flex-shrink-0" />
-                            )}
-                          </span>
-                          <span>{employee.legal_entity}</span>
-                        </div>
-                      </td>
-                      <td className="px-4 py-2 text-sm text-gray-900 text-right font-medium">
-                        {formatCurrency(employee.net_salary)}
-                      </td>
-                      <td className="px-4 py-2 text-sm text-right">
-                        {advancePaid > 0 ? (
-                          <span className="text-blue-600 font-medium">{formatNumber(advancePaid)}</span>
-                        ) : (
-                          <span className="text-gray-300">-</span>
-                        )}
-                      </td>
-                      <td className="px-4 py-2 w-36">
-                        <input
-                          type="text"
-                          value={advance > 0 ? formatNumber(advance) : ''}
-                          onChange={(e) => handleAdvanceChange(recordKey, e.target.value)}
-                          placeholder="0"
-                          className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm text-right focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                        />
-                      </td>
-                      <td className="px-4 py-2 w-36">
-                        <input
-                          type="text"
-                          value={wage > 0 ? formatNumber(wage) : ''}
-                          onChange={(e) => handleWageChange(recordKey, e.target.value)}
-                          placeholder="0"
-                          className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm text-right focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                        />
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-              <tfoot>
-                <tr className="border-t-2 border-gray-300 bg-gray-50 font-semibold">
-                  <td className="px-4 py-3 text-sm text-gray-700" colSpan={3}>
-                    Total ({payroll.length} employees)
-                  </td>
-                  <td className="px-4 py-3 text-sm text-gray-900 text-right">
-                    {formatCurrency(totalNetSalary)}
-                  </td>
-                  <td className="px-4 py-3 text-sm text-blue-600 text-right">
-                    {formatCurrency(summary.advance.paidAmount)}
-                  </td>
-                  <td className="px-4 py-3 text-sm text-orange-600 text-right">
-                    {formatCurrency(totalAdvanceInput)}
-                    {advanceCount > 0 && <span className="text-xs text-gray-500 ml-1">({advanceCount})</span>}
-                  </td>
-                  <td className="px-4 py-3 text-sm text-green-600 text-right">
-                    {formatCurrency(totalWageInput)}
-                    {wageCount > 0 && <span className="text-xs text-gray-500 ml-1">({wageCount})</span>}
-                  </td>
-                </tr>
-              </tfoot>
-            </table>
-          </div>
-
           {/* Submit Buttons */}
-          <div className="px-4 py-4 border-t border-gray-200 bg-gray-50 flex justify-end gap-3">
+          <div className="px-4 py-3 bg-gray-50 flex justify-end gap-3">
             <button
               onClick={() => handleCreateRequest('advance')}
               disabled={creating !== null || totalAdvanceInput === 0}
@@ -786,6 +655,182 @@ export default function PaymentRequestsSection({
                 </span>
               )}
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Primary Wages Table (Bank) */}
+      {canProcess && primaryPayroll.length > 0 && (
+        <div className="bg-white rounded-xl border border-indigo-200 overflow-hidden">
+          <div className="px-4 py-3 border-b border-indigo-200 bg-indigo-50 flex items-center gap-2">
+            <Building2 size={18} className="text-indigo-600" />
+            <h3 className="font-semibold text-indigo-900">Primary Wages (Bank)</h3>
+            <span className="text-xs text-indigo-600 bg-indigo-100 px-2 py-0.5 rounded-full ml-auto">
+              12% tax applied
+            </span>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-indigo-100 bg-indigo-50/50">
+                  <SortableHeader label="Employee" field="name" currentSort={sortField} currentDirection={sortDirection} onSort={handleSort} />
+                  <SortableHeader label="Position" field="position" currentSort={sortField} currentDirection={sortDirection} onSort={handleSort} />
+                  <SortableHeader label="Legal Entity" field="entity" currentSort={sortField} currentDirection={sortDirection} onSort={handleSort} />
+                  <SortableHeader label="Net Salary" field="salary" currentSort={sortField} currentDirection={sortDirection} onSort={handleSort} align="right" />
+                  <SortableHeader label="Paid" field="advancePaid" currentSort={sortField} currentDirection={sortDirection} onSort={handleSort} icon={<CheckCircle size={14} className="text-blue-500" />} align="right" />
+                  <SortableHeader label="Advance" field="advance" currentSort={sortField} currentDirection={sortDirection} onSort={handleSort} icon={<Banknote size={14} className="text-orange-500" />} align="right" />
+                  <SortableHeader label="Wage" field="wage" currentSort={sortField} currentDirection={sortDirection} onSort={handleSort} icon={<Wallet size={14} className="text-green-500" />} align="right" />
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-indigo-50">
+                {primaryPayroll.map(employee => {
+                  const recordKey = employee.id;
+                  const advance = advanceAmounts[recordKey] || 0;
+                  const wage = wageAmounts[recordKey] || 0;
+                  const employeeAdvancePaid = paidAdvances[employee.employee_id] || 0;
+
+                  return (
+                    <tr key={recordKey} className="hover:bg-indigo-50/30">
+                      <td className="px-4 py-2">
+                        <p className="font-medium text-gray-900 text-sm">{employee.employee_name}</p>
+                      </td>
+                      <td className="px-4 py-2 text-sm text-gray-500">{employee.employee_position}</td>
+                      <td className="px-4 py-2 text-sm text-gray-600">{employee.legal_entity}</td>
+                      <td className="px-4 py-2 text-sm text-gray-900 text-right font-medium">
+                        {formatCurrency(employee.net_salary)}
+                      </td>
+                      <td className="px-4 py-2 text-sm text-right">
+                        {employeeAdvancePaid > 0 ? (
+                          <span className="text-blue-600 font-medium">{formatNumber(employeeAdvancePaid)}</span>
+                        ) : (
+                          <span className="text-gray-300">-</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-2 w-36">
+                        <input
+                          type="text"
+                          value={advance > 0 ? formatNumber(advance) : ''}
+                          onChange={(e) => handleAdvanceChange(recordKey, e.target.value)}
+                          placeholder="0"
+                          className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm text-right focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                        />
+                      </td>
+                      <td className="px-4 py-2 w-36">
+                        <input
+                          type="text"
+                          value={wage > 0 ? formatNumber(wage) : ''}
+                          onChange={(e) => handleWageChange(recordKey, e.target.value)}
+                          placeholder="0"
+                          className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm text-right focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                        />
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+              <tfoot>
+                <tr className="border-t-2 border-indigo-200 bg-indigo-50 font-semibold">
+                  <td className="px-4 py-3 text-sm text-indigo-700" colSpan={3}>
+                    Primary Total ({primaryPayroll.length} records)
+                  </td>
+                  <td className="px-4 py-3 text-sm text-indigo-900 text-right">
+                    {formatCurrency(primaryNetTotal)}
+                  </td>
+                  <td className="px-4 py-3 text-sm text-blue-600 text-right">-</td>
+                  <td className="px-4 py-3 text-sm text-orange-600 text-right">-</td>
+                  <td className="px-4 py-3 text-sm text-green-600 text-right">-</td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* Additional Wages Table (Cash) */}
+      {canProcess && additionalPayroll.length > 0 && (
+        <div className="bg-white rounded-xl border border-emerald-200 overflow-hidden">
+          <div className="px-4 py-3 border-b border-emerald-200 bg-emerald-50 flex items-center gap-2">
+            <MapPin size={18} className="text-emerald-600" />
+            <h3 className="font-semibold text-emerald-900">Additional Wages (Cash)</h3>
+            <span className="text-xs text-emerald-600 bg-emerald-100 px-2 py-0.5 rounded-full ml-auto">
+              No tax
+            </span>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-emerald-100 bg-emerald-50/50">
+                  <SortableHeader label="Employee" field="name" currentSort={sortField} currentDirection={sortDirection} onSort={handleSort} />
+                  <SortableHeader label="Position" field="position" currentSort={sortField} currentDirection={sortDirection} onSort={handleSort} />
+                  <SortableHeader label="Branch" field="entity" currentSort={sortField} currentDirection={sortDirection} onSort={handleSort} />
+                  <SortableHeader label="Net Salary" field="salary" currentSort={sortField} currentDirection={sortDirection} onSort={handleSort} align="right" />
+                  <SortableHeader label="Paid" field="advancePaid" currentSort={sortField} currentDirection={sortDirection} onSort={handleSort} icon={<CheckCircle size={14} className="text-blue-500" />} align="right" />
+                  <SortableHeader label="Advance" field="advance" currentSort={sortField} currentDirection={sortDirection} onSort={handleSort} icon={<Banknote size={14} className="text-orange-500" />} align="right" />
+                  <SortableHeader label="Wage" field="wage" currentSort={sortField} currentDirection={sortDirection} onSort={handleSort} icon={<Wallet size={14} className="text-green-500" />} align="right" />
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-emerald-50">
+                {additionalPayroll.map(employee => {
+                  const recordKey = employee.id;
+                  const advance = advanceAmounts[recordKey] || 0;
+                  const wage = wageAmounts[recordKey] || 0;
+                  const employeeAdvancePaid = paidAdvances[employee.employee_id] || 0;
+
+                  return (
+                    <tr key={recordKey} className="hover:bg-emerald-50/30">
+                      <td className="px-4 py-2">
+                        <p className="font-medium text-gray-900 text-sm">{employee.employee_name}</p>
+                      </td>
+                      <td className="px-4 py-2 text-sm text-gray-500">{employee.employee_position}</td>
+                      <td className="px-4 py-2 text-sm text-gray-600">{employee.legal_entity}</td>
+                      <td className="px-4 py-2 text-sm text-gray-900 text-right font-medium">
+                        {formatCurrency(employee.net_salary)}
+                      </td>
+                      <td className="px-4 py-2 text-sm text-right">
+                        {employeeAdvancePaid > 0 ? (
+                          <span className="text-blue-600 font-medium">{formatNumber(employeeAdvancePaid)}</span>
+                        ) : (
+                          <span className="text-gray-300">-</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-2 w-36">
+                        <input
+                          type="text"
+                          value={advance > 0 ? formatNumber(advance) : ''}
+                          onChange={(e) => handleAdvanceChange(recordKey, e.target.value)}
+                          placeholder="0"
+                          className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm text-right focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                        />
+                      </td>
+                      <td className="px-4 py-2 w-36">
+                        <input
+                          type="text"
+                          value={wage > 0 ? formatNumber(wage) : ''}
+                          onChange={(e) => handleWageChange(recordKey, e.target.value)}
+                          placeholder="0"
+                          className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm text-right focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                        />
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+              <tfoot>
+                <tr className="border-t-2 border-emerald-200 bg-emerald-50 font-semibold">
+                  <td className="px-4 py-3 text-sm text-emerald-700" colSpan={3}>
+                    Additional Total ({additionalPayroll.length} records)
+                  </td>
+                  <td className="px-4 py-3 text-sm text-emerald-900 text-right">
+                    {formatCurrency(additionalNetTotal)}
+                  </td>
+                  <td className="px-4 py-3 text-sm text-blue-600 text-right">-</td>
+                  <td className="px-4 py-3 text-sm text-orange-600 text-right">-</td>
+                  <td className="px-4 py-3 text-sm text-green-600 text-right">-</td>
+                </tr>
+              </tfoot>
+            </table>
           </div>
         </div>
       )}
