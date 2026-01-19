@@ -5,6 +5,7 @@ import MobileNav from '@/components/MobileNav';
 import { AuthProvider } from '@/contexts/AuthContext';
 import NotificationBell from '@/components/NotificationBell';
 import TestBannerWrapper from '@/components/TestBannerWrapper';
+import FloatingFeedbackButton from '@/components/FloatingFeedbackButton';
 
 export default async function DashboardLayout({
   children,
@@ -52,6 +53,9 @@ export default async function DashboardLayout({
           {/* Main Content */}
           <div className="p-4 lg:p-6">{children}</div>
         </main>
+
+        {/* Floating Feedback Button */}
+        <FloatingFeedbackButton userRole={user.role} />
       </div>
     </AuthProvider>
   );
