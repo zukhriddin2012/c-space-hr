@@ -16,6 +16,8 @@ import {
   ChevronsUpDown,
   Download,
   FileSpreadsheet,
+  Building2,
+  MapPin,
 } from 'lucide-react';
 import ConfirmationDialog, { InputDialog } from '@/components/ConfirmationDialog';
 
@@ -25,6 +27,7 @@ interface PayrollRecord {
   employee_name: string;
   employee_position: string;
   legal_entity: string;
+  wage_category: 'primary' | 'additional';
   net_salary: number;
 }
 
@@ -622,7 +625,7 @@ export default function PaymentRequestsSection({
                     onSort={handleSort}
                   />
                   <SortableHeader
-                    label="Legal Entity"
+                    label="Source"
                     field="entity"
                     currentSort={sortField}
                     currentDirection={sortDirection}
@@ -679,7 +682,18 @@ export default function PaymentRequestsSection({
                         <p className="font-medium text-gray-900 text-sm">{employee.employee_name}</p>
                       </td>
                       <td className="px-4 py-2 text-sm text-gray-500">{employee.employee_position}</td>
-                      <td className="px-4 py-2 text-sm text-gray-600">{employee.legal_entity}</td>
+                      <td className="px-4 py-2 text-sm text-gray-600">
+                        <div className="flex items-center gap-1.5">
+                          <span title={employee.wage_category === 'primary' ? 'Primary (Bank)' : 'Additional (Cash)'}>
+                            {employee.wage_category === 'primary' ? (
+                              <Building2 size={14} className="text-indigo-500 flex-shrink-0" />
+                            ) : (
+                              <MapPin size={14} className="text-emerald-500 flex-shrink-0" />
+                            )}
+                          </span>
+                          <span>{employee.legal_entity}</span>
+                        </div>
+                      </td>
                       <td className="px-4 py-2 text-sm text-gray-900 text-right font-medium">
                         {formatCurrency(employee.net_salary)}
                       </td>
