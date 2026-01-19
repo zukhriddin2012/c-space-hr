@@ -19,6 +19,10 @@ interface Employee {
   status: string;
   employment_type?: string;
   hire_date: string;
+  date_of_birth?: string | null;
+  gender?: string | null;
+  notes?: string | null;
+  telegram_id?: string | null;
   branches?: { name: string };
 }
 
