@@ -1,7 +1,7 @@
 import { getSession } from '@/lib/auth-server';
 import { hasPermission, PERMISSIONS } from '@/lib/permissions';
 import { redirect, notFound } from 'next/navigation';
-import { ArrowLeft, User, Briefcase, MapPin, Clock, Phone, Mail, Calendar, CheckCircle, AlertCircle, XCircle } from 'lucide-react';
+import { ArrowLeft, User, Briefcase, MapPin, Clock, Phone, Mail, Calendar, CheckCircle, AlertCircle, XCircle, Pencil } from 'lucide-react';
 import Link from 'next/link';
 import { getEmployeeById, getBranches, getAttendanceByEmployeeAndMonth } from '@/lib/db';
 import EmployeeWagesSection from '@/components/EmployeeWagesSection';
@@ -100,6 +100,7 @@ export default async function EmployeeDetailPage({ params, searchParams }: PageP
 
   const canViewSalary = hasPermission(user.role, PERMISSIONS.EMPLOYEES_VIEW_SALARY);
   const canEditSalary = hasPermission(user.role, PERMISSIONS.EMPLOYEES_EDIT_SALARY);
+  const canEditEmployee = hasPermission(user.role, PERMISSIONS.EMPLOYEES_EDIT);
 
   // Get params
   const { id } = await params;
@@ -153,17 +154,28 @@ export default async function EmployeeDetailPage({ params, searchParams }: PageP
   return (
     <div>
       {/* Header */}
-      <div className="flex items-center gap-4 mb-6">
-        <Link
-          href="/employees"
-          className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-        >
-          <ArrowLeft size={20} />
-        </Link>
-        <div>
-          <h1 className="text-2xl font-semibold text-gray-900">Employee Details</h1>
-          <p className="text-gray-500 mt-1">View employee information and attendance history</p>
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-4">
+          <Link
+            href="/employees"
+            className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+          >
+            <ArrowLeft size={20} />
+          </Link>
+          <div>
+            <h1 className="text-2xl font-semibold text-gray-900">Employee Details</h1>
+            <p className="text-gray-500 mt-1">View employee information and attendance history</p>
+          </div>
         </div>
+        {canEditEmployee && (
+          <Link
+            href={`/employees/${id}/edit`}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg font-medium hover:bg-purple-700 transition-colors"
+          >
+            <Pencil size={16} />
+            Edit Employee
+          </Link>
+        )}
       </div>
 
       {/* Employee Profile Card */}

@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Briefcase, MapPin, Clock, Pencil, Plus, MessageCircle } from 'lucide-react';
+import { Briefcase, MapPin, Clock, Eye, Plus, MessageCircle } from 'lucide-react';
 import AddEmployeeModal from './AddEmployeeModal';
 
 interface Employee {
@@ -268,11 +268,11 @@ export default function EmployeesTable({
                   <td className="px-4 lg:px-6 py-4 text-right">
                     {canEditEmployee && (
                       <Link
-                        href={`/employees/${employee.id}/edit`}
+                        href={`/employees/${employee.id}`}
                         className="inline-flex items-center gap-1 px-3 py-1.5 text-sm text-purple-600 bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors"
                       >
-                        <Pencil size={14} />
-                        Edit
+                        <Eye size={14} />
+                        View
                       </Link>
                     )}
                   </td>
@@ -393,11 +393,11 @@ export default function EmployeesTable({
               {/* Actions */}
               {canEditEmployee && (
                 <Link
-                  href={`/employees/${employee.id}/edit`}
+                  href={`/employees/${employee.id}`}
                   className="w-full inline-flex items-center justify-center gap-1 px-3 py-2 text-sm text-purple-600 bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors"
                 >
-                  <Pencil size={14} />
-                  Edit
+                  <Eye size={14} />
+                  View
                 </Link>
               )}
             </div>

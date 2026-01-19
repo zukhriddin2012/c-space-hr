@@ -27,6 +27,9 @@ import {
   UserMinus,
   AlertTriangle,
   Clock,
+  ArrowUpCircle,
+  ArrowDownCircle,
+  Edit3,
 } from 'lucide-react';
 import type { UserRole } from '@/types';
 
@@ -113,6 +116,24 @@ interface EmployeeDocument {
   notes: string | null;
   created_at: string;
   updated_at: string;
+}
+
+interface PendingWageChange {
+  id: string;
+  employee_id: string;
+  wage_type: 'primary' | 'additional';
+  legal_entity_id: string | null;
+  branch_id: string | null;
+  current_amount: number;
+  proposed_amount: number;
+  change_type: 'increase' | 'decrease';
+  reason: string;
+  effective_date: string;
+  status: string;
+  created_at: string;
+  legal_entity?: { name: string };
+  branch?: { name: string };
+  requester?: { full_name: string };
 }
 
 const DOCUMENT_TYPES = [
@@ -211,6 +232,21 @@ export default function EditEmployeePage({ params }: { params: Promise<{ id: str
   const [terminationReason, setTerminationReason] = useState('');
   const [terminationDate, setTerminationDate] = useState('');
   const [submittingTermination, setSubmittingTermination] = useState(false);
+
+  // Wage change request state
+  const [pendingWageChanges, setPendingWageChanges] = useState<PendingWageChange[]>([]);
+  const [showWageChangeModal, setShowWageChangeModal] = useState(false);
+  const [wageChangeData, setWageChangeData] = useState<{
+    wage_type: 'primary' | 'additional';
+    legal_entity_id?: string;
+    branch_id?: string;
+    entity_name: string;
+    current_amount: number;
+  } | null>(null);
+  const [proposedAmount, setProposedAmount] = useState('');
+  const [wageChangeReason, setWageChangeReason] = useState('');
+  const [wageChangeDate, setWageChangeDate] = useState('');
+  const [submittingWageChange, setSubmittingWageChange] = useState(false);
 
   // Calculate totals
   const primaryTotal = wages.reduce((sum, w) => sum + (w.wage_amount || 0), 0);
@@ -343,6 +379,25 @@ export default function EditEmployeePage({ params }: { params: Promise<{ id: str
     fetchPendingTermination();
   }, [employeeId]);
 
+  // Fetch pending wage change requests
+  useEffect(() => {
+    if (!employeeId) return;
+
+    async function fetchPendingWageChanges() {
+      try {
+        const response = await fetch(`/api/employees/${employeeId}/pending-wage-changes`);
+        if (response.ok) {
+          const data = await response.json();
+          setPendingWageChanges(data.pendingChanges || []);
+        }
+      } catch (err) {
+        console.error('Error fetching pending wage changes:', err);
+      }
+    }
+
+    fetchPendingWageChanges();
+  }, [employeeId]);
+
   // Termination request handler
   const handleSubmitTermination = async () => {
     if (!employeeId || !terminationReason || !terminationDate) return;
@@ -384,6 +439,96 @@ export default function EditEmployeePage({ params }: { params: Promise<{ id: str
     } finally {
       setSubmittingTermination(false);
     }
+  };
+
+  // Wage change request handlers
+  const openWageChangeModal = (
+    wageType: 'primary' | 'additional',
+    entityId: string,
+    entityName: string,
+    currentAmount: number,
+    isLegalEntity: boolean
+  ) => {
+    setWageChangeData({
+      wage_type: wageType,
+      legal_entity_id: isLegalEntity ? entityId : undefined,
+      branch_id: !isLegalEntity ? entityId : undefined,
+      entity_name: entityName,
+      current_amount: currentAmount,
+    });
+    setProposedAmount(currentAmount.toString());
+    setWageChangeReason('');
+    // Default to first of next month
+    const nextMonth = new Date();
+    nextMonth.setMonth(nextMonth.getMonth() + 1);
+    nextMonth.setDate(1);
+    setWageChangeDate(nextMonth.toISOString().split('T')[0]);
+    setShowWageChangeModal(true);
+  };
+
+  const handleSubmitWageChange = async () => {
+    if (!employeeId || !wageChangeData || !proposedAmount || !wageChangeReason || !wageChangeDate) return;
+
+    const proposedAmountNum = parseFloat(proposedAmount);
+    if (proposedAmountNum === wageChangeData.current_amount) {
+      setError('Proposed amount must be different from current amount');
+      return;
+    }
+
+    setSubmittingWageChange(true);
+    setError(null);
+
+    try {
+      const response = await fetch('/api/wage-change-requests', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          employee_id: employeeId,
+          wage_type: wageChangeData.wage_type,
+          legal_entity_id: wageChangeData.legal_entity_id,
+          branch_id: wageChangeData.branch_id,
+          current_amount: wageChangeData.current_amount,
+          proposed_amount: proposedAmountNum,
+          reason: wageChangeReason,
+          effective_date: wageChangeDate,
+        }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to submit wage change request');
+      }
+
+      const data = await response.json();
+      setPendingWageChanges([data.request, ...pendingWageChanges]);
+      setShowWageChangeModal(false);
+      setWageChangeData(null);
+      setProposedAmount('');
+      setWageChangeReason('');
+      setWageChangeDate('');
+      setSuccess('Wage change request submitted. Awaiting GM approval.');
+      setTimeout(() => setSuccess(null), 5000);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to submit wage change request');
+    } finally {
+      setSubmittingWageChange(false);
+    }
+  };
+
+  // Helper to check if a wage has a pending change
+  const hasPendingChange = (wageType: 'primary' | 'additional', entityId: string) => {
+    return pendingWageChanges.some(pc =>
+      pc.wage_type === wageType &&
+      (wageType === 'primary' ? pc.legal_entity_id === entityId : pc.branch_id === entityId)
+    );
+  };
+
+  // Get pending change for a specific wage
+  const getPendingChange = (wageType: 'primary' | 'additional', entityId: string) => {
+    return pendingWageChanges.find(pc =>
+      pc.wage_type === wageType &&
+      (wageType === 'primary' ? pc.legal_entity_id === entityId : pc.branch_id === entityId)
+    );
   };
 
   // Document handlers
@@ -1042,34 +1187,67 @@ export default function EditEmployeePage({ params }: { params: Promise<{ id: str
               </div>
             ) : (
               <div className="space-y-2">
-                {wages.map((wage) => (
-                  <div
-                    key={wage.id}
-                    className="flex items-center justify-between p-3 bg-indigo-50 rounded-lg"
-                  >
-                    <div className="flex items-center gap-3">
-                      <Building2 size={16} className="text-indigo-500" />
-                      <div>
-                        <p className="text-sm font-medium text-gray-900">
-                          {wage.legal_entities?.short_name || wage.legal_entities?.name || wage.legal_entity_id}
-                        </p>
-                        {wage.legal_entities?.inn && (
-                          <p className="text-xs text-gray-500">INN: {wage.legal_entities.inn}</p>
-                        )}
+                {wages.map((wage) => {
+                  const pendingChange = getPendingChange('primary', wage.legal_entity_id);
+                  return (
+                    <div key={wage.id} className="p-3 bg-indigo-50 rounded-lg">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <Building2 size={16} className="text-indigo-500" />
+                          <div>
+                            <p className="text-sm font-medium text-gray-900">
+                              {wage.legal_entities?.short_name || wage.legal_entities?.name || wage.legal_entity_id}
+                            </p>
+                            {wage.legal_entities?.inn && (
+                              <p className="text-xs text-gray-500">INN: {wage.legal_entities.inn}</p>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <span className="font-semibold text-gray-900">{formatSalary(wage.wage_amount)}</span>
+                          {!pendingChange && (
+                            <button
+                              type="button"
+                              onClick={() => openWageChangeModal(
+                                'primary',
+                                wage.legal_entity_id,
+                                wage.legal_entities?.short_name || wage.legal_entities?.name || wage.legal_entity_id,
+                                wage.wage_amount,
+                                true
+                              )}
+                              className="inline-flex items-center gap-1 px-2 py-1 text-xs text-indigo-600 bg-white border border-indigo-200 rounded hover:bg-indigo-100 transition-colors"
+                            >
+                              <Edit3 size={12} />
+                              Request Change
+                            </button>
+                          )}
+                        </div>
                       </div>
+                      {/* Pending change indicator */}
+                      {pendingChange && (
+                        <div className="mt-2 p-2 bg-amber-50 border border-amber-200 rounded-lg">
+                          <div className="flex items-center gap-2 text-amber-700">
+                            <Clock size={14} />
+                            <span className="text-xs font-medium">Pending Change Request</span>
+                          </div>
+                          <div className="mt-1 flex items-center gap-2 text-xs text-amber-600">
+                            {pendingChange.change_type === 'increase' ? (
+                              <ArrowUpCircle size={12} className="text-green-500" />
+                            ) : (
+                              <ArrowDownCircle size={12} className="text-red-500" />
+                            )}
+                            <span>
+                              {formatSalary(pendingChange.current_amount)} → {formatSalary(pendingChange.proposed_amount)}
+                            </span>
+                            <span className="text-gray-400">|</span>
+                            <span>Effective: {formatDate(pendingChange.effective_date)}</span>
+                          </div>
+                          <p className="mt-1 text-xs text-gray-500">Reason: {pendingChange.reason}</p>
+                        </div>
+                      )}
                     </div>
-                    <div className="flex items-center gap-3">
-                      <span className="font-semibold text-gray-900">{formatSalary(wage.wage_amount)}</span>
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveWage(wage.id)}
-                        className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
-                      >
-                        <Trash2 size={14} />
-                      </button>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
 
@@ -1152,31 +1330,64 @@ export default function EditEmployeePage({ params }: { params: Promise<{ id: str
               </div>
             ) : (
               <div className="space-y-2">
-                {branchWages.map((wage) => (
-                  <div
-                    key={wage.id}
-                    className="flex items-center justify-between p-3 bg-emerald-50 rounded-lg"
-                  >
-                    <div className="flex items-center gap-3">
-                      <MapPin size={16} className="text-emerald-500" />
-                      <div>
-                        <p className="text-sm font-medium text-gray-900">
-                          {wage.branches?.name || wage.branch_id}
-                        </p>
+                {branchWages.map((wage) => {
+                  const pendingChange = getPendingChange('additional', wage.branch_id);
+                  return (
+                    <div key={wage.id} className="p-3 bg-emerald-50 rounded-lg">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <MapPin size={16} className="text-emerald-500" />
+                          <div>
+                            <p className="text-sm font-medium text-gray-900">
+                              {wage.branches?.name || wage.branch_id}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <span className="font-semibold text-gray-900">{formatSalary(wage.wage_amount)}</span>
+                          {!pendingChange && (
+                            <button
+                              type="button"
+                              onClick={() => openWageChangeModal(
+                                'additional',
+                                wage.branch_id,
+                                wage.branches?.name || wage.branch_id,
+                                wage.wage_amount,
+                                false
+                              )}
+                              className="inline-flex items-center gap-1 px-2 py-1 text-xs text-emerald-600 bg-white border border-emerald-200 rounded hover:bg-emerald-100 transition-colors"
+                            >
+                              <Edit3 size={12} />
+                              Request Change
+                            </button>
+                          )}
+                        </div>
                       </div>
+                      {/* Pending change indicator */}
+                      {pendingChange && (
+                        <div className="mt-2 p-2 bg-amber-50 border border-amber-200 rounded-lg">
+                          <div className="flex items-center gap-2 text-amber-700">
+                            <Clock size={14} />
+                            <span className="text-xs font-medium">Pending Change Request</span>
+                          </div>
+                          <div className="mt-1 flex items-center gap-2 text-xs text-amber-600">
+                            {pendingChange.change_type === 'increase' ? (
+                              <ArrowUpCircle size={12} className="text-green-500" />
+                            ) : (
+                              <ArrowDownCircle size={12} className="text-red-500" />
+                            )}
+                            <span>
+                              {formatSalary(pendingChange.current_amount)} → {formatSalary(pendingChange.proposed_amount)}
+                            </span>
+                            <span className="text-gray-400">|</span>
+                            <span>Effective: {formatDate(pendingChange.effective_date)}</span>
+                          </div>
+                          <p className="mt-1 text-xs text-gray-500">Reason: {pendingChange.reason}</p>
+                        </div>
+                      )}
                     </div>
-                    <div className="flex items-center gap-3">
-                      <span className="font-semibold text-gray-900">{formatSalary(wage.wage_amount)}</span>
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveBranchWage(wage.id)}
-                        className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
-                      >
-                        <Trash2 size={14} />
-                      </button>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
 
@@ -1562,6 +1773,126 @@ export default function EditEmployeePage({ params }: { params: Promise<{ id: str
                 className="flex-1 px-4 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {submittingTermination ? 'Submitting...' : 'Submit Request'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Wage Change Request Modal */}
+      {showWageChangeModal && wageChangeData && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-md mx-4 p-6">
+            <div className="flex items-center gap-4 mb-4">
+              <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center">
+                <Edit3 size={24} className="text-indigo-600" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">Request Wage Change</h3>
+                <p className="text-sm text-gray-500">This requires GM approval</p>
+              </div>
+            </div>
+
+            <div className="space-y-4 mb-6">
+              {/* Wage info display */}
+              <div className="p-3 bg-gray-50 rounded-lg">
+                <p className="text-sm text-gray-500">
+                  {wageChangeData.wage_type === 'primary' ? 'Primary Wage' : 'Additional Wage'}
+                </p>
+                <p className="text-sm font-medium text-gray-900">{wageChangeData.entity_name}</p>
+                <p className="text-lg font-bold text-gray-900 mt-1">
+                  Current: {formatSalary(wageChangeData.current_amount)}
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  New Amount (UZS) *
+                </label>
+                <input
+                  type="number"
+                  value={proposedAmount}
+                  onChange={(e) => setProposedAmount(e.target.value)}
+                  placeholder="Enter new wage amount"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                  min="0"
+                  step="100000"
+                  required
+                />
+                {proposedAmount && parseFloat(proposedAmount) !== wageChangeData.current_amount && (
+                  <p className={`text-xs mt-1 flex items-center gap-1 ${
+                    parseFloat(proposedAmount) > wageChangeData.current_amount ? 'text-green-600' : 'text-red-600'
+                  }`}>
+                    {parseFloat(proposedAmount) > wageChangeData.current_amount ? (
+                      <><ArrowUpCircle size={12} /> Increase by {formatSalary(parseFloat(proposedAmount) - wageChangeData.current_amount)}</>
+                    ) : (
+                      <><ArrowDownCircle size={12} /> Decrease by {formatSalary(wageChangeData.current_amount - parseFloat(proposedAmount))}</>
+                    )}
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Reason for Change *
+                </label>
+                <textarea
+                  value={wageChangeReason}
+                  onChange={(e) => setWageChangeReason(e.target.value)}
+                  rows={3}
+                  placeholder="e.g., Performance review - promotion, Annual raise, Role change..."
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none resize-none"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Effective Date *
+                </label>
+                <input
+                  type="date"
+                  value={wageChangeDate}
+                  onChange={(e) => setWageChangeDate(e.target.value)}
+                  min={new Date().toISOString().split('T')[0]}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                  required
+                />
+              </div>
+
+              <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-800">
+                <strong>Note:</strong> This change request will be sent to the General Manager for approval. The wage will only be updated after approval.
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowWageChangeModal(false);
+                  setWageChangeData(null);
+                  setProposedAmount('');
+                  setWageChangeReason('');
+                  setWageChangeDate('');
+                }}
+                disabled={submittingWageChange}
+                className="flex-1 px-4 py-2.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleSubmitWageChange}
+                disabled={
+                  submittingWageChange ||
+                  !proposedAmount ||
+                  !wageChangeReason ||
+                  !wageChangeDate ||
+                  parseFloat(proposedAmount) === wageChangeData.current_amount
+                }
+                className="flex-1 px-4 py-2.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {submittingWageChange ? 'Submitting...' : 'Submit Request'}
               </button>
             </div>
           </div>
