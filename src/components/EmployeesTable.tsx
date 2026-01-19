@@ -1,8 +1,8 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { Briefcase, MapPin, Clock, Pencil, Trash2, Plus, AlertTriangle, MessageCircle } from 'lucide-react';
-import EditEmployeeModal from './EditEmployeeModal';
 import AddEmployeeModal from './AddEmployeeModal';
 
 interface Employee {
@@ -202,17 +202,9 @@ export default function EmployeesTable({
   canAssignRoles = false,
 }: EmployeesTableProps) {
   const [employees, setEmployees] = useState(initialEmployees);
-  const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [deletingEmployee, setDeletingEmployee] = useState<Employee | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
-
-  const handleSave = (updatedEmployee: Employee) => {
-    setEmployees(employees.map(emp =>
-      emp.id === updatedEmployee.id ? updatedEmployee : emp
-    ));
-    setEditingEmployee(null);
-  };
 
   const handleAdd = (newEmployee: Employee) => {
     setEmployees([...employees, newEmployee]);
@@ -353,13 +345,13 @@ export default function EmployeesTable({
                   <td className="px-4 lg:px-6 py-4 text-right">
                     <div className="flex items-center justify-end gap-2">
                       {canEditEmployee && (
-                        <button
-                          onClick={() => setEditingEmployee(employee)}
+                        <Link
+                          href={`/employees/${employee.id}/edit`}
                           className="inline-flex items-center gap-1 px-3 py-1.5 text-sm text-purple-600 bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors"
                         >
                           <Pencil size={14} />
                           Edit
-                        </button>
+                        </Link>
                       )}
                       {canEditEmployee && (
                         <button
@@ -488,13 +480,13 @@ export default function EmployeesTable({
               {/* Actions */}
               {canEditEmployee && (
                 <div className="flex gap-2">
-                  <button
-                    onClick={() => setEditingEmployee(employee)}
+                  <Link
+                    href={`/employees/${employee.id}/edit`}
                     className="flex-1 inline-flex items-center justify-center gap-1 px-3 py-2 text-sm text-purple-600 bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors"
                   >
                     <Pencil size={14} />
                     Edit
-                  </button>
+                  </Link>
                   <button
                     onClick={() => setDeletingEmployee(employee)}
                     className="px-3 py-2 text-sm text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition-colors"
@@ -523,18 +515,6 @@ export default function EmployeesTable({
           branches={branches}
           onClose={() => setShowAddModal(false)}
           onAdd={handleAdd}
-          canAssignRoles={canAssignRoles}
-        />
-      )}
-
-      {/* Edit Modal */}
-      {editingEmployee && (
-        <EditEmployeeModal
-          employee={editingEmployee}
-          branches={branches}
-          onClose={() => setEditingEmployee(null)}
-          onSave={handleSave}
-          canEditSalary={canEditSalary}
           canAssignRoles={canAssignRoles}
         />
       )}
