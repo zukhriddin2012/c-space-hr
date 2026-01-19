@@ -249,62 +249,26 @@ export default function PaymentRequestsSection({
     }
   };
 
-  // Filter and sort employees
-  const filteredAndSortedPayroll = useMemo(() => {
-    let result = [...payroll];
-
-    // Apply search filter
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
-      result = result.filter(
-        p =>
-          p.employee_name.toLowerCase().includes(query) ||
-          p.employee_position.toLowerCase().includes(query) ||
-          p.legal_entity.toLowerCase().includes(query)
-      );
+  // Filter payroll by search query
+  const filteredPayroll = useMemo(() => {
+    if (!searchQuery.trim()) {
+      return payroll;
     }
 
-    // Apply sorting
-    if (sortField && sortDirection) {
-      result.sort((a, b) => {
-        let comparison = 0;
-
-        switch (sortField) {
-          case 'name':
-            comparison = (a.employee_name || '').localeCompare(b.employee_name || '');
-            break;
-          case 'position':
-            comparison = (a.employee_position || '').localeCompare(b.employee_position || '');
-            break;
-          case 'entity':
-            comparison = (a.legal_entity || '').localeCompare(b.legal_entity || '');
-            break;
-          case 'salary':
-            comparison = (a.net_salary || 0) - (b.net_salary || 0);
-            break;
-          case 'advancePaid':
-            comparison = (paidAdvances[a.employee_id] || 0) - (paidAdvances[b.employee_id] || 0);
-            break;
-          case 'advance':
-            comparison = (advanceAmounts[a.id] || 0) - (advanceAmounts[b.id] || 0);
-            break;
-          case 'wage':
-            comparison = (wageAmounts[a.id] || 0) - (wageAmounts[b.id] || 0);
-            break;
-        }
-
-        return sortDirection === 'desc' ? -comparison : comparison;
-      });
-    }
-
-    return result;
-  }, [payroll, searchQuery, sortField, sortDirection, advanceAmounts, wageAmounts, paidAdvances]);
+    const query = searchQuery.toLowerCase();
+    return payroll.filter(
+      p =>
+        p.employee_name.toLowerCase().includes(query) ||
+        p.employee_position.toLowerCase().includes(query) ||
+        p.legal_entity.toLowerCase().includes(query)
+    );
+  }, [payroll, searchQuery]);
 
   // Group payroll by employee for hybrid view
   const groupedEmployees = useMemo(() => {
     const map = new Map<string, GroupedEmployee>();
 
-    for (const record of filteredAndSortedPayroll) {
+    for (const record of filteredPayroll) {
       const existing = map.get(record.employee_id);
       if (existing) {
         existing.totalNet += record.net_salary;
@@ -330,14 +294,53 @@ export default function PaymentRequestsSection({
       });
     }
 
-    return Array.from(map.values());
-  }, [filteredAndSortedPayroll, paidAdvances]);
+    // Convert to array and apply sorting
+    let result = Array.from(map.values());
+
+    if (sortField && sortDirection) {
+      result.sort((a, b) => {
+        let comparison = 0;
+
+        switch (sortField) {
+          case 'name':
+            comparison = (a.employee_name || '').localeCompare(b.employee_name || '');
+            break;
+          case 'position':
+            comparison = (a.employee_position || '').localeCompare(b.employee_position || '');
+            break;
+          case 'salary':
+            // Sort by combined total for the employee
+            comparison = a.totalNet - b.totalNet;
+            break;
+          case 'advancePaid':
+            comparison = a.advancePaid - b.advancePaid;
+            break;
+          case 'advance':
+            // Sort by total advance input for this employee
+            const aAdvance = a.wageRecords.reduce((sum, r) => sum + (advanceAmounts[r.id] || 0), 0);
+            const bAdvance = b.wageRecords.reduce((sum, r) => sum + (advanceAmounts[r.id] || 0), 0);
+            comparison = aAdvance - bAdvance;
+            break;
+          case 'wage':
+            // Sort by total wage input for this employee
+            const aWage = a.wageRecords.reduce((sum, r) => sum + (wageAmounts[r.id] || 0), 0);
+            const bWage = b.wageRecords.reduce((sum, r) => sum + (wageAmounts[r.id] || 0), 0);
+            comparison = aWage - bWage;
+            break;
+        }
+
+        return sortDirection === 'desc' ? -comparison : comparison;
+      });
+    }
+
+    return result;
+  }, [filteredPayroll, paidAdvances, sortField, sortDirection, advanceAmounts, wageAmounts]);
 
   // Calculate totals by category
-  const primaryNetTotal = filteredAndSortedPayroll
+  const primaryNetTotal = filteredPayroll
     .filter(p => p.wage_category === 'primary')
     .reduce((sum, p) => sum + p.net_salary, 0);
-  const additionalNetTotal = filteredAndSortedPayroll
+  const additionalNetTotal = filteredPayroll
     .filter(p => p.wage_category === 'additional')
     .reduce((sum, p) => sum + p.net_salary, 0);
 
