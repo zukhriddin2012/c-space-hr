@@ -181,7 +181,7 @@ export default function AttendanceFilters({ branches, isEmployee }: AttendanceFi
         </button>
       </div>
 
-      <div className="flex flex-col sm:flex-row flex-wrap gap-3 lg:gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-end flex-wrap gap-3 lg:gap-4">
         {/* Date Picker with Navigation */}
         <div className="flex-1 sm:flex-initial">
           <label className="block text-xs font-medium text-gray-500 mb-1">Date</label>
@@ -251,7 +251,7 @@ export default function AttendanceFilters({ branches, isEmployee }: AttendanceFi
           </div>
         )}
 
-        <div className="flex gap-2 w-full sm:w-auto mt-2 sm:mt-0 sm:self-end">
+        <div className="flex gap-2 w-full sm:w-auto mt-2 sm:mt-0">
           <button
             onClick={handleApply}
             className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-3 lg:px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium"
