@@ -6,8 +6,11 @@ import {
   createCandidate,
   type CandidateStage,
 } from '@/lib/db';
-import { supabaseAdmin } from '@/lib/supabase';
+import { supabaseAdmin, isSupabaseAdminConfigured } from '@/lib/supabase';
 import type { User } from '@/types';
+
+// Use employee-documents bucket with recruitment subfolder
+const STORAGE_BUCKET = 'employee-documents';
 
 // GET /api/candidates - List all candidates
 export const GET = withAuth(async (request: NextRequest, context: { user: User }) => {
@@ -63,16 +66,23 @@ export const POST = withAuth(async (request: NextRequest, context: { user: User 
       // Handle resume file upload
       const resumeFile = formData.get('resume') as File | null;
       if (resumeFile && resumeFile.size > 0) {
-        // Upload to Supabase storage
+        // Check if storage is configured
+        if (!isSupabaseAdminConfigured() || !supabaseAdmin) {
+          console.error('Supabase storage not configured');
+          return NextResponse.json({ error: 'Storage not configured' }, { status: 500 });
+        }
+
+        // Upload to Supabase storage (using employee-documents bucket with recruitment subfolder)
         const fileExt = resumeFile.name.split('.').pop();
-        const fileName = `${Date.now()}-${candidateData.full_name.replace(/\s+/g, '_')}.${fileExt}`;
-        const filePath = `resumes/${fileName}`;
+        const cleanName = candidateData.full_name.replace(/[^a-zA-Z0-9._-]/g, '_').replace(/_+/g, '_');
+        const fileName = `${Date.now()}-${cleanName}.${fileExt}`;
+        const filePath = `recruitment/resumes/${fileName}`;
 
         const arrayBuffer = await resumeFile.arrayBuffer();
         const buffer = Buffer.from(arrayBuffer);
 
-        const { error: uploadError } = await supabaseAdmin!.storage
-          .from('recruitment')
+        const { error: uploadError } = await supabaseAdmin.storage
+          .from(STORAGE_BUCKET)
           .upload(filePath, buffer, {
             contentType: resumeFile.type,
             upsert: false,
@@ -80,7 +90,7 @@ export const POST = withAuth(async (request: NextRequest, context: { user: User 
 
         if (uploadError) {
           console.error('Error uploading resume:', uploadError);
-          return NextResponse.json({ error: 'Failed to upload resume' }, { status: 500 });
+          return NextResponse.json({ error: 'Failed to upload resume: ' + uploadError.message }, { status: 500 });
         }
 
         candidateData.resume_file_name = resumeFile.name;

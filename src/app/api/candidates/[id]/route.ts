@@ -6,8 +6,11 @@ import {
   updateCandidate,
   deleteCandidate,
 } from '@/lib/db';
-import { supabaseAdmin } from '@/lib/supabase';
+import { supabaseAdmin, isSupabaseAdminConfigured } from '@/lib/supabase';
 import type { User } from '@/types';
+
+// Use employee-documents bucket with recruitment subfolder
+const STORAGE_BUCKET = 'employee-documents';
 
 // GET /api/candidates/[id] - Get candidate details
 export const GET = withAuth(async (request: NextRequest, context: { user: User; params?: Record<string, string> }) => {
@@ -74,24 +77,31 @@ export const PUT = withAuth(async (request: NextRequest, context: { user: User; 
       // Handle resume file upload
       const resumeFile = formData.get('resume') as File | null;
       if (resumeFile && resumeFile.size > 0) {
+        // Check if storage is configured
+        if (!isSupabaseAdminConfigured() || !supabaseAdmin) {
+          console.error('Supabase storage not configured');
+          return NextResponse.json({ error: 'Storage not configured' }, { status: 500 });
+        }
+
         // Get existing candidate to delete old resume if exists
         const existingCandidate = await getCandidateById(id);
         if (existingCandidate?.resume_file_path) {
-          await supabaseAdmin!.storage
-            .from('recruitment')
+          await supabaseAdmin.storage
+            .from(STORAGE_BUCKET)
             .remove([existingCandidate.resume_file_path]);
         }
 
         // Upload new resume
         const fileExt = resumeFile.name.split('.').pop();
-        const fileName = `${Date.now()}-${updates.full_name?.replace(/\s+/g, '_') || 'candidate'}.${fileExt}`;
-        const filePath = `resumes/${fileName}`;
+        const cleanName = (updates.full_name || 'candidate').replace(/[^a-zA-Z0-9._-]/g, '_').replace(/_+/g, '_');
+        const fileName = `${Date.now()}-${cleanName}.${fileExt}`;
+        const filePath = `recruitment/resumes/${fileName}`;
 
         const arrayBuffer = await resumeFile.arrayBuffer();
         const buffer = Buffer.from(arrayBuffer);
 
-        const { error: uploadError } = await supabaseAdmin!.storage
-          .from('recruitment')
+        const { error: uploadError } = await supabaseAdmin.storage
+          .from(STORAGE_BUCKET)
           .upload(filePath, buffer, {
             contentType: resumeFile.type,
             upsert: false,
@@ -99,7 +109,7 @@ export const PUT = withAuth(async (request: NextRequest, context: { user: User; 
 
         if (uploadError) {
           console.error('Error uploading resume:', uploadError);
-          return NextResponse.json({ error: 'Failed to upload resume' }, { status: 500 });
+          return NextResponse.json({ error: 'Failed to upload resume: ' + uploadError.message }, { status: 500 });
         }
 
         updates.resume_file_name = resumeFile.name;
@@ -150,9 +160,9 @@ export const DELETE = withAuth(async (request: NextRequest, context: { user: Use
 
     // Get candidate to delete resume file if exists
     const candidate = await getCandidateById(id);
-    if (candidate?.resume_file_path) {
-      await supabaseAdmin!.storage
-        .from('recruitment')
+    if (candidate?.resume_file_path && isSupabaseAdminConfigured() && supabaseAdmin) {
+      await supabaseAdmin.storage
+        .from(STORAGE_BUCKET)
         .remove([candidate.resume_file_path]);
     }
 

@@ -2,8 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { withAuth } from '@/lib/api-auth';
 import { PERMISSIONS } from '@/lib/permissions';
 import { deleteRecruitmentFile, getRecruitmentFiles } from '@/lib/db';
-import { supabaseAdmin } from '@/lib/supabase';
+import { supabaseAdmin, isSupabaseAdminConfigured } from '@/lib/supabase';
 import type { User } from '@/types';
+
+// Use employee-documents bucket with recruitment subfolder
+const STORAGE_BUCKET = 'employee-documents';
 
 // DELETE /api/recruitment-files/[id] - Delete recruitment file
 export const DELETE = withAuth(async (request: NextRequest, context: { user: User; params?: Record<string, string> }) => {
@@ -22,8 +25,8 @@ export const DELETE = withAuth(async (request: NextRequest, context: { user: Use
     }
 
     // Delete from storage
-    if (file.file_path) {
-      await supabaseAdmin!.storage.from('recruitment').remove([file.file_path]);
+    if (file.file_path && isSupabaseAdminConfigured() && supabaseAdmin) {
+      await supabaseAdmin.storage.from(STORAGE_BUCKET).remove([file.file_path]);
     }
 
     // Delete from database

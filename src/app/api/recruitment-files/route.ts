@@ -2,8 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { withAuth } from '@/lib/api-auth';
 import { PERMISSIONS } from '@/lib/permissions';
 import { getRecruitmentFiles, createRecruitmentFile } from '@/lib/db';
-import { supabaseAdmin } from '@/lib/supabase';
+import { supabaseAdmin, isSupabaseAdminConfigured } from '@/lib/supabase';
 import type { User } from '@/types';
+
+// Use employee-documents bucket with recruitment subfolder
+const STORAGE_BUCKET = 'employee-documents';
 
 // GET /api/recruitment-files - List recruitment files
 export const GET = withAuth(async (request: NextRequest, context: { user: User }) => {
@@ -48,16 +51,22 @@ export const POST = withAuth(async (request: NextRequest, context: { user: User 
       );
     }
 
-    // Upload to Supabase storage
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${Date.now()}-${file.name.replace(/\s+/g, '_')}`;
-    const filePath = `${category}/${fileName}`;
+    // Check if storage is configured
+    if (!isSupabaseAdminConfigured() || !supabaseAdmin) {
+      console.error('Supabase storage not configured');
+      return NextResponse.json({ error: 'Storage not configured' }, { status: 500 });
+    }
+
+    // Upload to Supabase storage (using employee-documents bucket with recruitment subfolder)
+    const cleanFileName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_').replace(/_+/g, '_');
+    const fileName = `${Date.now()}-${cleanFileName}`;
+    const filePath = `recruitment/${category}/${fileName}`;
 
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
-    const { error: uploadError } = await supabaseAdmin!.storage
-      .from('recruitment')
+    const { error: uploadError } = await supabaseAdmin.storage
+      .from(STORAGE_BUCKET)
       .upload(filePath, buffer, {
         contentType: file.type,
         upsert: false,
@@ -65,7 +74,7 @@ export const POST = withAuth(async (request: NextRequest, context: { user: User 
 
     if (uploadError) {
       console.error('Error uploading file:', uploadError);
-      return NextResponse.json({ error: 'Failed to upload file' }, { status: 500 });
+      return NextResponse.json({ error: 'Failed to upload file: ' + uploadError.message }, { status: 500 });
     }
 
     // Create database record
@@ -82,7 +91,7 @@ export const POST = withAuth(async (request: NextRequest, context: { user: User 
 
     if (!result.success) {
       // Cleanup uploaded file on DB error
-      await supabaseAdmin!.storage.from('recruitment').remove([filePath]);
+      await supabaseAdmin.storage.from(STORAGE_BUCKET).remove([filePath]);
       return NextResponse.json({ error: result.error }, { status: 400 });
     }
 
