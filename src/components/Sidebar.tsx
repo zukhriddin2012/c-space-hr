@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
@@ -17,6 +18,10 @@ import {
   UserCircle,
   MessageSquare,
   Inbox,
+  ChevronDown,
+  ChevronRight,
+  Table,
+  Kanban,
 } from 'lucide-react';
 import type { User, UserRole } from '@/types';
 import { getRoleLabel } from '@/lib/auth';
@@ -30,6 +35,7 @@ interface NavItem {
   href: string;
   icon: React.ComponentType<{ size?: number; className?: string }>;
   roles: UserRole[];
+  children?: NavItem[];
 }
 
 const navItems: NavItem[] = [
@@ -74,6 +80,20 @@ const navItems: NavItem[] = [
     href: '/recruitment',
     icon: UserPlus,
     roles: ['general_manager', 'hr', 'recruiter'],
+    children: [
+      {
+        name: 'Table View',
+        href: '/recruitment/table',
+        icon: Table,
+        roles: ['general_manager', 'hr', 'recruiter'],
+      },
+      {
+        name: 'Board View',
+        href: '/recruitment/board',
+        icon: Kanban,
+        roles: ['general_manager', 'hr', 'recruiter'],
+      },
+    ],
   },
   {
     name: 'Reports',
@@ -109,10 +129,28 @@ const navItems: NavItem[] = [
 
 export default function Sidebar({ user }: SidebarProps) {
   const pathname = usePathname();
+  const [expandedItems, setExpandedItems] = useState<string[]>(() => {
+    // Auto-expand if we're on a child route
+    const expanded: string[] = [];
+    navItems.forEach(item => {
+      if (item.children && pathname.startsWith(item.href)) {
+        expanded.push(item.href);
+      }
+    });
+    return expanded;
+  });
 
   const filteredNavItems = navItems.filter((item) =>
     item.roles.includes(user.role)
   );
+
+  const toggleExpand = (href: string) => {
+    setExpandedItems(prev =>
+      prev.includes(href)
+        ? prev.filter(h => h !== href)
+        : [...prev, href]
+    );
+  };
 
   const handleLogout = async () => {
     try {
@@ -126,6 +164,66 @@ export default function Sidebar({ user }: SidebarProps) {
     } catch (error) {
       console.error('Logout error:', error);
     }
+  };
+
+  const renderNavItem = (item: NavItem, isChild = false) => {
+    const hasChildren = item.children && item.children.length > 0;
+    const isExpanded = expandedItems.includes(item.href);
+    const isActive = pathname === item.href ||
+      (hasChildren && pathname.startsWith(item.href + '/')) ||
+      (!hasChildren && pathname.startsWith(item.href + '/'));
+    const isChildActive = hasChildren && item.children?.some(child => pathname === child.href);
+    const Icon = item.icon;
+
+    if (hasChildren) {
+      return (
+        <li key={item.href}>
+          <button
+            onClick={() => toggleExpand(item.href)}
+            className={`w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+              isActive || isChildActive
+                ? 'bg-purple-50 text-purple-700'
+                : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+            }`}
+          >
+            <div className="flex items-center gap-3">
+              <Icon size={20} className={isActive || isChildActive ? 'text-purple-600' : 'text-gray-400'} />
+              {item.name}
+            </div>
+            {isExpanded ? (
+              <ChevronDown size={16} className="text-gray-400" />
+            ) : (
+              <ChevronRight size={16} className="text-gray-400" />
+            )}
+          </button>
+          {isExpanded && (
+            <ul className="mt-1 ml-6 space-y-1 border-l border-gray-200 pl-3">
+              {item.children
+                ?.filter(child => child.roles.includes(user.role))
+                .map(child => renderNavItem(child, true))}
+            </ul>
+          )}
+        </li>
+      );
+    }
+
+    return (
+      <li key={item.href}>
+        <Link
+          href={item.href}
+          className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+            isChild ? 'py-2' : ''
+          } ${
+            pathname === item.href
+              ? 'bg-purple-50 text-purple-700'
+              : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+          }`}
+        >
+          <Icon size={isChild ? 16 : 20} className={pathname === item.href ? 'text-purple-600' : 'text-gray-400'} />
+          {item.name}
+        </Link>
+      </li>
+    );
   };
 
   return (
@@ -150,26 +248,7 @@ export default function Sidebar({ user }: SidebarProps) {
       {/* Navigation */}
       <nav className="flex-1 p-4 overflow-y-auto">
         <ul className="space-y-1">
-          {filteredNavItems.map((item) => {
-            const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
-            const Icon = item.icon;
-
-            return (
-              <li key={item.href}>
-                <Link
-                  href={item.href}
-                  className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                    isActive
-                      ? 'bg-purple-50 text-purple-700'
-                      : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                  }`}
-                >
-                  <Icon size={20} className={isActive ? 'text-purple-600' : 'text-gray-400'} />
-                  {item.name}
-                </Link>
-              </li>
-            );
-          })}
+          {filteredNavItems.map((item) => renderNavItem(item))}
         </ul>
       </nav>
 
