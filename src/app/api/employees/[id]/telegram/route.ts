@@ -5,11 +5,15 @@ import { PERMISSIONS } from '@/lib/permissions';
 
 // DELETE - Disconnect Telegram from employee
 export const DELETE = withAuth(
-  async (
-    request: NextRequest,
-    { params }: { params: Promise<{ id: string }> }
-  ) => {
-    const { id } = await params;
+  async (request: NextRequest, { user, params }) => {
+    const id = params?.id;
+
+    if (!id) {
+      return NextResponse.json(
+        { error: 'Employee ID is required' },
+        { status: 400 }
+      );
+    }
 
     if (!supabase) {
       return NextResponse.json(
