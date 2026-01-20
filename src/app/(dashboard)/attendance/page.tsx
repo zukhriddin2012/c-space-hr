@@ -247,7 +247,7 @@ export default async function AttendancePage({
 
   // Present = currently in office (checked in, not checked out yet) - includes both on-time and late arrivals
   const currentlyPresent = allAttendance.filter((a) =>
-    (a.status === 'present' || a.status === 'late') && !a.checkOut
+    (a.status === 'present' || a.status === 'late') && !a.checkOutTime
   ).length;
 
   const stats = {
@@ -347,7 +347,7 @@ export default async function AttendancePage({
                 address: branch.address,
                 latitude: branch.latitude,
                 longitude: branch.longitude,
-                present: branchAttendance.filter(a => (a.status === 'present' || a.status === 'late') && !a.checkOut).length,
+                present: branchAttendance.filter(a => (a.status === 'present' || a.status === 'late') && !a.checkOutTime).length,
                 late: branchAttendance.filter(a => a.status === 'late').length,
                 absent: branchAttendance.filter(a => a.status === 'absent').length,
                 earlyLeave: branchAttendance.filter(a => a.status === 'early_leave').length,
