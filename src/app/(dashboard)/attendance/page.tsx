@@ -65,8 +65,34 @@ async function getAttendanceForDate(date: string): Promise<AttendanceRecord[]> {
   const branchMap = new Map(branches.map(b => [b.id, b.name]));
   const employeeMap = new Map(employees.map(e => [e.id, e]));
 
-  // Create attendance records for employees who checked in
-  const attendanceRecords: AttendanceRecord[] = attendance.map((a: any) => {
+  // Deduplicate attendance records by employee_id
+  // Priority: 1) Record without checkout (still in office), 2) Most recent check-in
+  const employeeAttendanceMap = new Map<string, any>();
+  for (const a of attendance) {
+    const existing = employeeAttendanceMap.get(a.employee_id);
+    if (!existing) {
+      employeeAttendanceMap.set(a.employee_id, a);
+    } else {
+      // Prefer record without checkout (currently in office)
+      const existingHasNoCheckout = !existing.check_out;
+      const currentHasNoCheckout = !a.check_out;
+
+      if (currentHasNoCheckout && !existingHasNoCheckout) {
+        // Current is still in office, existing has checked out - prefer current
+        employeeAttendanceMap.set(a.employee_id, a);
+      } else if (!currentHasNoCheckout && existingHasNoCheckout) {
+        // Existing is still in office - keep existing
+      } else {
+        // Both have same checkout status - prefer most recent check-in
+        if (a.check_in && existing.check_in && a.check_in > existing.check_in) {
+          employeeAttendanceMap.set(a.employee_id, a);
+        }
+      }
+    }
+  }
+
+  // Create attendance records for employees who checked in (deduplicated)
+  const attendanceRecords: AttendanceRecord[] = Array.from(employeeAttendanceMap.values()).map((a: any) => {
     const employee = employeeMap.get(a.employee_id) || a.employees;
     const recordDate = a.is_overnight ? a.overnight_from_date : date;
     return {
@@ -88,9 +114,10 @@ async function getAttendanceForDate(date: string): Promise<AttendanceRecord[]> {
     };
   });
 
-  // Add absent employees (those not in attendance)
-  const checkedInIds = new Set(attendance.map((a: any) => a.employee_id));
-  const absentEmployees = employees
+  // Add absent employees (those not in attendance) - only active employees
+  const checkedInIds = new Set(employeeAttendanceMap.keys());
+  const activeEmployees = employees.filter(e => e.status === 'active');
+  const absentEmployees = activeEmployees
     .filter(e => !checkedInIds.has(e.id))
     .map(e => ({
       id: `absent-${e.id}`,
