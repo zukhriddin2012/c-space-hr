@@ -187,8 +187,14 @@ export default function AttendanceTable({ records, canEditAttendance }: Attendan
                 <tr key={record.id} className="hover:bg-gray-50 transition-colors">
                   <td className="px-4 lg:px-6 py-4">
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0">
-                        <span className="text-purple-700 text-sm font-medium">{record.employeeName.charAt(0)}</span>
+                      <div className="relative">
+                        <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0">
+                          <span className="text-purple-700 text-sm font-medium">{record.employeeName.charAt(0)}</span>
+                        </div>
+                        {/* Green dot for currently in office */}
+                        {record.checkInTime && !record.checkOutTime && record.status !== 'absent' && (
+                          <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 border-2 border-white rounded-full animate-pulse" />
+                        )}
                       </div>
                       <div className="min-w-0">
                         <p className="font-medium text-gray-900 truncate">{record.employeeName}</p>
@@ -268,8 +274,14 @@ export default function AttendanceTable({ records, canEditAttendance }: Attendan
             <div key={record.id} className="bg-white rounded-xl border border-gray-200 p-4">
               <div className="flex items-start justify-between mb-3">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0">
-                    <span className="text-purple-700 font-medium">{record.employeeName.charAt(0)}</span>
+                  <div className="relative">
+                    <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0">
+                      <span className="text-purple-700 font-medium">{record.employeeName.charAt(0)}</span>
+                    </div>
+                    {/* Green dot for currently in office */}
+                    {record.checkInTime && !record.checkOutTime && record.status !== 'absent' && (
+                      <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full animate-pulse" />
+                    )}
                   </div>
                   <div className="min-w-0">
                     <p className="font-medium text-gray-900">{record.employeeName}</p>
