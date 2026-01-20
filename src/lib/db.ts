@@ -467,6 +467,7 @@ export async function getAttendanceByDate(date: string): Promise<Attendance[]> {
     return [];
   }
 
+  // Get attendance records for the requested date
   const { data, error } = await supabaseAdmin!
     .from('attendance')
     .select(`
@@ -483,7 +484,44 @@ export async function getAttendanceByDate(date: string): Promise<Attendance[]> {
     return [];
   }
 
-  return data || [];
+  // Also fetch overnight night shift records from the previous day
+  // These are workers who checked in yesterday evening and either:
+  // - Haven't checked out yet, OR
+  // - Checked out this morning
+  const previousDate = new Date(date);
+  previousDate.setDate(previousDate.getDate() - 1);
+  const previousDateStr = previousDate.toISOString().split('T')[0];
+
+  const { data: overnightData, error: overnightError } = await supabaseAdmin!
+    .from('attendance')
+    .select(`
+      *,
+      employees(full_name, employee_id, position),
+      check_in_branch:branches!attendance_check_in_branch_id_fkey(name),
+      check_out_branch:branches!attendance_check_out_branch_id_fkey(name)
+    `)
+    .eq('date', previousDateStr)
+    .eq('shift_id', 'night')
+    .or('check_out.is.null,check_out.lt.12:00:00');
+
+  if (overnightError) {
+    console.error('Error fetching overnight attendance:', overnightError);
+  }
+
+  // Mark overnight records and combine with today's records
+  const overnightRecords = (overnightData || []).map(record => ({
+    ...record,
+    is_overnight: true,
+    overnight_from_date: previousDateStr,
+  }));
+
+  // Filter out employees who already have a record for today (avoid duplicates)
+  const todayEmployeeIds = new Set((data || []).map(r => r.employee_id));
+  const filteredOvernightRecords = overnightRecords.filter(
+    r => !todayEmployeeIds.has(r.employee_id)
+  );
+
+  return [...(data || []), ...filteredOvernightRecords];
 }
 
 export async function getAttendanceByEmployee(employeeId: string, days: number = 30): Promise<Attendance[]> {

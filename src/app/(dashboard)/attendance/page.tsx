@@ -9,6 +9,7 @@ import {
   MapPin,
   Users,
   TrendingUp,
+  Moon,
 } from 'lucide-react';
 import { getBranches, getEmployees, getAttendanceByDate, getWeeklyAttendanceSummary } from '@/lib/db';
 import AttendanceFilters from './AttendanceFilters';
@@ -36,6 +37,8 @@ interface AttendanceRecord {
   status: 'present' | 'late' | 'absent' | 'early_leave';
   source: 'telegram' | 'web' | 'manual' | null;
   totalHours: number | null;
+  isOvernight?: boolean;
+  overnightFromDate?: string;
 }
 
 interface Branch {
@@ -60,6 +63,7 @@ async function getAttendanceForDate(date: string): Promise<AttendanceRecord[]> {
   // Create attendance records for employees who checked in
   const attendanceRecords: AttendanceRecord[] = attendance.map((a: any) => {
     const employee = employeeMap.get(a.employee_id) || a.employees;
+    const recordDate = a.is_overnight ? a.overnight_from_date : date;
     return {
       id: a.id,
       employeeId: employee?.employee_id || a.employee_id,
@@ -67,11 +71,13 @@ async function getAttendanceForDate(date: string): Promise<AttendanceRecord[]> {
       position: employee?.position || '',
       branchId: a.check_in_branch_id,
       branchName: a.check_in_branch?.name || branchMap.get(a.check_in_branch_id) || '-',
-      checkInTime: a.check_in ? `${date}T${a.check_in}` : null,
+      checkInTime: a.check_in ? `${recordDate}T${a.check_in}` : null,
       checkOutTime: a.check_out ? `${date}T${a.check_out}` : null,
       status: a.status as 'present' | 'late' | 'absent' | 'early_leave',
       source: 'telegram' as const,
       totalHours: a.total_hours,
+      isOvernight: a.is_overnight || false,
+      overnightFromDate: a.overnight_from_date,
     };
   });
 
@@ -97,7 +103,7 @@ async function getAttendanceForDate(date: string): Promise<AttendanceRecord[]> {
 }
 
 
-function StatusBadge({ status }: { status: string }) {
+function StatusBadge({ status, isOvernight }: { status: string; isOvernight?: boolean }) {
   const statusConfig: Record<
     string,
     { label: string; className: string; icon: React.ComponentType<{ size?: number }> }
@@ -122,9 +128,17 @@ function StatusBadge({ status }: { status: string }) {
       className: 'bg-yellow-50 text-yellow-700',
       icon: Clock,
     },
+    overnight: {
+      label: 'Overnight',
+      className: 'bg-indigo-50 text-indigo-700',
+      icon: Moon,
+    },
   };
 
-  const config = statusConfig[status] || statusConfig.absent;
+  // Show overnight badge for night shift workers from previous day
+  const displayStatus = isOvernight ? 'overnight' : status;
+
+  const config = statusConfig[displayStatus] || statusConfig.absent;
   const Icon = config.icon;
 
   return (
@@ -492,8 +506,9 @@ export default async function AttendancePage({
                     </div>
                   </td>
                   <td className="px-4 lg:px-6 py-4">
-                    <span className={`text-sm ${record.status === 'late' ? 'text-orange-600 font-medium' : 'text-gray-900'}`}>
+                    <span className={`text-sm ${record.status === 'late' && !record.isOvernight ? 'text-orange-600 font-medium' : 'text-gray-900'}`}>
                       {formatTime(record.checkInTime)}
+                      {record.isOvernight && <span className="text-indigo-500 text-xs ml-1">(prev)</span>}
                     </span>
                   </td>
                   <td className="px-4 lg:px-6 py-4">
@@ -505,7 +520,7 @@ export default async function AttendancePage({
                     {record.totalHours ? `${record.totalHours}h` : calculateHours(record.checkInTime, record.checkOutTime)}
                   </td>
                   <td className="px-4 lg:px-6 py-4">
-                    <StatusBadge status={record.status} />
+                    <StatusBadge status={record.status} isOvernight={record.isOvernight} />
                   </td>
                   <td className="px-4 lg:px-6 py-4">
                     <SourceBadge source={record.source} />
@@ -567,12 +582,15 @@ export default async function AttendancePage({
                     <p className="text-xs text-gray-500">{record.position}</p>
                   </div>
                 </div>
-                <StatusBadge status={record.status} />
+                <StatusBadge status={record.status} isOvernight={record.isOvernight} />
               </div>
 
               <div className="flex items-center gap-2 text-sm text-gray-500 mb-3">
                 <MapPin size={14} />
                 <span>{record.branchName}</span>
+                {record.isOvernight && record.overnightFromDate && (
+                  <span className="text-indigo-600 text-xs">(from {record.overnightFromDate})</span>
+                )}
               </div>
 
               <div className="grid grid-cols-3 gap-3 text-center bg-gray-50 rounded-lg p-3">
