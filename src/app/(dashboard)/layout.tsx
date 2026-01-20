@@ -3,6 +3,7 @@ import { getSession } from '@/lib/auth-server';
 import Sidebar from '@/components/Sidebar';
 import MobileNav from '@/components/MobileNav';
 import { AuthProvider } from '@/contexts/AuthContext';
+import { SidebarProvider } from '@/contexts/SidebarContext';
 import NotificationBell from '@/components/NotificationBell';
 import TestBannerWrapper from '@/components/TestBannerWrapper';
 import FloatingFeedbackButton from '@/components/FloatingFeedbackButton';
@@ -22,12 +23,13 @@ export default async function DashboardLayout({
 
   return (
     <AuthProvider initialUser={user}>
-      <TestBannerWrapper />
-      <div className="flex min-h-screen bg-gray-50">
-        {/* Desktop Sidebar - hidden on mobile */}
-        <div className="hidden lg:block">
-          <Sidebar user={user} />
-        </div>
+      <SidebarProvider>
+        <TestBannerWrapper />
+        <div className="flex min-h-screen bg-gray-50">
+          {/* Desktop Sidebar - hidden on mobile */}
+          <div className="hidden lg:block">
+            <Sidebar user={user} />
+          </div>
 
         {/* Mobile Navigation */}
         <MobileNav user={user} />
@@ -54,9 +56,10 @@ export default async function DashboardLayout({
           <div className="p-4 lg:p-6">{children}</div>
         </main>
 
-        {/* Floating Feedback Button */}
-        <FloatingFeedbackButton userRole={user.role} />
-      </div>
+          {/* Floating Feedback Button */}
+          <FloatingFeedbackButton userRole={user.role} />
+        </div>
+      </SidebarProvider>
     </AuthProvider>
   );
 }

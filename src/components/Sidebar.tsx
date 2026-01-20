@@ -22,9 +22,12 @@ import {
   ChevronRight,
   Table,
   Kanban,
+  PanelLeftClose,
+  PanelLeft,
 } from 'lucide-react';
 import type { User, UserRole } from '@/types';
 import { getRoleLabel } from '@/lib/auth';
+import { useSidebar } from '@/contexts/SidebarContext';
 
 interface SidebarProps {
   user: User;
@@ -129,6 +132,7 @@ const navItems: NavItem[] = [
 
 export default function Sidebar({ user }: SidebarProps) {
   const pathname = usePathname();
+  const { isCollapsed, toggleSidebar } = useSidebar();
   const [expandedItems, setExpandedItems] = useState<string[]>(() => {
     // Auto-expand if we're on a child route
     const expanded: string[] = [];
@@ -176,6 +180,25 @@ export default function Sidebar({ user }: SidebarProps) {
     const Icon = item.icon;
 
     if (hasChildren) {
+      // Don't show expandable items when collapsed
+      if (isCollapsed) {
+        return (
+          <li key={item.href}>
+            <Link
+              href={item.children[0].href}
+              className={`flex items-center justify-center p-2.5 rounded-lg text-sm font-medium transition-colors ${
+                isActive || isChildActive
+                  ? 'bg-purple-50 text-purple-700'
+                  : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+              }`}
+              title={item.name}
+            >
+              <Icon size={20} className={isActive || isChildActive ? 'text-purple-600' : 'text-gray-400'} />
+            </Link>
+          </li>
+        );
+      }
+
       return (
         <li key={item.href}>
           <button
@@ -207,6 +230,24 @@ export default function Sidebar({ user }: SidebarProps) {
       );
     }
 
+    if (isCollapsed) {
+      return (
+        <li key={item.href}>
+          <Link
+            href={item.href}
+            className={`flex items-center justify-center p-2.5 rounded-lg text-sm font-medium transition-colors ${
+              pathname === item.href
+                ? 'bg-purple-50 text-purple-700'
+                : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+            }`}
+            title={item.name}
+          >
+            <Icon size={20} className={pathname === item.href ? 'text-purple-600' : 'text-gray-400'} />
+          </Link>
+        </li>
+      );
+    }
+
     return (
       <li key={item.href}>
         <Link
@@ -227,10 +268,10 @@ export default function Sidebar({ user }: SidebarProps) {
   };
 
   return (
-    <aside className="w-64 bg-white border-r border-gray-200 flex flex-col h-screen sticky top-0">
+    <aside className={`${isCollapsed ? 'w-16' : 'w-64'} bg-white border-r border-gray-200 flex flex-col h-screen sticky top-0 transition-all duration-300`}>
       {/* Logo */}
-      <div className="p-4 border-b border-gray-200">
-        <Link href="/dashboard" className="flex items-center gap-3">
+      <div className={`p-4 border-b border-gray-200 ${isCollapsed ? 'flex justify-center' : ''}`}>
+        <Link href="/dashboard" className={`flex items-center ${isCollapsed ? 'justify-center' : 'gap-3'}`}>
           <Image
             src="/logo-icon.svg"
             alt="C-Space Logo"
@@ -238,40 +279,65 @@ export default function Sidebar({ user }: SidebarProps) {
             height={44}
             className="flex-shrink-0"
           />
-          <div>
-            <h1 className="font-semibold text-gray-900">C-Space People</h1>
-            <p className="text-xs text-gray-500">People Management</p>
-          </div>
+          {!isCollapsed && (
+            <div>
+              <h1 className="font-semibold text-gray-900">C-Space People</h1>
+              <p className="text-xs text-gray-500">People Management</p>
+            </div>
+          )}
         </Link>
       </div>
 
+      {/* Toggle Button */}
+      <div className={`px-2 py-2 border-b border-gray-100 ${isCollapsed ? 'flex justify-center' : ''}`}>
+        <button
+          onClick={toggleSidebar}
+          className="p-2 rounded-lg text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-colors"
+          title={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+        >
+          {isCollapsed ? <PanelLeft size={20} /> : <PanelLeftClose size={20} />}
+        </button>
+      </div>
+
       {/* Navigation */}
-      <nav className="flex-1 p-4 overflow-y-auto">
+      <nav className="flex-1 p-2 overflow-y-auto">
         <ul className="space-y-1">
           {filteredNavItems.map((item) => renderNavItem(item))}
         </ul>
       </nav>
 
       {/* User Section */}
-      <div className="p-4 border-t border-gray-200">
-        <div className="flex items-center gap-3 mb-3">
-          <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
-            <span className="text-purple-700 font-medium">
-              {user.name.charAt(0).toUpperCase()}
-            </span>
+      <div className={`p-4 border-t border-gray-200 ${isCollapsed ? 'flex flex-col items-center' : ''}`}>
+        {!isCollapsed && (
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+              <span className="text-purple-700 font-medium">
+                {user.name.charAt(0).toUpperCase()}
+              </span>
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-gray-900 truncate">{user.name}</p>
+              <p className="text-xs text-gray-500 truncate">{getRoleLabel(user.role)}</p>
+            </div>
           </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-gray-900 truncate">{user.name}</p>
-            <p className="text-xs text-gray-500 truncate">{getRoleLabel(user.role)}</p>
-          </div>
-        </div>
-        <button
-          onClick={handleLogout}
-          className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-        >
-          <LogOut size={18} />
-          Sign out
-        </button>
+        )}
+        {isCollapsed ? (
+          <button
+            onClick={handleLogout}
+            className="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+            title="Sign out"
+          >
+            <LogOut size={20} />
+          </button>
+        ) : (
+          <button
+            onClick={handleLogout}
+            className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+          >
+            <LogOut size={18} />
+            Sign out
+          </button>
+        )}
       </div>
     </aside>
   );
