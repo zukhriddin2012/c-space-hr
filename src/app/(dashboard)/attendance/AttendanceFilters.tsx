@@ -67,14 +67,14 @@ export default function AttendanceFilters({ branches, isEmployee }: AttendanceFi
     if (branch) params.set('branch', branch);
     if (status) params.set('status', status);
 
-    router.push(`/attendance?${params.toString()}`);
+    router.push(`/attendance/sheet?${params.toString()}`);
   };
 
   const handleReset = () => {
     setDate(quickDates.today);
     setBranch('');
     setStatus('');
-    router.push('/attendance');
+    router.push('/attendance/sheet');
   };
 
   // Navigate to previous/next day
@@ -94,7 +94,7 @@ export default function AttendanceFilters({ branches, isEmployee }: AttendanceFi
     params.set('date', newDate);
     if (branch) params.set('branch', branch);
     if (status) params.set('status', status);
-    router.push(`/attendance?${params.toString()}`);
+    router.push(`/attendance/sheet?${params.toString()}`);
   };
 
   // Quick date selection
@@ -104,7 +104,7 @@ export default function AttendanceFilters({ branches, isEmployee }: AttendanceFi
     params.set('date', quickDate);
     if (branch) params.set('branch', branch);
     if (status) params.set('status', status);
-    router.push(`/attendance?${params.toString()}`);
+    router.push(`/attendance/sheet?${params.toString()}`);
   };
 
   // Check if selected date is in the future (using Tashkent timezone)
@@ -182,7 +182,7 @@ export default function AttendanceFilters({ branches, isEmployee }: AttendanceFi
                   params.set('date', newDate);
                   if (branch) params.set('branch', branch);
                   if (status) params.set('status', status);
-                  router.push(`/attendance?${params.toString()}`);
+                  router.push(`/attendance/sheet?${params.toString()}`);
                 }}
                 max={quickDates.today}
                 className="outline-none text-sm flex-1 bg-transparent min-w-0"
