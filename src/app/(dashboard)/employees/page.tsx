@@ -57,7 +57,7 @@ export default async function EmployeesPage({
   const params = await searchParams;
   const selectedBranch = params.branch || '';
   const selectedLevel = params.level || '';
-  const selectedStatus = params.status || 'active';
+  const selectedStatus = params.status !== undefined ? params.status : 'active';
   const searchQuery = params.search || '';
 
   // Fetch real data from Supabase
