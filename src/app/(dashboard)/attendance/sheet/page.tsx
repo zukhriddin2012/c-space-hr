@@ -159,6 +159,24 @@ export default async function AttendanceSheetPage({
     filteredAttendance = filteredAttendance.filter(a => a.status === selectedStatus);
   }
 
+  // Default sort: present employees first (by check-in time), then absent
+  filteredAttendance = [...filteredAttendance].sort((a, b) => {
+    // Present/checked-in employees first
+    const aHasCheckIn = a.checkInTime !== null;
+    const bHasCheckIn = b.checkInTime !== null;
+
+    if (aHasCheckIn && !bHasCheckIn) return -1;
+    if (!aHasCheckIn && bHasCheckIn) return 1;
+
+    // Both have check-in: sort by check-in time (earliest first)
+    if (aHasCheckIn && bHasCheckIn) {
+      return (a.checkInTime || '').localeCompare(b.checkInTime || '');
+    }
+
+    // Both absent: sort by name
+    return a.employeeName.localeCompare(b.employeeName);
+  });
+
   const activeBranches = branches.filter(b => allAttendance.some(a => a.branchId === b.id));
 
   return (
