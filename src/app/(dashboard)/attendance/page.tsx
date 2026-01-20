@@ -490,9 +490,6 @@ export default async function AttendancePage({
                 <th className="text-left px-4 lg:px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Status
                 </th>
-                <th className="text-left px-4 lg:px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Source
-                </th>
                 {canEditAttendance && (
                   <th className="text-left px-4 lg:px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Actions
@@ -538,9 +535,6 @@ export default async function AttendancePage({
                   </td>
                   <td className="px-4 lg:px-6 py-4">
                     <StatusBadge status={record.status} isOvernight={record.isOvernight} />
-                  </td>
-                  <td className="px-4 lg:px-6 py-4">
-                    <SourceBadge source={record.source} />
                   </td>
                   {canEditAttendance && (
                     <td className="px-4 lg:px-6 py-4">
