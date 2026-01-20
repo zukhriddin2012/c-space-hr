@@ -12,8 +12,10 @@ import {
   Moon,
 } from 'lucide-react';
 import { getBranches, getEmployees, getAttendanceByDate, getWeeklyAttendanceSummary } from '@/lib/db';
+import { hasPermission, PERMISSIONS } from '@/lib/permissions';
 import AttendanceFilters from './AttendanceFilters';
 import AttendanceMap from '@/components/AttendanceMap';
+import ManualCheckoutButton from './ManualCheckoutButton';
 
 // Get current date in Tashkent timezone (UTC+5) - consistent with bot
 function getTashkentDateString(): string {
@@ -27,6 +29,7 @@ function getTashkentDateString(): string {
 
 interface AttendanceRecord {
   id: string;
+  attendanceDbId: string | null; // The actual database ID for API calls
   employeeId: string;
   employeeName: string;
   position: string;
@@ -66,6 +69,7 @@ async function getAttendanceForDate(date: string): Promise<AttendanceRecord[]> {
     const recordDate = a.is_overnight ? a.overnight_from_date : date;
     return {
       id: a.id,
+      attendanceDbId: a.id, // The actual database ID for API calls
       employeeId: employee?.employee_id || a.employee_id,
       employeeName: employee?.full_name || 'Unknown',
       position: employee?.position || '',
@@ -87,6 +91,7 @@ async function getAttendanceForDate(date: string): Promise<AttendanceRecord[]> {
     .filter(e => !checkedInIds.has(e.id))
     .map(e => ({
       id: `absent-${e.id}`,
+      attendanceDbId: null, // No attendance record exists
       employeeId: e.employee_id,
       employeeName: e.full_name,
       position: e.position,
@@ -234,6 +239,9 @@ export default async function AttendancePage({
 
   // For employees, show only their own attendance
   const isEmployee = user.role === 'employee';
+
+  // Check if user can edit attendance (for manual checkout)
+  const canEditAttendance = hasPermission(user.role, PERMISSIONS.ATTENDANCE_EDIT);
 
   // Get filter params
   const params = await searchParams;
@@ -481,6 +489,11 @@ export default async function AttendancePage({
                 <th className="text-left px-4 lg:px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Source
                 </th>
+                {canEditAttendance && (
+                  <th className="text-left px-4 lg:px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Actions
+                  </th>
+                )}
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
@@ -525,6 +538,18 @@ export default async function AttendancePage({
                   <td className="px-4 lg:px-6 py-4">
                     <SourceBadge source={record.source} />
                   </td>
+                  {canEditAttendance && (
+                    <td className="px-4 lg:px-6 py-4">
+                      {/* Show manual checkout button only if: checked in, not checked out, not absent */}
+                      {record.attendanceDbId && record.checkInTime && !record.checkOutTime && record.status !== 'absent' && (
+                        <ManualCheckoutButton
+                          attendanceId={record.attendanceDbId}
+                          employeeName={record.employeeName}
+                          checkInTime={formatTime(record.checkInTime)}
+                        />
+                      )}
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>
