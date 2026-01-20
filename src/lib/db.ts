@@ -41,7 +41,6 @@ export async function getEmployees(): Promise<Employee[]> {
   const { data, error } = await supabaseAdmin!
     .from('employees')
     .select('*, branches(name)')
-    .eq('status', 'active')
     .order('full_name');
 
   if (error) {
@@ -118,7 +117,6 @@ export async function getEmployeesByBranch(branchId: string): Promise<Employee[]
     .from('employees')
     .select('*, branches(name)')
     .eq('branch_id', branchId)
-    .eq('status', 'active')
     .order('full_name');
 
   if (error) {
