@@ -57,7 +57,7 @@ export default async function DashboardLayout({
           <div className="lg:hidden h-14" />
 
           {/* Main Content */}
-          <div className="p-4 lg:p-6">{children}</div>
+          <div className="p-4 lg:p-5 xl:p-6">{children}</div>
         </main>
 
           {/* Floating Feedback Button */}

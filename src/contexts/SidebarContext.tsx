@@ -15,11 +15,15 @@ const STORAGE_KEY = 'sidebar-collapsed';
 export function SidebarProvider({ children }: { children: ReactNode }) {
   const [isCollapsed, setIsCollapsed] = useState(false);
 
-  // Load saved preference on mount
+  // Load saved preference on mount, or auto-collapse on smaller screens
   useEffect(() => {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved !== null) {
       setIsCollapsed(saved === 'true');
+    } else {
+      // Auto-collapse on screens smaller than 1440px (13-14 inch laptops)
+      const isSmallScreen = window.innerWidth < 1440;
+      setIsCollapsed(isSmallScreen);
     }
   }, []);
 

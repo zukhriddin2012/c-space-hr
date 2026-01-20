@@ -152,7 +152,7 @@ export default function AttendanceTable({ records, canEditAttendance }: Attendan
   const SortableHeader = ({ field, children }: { field: SortField; children: React.ReactNode }) => (
     <th
       onClick={() => handleSort(field)}
-      className="text-left px-4 lg:px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors select-none"
+      className="text-left px-3 lg:px-4 xl:px-6 py-2.5 lg:py-3 text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors select-none"
     >
       <div className="flex items-center gap-1.5">
         {children}
@@ -185,7 +185,7 @@ export default function AttendanceTable({ records, canEditAttendance }: Attendan
             <tbody className="divide-y divide-gray-200">
               {sortedRecords.map((record) => (
                 <tr key={record.id} className="hover:bg-gray-50 transition-colors">
-                  <td className="px-4 lg:px-6 py-4">
+                  <td className="px-3 lg:px-4 xl:px-6 py-3 lg:py-4">
                     <div className="flex items-center gap-3">
                       <div className="relative">
                         <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0">
@@ -202,31 +202,31 @@ export default function AttendanceTable({ records, canEditAttendance }: Attendan
                       </div>
                     </div>
                   </td>
-                  <td className="px-4 lg:px-6 py-4">
+                  <td className="px-3 lg:px-4 xl:px-6 py-3 lg:py-4">
                     <div className="flex items-center gap-2">
                       <MapPin size={14} className="text-gray-400 flex-shrink-0" />
                       <span className="text-sm text-gray-900 truncate">{record.branchName}</span>
                     </div>
                   </td>
-                  <td className="px-4 lg:px-6 py-4">
+                  <td className="px-3 lg:px-4 xl:px-6 py-3 lg:py-4">
                     <span className={`text-sm ${record.status === 'late' && !record.isOvernight ? 'text-orange-600 font-medium' : 'text-gray-900'}`}>
                       {formatTime(record.checkInTime)}
                       {record.isOvernight && <span className="text-indigo-500 text-xs ml-1">(prev)</span>}
                     </span>
                   </td>
-                  <td className="px-4 lg:px-6 py-4">
+                  <td className="px-3 lg:px-4 xl:px-6 py-3 lg:py-4">
                     <span className={`text-sm ${record.status === 'early_leave' ? 'text-yellow-600 font-medium' : 'text-gray-900'}`}>
                       {formatTime(record.checkOutTime)}
                     </span>
                   </td>
-                  <td className="px-4 lg:px-6 py-4 text-sm text-gray-900">
+                  <td className="px-3 lg:px-4 xl:px-6 py-3 lg:py-4 text-sm text-gray-900">
                     {formatHours(record.totalHours ?? calculateHours(record.checkInTime, record.checkOutTime))}
                   </td>
-                  <td className="px-4 lg:px-6 py-4">
+                  <td className="px-3 lg:px-4 xl:px-6 py-3 lg:py-4">
                     <StatusBadge status={record.status} isOvernight={record.isOvernight} />
                   </td>
                   {canEditAttendance && (
-                    <td className="px-4 lg:px-6 py-4">
+                    <td className="px-3 lg:px-4 xl:px-6 py-3 lg:py-4">
                       <div className="flex items-center gap-2">
                         {record.attendanceDbId && record.checkInTime && !record.checkOutTime && record.status !== 'absent' && (
                           <ManualCheckoutButton
@@ -256,7 +256,7 @@ export default function AttendanceTable({ records, canEditAttendance }: Attendan
           </div>
         )}
 
-        <div className="flex items-center justify-between px-4 lg:px-6 py-4 border-t border-gray-200 bg-gray-50">
+        <div className="flex items-center justify-between px-3 lg:px-4 xl:px-6 py-3 lg:py-4 border-t border-gray-200 bg-gray-50">
           <p className="text-sm text-gray-500">
             Showing <span className="font-medium">{sortedRecords.length}</span> records
           </p>

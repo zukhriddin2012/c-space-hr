@@ -146,53 +146,53 @@ export default async function AttendanceDashboardPage() {
   const weeklySummary = await getWeeklyAttendanceSummary(allAttendance.length);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 xl:space-y-6">
       {/* Stats Summary */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-        <div className="bg-white rounded-xl border border-gray-200 p-4">
-          <div className="flex items-center gap-2 text-purple-600 mb-2">
-            <Users size={20} />
-            <span className="text-sm font-medium">Total</span>
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3 xl:gap-4">
+        <div className="bg-white rounded-xl border border-gray-200 p-3 xl:p-4">
+          <div className="flex items-center gap-1.5 xl:gap-2 text-purple-600 mb-1.5 xl:mb-2">
+            <Users size={18} />
+            <span className="text-xs xl:text-sm font-medium">Total</span>
           </div>
-          <p className="text-2xl font-semibold text-gray-900">{stats.total}</p>
-          <p className="text-xs text-gray-500 mt-1">employees</p>
+          <p className="text-xl xl:text-2xl font-semibold text-gray-900">{stats.total}</p>
+          <p className="text-xs text-gray-500 mt-0.5 xl:mt-1">employees</p>
         </div>
-        <div className="bg-white rounded-xl border border-gray-200 p-4">
-          <div className="flex items-center gap-2 text-green-600 mb-2">
-            <CheckCircle size={20} />
-            <span className="text-sm font-medium">Present Now</span>
+        <div className="bg-white rounded-xl border border-gray-200 p-3 xl:p-4">
+          <div className="flex items-center gap-1.5 xl:gap-2 text-green-600 mb-1.5 xl:mb-2">
+            <CheckCircle size={18} />
+            <span className="text-xs xl:text-sm font-medium">Present Now</span>
           </div>
-          <p className="text-2xl font-semibold text-gray-900">{stats.present}</p>
-          <p className="text-xs text-green-600 mt-1">currently in office</p>
+          <p className="text-xl xl:text-2xl font-semibold text-gray-900">{stats.present}</p>
+          <p className="text-xs text-green-600 mt-0.5 xl:mt-1">in office</p>
         </div>
-        <div className="bg-white rounded-xl border border-gray-200 p-4">
-          <div className="flex items-center gap-2 text-orange-600 mb-2">
-            <AlertCircle size={20} />
-            <span className="text-sm font-medium">Late</span>
+        <div className="bg-white rounded-xl border border-gray-200 p-3 xl:p-4">
+          <div className="flex items-center gap-1.5 xl:gap-2 text-orange-600 mb-1.5 xl:mb-2">
+            <AlertCircle size={18} />
+            <span className="text-xs xl:text-sm font-medium">Late</span>
           </div>
-          <p className="text-2xl font-semibold text-gray-900">{stats.late}</p>
-          <p className="text-xs text-orange-600 mt-1">after 9:00 AM</p>
+          <p className="text-xl xl:text-2xl font-semibold text-gray-900">{stats.late}</p>
+          <p className="text-xs text-orange-600 mt-0.5 xl:mt-1">after 9 AM</p>
         </div>
-        <div className="bg-white rounded-xl border border-gray-200 p-4">
-          <div className="flex items-center gap-2 text-red-600 mb-2">
-            <XCircle size={20} />
-            <span className="text-sm font-medium">Absent</span>
+        <div className="bg-white rounded-xl border border-gray-200 p-3 xl:p-4">
+          <div className="flex items-center gap-1.5 xl:gap-2 text-red-600 mb-1.5 xl:mb-2">
+            <XCircle size={18} />
+            <span className="text-xs xl:text-sm font-medium">Absent</span>
           </div>
-          <p className="text-2xl font-semibold text-gray-900">{stats.absent}</p>
-          <p className="text-xs text-red-600 mt-1">not checked in</p>
+          <p className="text-xl xl:text-2xl font-semibold text-gray-900">{stats.absent}</p>
+          <p className="text-xs text-red-600 mt-0.5 xl:mt-1">not checked in</p>
         </div>
-        <div className="bg-white rounded-xl border border-gray-200 p-4">
-          <div className="flex items-center gap-2 text-yellow-600 mb-2">
-            <Clock size={20} />
-            <span className="text-sm font-medium">Early Leave</span>
+        <div className="bg-white rounded-xl border border-gray-200 p-3 xl:p-4">
+          <div className="flex items-center gap-1.5 xl:gap-2 text-yellow-600 mb-1.5 xl:mb-2">
+            <Clock size={18} />
+            <span className="text-xs xl:text-sm font-medium">Early Leave</span>
           </div>
-          <p className="text-2xl font-semibold text-gray-900">{stats.earlyLeave}</p>
-          <p className="text-xs text-yellow-600 mt-1">left before 5 PM</p>
+          <p className="text-xl xl:text-2xl font-semibold text-gray-900">{stats.earlyLeave}</p>
+          <p className="text-xs text-yellow-600 mt-0.5 xl:mt-1">left early</p>
         </div>
       </div>
 
       {/* Map and Branch Summary - Side by Side on Desktop */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 xl:gap-6">
         {/* Interactive Attendance Map */}
         {branches.length > 0 && (
           <div className="lg:col-span-2">
@@ -212,7 +212,7 @@ export default async function AttendanceDashboardPage() {
                   total: branchAttendance.length,
                 };
               })}
-              height="350px"
+              height="300px"
               selectedDate={selectedDate}
             />
           </div>
@@ -220,12 +220,12 @@ export default async function AttendanceDashboardPage() {
 
         {/* Branch Attendance Cards */}
         {activeBranches.length > 0 && (
-          <div className="bg-white rounded-xl border border-gray-200 p-5">
-            <div className="flex items-center gap-2 mb-4">
-              <MapPin size={20} className="text-purple-600" />
-              <h3 className="font-semibold text-gray-900">Branch Summary</h3>
+          <div className="bg-white rounded-xl border border-gray-200 p-4 xl:p-5">
+            <div className="flex items-center gap-2 mb-3 xl:mb-4">
+              <MapPin size={18} className="text-purple-600" />
+              <h3 className="text-sm xl:text-base font-semibold text-gray-900">Branch Summary</h3>
             </div>
-            <div className="space-y-3">
+            <div className="space-y-2.5 xl:space-y-3">
               {activeBranches.map(branch => (
                 <BranchAttendanceCard
                   key={branch.id}
