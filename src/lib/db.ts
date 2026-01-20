@@ -485,9 +485,8 @@ export async function getAttendanceByDate(date: string): Promise<Attendance[]> {
   }
 
   // Also fetch overnight night shift records from the previous day
-  // These are workers who checked in yesterday evening and either:
-  // - Haven't checked out yet, OR
-  // - Checked out this morning
+  // These are workers who checked in yesterday evening and haven't checked out yet
+  // Once they check out, the record stays on the original date (not shown on next day)
   const previousDate = new Date(date);
   previousDate.setDate(previousDate.getDate() - 1);
   const previousDateStr = previousDate.toISOString().split('T')[0];
@@ -502,7 +501,7 @@ export async function getAttendanceByDate(date: string): Promise<Attendance[]> {
     `)
     .eq('date', previousDateStr)
     .eq('shift_id', 'night')
-    .or('check_out.is.null,check_out.lt.12:00:00');
+    .is('check_out', null);
 
   if (overnightError) {
     console.error('Error fetching overnight attendance:', overnightError);
