@@ -6,6 +6,13 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 const supabase = createClient(supabaseUrl, supabaseKey);
 
+// CORS headers for Mini App
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, X-Telegram-Init-Data',
+};
+
 // Shift configurations
 const SHIFTS = {
   day: {
@@ -20,6 +27,11 @@ const SHIFTS = {
   },
 };
 
+// Handle OPTIONS request for CORS
+export async function OPTIONS() {
+  return NextResponse.json({}, { headers: corsHeaders });
+}
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
@@ -28,7 +40,7 @@ export async function GET(request: NextRequest) {
     if (!telegramId) {
       return NextResponse.json(
         { error: 'telegramId is required' },
-        { status: 400 }
+        { status: 400, headers: corsHeaders }
       );
     }
 
@@ -42,18 +54,9 @@ export async function GET(request: NextRequest) {
     if (empError || !employee) {
       return NextResponse.json(
         { error: 'Employee not found', isActive: false },
-        { status: 404 }
+        { status: 404, headers: corsHeaders }
       );
     }
-
-    // Get today's date range (Tashkent timezone)
-    const now = new Date();
-    const tashkentOffset = 5 * 60; // UTC+5
-    const localNow = new Date(now.getTime() + tashkentOffset * 60 * 1000);
-    const todayStart = new Date(localNow);
-    todayStart.setHours(0, 0, 0, 0);
-    const todayEnd = new Date(localNow);
-    todayEnd.setHours(23, 59, 59, 999);
 
     // Get active attendance record (checked in but not checked out)
     const { data: attendance, error: attError } = await supabase
@@ -76,7 +79,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({
         isActive: false,
         employeeName: employee.full_name,
-      });
+      }, { headers: corsHeaders });
     }
 
     // Get shift info
@@ -95,12 +98,12 @@ export async function GET(request: NextRequest) {
       shiftName: shift.name,
       shiftDuration: shift.duration,
       attendanceId: attendance.id,
-    });
+    }, { headers: corsHeaders });
   } catch (error) {
     console.error('Timer status error:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
-      { status: 500 }
+      { status: 500, headers: corsHeaders }
     );
   }
 }

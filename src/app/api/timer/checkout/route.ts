@@ -6,6 +6,18 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 const supabase = createClient(supabaseUrl, supabaseKey);
 
+// CORS headers for Mini App
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, X-Telegram-Init-Data',
+};
+
+// Handle OPTIONS request for CORS
+export async function OPTIONS() {
+  return NextResponse.json({}, { headers: corsHeaders });
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -14,7 +26,7 @@ export async function POST(request: NextRequest) {
     if (!telegramId) {
       return NextResponse.json(
         { error: 'telegramId is required' },
-        { status: 400 }
+        { status: 400, headers: corsHeaders }
       );
     }
 
@@ -28,7 +40,7 @@ export async function POST(request: NextRequest) {
     if (empError || !employee) {
       return NextResponse.json(
         { error: 'Employee not found' },
-        { status: 404 }
+        { status: 404, headers: corsHeaders }
       );
     }
 
@@ -45,7 +57,7 @@ export async function POST(request: NextRequest) {
     if (attError || !attendance) {
       return NextResponse.json(
         { error: 'No active check-in found' },
-        { status: 400 }
+        { status: 400, headers: corsHeaders }
       );
     }
 
@@ -79,7 +91,7 @@ export async function POST(request: NextRequest) {
       console.error('Update error:', updateError);
       return NextResponse.json(
         { error: 'Failed to record checkout' },
-        { status: 500 }
+        { status: 500, headers: corsHeaders }
       );
     }
 
@@ -89,12 +101,12 @@ export async function POST(request: NextRequest) {
       totalHours: totalHours,
       isEarlyLeave: isEarlyLeave,
       employeeName: employee.full_name,
-    });
+    }, { headers: corsHeaders });
   } catch (error) {
     console.error('Checkout error:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
-      { status: 500 }
+      { status: 500, headers: corsHeaders }
     );
   }
 }
