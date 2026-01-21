@@ -37,6 +37,7 @@ import {
   MessageSquare,
 } from 'lucide-react';
 import type { Candidate, CandidateStage, ChecklistItem } from '@/lib/db';
+import CandidateDetailModal from '@/components/CandidateDetailModal';
 
 const STAGES: { id: CandidateStage; label: string; color: string; bgColor: string }[] = [
   { id: 'screening', label: 'Screening', color: 'text-blue-700', bgColor: 'bg-blue-50 border-blue-200' },
@@ -1017,294 +1018,129 @@ export default function RecruitmentBoardPage() {
       )}
 
       {/* Candidate Detail Modal */}
-      {selectedCandidate && (
+      {selectedCandidate && !isEditMode && (
+        <CandidateDetailModal
+          candidate={selectedCandidate}
+          onClose={() => setSelectedCandidate(null)}
+          onStageChange={handleStageChange}
+          onChecklistUpdate={handleChecklistUpdate}
+          onHire={handleHire}
+          onReject={handleReject}
+          onDelete={handleDelete}
+          onEdit={openEditMode}
+          onRefresh={() => {
+            fetchCandidates();
+            fetchStats();
+          }}
+          processing={processing}
+        />
+      )}
+
+      {/* Edit Candidate Modal */}
+      {selectedCandidate && isEditMode && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between p-4 border-b sticky top-0 bg-white z-10">
-              <h2 className="text-lg font-semibold">Candidate Details</h2>
-              <div className="flex items-center gap-2">
-                {!isEditMode && (
-                  <button onClick={openEditMode} className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100">
-                    <Edit size={18} />
-                  </button>
-                )}
-                <button onClick={() => { setSelectedCandidate(null); setIsEditMode(false); }} className="text-gray-400 hover:text-gray-600">
-                  <X size={20} />
-                </button>
-              </div>
+            <div className="flex items-center justify-between p-4 border-b">
+              <h2 className="text-lg font-semibold">Edit Candidate</h2>
+              <button onClick={() => setIsEditMode(false)} className="text-gray-400 hover:text-gray-600">
+                <X size={20} />
+              </button>
             </div>
 
-            {isEditMode ? (
-              <form onSubmit={handleUpdateCandidate} className="p-4 space-y-4">
-                {/* Same form fields as Add Modal */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
-                    <input
-                      type="text"
-                      required
-                      value={formData.full_name}
-                      onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                    <input
-                      type="email"
-                      required
-                      value={formData.email}
-                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
-                    <input
-                      type="tel"
-                      value={formData.phone}
-                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Applied Role</label>
-                    <select
-                      required
-                      value={formData.applied_role}
-                      onChange={(e) => setFormData({ ...formData, applied_role: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
-                    >
-                      <option value="">Select role...</option>
-                      {ROLE_OPTIONS.map(role => (
-                        <option key={role} value={role}>{role}</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">IQ Score</label>
-                    <input
-                      type="number"
-                      value={formData.iq_score}
-                      onChange={(e) => setFormData({ ...formData, iq_score: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">MBTI Type</label>
-                    <select
-                      value={formData.mbti_type}
-                      onChange={(e) => setFormData({ ...formData, mbti_type: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
-                    >
-                      <option value="">Select MBTI...</option>
-                      {MBTI_TYPES.map(type => (
-                        <option key={type} value={type}>{type}</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-
+            <form onSubmit={handleUpdateCandidate} className="p-4 space-y-4">
+              <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">About</label>
-                  <textarea
-                    value={formData.about}
-                    onChange={(e) => setFormData({ ...formData, about: e.target.value })}
-                    rows={3}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 resize-none"
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                  <input
+                    type="text"
+                    required
+                    value={formData.full_name}
+                    onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
                   />
                 </div>
-
-                <div className="flex justify-end gap-3 pt-4 border-t">
-                  <button type="button" onClick={() => setIsEditMode(false)} className="px-4 py-2 text-gray-600">
-                    Cancel
-                  </button>
-                  <button type="submit" disabled={processing} className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50">
-                    {processing ? 'Saving...' : 'Save Changes'}
-                  </button>
-                </div>
-              </form>
-            ) : (
-              <div className="p-4 space-y-6">
-                {/* Header */}
-                <div className="flex items-start gap-4">
-                  <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center">
-                    <span className="text-purple-700 font-bold text-xl">
-                      {selectedCandidate.full_name.charAt(0)}
-                    </span>
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="text-xl font-semibold text-gray-900">{selectedCandidate.full_name}</h3>
-                    <p className="text-gray-600">{selectedCandidate.applied_role}</p>
-                    <div className="flex items-center gap-4 mt-2 text-sm text-gray-500">
-                      <span className="flex items-center gap-1">
-                        <Mail size={14} />
-                        {selectedCandidate.email}
-                      </span>
-                      {selectedCandidate.phone && (
-                        <span className="flex items-center gap-1">
-                          <Phone size={14} />
-                          {selectedCandidate.phone}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Assessment Data */}
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <h4 className="font-medium text-gray-900 mb-3 flex items-center gap-2">
-                    <Brain size={16} />
-                    Assessment
-                  </h4>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-sm text-gray-500">IQ Score</p>
-                      <p className="font-medium">{selectedCandidate.iq_score || 'Not tested'}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-500">MBTI Type</p>
-                      <p className="font-medium">{selectedCandidate.mbti_type || 'Not assessed'}</p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* About */}
-                {selectedCandidate.about && (
-                  <div className="bg-gray-50 rounded-lg p-4">
-                    <h4 className="font-medium text-gray-900 mb-2">About</h4>
-                    <p className="text-gray-700 text-sm whitespace-pre-wrap">{selectedCandidate.about}</p>
-                  </div>
-                )}
-
-                {/* Resume */}
-                {selectedCandidate.resume_file_name && (
-                  <div className="bg-gray-50 rounded-lg p-4">
-                    <h4 className="font-medium text-gray-900 mb-2 flex items-center gap-2">
-                      <FileText size={16} />
-                      Resume
-                    </h4>
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium">{selectedCandidate.resume_file_name}</p>
-                        {selectedCandidate.resume_file_size && (
-                          <p className="text-xs text-gray-500">{formatFileSize(selectedCandidate.resume_file_size)}</p>
-                        )}
-                      </div>
-                      <button className="flex items-center gap-1 px-3 py-1.5 text-sm text-purple-600 hover:bg-purple-50 rounded-lg">
-                        <Download size={14} />
-                        Download
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                {/* Probation Checklist */}
-                {selectedCandidate.stage === 'probation' && selectedCandidate.checklist && selectedCandidate.checklist.length > 0 && (
-                  <div className="bg-yellow-50 rounded-lg p-4 border border-yellow-200">
-                    <h4 className="font-medium text-gray-900 mb-3 flex items-center gap-2">
-                      <CheckSquare size={16} />
-                      Probation Checklist
-                    </h4>
-                    <div className="space-y-2">
-                      {selectedCandidate.checklist.map((item) => (
-                        <div
-                          key={item.id}
-                          className="flex items-center gap-3 cursor-pointer hover:bg-yellow-100 rounded p-1 -mx-1"
-                          onClick={() => {
-                            const updatedChecklist = selectedCandidate.checklist.map(i =>
-                              i.id === item.id ? { ...i, completed: !i.completed } : i
-                            );
-                            handleChecklistUpdate(selectedCandidate.id, updatedChecklist);
-                          }}
-                        >
-                          {item.completed ? (
-                            <CheckSquare size={18} className="text-green-600" />
-                          ) : (
-                            <Square size={18} className="text-gray-400" />
-                          )}
-                          <span className={`text-sm ${item.completed ? 'text-gray-500 line-through' : 'text-gray-700'}`}>
-                            {item.text}
-                            {item.required && <span className="text-red-500 ml-1">*</span>}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                    {selectedCandidate.probation_start_date && (
-                      <div className="mt-3 pt-3 border-t border-yellow-200 text-sm text-gray-600">
-                        <p>Started: {formatDate(selectedCandidate.probation_start_date)}</p>
-                        {selectedCandidate.probation_end_date && (
-                          <p>Ends: {formatDate(selectedCandidate.probation_end_date)}</p>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* Stage Control */}
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <h4 className="font-medium text-gray-900 mb-3">Stage</h4>
-                  <div className="flex items-center gap-2 flex-wrap">
-                    {STAGES.filter(s => s.id !== 'hired' && s.id !== 'rejected').map((stage) => (
-                      <button
-                        key={stage.id}
-                        onClick={() => handleStageChange(selectedCandidate.id, stage.id)}
-                        className={`px-3 py-1.5 text-sm rounded-lg border transition-all ${
-                          selectedCandidate.stage === stage.id
-                            ? `${stage.bgColor} ${stage.color} border-current`
-                            : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'
-                        }`}
-                      >
-                        {stage.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Actions */}
-                <div className="flex items-center justify-between pt-4 border-t">
-                  <div className="flex items-center gap-2">
-                    {selectedCandidate.stage === 'probation' && (
-                      <button
-                        onClick={() => handleHire(selectedCandidate.id)}
-                        disabled={processing}
-                        className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
-                      >
-                        <CheckCircle size={16} />
-                        Hire
-                      </button>
-                    )}
-                    <button
-                      onClick={() => handleReject(selectedCandidate.id)}
-                      disabled={processing}
-                      className="flex items-center gap-2 px-4 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100"
-                    >
-                      <XCircle size={16} />
-                      Reject
-                    </button>
-                  </div>
-                  <button
-                    onClick={() => handleDelete(selectedCandidate.id)}
-                    className="flex items-center gap-2 px-4 py-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg"
-                  >
-                    <Trash2 size={16} />
-                    Delete
-                  </button>
-                </div>
-
-                {/* Metadata */}
-                <div className="text-xs text-gray-400 pt-2 border-t">
-                  <p>Source: {selectedCandidate.source || 'Unknown'}</p>
-                  <p>Added: {formatDate(selectedCandidate.created_at)}</p>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                  <input
+                    type="email"
+                    required
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                  />
                 </div>
               </div>
-            )}
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+                  <input
+                    type="tel"
+                    value={formData.phone}
+                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Applied Role</label>
+                  <select
+                    required
+                    value={formData.applied_role}
+                    onChange={(e) => setFormData({ ...formData, applied_role: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                  >
+                    <option value="">Select role...</option>
+                    {ROLE_OPTIONS.map(role => (
+                      <option key={role} value={role}>{role}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">IQ Score</label>
+                  <input
+                    type="number"
+                    value={formData.iq_score}
+                    onChange={(e) => setFormData({ ...formData, iq_score: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">MBTI Type</label>
+                  <select
+                    value={formData.mbti_type}
+                    onChange={(e) => setFormData({ ...formData, mbti_type: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                  >
+                    <option value="">Select MBTI...</option>
+                    {MBTI_TYPES.map(type => (
+                      <option key={type} value={type}>{type}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">About</label>
+                <textarea
+                  value={formData.about}
+                  onChange={(e) => setFormData({ ...formData, about: e.target.value })}
+                  rows={3}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 resize-none"
+                />
+              </div>
+
+              <div className="flex justify-end gap-3 pt-4 border-t">
+                <button type="button" onClick={() => setIsEditMode(false)} className="px-4 py-2 text-gray-600">
+                  Cancel
+                </button>
+                <button type="submit" disabled={processing} className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50">
+                  {processing ? 'Saving...' : 'Save Changes'}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
