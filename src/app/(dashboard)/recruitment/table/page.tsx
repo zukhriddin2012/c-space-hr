@@ -259,7 +259,25 @@ export default function RecruitmentTablePage() {
     setResumeFile(null);
   };
 
+  const handleViewResume = async (candidateId: string) => {
+    try {
+      const res = await fetch(`/api/candidates/${candidateId}/resume`);
+      if (res.ok) {
+        const data = await res.json();
+        // Open in new tab - browser will display PDF or download other file types
+        window.open(data.url, '_blank');
+      } else {
+        const errorData = await res.json();
+        alert(errorData.error || 'Failed to get resume');
+      }
+    } catch (error) {
+      console.error('Error viewing resume:', error);
+      alert('Failed to view resume');
+    }
+  };
+
   const openEditMode = (candidate: Candidate) => {
+    setResumeFile(null); // Clear any previous resume file
     setSelectedCandidate(candidate);
     setFormData({
       full_name: candidate.full_name,
@@ -454,7 +472,7 @@ export default function RecruitmentTablePage() {
                   return (
                     <tr
                       key={candidate.id}
-                      onClick={() => setSelectedCandidate(candidate)}
+                      onClick={() => openEditMode(candidate)}
                       className="hover:bg-purple-50 cursor-pointer transition-colors"
                     >
                       <td className="px-4 py-4">
@@ -838,6 +856,14 @@ export default function RecruitmentTablePage() {
                           <span className="text-xs text-gray-400">({formatFileSize(selectedCandidate.resume_file_size)})</span>
                         )}
                       </div>
+                      <button
+                        type="button"
+                        onClick={() => handleViewResume(selectedCandidate.id)}
+                        className="flex items-center gap-1 px-3 py-1 text-sm text-purple-600 hover:bg-purple-50 rounded-lg"
+                      >
+                        <Eye size={14} />
+                        View
+                      </button>
                     </div>
                   )}
 
