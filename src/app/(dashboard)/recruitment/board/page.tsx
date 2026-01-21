@@ -119,6 +119,15 @@ export default function RecruitmentBoardPage() {
     notes: '',
   });
   const [resumeFile, setResumeFile] = useState<File | null>(null);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [importFile, setImportFile] = useState<File | null>(null);
+  const [importProcessing, setImportProcessing] = useState(false);
+  const [importResult, setImportResult] = useState<{
+    imported: number;
+    skipped: number;
+    total: number;
+    errors?: string[];
+  } | null>(null);
 
   useEffect(() => {
     fetchCandidates();
@@ -334,6 +343,57 @@ export default function RecruitmentBoardPage() {
     setResumeFile(null);
   };
 
+  const handleImport = async () => {
+    if (!importFile) return;
+    setImportProcessing(true);
+    setImportResult(null);
+    try {
+      const formData = new FormData();
+      formData.append('file', importFile);
+
+      const res = await fetch('/api/candidates/import', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        setImportResult({
+          imported: data.imported,
+          skipped: data.skipped,
+          total: data.total,
+          errors: data.errors,
+        });
+        fetchCandidates();
+        fetchStats();
+      } else {
+        setImportResult({
+          imported: 0,
+          skipped: 0,
+          total: 0,
+          errors: [data.error || 'Failed to import'],
+        });
+      }
+    } catch (error) {
+      console.error('Error importing candidates:', error);
+      setImportResult({
+        imported: 0,
+        skipped: 0,
+        total: 0,
+        errors: ['Network error - please try again'],
+      });
+    } finally {
+      setImportProcessing(false);
+    }
+  };
+
+  const closeImportModal = () => {
+    setIsImportModalOpen(false);
+    setImportFile(null);
+    setImportResult(null);
+  };
+
   const openEditMode = () => {
     if (!selectedCandidate) return;
     setFormData({
@@ -406,6 +466,13 @@ export default function RecruitmentBoardPage() {
             <Table size={18} />
             Switch to Table
           </Link>
+          <button
+            onClick={() => setIsImportModalOpen(true)}
+            className="flex items-center gap-2 px-4 py-2 text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+          >
+            <Upload size={18} />
+            Import CSV
+          </button>
           <button
             onClick={() => {
               resetForm();
@@ -752,6 +819,141 @@ export default function RecruitmentBoardPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Import CSV Modal */}
+      {isImportModalOpen && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl max-w-md w-full">
+            <div className="flex items-center justify-between p-4 border-b">
+              <h2 className="text-lg font-semibold flex items-center gap-2">
+                <Upload size={20} className="text-purple-600" />
+                Import Candidates from CSV
+              </h2>
+              <button onClick={closeImportModal} className="text-gray-400 hover:text-gray-600">
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="p-4 space-y-4">
+              {!importResult ? (
+                <>
+                  {/* File Upload Area */}
+                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-purple-400 transition-colors">
+                    <input
+                      type="file"
+                      accept=".csv"
+                      onChange={(e) => setImportFile(e.target.files?.[0] || null)}
+                      className="hidden"
+                      id="csv-upload"
+                    />
+                    <label htmlFor="csv-upload" className="cursor-pointer">
+                      {importFile ? (
+                        <div className="flex items-center justify-center gap-2 text-purple-600">
+                          <FileText size={24} />
+                          <div>
+                            <p className="font-medium">{importFile.name}</p>
+                            <p className="text-sm text-gray-500">{(importFile.size / 1024).toFixed(1)} KB</p>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="text-gray-500">
+                          <Upload size={32} className="mx-auto mb-2" />
+                          <p className="font-medium">Click to upload CSV file</p>
+                          <p className="text-sm mt-1">or drag and drop</p>
+                        </div>
+                      )}
+                    </label>
+                  </div>
+
+                  {/* Expected Format */}
+                  <div className="bg-gray-50 rounded-lg p-3 text-sm">
+                    <p className="font-medium text-gray-700 mb-1">Expected columns:</p>
+                    <p className="text-gray-500 text-xs">
+                      Candidate name, IQ, MBTi, Role, Stage, About, Candidate Email
+                    </p>
+                  </div>
+
+                  {/* Import Button */}
+                  <div className="flex justify-end gap-3">
+                    <button
+                      onClick={closeImportModal}
+                      className="px-4 py-2 text-gray-600 hover:text-gray-800"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleImport}
+                      disabled={!importFile || importProcessing}
+                      className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {importProcessing ? (
+                        <>
+                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                          Importing...
+                        </>
+                      ) : (
+                        <>
+                          <Upload size={16} />
+                          Import
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  {/* Import Results */}
+                  <div className="text-center py-4">
+                    {importResult.imported > 0 ? (
+                      <CheckCircle size={48} className="mx-auto text-green-500 mb-3" />
+                    ) : (
+                      <AlertCircle size={48} className="mx-auto text-yellow-500 mb-3" />
+                    )}
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">Import Complete</h3>
+                  </div>
+
+                  <div className="bg-gray-50 rounded-lg p-4 space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">Total rows processed:</span>
+                      <span className="font-medium">{importResult.total}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-green-600">Successfully imported:</span>
+                      <span className="font-medium text-green-600">{importResult.imported}</span>
+                    </div>
+                    {importResult.skipped > 0 && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-yellow-600">Skipped (duplicates):</span>
+                        <span className="font-medium text-yellow-600">{importResult.skipped}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {importResult.errors && importResult.errors.length > 0 && (
+                    <div className="bg-red-50 rounded-lg p-3 border border-red-200">
+                      <p className="text-sm font-medium text-red-700 mb-1">Errors:</p>
+                      <ul className="text-xs text-red-600 space-y-1">
+                        {importResult.errors.map((err, idx) => (
+                          <li key={idx}>• {err}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  <div className="flex justify-end">
+                    <button
+                      onClick={closeImportModal}
+                      className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
+                    >
+                      Done
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
           </div>
         </div>
       )}
