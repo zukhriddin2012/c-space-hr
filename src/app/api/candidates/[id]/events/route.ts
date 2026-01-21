@@ -20,7 +20,7 @@ export const GET = withAuth(async (
       .from('candidate_events')
       .select(`
         *,
-        with_user:users!candidate_events_with_user_id_fkey(full_name)
+        with_user:employees!candidate_events_with_user_id_fkey(full_name)
       `)
       .eq('candidate_id', id)
       .order('scheduled_at', { ascending: true });
@@ -72,7 +72,7 @@ export const POST = withAuth(async (
       })
       .select(`
         *,
-        with_user:users!candidate_events_with_user_id_fkey(full_name)
+        with_user:employees!candidate_events_with_user_id_fkey(full_name)
       `)
       .single();
 
@@ -118,7 +118,7 @@ export const PUT = withAuth(async (
       .eq('id', event_id)
       .select(`
         *,
-        with_user:users!candidate_events_with_user_id_fkey(full_name)
+        with_user:employees!candidate_events_with_user_id_fkey(full_name)
       `)
       .single();
 

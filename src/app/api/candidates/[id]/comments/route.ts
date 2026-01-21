@@ -20,7 +20,7 @@ export const GET = withAuth(async (
       .from('candidate_comments')
       .select(`
         *,
-        user:users!candidate_comments_user_id_fkey(full_name, email)
+        user:employees!candidate_comments_user_id_fkey(full_name, email)
       `)
       .eq('candidate_id', id)
       .order('created_at', { ascending: false });
@@ -65,7 +65,7 @@ export const POST = withAuth(async (
       })
       .select(`
         *,
-        user:users!candidate_comments_user_id_fkey(full_name, email)
+        user:employees!candidate_comments_user_id_fkey(full_name, email)
       `)
       .single();
 

@@ -6,7 +6,7 @@
 CREATE TABLE IF NOT EXISTS candidate_comments (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   candidate_id UUID NOT NULL REFERENCES candidates(id) ON DELETE CASCADE,
-  user_id UUID NOT NULL REFERENCES users(id),
+  user_id UUID NOT NULL REFERENCES employees(id),
   content TEXT NOT NULL,
   stage_tag TEXT, -- Which stage this comment relates to (screening, interview_1, etc.)
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
@@ -14,8 +14,8 @@ CREATE TABLE IF NOT EXISTS candidate_comments (
 );
 
 -- Indexes for comments
-CREATE INDEX idx_candidate_comments_candidate ON candidate_comments(candidate_id);
-CREATE INDEX idx_candidate_comments_created ON candidate_comments(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_candidate_comments_candidate ON candidate_comments(candidate_id);
+CREATE INDEX IF NOT EXISTS idx_candidate_comments_created ON candidate_comments(created_at DESC);
 
 -- =============================================
 -- 2. Candidate Events Table (Interviews, Meetings, Deadlines)
@@ -30,7 +30,7 @@ CREATE TABLE IF NOT EXISTS candidate_events (
   scheduled_at TIMESTAMP WITH TIME ZONE NOT NULL,
   completed_at TIMESTAMP WITH TIME ZONE, -- NULL if not completed
 
-  with_user_id UUID REFERENCES users(id), -- Who is conducting the interview/meeting
+  with_user_id UUID REFERENCES employees(id), -- Who is conducting the interview/meeting
   location TEXT, -- Room, link, etc.
   notes TEXT,
 
@@ -39,9 +39,9 @@ CREATE TABLE IF NOT EXISTS candidate_events (
 );
 
 -- Indexes for events
-CREATE INDEX idx_candidate_events_candidate ON candidate_events(candidate_id);
-CREATE INDEX idx_candidate_events_scheduled ON candidate_events(scheduled_at);
-CREATE INDEX idx_candidate_events_type ON candidate_events(event_type);
+CREATE INDEX IF NOT EXISTS idx_candidate_events_candidate ON candidate_events(candidate_id);
+CREATE INDEX IF NOT EXISTS idx_candidate_events_scheduled ON candidate_events(scheduled_at);
+CREATE INDEX IF NOT EXISTS idx_candidate_events_type ON candidate_events(event_type);
 
 -- Constraint for event types
 ALTER TABLE candidate_events
