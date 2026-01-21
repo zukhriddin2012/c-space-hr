@@ -59,7 +59,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Get active attendance record (checked in but not checked out)
-    const { data: attendance, error: attError } = await supabase
+    const { data: attendanceData, error: attError } = await supabase
       .from('attendance')
       .select(`
         id,
@@ -68,15 +68,18 @@ export async function GET(request: NextRequest) {
         check_in_timestamp,
         check_out,
         shift_id,
-        check_in_branch:branches!attendance_check_in_branch_id_fkey(id, name)
+        check_in_branch_id
       `)
       .eq('employee_id', employee.id)
       .is('check_out', null)
+      .order('date', { ascending: false })
       .order('check_in', { ascending: false })
-      .limit(1)
-      .single();
+      .limit(1);
 
-    if (attError || !attendance) {
+    // Debug log
+    console.log('Attendance query result:', { attendanceData, attError });
+
+    if (attError || !attendanceData || attendanceData.length === 0) {
       // No active check-in
       return NextResponse.json({
         isActive: false,
@@ -84,21 +87,40 @@ export async function GET(request: NextRequest) {
       }, { headers: corsHeaders });
     }
 
+    const attendance = attendanceData[0];
+    console.log('Attendance record:', attendance);
+
+    // Get branch name separately
+    let branchName = 'Unknown';
+    if (attendance.check_in_branch_id) {
+      const { data: branch } = await supabase
+        .from('branches')
+        .select('name')
+        .eq('id', attendance.check_in_branch_id)
+        .single();
+      branchName = branch?.name || 'Unknown';
+    }
+
     // Get shift info
     const shiftId = attendance.shift_id || 'day';
     const shift = SHIFTS[shiftId as keyof typeof SHIFTS] || SHIFTS.day;
-
-    // Get branch name
-    const branchName = (attendance.check_in_branch as any)?.name || 'Unknown';
 
     // Use check_in_timestamp if available, otherwise construct from date + check_in
     // check_in is just TIME (HH:MM:SS), check_in_timestamp is TIMESTAMP
     let checkInTime = attendance.check_in_timestamp;
 
+    // Debug log
+    console.log('Building checkInTime:', {
+      check_in_timestamp: attendance.check_in_timestamp,
+      date: attendance.date,
+      check_in: attendance.check_in
+    });
+
     // Fallback: if check_in_timestamp is null, construct it from date + check_in
     if (!checkInTime && attendance.date && attendance.check_in) {
       // Combine date (YYYY-MM-DD) with check_in time (HH:MM:SS)
       checkInTime = `${attendance.date}T${attendance.check_in}`;
+      console.log('Constructed checkInTime:', checkInTime);
     }
 
     return NextResponse.json({
