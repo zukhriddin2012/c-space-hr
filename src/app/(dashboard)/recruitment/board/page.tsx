@@ -91,32 +91,61 @@ function formatFileSize(bytes: number): string {
   return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
 }
 
-function formatEventDate(dateString: string): { text: string; isOverdue: boolean; isToday: boolean } {
+function formatEventDate(dateString: string): { text: string; isOverdue: boolean; isToday: boolean; isTomorrow: boolean } {
   const eventDate = new Date(dateString);
   const now = new Date();
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const tomorrow = new Date(today);
+  tomorrow.setDate(tomorrow.getDate() + 1);
   const eventDay = new Date(eventDate.getFullYear(), eventDate.getMonth(), eventDate.getDate());
 
   const isOverdue = eventDate < now;
+  const isTomorrow = eventDay.getTime() === tomorrow.getTime();
   const isToday = eventDay.getTime() === today.getTime();
 
   if (isToday) {
     return {
-      text: `Today, ${eventDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}`,
+      text: 'Today',
       isOverdue: false,
       isToday: true,
+      isTomorrow: false,
+    };
+  }
+
+  if (isTomorrow) {
+    return {
+      text: 'Tomorrow',
+      isOverdue: false,
+      isToday: false,
+      isTomorrow: true,
     };
   }
 
   const text = eventDate.toLocaleDateString('en-US', {
     month: 'short',
     day: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
   });
 
-  return { text, isOverdue, isToday: false };
+  return { text, isOverdue, isToday: false, isTomorrow: false };
 }
+
+function getDaysInStage(createdAt: string, stageChangedAt?: string | null): number {
+  const startDate = stageChangedAt ? new Date(stageChangedAt) : new Date(createdAt);
+  const now = new Date();
+  const diffTime = Math.abs(now.getTime() - startDate.getTime());
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  return diffDays;
+}
+
+const SOURCE_COLORS: Record<string, string> = {
+  'LinkedIn': 'bg-purple-100 text-purple-600',
+  'Referral': 'bg-green-100 text-green-600',
+  'Job Board': 'bg-blue-100 text-blue-600',
+  'Company Website': 'bg-gray-100 text-gray-600',
+  'Telegram': 'bg-sky-100 text-sky-600',
+  'Social Media': 'bg-pink-100 text-pink-600',
+  'Other': 'bg-gray-100 text-gray-600',
+};
 
 export default function RecruitmentBoardPage() {
   const { user } = useAuth();
@@ -588,117 +617,124 @@ export default function RecruitmentBoardPage() {
         </div>
       ) : (
         <div className="overflow-x-auto pb-4">
-          <div className="flex gap-4 min-w-max">
+          <div className="flex gap-4">
             {STAGES.map((stage) => {
               const stageCandidates = getCandidatesByStage(stage.id);
               return (
                 <div
                   key={stage.id}
-                  className="w-72 flex-shrink-0"
+                  className="w-[300px] shrink-0 flex flex-col"
                   onDragOver={handleDragOver}
                   onDrop={(e) => handleDrop(e, stage.id)}
                 >
                   {/* Column Header */}
-                  <div className={`p-3 rounded-t-xl border-2 ${stage.bgColor}`}>
+                  <div className={`px-4 py-3 rounded-t-xl border-2 ${stage.bgColor}`}>
                     <div className="flex items-center justify-between">
                       <h3 className={`font-semibold ${stage.color}`}>{stage.label}</h3>
-                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${stage.bgColor} ${stage.color}`}>
+                      <span className={`px-2 py-0.5 rounded-full text-sm font-medium ${stage.bgColor} ${stage.color}`}>
                         {stageCandidates.length}
                       </span>
                     </div>
                   </div>
 
-                  {/* Column Body - Scrollable */}
-                  <div className="bg-gray-100 rounded-b-xl p-2 min-h-[400px] max-h-[calc(100vh-320px)] overflow-y-auto space-y-2">
+                  {/* Column Body - Fixed Height, Scrollable */}
+                  <div className="bg-gray-100 rounded-b-xl p-3 h-[600px] overflow-y-auto space-y-3">
                     {stageCandidates.map((candidate) => {
                       const checklistProgress = getChecklistProgress(candidate.checklist);
+                      const daysInStage = getDaysInStage(candidate.created_at, candidate.stage_changed_at);
                       return (
                         <div
                           key={candidate.id}
                           draggable
                           onDragStart={(e) => handleDragStart(e, candidate.id)}
                           onClick={() => setSelectedCandidate(candidate)}
-                          className={`bg-white rounded-lg p-3 shadow-sm border border-gray-200 cursor-pointer hover:shadow-md hover:border-purple-200 transition-all ${
+                          className={`bg-white rounded-lg p-3 shadow-sm border border-gray-100 cursor-pointer hover:shadow-md transition-shadow ${
                             draggedCandidate === candidate.id ? 'opacity-50' : ''
                           }`}
                         >
-                          <div className="flex items-start justify-between mb-2">
-                            <div className="flex items-center gap-2">
-                              <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
-                                <span className="text-purple-700 font-medium text-sm">
-                                  {candidate.full_name.charAt(0)}
-                                </span>
-                              </div>
-                              <div>
-                                <h4 className="font-medium text-gray-900 text-sm">{candidate.full_name}</h4>
-                                <p className="text-xs text-gray-500">{candidate.applied_role}</p>
-                              </div>
+                          <div className="flex items-start gap-3">
+                            <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center shrink-0">
+                              <span className="text-purple-700 font-semibold">
+                                {candidate.full_name.charAt(0)}
+                              </span>
                             </div>
-                            <GripVertical size={14} className="text-gray-300" />
-                          </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="font-medium text-gray-900 truncate">{candidate.full_name}</p>
+                              <p className="text-sm text-gray-500">{candidate.applied_role}</p>
 
-                          {/* Quick Info */}
-                          <div className="flex flex-wrap gap-2 mt-2">
-                            {candidate.iq_score && (
-                              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-blue-50 text-blue-700 text-xs rounded">
-                                <Brain size={10} />
-                                IQ: {candidate.iq_score}
-                              </span>
-                            )}
-                            {candidate.mbti_type && (
-                              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-purple-50 text-purple-700 text-xs rounded">
-                                {candidate.mbti_type}
-                              </span>
-                            )}
-                          </div>
-
-                          {/* Deadline Badge */}
-                          {candidate.next_event_at && (
-                            (() => {
-                              const eventInfo = formatEventDate(candidate.next_event_at);
-                              return (
-                                <div className={`flex items-center gap-1 mt-2 px-2 py-1 rounded text-xs ${
-                                  eventInfo.isOverdue
-                                    ? 'bg-red-50 text-red-600'
-                                    : eventInfo.isToday
-                                    ? 'bg-yellow-50 text-yellow-700'
-                                    : 'bg-orange-50 text-orange-600'
-                                }`}>
-                                  <Clock size={12} />
-                                  <span className="truncate">
-                                    {eventInfo.isOverdue ? 'OVERDUE: ' : ''}
-                                    {candidate.next_event_title || 'Event'}: {eventInfo.text}
+                              {/* Labels Row */}
+                              <div className="flex flex-wrap gap-1.5 mt-2">
+                                {/* Source Label */}
+                                {candidate.source && (
+                                  <span className={`text-xs px-2 py-0.5 rounded-full ${SOURCE_COLORS[candidate.source] || SOURCE_COLORS['Other']}`}>
+                                    {candidate.source}
                                   </span>
-                                </div>
-                              );
-                            })()
-                          )}
+                                )}
 
-                          {/* Checklist Progress (Probation) */}
-                          {checklistProgress && (
-                            <div className="mt-2 pt-2 border-t border-gray-100">
-                              <div className="flex items-center gap-2 text-xs">
-                                <CheckSquare size={12} className="text-gray-400" />
-                                <span className="text-gray-600">
-                                  {checklistProgress.completed}/{checklistProgress.total} completed
+                                {/* Days in Stage */}
+                                <span className="text-xs px-2 py-0.5 bg-blue-100 text-blue-600 rounded-full">
+                                  {daysInStage}d
                                 </span>
-                              </div>
-                              <div className="mt-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                                <div
-                                  className="h-full bg-green-500 rounded-full transition-all"
-                                  style={{ width: `${(checklistProgress.completed / checklistProgress.total) * 100}%` }}
-                                />
-                              </div>
-                            </div>
-                          )}
 
-                          {/* Comment Count */}
-                          {(candidate.comment_count ?? 0) > 0 && (
-                            <div className="flex items-center gap-1 mt-2 text-xs text-gray-400">
-                              <MessageSquare size={12} />
-                              <span>{candidate.comment_count} comment{candidate.comment_count !== 1 ? 's' : ''}</span>
+                                {/* Event Badge */}
+                                {candidate.next_event_at && (
+                                  (() => {
+                                    const eventInfo = formatEventDate(candidate.next_event_at);
+                                    return (
+                                      <span className={`text-xs px-2 py-0.5 rounded-full flex items-center gap-1 ${
+                                        eventInfo.isOverdue
+                                          ? 'bg-red-100 text-red-600'
+                                          : eventInfo.isToday || eventInfo.isTomorrow
+                                          ? 'bg-yellow-100 text-yellow-700'
+                                          : 'bg-orange-100 text-orange-600'
+                                      }`}>
+                                        <Calendar size={10} />
+                                        {eventInfo.isOverdue ? 'Overdue' : eventInfo.text}
+                                      </span>
+                                    );
+                                  })()
+                                )}
+
+                                {/* Comment Count */}
+                                {(candidate.comment_count ?? 0) > 0 && (
+                                  <span className="text-xs px-2 py-0.5 bg-gray-100 text-gray-600 rounded-full flex items-center gap-1">
+                                    <MessageSquare size={10} />
+                                    {candidate.comment_count}
+                                  </span>
+                                )}
+
+                                {/* IQ Score */}
+                                {candidate.iq_score && (
+                                  <span className="text-xs px-2 py-0.5 bg-green-100 text-green-600 rounded-full">
+                                    IQ: {candidate.iq_score}
+                                  </span>
+                                )}
+
+                                {/* MBTI Type */}
+                                {candidate.mbti_type && (
+                                  <span className="text-xs px-2 py-0.5 bg-purple-100 text-purple-600 rounded-full">
+                                    {candidate.mbti_type}
+                                  </span>
+                                )}
+                              </div>
+
+                              {/* Checklist Progress (Probation) */}
+                              {checklistProgress && (
+                                <div className="mt-2">
+                                  <div className="flex justify-between text-xs text-gray-500 mb-1">
+                                    <span>Checklist</span>
+                                    <span>{checklistProgress.completed}/{checklistProgress.total}</span>
+                                  </div>
+                                  <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                                    <div
+                                      className="h-full bg-green-500 rounded-full transition-all"
+                                      style={{ width: `${(checklistProgress.completed / checklistProgress.total) * 100}%` }}
+                                    />
+                                  </div>
+                                </div>
+                              )}
                             </div>
-                          )}
+                          </div>
                         </div>
                       );
                     })}
