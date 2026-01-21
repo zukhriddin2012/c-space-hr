@@ -3140,8 +3140,44 @@ export interface Candidate {
   created_at: string;
   updated_at: string;
   stage_changed_at: string;
+  // New fields for deadlines and tracking
+  next_event_at: string | null;
+  next_event_title: string | null;
+  term_sheet_signed: boolean;
+  probation_account_created: boolean;
+  comment_count: number;
   // Joined
   probation_employee?: { full_name: string; employee_id: string };
+}
+
+// Comment on a candidate
+export interface CandidateComment {
+  id: string;
+  candidate_id: string;
+  user_id: string;
+  content: string;
+  stage_tag: string | null;
+  created_at: string;
+  updated_at: string;
+  // Joined
+  user?: { full_name: string; email: string };
+}
+
+// Event for a candidate (interview, meeting, deadline)
+export interface CandidateEvent {
+  id: string;
+  candidate_id: string;
+  title: string;
+  event_type: 'interview' | 'meeting' | 'deadline' | 'review' | 'signing' | 'other';
+  scheduled_at: string;
+  completed_at: string | null;
+  with_user_id: string | null;
+  location: string | null;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+  // Joined
+  with_user?: { full_name: string };
 }
 
 // Default checklist items for probation

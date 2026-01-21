@@ -34,6 +34,7 @@ import {
   Star,
   ArrowRight,
   Table,
+  MessageSquare,
 } from 'lucide-react';
 import type { Candidate, CandidateStage, ChecklistItem } from '@/lib/db';
 
@@ -87,6 +88,33 @@ function formatFileSize(bytes: number): string {
   if (bytes < 1024) return bytes + ' B';
   if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
   return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+}
+
+function formatEventDate(dateString: string): { text: string; isOverdue: boolean; isToday: boolean } {
+  const eventDate = new Date(dateString);
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const eventDay = new Date(eventDate.getFullYear(), eventDate.getMonth(), eventDate.getDate());
+
+  const isOverdue = eventDate < now;
+  const isToday = eventDay.getTime() === today.getTime();
+
+  if (isToday) {
+    return {
+      text: `Today, ${eventDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}`,
+      isOverdue: false,
+      isToday: true,
+    };
+  }
+
+  const text = eventDate.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  });
+
+  return { text, isOverdue, isToday: false };
 }
 
 export default function RecruitmentBoardPage() {
@@ -579,8 +607,8 @@ export default function RecruitmentBoardPage() {
                     </div>
                   </div>
 
-                  {/* Column Body */}
-                  <div className="bg-gray-100 rounded-b-xl p-2 min-h-[400px] space-y-2">
+                  {/* Column Body - Scrollable */}
+                  <div className="bg-gray-100 rounded-b-xl p-2 min-h-[400px] max-h-[calc(100vh-320px)] overflow-y-auto space-y-2">
                     {stageCandidates.map((candidate) => {
                       const checklistProgress = getChecklistProgress(candidate.checklist);
                       return (
@@ -623,6 +651,28 @@ export default function RecruitmentBoardPage() {
                             )}
                           </div>
 
+                          {/* Deadline Badge */}
+                          {candidate.next_event_at && (
+                            (() => {
+                              const eventInfo = formatEventDate(candidate.next_event_at);
+                              return (
+                                <div className={`flex items-center gap-1 mt-2 px-2 py-1 rounded text-xs ${
+                                  eventInfo.isOverdue
+                                    ? 'bg-red-50 text-red-600'
+                                    : eventInfo.isToday
+                                    ? 'bg-yellow-50 text-yellow-700'
+                                    : 'bg-orange-50 text-orange-600'
+                                }`}>
+                                  <Clock size={12} />
+                                  <span className="truncate">
+                                    {eventInfo.isOverdue ? 'OVERDUE: ' : ''}
+                                    {candidate.next_event_title || 'Event'}: {eventInfo.text}
+                                  </span>
+                                </div>
+                              );
+                            })()
+                          )}
+
                           {/* Checklist Progress (Probation) */}
                           {checklistProgress && (
                             <div className="mt-2 pt-2 border-t border-gray-100">
@@ -638,6 +688,14 @@ export default function RecruitmentBoardPage() {
                                   style={{ width: `${(checklistProgress.completed / checklistProgress.total) * 100}%` }}
                                 />
                               </div>
+                            </div>
+                          )}
+
+                          {/* Comment Count */}
+                          {(candidate.comment_count ?? 0) > 0 && (
+                            <div className="flex items-center gap-1 mt-2 text-xs text-gray-400">
+                              <MessageSquare size={12} />
+                              <span>{candidate.comment_count} comment{candidate.comment_count !== 1 ? 's' : ''}</span>
                             </div>
                           )}
                         </div>
