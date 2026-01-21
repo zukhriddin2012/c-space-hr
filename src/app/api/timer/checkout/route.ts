@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
     // Get active attendance record
     const { data: attendance, error: attError } = await supabase
       .from('attendance')
-      .select('id, check_in, check_in_branch_id')
+      .select('id, check_in, check_in_timestamp, check_in_branch_id')
       .eq('employee_id', employee.id)
       .is('check_out', null)
       .order('check_in', { ascending: false })
@@ -61,8 +61,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Calculate total hours
-    const checkIn = new Date(attendance.check_in);
+    // Calculate total hours using full timestamp
+    const checkIn = new Date(attendance.check_in_timestamp);
     const checkOut = new Date();
     const totalHours = ((checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60)).toFixed(2);
 

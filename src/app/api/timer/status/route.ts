@@ -64,6 +64,7 @@ export async function GET(request: NextRequest) {
       .select(`
         id,
         check_in,
+        check_in_timestamp,
         check_out,
         shift_id,
         check_in_branch:branches!attendance_check_in_branch_id_fkey(id, name)
@@ -89,10 +90,14 @@ export async function GET(request: NextRequest) {
     // Get branch name
     const branchName = (attendance.check_in_branch as any)?.name || 'Unknown';
 
+    // Use check_in_timestamp which contains full ISO timestamp
+    // check_in is just TIME (HH:MM:SS), check_in_timestamp is TIMESTAMP
+    const checkInTime = attendance.check_in_timestamp;
+
     return NextResponse.json({
       isActive: true,
       employeeName: employee.full_name,
-      checkInTime: attendance.check_in,
+      checkInTime: checkInTime, // Full ISO: "2025-01-21T08:45:27.000Z"
       branchName: branchName,
       shiftId: shiftId,
       shiftName: shift.name,
