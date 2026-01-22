@@ -12,6 +12,19 @@ import {
 import AttendanceMap from '@/components/AttendanceMap';
 import WeeklyChart from './WeeklyChart';
 
+interface PersonInOffice {
+  id: string;
+  name: string;
+  position: string;
+  isLate: boolean;
+}
+
+interface BranchWithPeople {
+  branchId: string;
+  branchName: string;
+  people: PersonInOffice[];
+}
+
 interface DashboardData {
   stats: {
     total: number;
@@ -32,13 +45,7 @@ interface DashboardData {
     earlyLeave: number;
     total: number;
   }[];
-  activeBranches: {
-    id: string;
-    name: string;
-    present: number;
-    total: number;
-    percentage: number;
-  }[];
+  currentlyInOffice: BranchWithPeople[];
   selectedDate: string;
 }
 
@@ -133,7 +140,7 @@ export default function DashboardContent() {
     );
   }
 
-  const { stats, branchData, activeBranches, selectedDate } = data;
+  const { stats, branchData, currentlyInOffice, selectedDate } = data;
 
   return (
     <div className="space-y-4 xl:space-y-6">
@@ -193,32 +200,45 @@ export default function DashboardContent() {
           </div>
         )}
 
-        {activeBranches.length > 0 && (
-          <div className="bg-white rounded-xl border border-gray-200 p-4 xl:p-5 flex flex-col" style={{ height: '300px' }}>
-            <div className="flex items-center gap-2 mb-3 xl:mb-4 flex-shrink-0">
-              <MapPin size={18} className="text-purple-600" />
-              <h3 className="text-sm xl:text-base font-semibold text-gray-900">Branch Summary</h3>
-            </div>
-            <div className="space-y-2.5 xl:space-y-3 overflow-y-auto flex-1 pr-1">
-              {activeBranches.map(branch => (
-                <div key={branch.id} className="bg-gray-50 rounded-lg p-3">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium text-gray-900">{branch.name}</span>
-                    <span className="text-xs text-gray-500">{branch.present}/{branch.total}</span>
+        <div className="bg-white rounded-xl border border-gray-200 p-4 xl:p-5 flex flex-col" style={{ height: '300px' }}>
+          <div className="flex items-center gap-2 mb-3 xl:mb-4 flex-shrink-0">
+            <CheckCircle size={18} className="text-green-600" />
+            <h3 className="text-sm xl:text-base font-semibold text-gray-900">Currently in Office</h3>
+            <span className="text-xs text-gray-500 ml-auto">{stats.present} people</span>
+          </div>
+          <div className="space-y-3 overflow-y-auto flex-1 pr-1">
+            {currentlyInOffice.length > 0 ? (
+              currentlyInOffice.map(branch => (
+                <div key={branch.branchId}>
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <MapPin size={14} className="text-gray-400" />
+                    <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">{branch.branchName}</span>
+                    <span className="text-xs text-gray-400">({branch.people.length})</span>
                   </div>
-                  <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                    <div
-                      className={`h-full rounded-full transition-all ${
-                        branch.percentage >= 80 ? 'bg-green-500' : branch.percentage >= 60 ? 'bg-yellow-500' : 'bg-red-500'
-                      }`}
-                      style={{ width: `${branch.percentage}%` }}
-                    />
+                  <div className="flex flex-wrap gap-1.5 ml-5">
+                    {branch.people.map(person => (
+                      <span
+                        key={person.id}
+                        className={`inline-flex items-center px-2 py-1 rounded-full text-xs ${
+                          person.isLate
+                            ? 'bg-orange-100 text-orange-700'
+                            : 'bg-green-100 text-green-700'
+                        }`}
+                        title={`${person.name} - ${person.position}${person.isLate ? ' (Late)' : ''}`}
+                      >
+                        {person.name.split(' ')[0]}
+                      </span>
+                    ))}
                   </div>
                 </div>
-              ))}
-            </div>
+              ))
+            ) : (
+              <div className="flex items-center justify-center h-full text-gray-400 text-sm">
+                No one in office right now
+              </div>
+            )}
           </div>
-        )}
+        </div>
       </div>
 
       {/* Weekly Chart */}

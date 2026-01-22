@@ -111,10 +111,42 @@ export const GET = withAuth(async () => {
         };
       });
 
+    // Create employee lookup map
+    const employeeMap = new Map(employees.map(e => [e.id, e]));
+
+    // Currently in office - people who checked in but haven't checked out
+    const currentlyInOffice = branches
+      .map(branch => {
+        const presentPeople = allAttendance
+          .filter(a =>
+            a.branchId === branch.id &&
+            (a.status === 'present' || a.status === 'late') &&
+            !a.checkOutTime
+          )
+          .map(a => {
+            const emp = employeeMap.get(a.employeeDbId);
+            return emp ? {
+              id: a.employeeDbId,
+              name: emp.full_name,
+              position: emp.position,
+              isLate: a.status === 'late',
+            } : null;
+          })
+          .filter(Boolean);
+
+        return {
+          branchId: branch.id,
+          branchName: branch.name,
+          people: presentPeople,
+        };
+      })
+      .filter(b => b.people.length > 0);
+
     return NextResponse.json({
       stats,
       branchData,
       activeBranches,
+      currentlyInOffice,
       selectedDate,
     });
   } catch (error) {
