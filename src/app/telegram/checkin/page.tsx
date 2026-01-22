@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 
-export default function TelegramCheckinPage() {
+function TelegramCheckinContent() {
   const searchParams = useSearchParams();
   const telegramId = searchParams.get('tid');
   const shiftId = searchParams.get('shift') || 'day';
@@ -168,6 +168,32 @@ export default function TelegramCheckinPage() {
         )}
       </div>
     </div>
+  );
+}
+
+// Loading fallback for Suspense
+function LoadingFallback() {
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-indigo-500 to-purple-600 flex items-center justify-center p-4">
+      <div className="bg-white rounded-2xl shadow-xl p-8 max-w-sm w-full text-center">
+        <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-indigo-100 flex items-center justify-center">
+          <svg className="w-8 h-8 text-indigo-600 animate-spin" fill="none" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+        </div>
+        <h1 className="text-xl font-bold text-gray-900 mb-2">Loading...</h1>
+      </div>
+    </div>
+  );
+}
+
+// Main page component with Suspense boundary
+export default function TelegramCheckinPage() {
+  return (
+    <Suspense fallback={<LoadingFallback />}>
+      <TelegramCheckinContent />
+    </Suspense>
   );
 }
 
