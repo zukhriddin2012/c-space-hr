@@ -508,9 +508,12 @@ export async function getAttendanceByDate(date: string): Promise<Attendance[]> {
     console.error('Error fetching active overnight attendance:', activeOvernightError);
   }
 
-  // Fetch records that checked out on the viewing date (checkout timestamp contains the date)
-  // This handles cases where someone checked in on day X and checked out on day Y
-  // We need to show them on day Y as well
+  // Fetch records that checked out on the viewing date
+  // Two approaches:
+  // 1. Records with check_out_timestamp on this date (new format)
+  // 2. Records from previous day(s) with very long hours (>12h suggests multi-day, fallback for old data)
+
+  // Approach 1: Use check_out_timestamp if available
   const { data: checkoutOnDateData, error: checkoutOnDateError } = await supabaseAdmin!
     .from('attendance')
     .select(`
@@ -528,7 +531,36 @@ export async function getAttendanceByDate(date: string): Promise<Attendance[]> {
     console.error('Error fetching checkout-on-date attendance:', checkoutOnDateError);
   }
 
+  // Approach 2: Fallback for records without check_out_timestamp
+  // Get records from the previous day (or up to 2 days before) that have checked out
+  // with total_hours > 12 (multi-day indicator)
+  // Check both previous day and 2 days before for multi-day shifts
+  const twoDaysBefore = new Date(date);
+  twoDaysBefore.setDate(twoDaysBefore.getDate() - 2);
+  const twoDaysBeforeStr = twoDaysBefore.toISOString().split('T')[0];
+
+  const { data: fallbackOvernightData, error: fallbackOvernightError } = await supabaseAdmin!
+    .from('attendance')
+    .select(`
+      *,
+      employees(full_name, employee_id, position),
+      check_in_branch:branches!attendance_check_in_branch_id_fkey(name),
+      check_out_branch:branches!attendance_check_out_branch_id_fkey(name)
+    `)
+    .gte('date', twoDaysBeforeStr) // Check-in was within last 2 days
+    .lt('date', date) // But before viewing date
+    .not('check_out', 'is', null) // Has checked out
+    .is('check_out_timestamp', null) // Doesn't have the new timestamp field
+    .gte('total_hours', 12); // More than 12 hours suggests overnight shift
+
+  if (fallbackOvernightError) {
+    console.error('Error fetching fallback overnight attendance:', fallbackOvernightError);
+  }
+
   // Mark overnight records and combine with today's records
+  // Collect IDs from checkoutOnDateData to avoid duplicates with fallback
+  const checkoutOnDateIds = new Set((checkoutOnDateData || []).map(r => r.id));
+
   const overnightRecords = [
     ...(activeOvernightData || []).map(record => ({
       ...record,
@@ -542,6 +574,15 @@ export async function getAttendanceByDate(date: string): Promise<Attendance[]> {
       // Mark that this is a checkout-only view (checked out on this day)
       is_checkout_day: true,
     })),
+    // Add fallback overnight records (from previous day with >12h total)
+    ...(fallbackOvernightData || [])
+      .filter(record => !checkoutOnDateIds.has(record.id)) // Avoid duplicates
+      .map(record => ({
+        ...record,
+        is_overnight: true,
+        overnight_from_date: record.date,
+        is_checkout_day: true,
+      })),
   ];
 
   // Filter out employees who already have a record for today (avoid duplicates)

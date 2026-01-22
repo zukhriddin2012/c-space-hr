@@ -122,11 +122,15 @@ export const POST = withAuth(async (
     // Update status if early leave
     const newStatus = isEarlyLeave ? 'early_leave' : record.status;
 
+    // Create full checkout timestamp for multi-day tracking
+    const checkOutTimestamp = checkOutDateTime.toISOString();
+
     // Update the attendance record
     const { data: updated, error: updateError } = await supabaseAdmin!
       .from('attendance')
       .update({
         check_out: formattedTime,
+        check_out_timestamp: checkOutTimestamp,
         total_hours: totalHours,
         status: newStatus,
       })
