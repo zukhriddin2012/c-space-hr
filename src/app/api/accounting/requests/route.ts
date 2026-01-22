@@ -48,8 +48,7 @@ export const GET = withAuth(async (request: NextRequest, { user }) => {
         *,
         requester:employees!requester_id(id, full_name, email, position),
         assignee:employees!assigned_to(id, full_name, email, position),
-        branch:branches!branch_id(id, name),
-        from_entity:legal_entities!from_entity_id(id, name)
+        branch:branches!branch_id(id, name)
       `, { count: 'exact' });
 
     // Apply role-based filtering
