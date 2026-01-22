@@ -15,6 +15,7 @@ import {
   FileText,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useTranslation } from '@/contexts/LanguageContext';
 import { hasPermission, PERMISSIONS } from '@/lib/permissions';
 import {
   getStatusLabel,
@@ -37,6 +38,7 @@ interface ApprovalRequest extends AccountingRequest {
 
 export default function AccountingApprovalsPage() {
   const { user } = useAuth();
+  const { t } = useTranslation();
   const [requests, setRequests] = useState<ApprovalRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -170,17 +172,17 @@ export default function AccountingApprovalsPage() {
     const approvalLevel = request.approvalLevel;
 
     if (approvalLevel === 'chief_accountant') {
-      return 'Chief Accountant Approval';
+      return t.accounting.chiefAccountantApproval;
     }
 
     if (approvalLevel === 'executive') {
       if (currentStep === 1) {
-        return 'Step 1: Chief Accountant Review';
+        return t.accounting.chiefAccountantApproval;
       }
-      return 'Step 2: Executive Approval (GM/CEO)';
+      return t.accounting.executiveApproval;
     }
 
-    return 'Approval Required';
+    return t.accounting.approvalRequired;
   };
 
   if (!user) return null;
@@ -189,10 +191,10 @@ export default function AccountingApprovalsPage() {
     return (
       <div className="text-center py-12">
         <AlertTriangle className="mx-auto mb-4 text-yellow-500" size={48} />
-        <h1 className="text-xl font-semibold text-gray-900 mb-2">Access Denied</h1>
-        <p className="text-gray-500">You don't have permission to approve requests.</p>
+        <h1 className="text-xl font-semibold text-gray-900 mb-2">{t.errors.forbidden}</h1>
+        <p className="text-gray-500">{t.errors.unauthorized}</p>
         <Link href="/accounting/my-requests" className="text-purple-600 hover:underline mt-4 inline-block">
-          Go to My Requests
+          {t.accounting.myRequests}
         </Link>
       </div>
     );
@@ -203,12 +205,12 @@ export default function AccountingApprovalsPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Pending Approvals</h1>
-          <p className="text-gray-500 mt-1">Review and approve accounting requests</p>
+          <h1 className="text-2xl font-bold text-gray-900">{t.accounting.approvals}</h1>
+          <p className="text-gray-500 mt-1">{t.accounting.approvalRequired}</p>
         </div>
         <div className="flex items-center gap-2">
           <span className="text-sm text-gray-500">
-            {requests.length} pending approval{requests.length !== 1 ? 's' : ''}
+            {requests.length} {t.accounting.pendingApproval}
           </span>
           <button
             onClick={fetchApprovals}
@@ -235,8 +237,8 @@ export default function AccountingApprovalsPage() {
       ) : requests.length === 0 ? (
         <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
           <CheckCircle2 className="mx-auto mb-4 text-green-400" size={48} />
-          <h2 className="text-lg font-semibold text-gray-900 mb-2">All caught up!</h2>
-          <p className="text-gray-500">No requests pending your approval.</p>
+          <h2 className="text-lg font-semibold text-gray-900 mb-2">{t.accounting.noApprovals}</h2>
+          <p className="text-gray-500">{t.accounting.noRequests}</p>
         </div>
       ) : (
         <div className="space-y-4">
@@ -265,7 +267,7 @@ export default function AccountingApprovalsPage() {
                           </Link>
                           {isUrgent && (
                             <span className="px-2 py-1 text-xs font-medium rounded-full border bg-red-100 text-red-800 border-red-200">
-                              Urgent
+                              {t.accounting.urgent}
                             </span>
                           )}
                         </div>
@@ -276,27 +278,27 @@ export default function AccountingApprovalsPage() {
                     {/* Details Grid */}
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
                       <div>
-                        <p className="text-gray-500">Amount</p>
+                        <p className="text-gray-500">{t.accounting.amount}</p>
                         <p className="font-semibold text-green-600 text-lg">
                           {formatCurrency(request.amount!)}
                         </p>
                       </div>
                       <div>
-                        <p className="text-gray-500">Requester</p>
+                        <p className="text-gray-500">{t.accounting.requester}</p>
                         <div className="flex items-center gap-1">
                           <User size={14} className="text-gray-400" />
                           <p className="font-medium">{request.requester?.full_name || 'Unknown'}</p>
                         </div>
                       </div>
                       <div>
-                        <p className="text-gray-500">Entity</p>
+                        <p className="text-gray-500">{t.accounting.fromEntity}</p>
                         <div className="flex items-center gap-1">
                           <Building2 size={14} className="text-gray-400" />
                           <p className="font-medium">{request.from_entity?.name || 'Unknown'}</p>
                         </div>
                       </div>
                       <div>
-                        <p className="text-gray-500">SLA</p>
+                        <p className="text-gray-500">{t.accounting.slaDeadline}</p>
                         <div className="flex items-center gap-1">
                           <Clock size={14} className={getSlaColor(slaStatus)} />
                           <p className={`font-medium ${getSlaColor(slaStatus)}`}>
@@ -322,7 +324,7 @@ export default function AccountingApprovalsPage() {
                     {/* Payment Purpose */}
                     {request.paymentPurpose && (
                       <div className="p-3 bg-gray-50 rounded-lg">
-                        <p className="text-xs text-gray-500 mb-1">Payment Purpose</p>
+                        <p className="text-xs text-gray-500 mb-1">{t.accounting.paymentPurpose}</p>
                         <p className="text-sm text-gray-700">{request.paymentPurpose}</p>
                       </div>
                     )}
@@ -340,7 +342,7 @@ export default function AccountingApprovalsPage() {
                       ) : (
                         <CheckCircle2 size={16} />
                       )}
-                      Approve
+                      {t.accounting.approve}
                     </button>
                     <button
                       onClick={() => openRejectModal(request)}
@@ -348,14 +350,14 @@ export default function AccountingApprovalsPage() {
                       className="flex-1 lg:flex-none inline-flex items-center justify-center gap-2 px-4 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors disabled:opacity-50"
                     >
                       <XCircle size={16} />
-                      Reject
+                      {t.accounting.reject}
                     </button>
                     <Link
                       href={`/accounting/requests/${request.id}`}
                       className="flex-1 lg:flex-none inline-flex items-center justify-center gap-2 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
                     >
                       <FileText size={16} />
-                      Details
+                      {t.common.details}
                     </Link>
                   </div>
                 </div>
@@ -374,18 +376,18 @@ export default function AccountingApprovalsPage() {
                 <CheckCircle2 size={24} className="text-green-600" />
               </div>
               <div>
-                <h3 className="text-lg font-semibold text-gray-900">Approve Request</h3>
+                <h3 className="text-lg font-semibold text-gray-900">{t.accounting.approve}</h3>
                 <p className="text-sm text-gray-500">{selectedRequest.requestNumber}</p>
               </div>
             </div>
 
             <div className="mb-4 p-3 bg-gray-50 rounded-lg">
               <div className="flex justify-between text-sm mb-2">
-                <span className="text-gray-500">Amount</span>
+                <span className="text-gray-500">{t.accounting.amount}</span>
                 <span className="font-semibold text-green-600">{formatCurrency(selectedRequest.amount!)}</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-gray-500">Recipient</span>
+                <span className="text-gray-500">{t.accounting.recipientName}</span>
                 <span className="font-medium">{selectedRequest.recipientName}</span>
               </div>
             </div>
@@ -393,20 +395,20 @@ export default function AccountingApprovalsPage() {
             {selectedRequest.approvalLevel === 'executive' && selectedRequest.currentApprovalStep === 1 && (
               <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
                 <p className="text-sm text-blue-700">
-                  <strong>Note:</strong> After your approval, this will be sent for executive (GM/CEO) approval.
+                  <strong>{t.common.notes}:</strong> {t.accounting.executiveApproval}
                 </p>
               </div>
             )}
 
             <div className="mb-6">
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Comments (optional)
+                {t.accounting.addComment} ({t.common.optional})
               </label>
               <textarea
                 value={approvalComments}
                 onChange={(e) => setApprovalComments(e.target.value)}
                 rows={3}
-                placeholder="Any comments about this approval..."
+                placeholder={t.accounting.addComment + '...'}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none resize-none"
               />
             </div>
@@ -420,14 +422,14 @@ export default function AccountingApprovalsPage() {
                 disabled={actionLoading === selectedRequest.id}
                 className="flex-1 px-4 py-2.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium disabled:opacity-50"
               >
-                Cancel
+                {t.common.cancel}
               </button>
               <button
                 onClick={handleApprove}
                 disabled={actionLoading === selectedRequest.id}
                 className="flex-1 px-4 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium disabled:opacity-50"
               >
-                {actionLoading === selectedRequest.id ? 'Approving...' : 'Approve'}
+                {actionLoading === selectedRequest.id ? t.common.loading : t.accounting.approve}
               </button>
             </div>
           </div>
@@ -443,31 +445,31 @@ export default function AccountingApprovalsPage() {
                 <XCircle size={24} className="text-red-600" />
               </div>
               <div>
-                <h3 className="text-lg font-semibold text-gray-900">Reject Request</h3>
+                <h3 className="text-lg font-semibold text-gray-900">{t.accounting.reject}</h3>
                 <p className="text-sm text-gray-500">{selectedRequest.requestNumber}</p>
               </div>
             </div>
 
             <div className="mb-4 p-3 bg-gray-50 rounded-lg">
               <div className="flex justify-between text-sm mb-2">
-                <span className="text-gray-500">Amount</span>
+                <span className="text-gray-500">{t.accounting.amount}</span>
                 <span className="font-semibold">{formatCurrency(selectedRequest.amount!)}</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-gray-500">Recipient</span>
+                <span className="text-gray-500">{t.accounting.recipientName}</span>
                 <span className="font-medium">{selectedRequest.recipientName}</span>
               </div>
             </div>
 
             <div className="mb-6">
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Reason for rejection <span className="text-red-500">*</span>
+                {t.accounting.reject} <span className="text-red-500">*</span>
               </label>
               <textarea
                 value={rejectReason}
                 onChange={(e) => setRejectReason(e.target.value)}
                 rows={3}
-                placeholder="Why is this request being rejected?"
+                placeholder={t.common.description + '...'}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none resize-none"
                 required
               />
@@ -482,14 +484,14 @@ export default function AccountingApprovalsPage() {
                 disabled={actionLoading === selectedRequest.id}
                 className="flex-1 px-4 py-2.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium disabled:opacity-50"
               >
-                Cancel
+                {t.common.cancel}
               </button>
               <button
                 onClick={handleReject}
                 disabled={!rejectReason.trim() || actionLoading === selectedRequest.id}
                 className="flex-1 px-4 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium disabled:opacity-50"
               >
-                {actionLoading === selectedRequest.id ? 'Rejecting...' : 'Reject'}
+                {actionLoading === selectedRequest.id ? t.common.loading : t.accounting.reject}
               </button>
             </div>
           </div>

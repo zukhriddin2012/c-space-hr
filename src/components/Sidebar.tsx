@@ -30,13 +30,14 @@ import {
 import type { User, UserRole } from '@/types';
 import { getRoleLabel } from '@/lib/auth';
 import { useSidebar } from '@/contexts/SidebarContext';
+import { useTranslation } from '@/contexts/LanguageContext';
 
 interface SidebarProps {
   user: User;
 }
 
 interface NavItem {
-  name: string;
+  nameKey: string;
   href: string;
   icon: React.ComponentType<{ size?: number; className?: string }>;
   roles: UserRole[];
@@ -45,55 +46,55 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   {
-    name: 'Dashboard',
+    nameKey: 'dashboard',
     href: '/dashboard',
     icon: LayoutDashboard,
-    roles: ['general_manager', 'ceo', 'hr', 'recruiter', 'branch_manager', 'employee'],
+    roles: ['general_manager', 'ceo', 'hr', 'recruiter', 'branch_manager', 'employee', 'accountant', 'chief_accountant', 'legal_manager'],
   },
   {
-    name: 'My Portal',
+    nameKey: 'myPortal',
     href: '/my-portal',
     icon: UserCircle,
-    roles: ['general_manager', 'ceo', 'hr', 'recruiter', 'branch_manager', 'employee'],
+    roles: ['general_manager', 'ceo', 'hr', 'recruiter', 'branch_manager', 'employee', 'accountant', 'chief_accountant', 'legal_manager'],
   },
   {
-    name: 'Employees',
+    nameKey: 'employees',
     href: '/employees',
     icon: Users,
     roles: ['general_manager', 'ceo', 'hr', 'branch_manager'],
   },
   {
-    name: 'Branches',
+    nameKey: 'branches',
     href: '/branches',
     icon: MapPin,
     roles: ['general_manager', 'hr'],
   },
   {
-    name: 'Attendance',
+    nameKey: 'attendance',
     href: '/attendance',
     icon: Clock,
     roles: ['general_manager', 'ceo', 'hr', 'branch_manager'],
   },
   {
-    name: 'Payroll',
+    nameKey: 'payroll',
     href: '/payroll',
     icon: Wallet,
     roles: ['general_manager', 'ceo', 'hr'],
   },
   {
-    name: 'Recruitment',
+    nameKey: 'recruitment',
     href: '/recruitment',
     icon: UserPlus,
     roles: ['general_manager', 'hr', 'recruiter'],
     children: [
       {
-        name: 'Table View',
+        nameKey: 'tableView',
         href: '/recruitment/table',
         icon: Table,
         roles: ['general_manager', 'hr', 'recruiter'],
       },
       {
-        name: 'Board View',
+        nameKey: 'boardView',
         href: '/recruitment/board',
         icon: Kanban,
         roles: ['general_manager', 'hr', 'recruiter'],
@@ -101,31 +102,31 @@ const navItems: NavItem[] = [
     ],
   },
   {
-    name: 'Reports',
+    nameKey: 'reports',
     href: '/reports',
     icon: BarChart3,
     roles: ['general_manager', 'ceo'],
   },
   {
-    name: 'Accounting',
+    nameKey: 'accounting',
     href: '/accounting',
     icon: Calculator,
-    roles: ['general_manager', 'ceo', 'chief_accountant', 'accountant', 'branch_manager', 'legal_manager'],
+    roles: ['general_manager', 'ceo', 'chief_accountant', 'accountant', 'branch_manager', 'legal_manager', 'hr', 'employee', 'recruiter'],
     children: [
       {
-        name: 'My Requests',
+        nameKey: 'myRequests',
         href: '/accounting/my-requests',
         icon: FileText,
-        roles: ['general_manager', 'ceo', 'branch_manager', 'legal_manager'],
+        roles: ['general_manager', 'ceo', 'branch_manager', 'legal_manager', 'hr', 'employee', 'recruiter', 'accountant', 'chief_accountant'],
       },
       {
-        name: 'All Requests',
+        nameKey: 'allRequests',
         href: '/accounting/requests',
         icon: ListTodo,
         roles: ['general_manager', 'ceo', 'chief_accountant', 'accountant'],
       },
       {
-        name: 'Approvals',
+        nameKey: 'approvals',
         href: '/accounting/approvals',
         icon: ClipboardCheck,
         roles: ['general_manager', 'ceo', 'chief_accountant'],
@@ -133,25 +134,25 @@ const navItems: NavItem[] = [
     ],
   },
   {
-    name: 'Departments',
+    nameKey: 'departments',
     href: '/departments',
     icon: Building2,
     roles: ['general_manager', 'hr'],
   },
   {
-    name: 'Feedback',
+    nameKey: 'feedback',
     href: '/feedback',
     icon: MessageSquare,
-    roles: ['employee', 'branch_manager', 'recruiter', 'hr'],
+    roles: ['employee', 'branch_manager', 'recruiter', 'hr', 'accountant', 'chief_accountant', 'legal_manager'],
   },
   {
-    name: 'Feedback Inbox',
+    nameKey: 'feedbackInbox',
     href: '/feedback/review',
     icon: Inbox,
     roles: ['general_manager', 'ceo'],
   },
   {
-    name: 'Settings',
+    nameKey: 'settings',
     href: '/settings',
     icon: Settings,
     roles: ['general_manager'],
@@ -161,6 +162,7 @@ const navItems: NavItem[] = [
 export default function Sidebar({ user }: SidebarProps) {
   const pathname = usePathname();
   const { isCollapsed } = useSidebar();
+  const { t } = useTranslation();
   const [expandedItems, setExpandedItems] = useState<string[]>(() => {
     // Auto-expand if we're on a child route
     const expanded: string[] = [];
@@ -171,6 +173,31 @@ export default function Sidebar({ user }: SidebarProps) {
     });
     return expanded;
   });
+
+  // Translation helper for nav items
+  const getNavLabel = (key: string): string => {
+    const labels: Record<string, string> = {
+      dashboard: t.nav.dashboard,
+      myPortal: t.nav.myPortal,
+      employees: t.nav.employees,
+      branches: t.nav.branches,
+      attendance: t.nav.attendance,
+      payroll: t.nav.payroll,
+      recruitment: t.nav.recruitment,
+      tableView: 'Table View', // Not in translations yet
+      boardView: 'Board View', // Not in translations yet
+      reports: t.nav.reports,
+      accounting: t.nav.accounting,
+      myRequests: t.nav.myRequests,
+      allRequests: t.nav.allRequests,
+      approvals: t.nav.approvals,
+      departments: t.nav.departments,
+      feedback: 'Feedback', // Not in translations yet
+      feedbackInbox: 'Feedback Inbox', // Not in translations yet
+      settings: t.nav.settings,
+    };
+    return labels[key] || key;
+  };
 
   const filteredNavItems = navItems.filter((item) =>
     item.roles.includes(user.role)
@@ -206,6 +233,7 @@ export default function Sidebar({ user }: SidebarProps) {
       (!hasChildren && pathname.startsWith(item.href + '/'));
     const isChildActive = hasChildren && item.children?.some(child => pathname === child.href);
     const Icon = item.icon;
+    const itemName = getNavLabel(item.nameKey);
 
     if (hasChildren && item.children) {
       // Don't show expandable items when collapsed
@@ -219,7 +247,7 @@ export default function Sidebar({ user }: SidebarProps) {
                   ? 'bg-purple-50 text-purple-700'
                   : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
               }`}
-              title={item.name}
+              title={itemName}
             >
               <Icon size={20} className={isActive || isChildActive ? 'text-purple-600' : 'text-gray-400'} />
             </Link>
@@ -239,7 +267,7 @@ export default function Sidebar({ user }: SidebarProps) {
           >
             <div className="flex items-center gap-3">
               <Icon size={20} className={isActive || isChildActive ? 'text-purple-600' : 'text-gray-400'} />
-              {item.name}
+              {itemName}
             </div>
             {isExpanded ? (
               <ChevronDown size={16} className="text-gray-400" />
@@ -268,7 +296,7 @@ export default function Sidebar({ user }: SidebarProps) {
                 ? 'bg-purple-50 text-purple-700'
                 : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
             }`}
-            title={item.name}
+            title={itemName}
           >
             <Icon size={20} className={pathname === item.href ? 'text-purple-600' : 'text-gray-400'} />
           </Link>
@@ -289,7 +317,7 @@ export default function Sidebar({ user }: SidebarProps) {
           }`}
         >
           <Icon size={isChild ? 16 : 20} className={pathname === item.href ? 'text-purple-600' : 'text-gray-400'} />
-          {item.name}
+          {itemName}
         </Link>
       </li>
     );
@@ -342,7 +370,7 @@ export default function Sidebar({ user }: SidebarProps) {
           <button
             onClick={handleLogout}
             className="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-            title="Sign out"
+            title={t.nav.logout}
           >
             <LogOut size={20} />
           </button>
@@ -352,7 +380,7 @@ export default function Sidebar({ user }: SidebarProps) {
             className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
           >
             <LogOut size={18} />
-            Sign out
+            {t.nav.logout}
           </button>
         )}
       </div>

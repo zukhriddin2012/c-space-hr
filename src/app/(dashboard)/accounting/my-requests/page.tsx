@@ -2,15 +2,13 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Plus, Search, Filter, RefreshCw } from 'lucide-react';
+import { Plus, Search, RefreshCw } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useTranslation } from '@/contexts/LanguageContext';
 import { hasPermission, PERMISSIONS } from '@/lib/permissions';
 import {
-  getStatusLabel,
   getStatusColor,
-  getRequestTypeLabel,
   getRequestTypeColor,
-  getPriorityLabel,
   getPriorityColor,
   formatCurrency,
   formatRelativeTime,
@@ -23,6 +21,7 @@ import type { AccountingRequest, AccountingRequestStatus, AccountingRequestType 
 
 export default function MyAccountingRequestsPage() {
   const { user } = useAuth();
+  const { t } = useTranslation();
   const [requests, setRequests] = useState<AccountingRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -51,7 +50,7 @@ export default function MyAccountingRequestsPage() {
       const transformed = (data.data || []).map((r: Record<string, unknown>) => transformRequestListItem(r));
       setRequests(transformed as AccountingRequest[]);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      setError(err instanceof Error ? err.message : t.errors.generic);
     } finally {
       setLoading(false);
     }
@@ -62,6 +61,31 @@ export default function MyAccountingRequestsPage() {
     fetchRequests();
   };
 
+  // Helper for status labels
+  const getStatusLabelTranslated = (status: AccountingRequestStatus) => {
+    const statusMap: Record<AccountingRequestStatus, string> = {
+      pending: t.accounting.pending,
+      in_progress: t.accounting.inProgress,
+      needs_info: t.accounting.needsInfo,
+      pending_approval: t.accounting.pendingApproval,
+      approved: t.accounting.approved,
+      completed: t.accounting.completed,
+      rejected: t.accounting.rejected,
+      cancelled: t.accounting.cancelled,
+    };
+    return statusMap[status] || status;
+  };
+
+  // Helper for type labels
+  const getTypeLabelTranslated = (type: AccountingRequestType) => {
+    const typeMap: Record<AccountingRequestType, string> = {
+      reconciliation: t.accounting.reconciliation,
+      payment: t.accounting.payment,
+      confirmation: t.accounting.confirmation,
+    };
+    return typeMap[type] || type;
+  };
+
   if (!user) return null;
 
   return (
@@ -69,8 +93,8 @@ export default function MyAccountingRequestsPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">My Accounting Requests</h1>
-          <p className="text-gray-500 mt-1">View and manage your accounting requests</p>
+          <h1 className="text-2xl font-bold text-gray-900">{t.accounting.myRequests}</h1>
+          <p className="text-gray-500 mt-1">{t.common.view} {t.accounting.myRequests.toLowerCase()}</p>
         </div>
         {canCreate && (
           <Link
@@ -78,7 +102,7 @@ export default function MyAccountingRequestsPage() {
             className="inline-flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
           >
             <Plus size={20} />
-            New Request
+            {t.accounting.newRequest}
           </Link>
         )}
       </div>
@@ -90,7 +114,7 @@ export default function MyAccountingRequestsPage() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
             <input
               type="text"
-              placeholder="Search by request number, name..."
+              placeholder={`${t.common.search}...`}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
@@ -102,13 +126,13 @@ export default function MyAccountingRequestsPage() {
             onChange={(e) => setStatusFilter(e.target.value as AccountingRequestStatus | '')}
             className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
           >
-            <option value="">All Statuses</option>
-            <option value="pending">Pending</option>
-            <option value="in_progress">In Progress</option>
-            <option value="needs_info">Needs Info</option>
-            <option value="pending_approval">Pending Approval</option>
-            <option value="completed">Completed</option>
-            <option value="rejected">Rejected</option>
+            <option value="">{t.common.all} {t.common.status}</option>
+            <option value="pending">{t.accounting.pending}</option>
+            <option value="in_progress">{t.accounting.inProgress}</option>
+            <option value="needs_info">{t.accounting.needsInfo}</option>
+            <option value="pending_approval">{t.accounting.pendingApproval}</option>
+            <option value="completed">{t.accounting.completed}</option>
+            <option value="rejected">{t.accounting.rejected}</option>
           </select>
 
           <select
@@ -116,16 +140,17 @@ export default function MyAccountingRequestsPage() {
             onChange={(e) => setTypeFilter(e.target.value as AccountingRequestType | '')}
             className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
           >
-            <option value="">All Types</option>
-            <option value="reconciliation">Reconciliation</option>
-            <option value="payment">Payment</option>
-            <option value="confirmation">Confirmation</option>
+            <option value="">{t.common.all} {t.accounting.requestType}</option>
+            <option value="reconciliation">{t.accounting.reconciliation}</option>
+            <option value="payment">{t.accounting.payment}</option>
+            <option value="confirmation">{t.accounting.confirmation}</option>
           </select>
 
           <button
             type="button"
             onClick={fetchRequests}
             className="p-2 text-gray-600 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
+            title={t.common.refresh}
           >
             <RefreshCw size={20} />
           </button>
@@ -142,14 +167,14 @@ export default function MyAccountingRequestsPage() {
           <div className="p-8 text-center text-red-600">{error}</div>
         ) : requests.length === 0 ? (
           <div className="p-8 text-center text-gray-500">
-            <p>No requests found.</p>
+            <p>{t.accounting.noRequests}</p>
             {canCreate && (
               <Link
                 href="/accounting/requests/new"
                 className="inline-flex items-center gap-2 mt-4 text-purple-600 hover:text-purple-700"
               >
                 <Plus size={16} />
-                Create your first request
+                {t.accounting.createFirst}
               </Link>
             )}
           </div>
@@ -159,22 +184,22 @@ export default function MyAccountingRequestsPage() {
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Request
+                    {t.accounting.requestNumber}
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Type
+                    {t.accounting.requestType}
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Status
+                    {t.common.status}
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Amount
+                    {t.accounting.amount}
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     SLA
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Created
+                    {t.accounting.createdAt}
                   </th>
                 </tr>
               </thead>
@@ -196,16 +221,16 @@ export default function MyAccountingRequestsPage() {
                       </td>
                       <td className="px-4 py-4">
                         <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full border ${getRequestTypeColor(request.requestType)}`}>
-                          {getRequestTypeLabel(request.requestType)}
+                          {getTypeLabelTranslated(request.requestType)}
                         </span>
                       </td>
                       <td className="px-4 py-4">
                         <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full border ${getStatusColor(request.status)}`}>
-                          {getStatusLabel(request.status)}
+                          {getStatusLabelTranslated(request.status)}
                         </span>
                         {request.priority === 'urgent' && (
                           <span className={`ml-2 inline-flex px-2 py-1 text-xs font-medium rounded-full border ${getPriorityColor('urgent')}`}>
-                            {getPriorityLabel('urgent')}
+                            {t.accounting.urgent}
                           </span>
                         )}
                       </td>

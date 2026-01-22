@@ -1,0 +1,273 @@
+import type { Translations } from './types';
+
+export const ru: Translations = {
+  // Common
+  common: {
+    loading: 'Загрузка...',
+    error: 'Ошибка',
+    save: 'Сохранить',
+    cancel: 'Отмена',
+    delete: 'Удалить',
+    edit: 'Редактировать',
+    create: 'Создать',
+    search: 'Поиск',
+    filter: 'Фильтр',
+    refresh: 'Обновить',
+    back: 'Назад',
+    next: 'Далее',
+    previous: 'Назад',
+    submit: 'Отправить',
+    confirm: 'Подтвердить',
+    close: 'Закрыть',
+    yes: 'Да',
+    no: 'Нет',
+    all: 'Все',
+    none: 'Нет',
+    select: 'Выбрать',
+    required: 'Обязательно',
+    optional: 'Необязательно',
+    actions: 'Действия',
+    status: 'Статус',
+    date: 'Дата',
+    time: 'Время',
+    name: 'Название',
+    description: 'Описание',
+    notes: 'Примечания',
+    details: 'Детали',
+    view: 'Просмотр',
+    download: 'Скачать',
+    upload: 'Загрузить',
+    noData: 'Нет данных',
+    showing: 'Показано',
+    of: 'из',
+    results: 'результатов',
+    page: 'Страница',
+  },
+
+  // Navigation
+  nav: {
+    dashboard: 'Главная',
+    employees: 'Сотрудники',
+    attendance: 'Посещаемость',
+    payroll: 'Зарплата',
+    branches: 'Филиалы',
+    departments: 'Отделы',
+    recruitment: 'Рекрутинг',
+    reports: 'Отчеты',
+    settings: 'Настройки',
+    accounting: 'Бухгалтерия',
+    myRequests: 'Мои заявки',
+    allRequests: 'Все заявки',
+    approvals: 'Согласования',
+    newRequest: 'Новая заявка',
+    myPortal: 'Мой портал',
+    profile: 'Профиль',
+    logout: 'Выход',
+  },
+
+  // Dashboard
+  dashboard: {
+    title: 'Главная',
+    welcome: 'Добро пожаловать',
+    totalEmployees: 'Всего сотрудников',
+    activeToday: 'Активны сегодня',
+    pendingLeaves: 'Ожидающие отпуска',
+    openPositions: 'Открытые вакансии',
+    recentActivity: 'Последняя активность',
+    quickActions: 'Быстрые действия',
+  },
+
+  // Employees
+  employees: {
+    title: 'Сотрудники',
+    addEmployee: 'Добавить сотрудника',
+    editEmployee: 'Редактировать сотрудника',
+    employeeDetails: 'Данные сотрудника',
+    fullName: 'ФИО',
+    email: 'Email',
+    phone: 'Телефон',
+    position: 'Должность',
+    department: 'Отдел',
+    branch: 'Филиал',
+    hireDate: 'Дата приема',
+    salary: 'Зарплата',
+    status: 'Статус',
+    active: 'Активный',
+    inactive: 'Неактивный',
+    onLeave: 'В отпуске',
+  },
+
+  // Attendance
+  attendance: {
+    title: 'Посещаемость',
+    checkIn: 'Приход',
+    checkOut: 'Уход',
+    present: 'Присутствует',
+    absent: 'Отсутствует',
+    late: 'Опоздание',
+    earlyLeave: 'Ранний уход',
+    overtime: 'Переработка',
+    workingHours: 'Рабочие часы',
+    totalHours: 'Всего часов',
+    timesheet: 'Табель',
+  },
+
+  // Branches
+  branches: {
+    title: 'Филиалы',
+    addBranch: 'Добавить филиал',
+    branchName: 'Название филиала',
+    address: 'Адрес',
+    manager: 'Руководитель',
+    employeeCount: 'Кол-во сотрудников',
+  },
+
+  // Payroll
+  payroll: {
+    title: 'Зарплата',
+    baseSalary: 'Оклад',
+    bonus: 'Бонус',
+    deductions: 'Удержания',
+    netSalary: 'Чистая зарплата',
+    payslip: 'Расчетный лист',
+    payPeriod: 'Период',
+    process: 'Обработать',
+    approve: 'Утвердить',
+  },
+
+  // Accounting
+  accounting: {
+    title: 'Бухгалтерия',
+    myRequests: 'Мои заявки в бухгалтерию',
+    allRequests: 'Все заявки',
+    approvals: 'Очередь согласований',
+    newRequest: 'Новая заявка',
+    requestNumber: 'Номер заявки',
+    requestType: 'Тип заявки',
+    requester: 'Заявитель',
+    assignee: 'Исполнитель',
+    priority: 'Приоритет',
+    slaDeadline: 'Срок SLA',
+    createdAt: 'Создано',
+    updatedAt: 'Обновлено',
+
+    // Request types
+    reconciliation: 'Акт сверки',
+    payment: 'Оплата',
+    confirmation: 'Подтверждение оплаты',
+
+    // Statuses
+    pending: 'Ожидает',
+    inProgress: 'В работе',
+    needsInfo: 'Нужна информация',
+    pendingApproval: 'На согласовании',
+    approved: 'Согласовано',
+    completed: 'Завершено',
+    rejected: 'Отклонено',
+    cancelled: 'Отменено',
+
+    // Priority
+    normal: 'Обычный',
+    urgent: 'Срочно',
+
+    // Actions
+    startProcessing: 'Начать обработку',
+    markNeedsInfo: 'Запросить информацию',
+    markComplete: 'Завершить',
+    reject: 'Отклонить',
+    approve: 'Согласовать',
+    submitForApproval: 'Отправить на согласование',
+    cancelRequest: 'Отменить заявку',
+    addComment: 'Добавить комментарий',
+
+    // Form fields
+    selectType: 'Выберите тип заявки',
+    selectEntity: 'Выберите юр. лицо',
+    fromEntity: 'Юр. лицо',
+    tenantName: 'Наименование арендатора',
+    tenantInn: 'ИНН арендатора',
+    contractNumber: 'Номер договора',
+    contractPeriod: 'Период договора',
+    reconciliationPeriod: 'Период сверки',
+    recipientName: 'Получатель',
+    recipientInn: 'ИНН получателя',
+    amount: 'Сумма',
+    paymentCategory: 'Категория платежа',
+    paymentPurpose: 'Назначение платежа',
+    invoiceNumber: 'Номер счета',
+    clientName: 'Наименование клиента',
+    clientInn: 'ИНН клиента',
+    expectedAmount: 'Ожидаемая сумма',
+    expectedDate: 'Ожидаемая дата',
+
+    // Payment categories
+    officeSupplies: 'Канцтовары',
+    rent: 'Аренда',
+    utilities: 'Коммунальные услуги',
+    services: 'Услуги',
+    equipment: 'Оборудование',
+    marketing: 'Маркетинг',
+    salaryHr: 'Зарплата/Кадры',
+    other: 'Другое',
+
+    // Messages
+    noRequests: 'Заявки не найдены',
+    createFirst: 'Создайте первую заявку',
+    noApprovals: 'Нет заявок на согласование',
+    approvalRequired: 'Требуется согласование',
+    chiefAccountantApproval: 'Согласование главного бухгалтера',
+    executiveApproval: 'Согласование руководства (ГД/CEO)',
+
+    // SLA
+    slaOnTime: 'В срок',
+    slaWarning: 'Скоро срок',
+    slaOverdue: 'Просрочено',
+    slaDaysRemaining: 'дней осталось',
+    slaHoursRemaining: 'часов осталось',
+  },
+
+  // Auth
+  auth: {
+    login: 'Вход',
+    logout: 'Выход',
+    email: 'Email',
+    password: 'Пароль',
+    forgotPassword: 'Забыли пароль?',
+    rememberMe: 'Запомнить меня',
+    signIn: 'Войти',
+    signOut: 'Выйти',
+    invalidCredentials: 'Неверный email или пароль',
+  },
+
+  // Settings
+  settings: {
+    title: 'Настройки',
+    general: 'Общие',
+    notifications: 'Уведомления',
+    security: 'Безопасность',
+    language: 'Язык',
+    theme: 'Тема',
+    darkMode: 'Темная тема',
+    lightMode: 'Светлая тема',
+  },
+
+  // Errors
+  errors: {
+    generic: 'Что-то пошло не так',
+    notFound: 'Не найдено',
+    unauthorized: 'Пожалуйста, войдите в систему',
+    forbidden: 'Доступ запрещен',
+    validationFailed: 'Проверьте введенные данные',
+    networkError: 'Ошибка сети. Попробуйте снова.',
+    serverError: 'Ошибка сервера. Попробуйте позже.',
+  },
+
+  // Success messages
+  success: {
+    saved: 'Успешно сохранено',
+    created: 'Успешно создано',
+    updated: 'Успешно обновлено',
+    deleted: 'Успешно удалено',
+    submitted: 'Успешно отправлено',
+  },
+};

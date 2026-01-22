@@ -1,0 +1,273 @@
+import type { Translations } from './types';
+
+export const en: Translations = {
+  // Common
+  common: {
+    loading: 'Loading...',
+    error: 'Error',
+    save: 'Save',
+    cancel: 'Cancel',
+    delete: 'Delete',
+    edit: 'Edit',
+    create: 'Create',
+    search: 'Search',
+    filter: 'Filter',
+    refresh: 'Refresh',
+    back: 'Back',
+    next: 'Next',
+    previous: 'Previous',
+    submit: 'Submit',
+    confirm: 'Confirm',
+    close: 'Close',
+    yes: 'Yes',
+    no: 'No',
+    all: 'All',
+    none: 'None',
+    select: 'Select',
+    required: 'Required',
+    optional: 'Optional',
+    actions: 'Actions',
+    status: 'Status',
+    date: 'Date',
+    time: 'Time',
+    name: 'Name',
+    description: 'Description',
+    notes: 'Notes',
+    details: 'Details',
+    view: 'View',
+    download: 'Download',
+    upload: 'Upload',
+    noData: 'No data available',
+    showing: 'Showing',
+    of: 'of',
+    results: 'results',
+    page: 'Page',
+  },
+
+  // Navigation
+  nav: {
+    dashboard: 'Dashboard',
+    employees: 'Employees',
+    attendance: 'Attendance',
+    payroll: 'Payroll',
+    branches: 'Branches',
+    departments: 'Departments',
+    recruitment: 'Recruitment',
+    reports: 'Reports',
+    settings: 'Settings',
+    accounting: 'Accounting',
+    myRequests: 'My Requests',
+    allRequests: 'All Requests',
+    approvals: 'Approvals',
+    newRequest: 'New Request',
+    myPortal: 'My Portal',
+    profile: 'Profile',
+    logout: 'Logout',
+  },
+
+  // Dashboard
+  dashboard: {
+    title: 'Dashboard',
+    welcome: 'Welcome',
+    totalEmployees: 'Total Employees',
+    activeToday: 'Active Today',
+    pendingLeaves: 'Pending Leaves',
+    openPositions: 'Open Positions',
+    recentActivity: 'Recent Activity',
+    quickActions: 'Quick Actions',
+  },
+
+  // Employees
+  employees: {
+    title: 'Employees',
+    addEmployee: 'Add Employee',
+    editEmployee: 'Edit Employee',
+    employeeDetails: 'Employee Details',
+    fullName: 'Full Name',
+    email: 'Email',
+    phone: 'Phone',
+    position: 'Position',
+    department: 'Department',
+    branch: 'Branch',
+    hireDate: 'Hire Date',
+    salary: 'Salary',
+    status: 'Status',
+    active: 'Active',
+    inactive: 'Inactive',
+    onLeave: 'On Leave',
+  },
+
+  // Attendance
+  attendance: {
+    title: 'Attendance',
+    checkIn: 'Check In',
+    checkOut: 'Check Out',
+    present: 'Present',
+    absent: 'Absent',
+    late: 'Late',
+    earlyLeave: 'Early Leave',
+    overtime: 'Overtime',
+    workingHours: 'Working Hours',
+    totalHours: 'Total Hours',
+    timesheet: 'Timesheet',
+  },
+
+  // Branches
+  branches: {
+    title: 'Branches',
+    addBranch: 'Add Branch',
+    branchName: 'Branch Name',
+    address: 'Address',
+    manager: 'Manager',
+    employeeCount: 'Employee Count',
+  },
+
+  // Payroll
+  payroll: {
+    title: 'Payroll',
+    baseSalary: 'Base Salary',
+    bonus: 'Bonus',
+    deductions: 'Deductions',
+    netSalary: 'Net Salary',
+    payslip: 'Payslip',
+    payPeriod: 'Pay Period',
+    process: 'Process',
+    approve: 'Approve',
+  },
+
+  // Accounting
+  accounting: {
+    title: 'Accounting',
+    myRequests: 'My Accounting Requests',
+    allRequests: 'All Requests',
+    approvals: 'Approvals Queue',
+    newRequest: 'New Request',
+    requestNumber: 'Request Number',
+    requestType: 'Request Type',
+    requester: 'Requester',
+    assignee: 'Assignee',
+    priority: 'Priority',
+    slaDeadline: 'SLA Deadline',
+    createdAt: 'Created',
+    updatedAt: 'Updated',
+
+    // Request types
+    reconciliation: 'Reconciliation',
+    payment: 'Payment',
+    confirmation: 'Payment Confirmation',
+
+    // Statuses
+    pending: 'Pending',
+    inProgress: 'In Progress',
+    needsInfo: 'Needs Info',
+    pendingApproval: 'Pending Approval',
+    approved: 'Approved',
+    completed: 'Completed',
+    rejected: 'Rejected',
+    cancelled: 'Cancelled',
+
+    // Priority
+    normal: 'Normal',
+    urgent: 'Urgent',
+
+    // Actions
+    startProcessing: 'Start Processing',
+    markNeedsInfo: 'Request Information',
+    markComplete: 'Mark Complete',
+    reject: 'Reject',
+    approve: 'Approve',
+    submitForApproval: 'Submit for Approval',
+    cancelRequest: 'Cancel Request',
+    addComment: 'Add Comment',
+
+    // Form fields
+    selectType: 'Select Request Type',
+    selectEntity: 'Select Legal Entity',
+    fromEntity: 'From Entity',
+    tenantName: 'Tenant Name',
+    tenantInn: 'Tenant INN',
+    contractNumber: 'Contract Number',
+    contractPeriod: 'Contract Period',
+    reconciliationPeriod: 'Reconciliation Period',
+    recipientName: 'Recipient Name',
+    recipientInn: 'Recipient INN',
+    amount: 'Amount',
+    paymentCategory: 'Payment Category',
+    paymentPurpose: 'Payment Purpose',
+    invoiceNumber: 'Invoice Number',
+    clientName: 'Client Name',
+    clientInn: 'Client INN',
+    expectedAmount: 'Expected Amount',
+    expectedDate: 'Expected Date',
+
+    // Payment categories
+    officeSupplies: 'Office Supplies',
+    rent: 'Rent',
+    utilities: 'Utilities',
+    services: 'Services',
+    equipment: 'Equipment',
+    marketing: 'Marketing',
+    salaryHr: 'Salary/HR',
+    other: 'Other',
+
+    // Messages
+    noRequests: 'No requests found',
+    createFirst: 'Create your first request',
+    noApprovals: 'No pending approvals',
+    approvalRequired: 'Approval Required',
+    chiefAccountantApproval: 'Chief Accountant Approval',
+    executiveApproval: 'Executive Approval (GM/CEO)',
+
+    // SLA
+    slaOnTime: 'On Time',
+    slaWarning: 'Due Soon',
+    slaOverdue: 'Overdue',
+    slaDaysRemaining: 'days remaining',
+    slaHoursRemaining: 'hours remaining',
+  },
+
+  // Auth
+  auth: {
+    login: 'Login',
+    logout: 'Logout',
+    email: 'Email',
+    password: 'Password',
+    forgotPassword: 'Forgot Password?',
+    rememberMe: 'Remember Me',
+    signIn: 'Sign In',
+    signOut: 'Sign Out',
+    invalidCredentials: 'Invalid email or password',
+  },
+
+  // Settings
+  settings: {
+    title: 'Settings',
+    general: 'General',
+    notifications: 'Notifications',
+    security: 'Security',
+    language: 'Language',
+    theme: 'Theme',
+    darkMode: 'Dark Mode',
+    lightMode: 'Light Mode',
+  },
+
+  // Errors
+  errors: {
+    generic: 'Something went wrong',
+    notFound: 'Not found',
+    unauthorized: 'Please log in to continue',
+    forbidden: 'Access denied',
+    validationFailed: 'Please check your input',
+    networkError: 'Network error. Please try again.',
+    serverError: 'Server error. Please try again later.',
+  },
+
+  // Success messages
+  success: {
+    saved: 'Saved successfully',
+    created: 'Created successfully',
+    updated: 'Updated successfully',
+    deleted: 'Deleted successfully',
+    submitted: 'Submitted successfully',
+  },
+};

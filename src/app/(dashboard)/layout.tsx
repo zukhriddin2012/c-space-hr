@@ -4,10 +4,12 @@ import Sidebar from '@/components/Sidebar';
 import MobileNav from '@/components/MobileNav';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { SidebarProvider } from '@/contexts/SidebarContext';
+import { LanguageProvider } from '@/contexts/LanguageContext';
 import NotificationBell from '@/components/NotificationBell';
 import SidebarToggle from '@/components/SidebarToggle';
 import TestBannerWrapper from '@/components/TestBannerWrapper';
 import FloatingFeedbackButton from '@/components/FloatingFeedbackButton';
+import LanguageSwitcher from '@/components/LanguageSwitcher';
 
 export default async function DashboardLayout({
   children,
@@ -23,6 +25,7 @@ export default async function DashboardLayout({
   const showNotifications = ['general_manager', 'ceo', 'hr'].includes(user.role);
 
   return (
+    <LanguageProvider>
     <AuthProvider initialUser={user}>
       <SidebarProvider>
         <TestBannerWrapper />
@@ -40,6 +43,7 @@ export default async function DashboardLayout({
           <div className="hidden lg:flex sticky top-0 z-40 bg-white border-b border-gray-200 px-6 py-3 items-center justify-between">
             <SidebarToggle />
             <div className="flex items-center gap-4">
+            <LanguageSwitcher />
             {showNotifications && <NotificationBell />}
             <div className="h-8 w-px bg-gray-200" />
             <div className="flex items-center gap-2">
@@ -65,5 +69,6 @@ export default async function DashboardLayout({
         </div>
       </SidebarProvider>
     </AuthProvider>
+    </LanguageProvider>
   );
 }

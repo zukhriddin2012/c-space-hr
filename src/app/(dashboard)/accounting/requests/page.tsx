@@ -17,6 +17,7 @@ import {
   XCircle,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useTranslation } from '@/contexts/LanguageContext';
 import { hasPermission, PERMISSIONS } from '@/lib/permissions';
 import {
   getStatusLabel,
@@ -43,12 +44,45 @@ interface RequestWithMeta extends AccountingRequest {
 
 export default function AllAccountingRequestsPage() {
   const { user } = useAuth();
+  const { t } = useTranslation();
   const [requests, setRequests] = useState<RequestWithMeta[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [pageSize] = useState(20);
+
+  // Translation helpers
+  const getStatusLabelTranslated = (status: string): string => {
+    const statusMap: Record<string, string> = {
+      pending: t.accounting.pending,
+      in_progress: t.accounting.inProgress,
+      needs_info: t.accounting.needsInfo,
+      pending_approval: t.accounting.pendingApproval,
+      approved: t.accounting.approved,
+      completed: t.accounting.completed,
+      rejected: t.accounting.rejected,
+      cancelled: t.accounting.cancelled,
+    };
+    return statusMap[status] || status;
+  };
+
+  const getTypeLabelTranslated = (type: string): string => {
+    const typeMap: Record<string, string> = {
+      reconciliation: t.accounting.reconciliation,
+      payment: t.accounting.payment,
+      confirmation: t.accounting.confirmation,
+    };
+    return typeMap[type] || type;
+  };
+
+  const getPriorityLabelTranslated = (priority: string): string => {
+    const priorityMap: Record<string, string> = {
+      normal: t.accounting.normal,
+      urgent: t.accounting.urgent,
+    };
+    return priorityMap[priority] || priority;
+  };
 
   // Filters
   const [searchQuery, setSearchQuery] = useState('');
@@ -133,10 +167,10 @@ export default function AllAccountingRequestsPage() {
     return (
       <div className="text-center py-12">
         <AlertTriangle className="mx-auto mb-4 text-yellow-500" size={48} />
-        <h1 className="text-xl font-semibold text-gray-900 mb-2">Access Denied</h1>
-        <p className="text-gray-500">You don't have permission to view all requests.</p>
+        <h1 className="text-xl font-semibold text-gray-900 mb-2">{t.errors.forbidden}</h1>
+        <p className="text-gray-500">{t.errors.unauthorized}</p>
         <Link href="/accounting/my-requests" className="text-purple-600 hover:underline mt-4 inline-block">
-          Go to My Requests
+          {t.accounting.myRequests}
         </Link>
       </div>
     );
@@ -147,11 +181,11 @@ export default function AllAccountingRequestsPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">All Accounting Requests</h1>
-          <p className="text-gray-500 mt-1">Manage and process accounting requests</p>
+          <h1 className="text-2xl font-bold text-gray-900">{t.accounting.allRequests}</h1>
+          <p className="text-gray-500 mt-1">{t.accounting.title}</p>
         </div>
         <div className="flex items-center gap-2 text-sm text-gray-500">
-          <span>{total} request{total !== 1 ? 's' : ''}</span>
+          <span>{total} {t.common.results}</span>
         </div>
       </div>
 
@@ -164,7 +198,7 @@ export default function AllAccountingRequestsPage() {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
               <input
                 type="text"
-                placeholder="Search by request number, name, INN..."
+                placeholder={t.common.search + '...'}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
@@ -180,7 +214,7 @@ export default function AllAccountingRequestsPage() {
               }`}
             >
               <Filter size={18} />
-              Filters
+              {t.common.filter}
               {hasActiveFilters && (
                 <span className="w-2 h-2 bg-purple-600 rounded-full"></span>
               )}
@@ -202,14 +236,14 @@ export default function AllAccountingRequestsPage() {
                 onChange={(e) => setStatusFilter(e.target.value as AccountingRequestStatus | '')}
                 className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 text-sm"
               >
-                <option value="">All Statuses</option>
-                <option value="pending">Pending</option>
-                <option value="in_progress">In Progress</option>
-                <option value="needs_info">Needs Info</option>
-                <option value="pending_approval">Pending Approval</option>
-                <option value="approved">Approved</option>
-                <option value="completed">Completed</option>
-                <option value="rejected">Rejected</option>
+                <option value="">{t.common.all} {t.common.status}</option>
+                <option value="pending">{t.accounting.pending}</option>
+                <option value="in_progress">{t.accounting.inProgress}</option>
+                <option value="needs_info">{t.accounting.needsInfo}</option>
+                <option value="pending_approval">{t.accounting.pendingApproval}</option>
+                <option value="approved">{t.accounting.approved}</option>
+                <option value="completed">{t.accounting.completed}</option>
+                <option value="rejected">{t.accounting.rejected}</option>
               </select>
 
               <select
@@ -217,10 +251,10 @@ export default function AllAccountingRequestsPage() {
                 onChange={(e) => setTypeFilter(e.target.value as AccountingRequestType | '')}
                 className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 text-sm"
               >
-                <option value="">All Types</option>
-                <option value="reconciliation">Reconciliation</option>
-                <option value="payment">Payment</option>
-                <option value="confirmation">Confirmation</option>
+                <option value="">{t.common.all}</option>
+                <option value="reconciliation">{t.accounting.reconciliation}</option>
+                <option value="payment">{t.accounting.payment}</option>
+                <option value="confirmation">{t.accounting.confirmation}</option>
               </select>
 
               <select
@@ -228,9 +262,9 @@ export default function AllAccountingRequestsPage() {
                 onChange={(e) => setPriorityFilter(e.target.value as 'normal' | 'urgent' | '')}
                 className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 text-sm"
               >
-                <option value="">All Priorities</option>
-                <option value="normal">Normal</option>
-                <option value="urgent">Urgent</option>
+                <option value="">{t.common.all}</option>
+                <option value="normal">{t.accounting.normal}</option>
+                <option value="urgent">{t.accounting.urgent}</option>
               </select>
 
               <select
@@ -238,9 +272,9 @@ export default function AllAccountingRequestsPage() {
                 onChange={(e) => setAssignedFilter(e.target.value as 'me' | 'unassigned' | '')}
                 className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 text-sm"
               >
-                <option value="">All Assignments</option>
-                <option value="me">Assigned to Me</option>
-                <option value="unassigned">Unassigned</option>
+                <option value="">{t.common.all}</option>
+                <option value="me">{t.accounting.assignee}</option>
+                <option value="unassigned">{t.common.none}</option>
               </select>
 
               {hasActiveFilters && (
@@ -267,13 +301,13 @@ export default function AllAccountingRequestsPage() {
           <div className="p-8 text-center text-red-600">{error}</div>
         ) : requests.length === 0 ? (
           <div className="p-8 text-center text-gray-500">
-            <p>No requests found.</p>
+            <p>{t.accounting.noRequests}</p>
             {hasActiveFilters && (
               <button
                 onClick={clearFilters}
                 className="mt-2 text-purple-600 hover:text-purple-700"
               >
-                Clear filters
+                {t.common.refresh}
               </button>
             )}
           </div>
@@ -343,16 +377,16 @@ export default function AllAccountingRequestsPage() {
                         </td>
                         <td className="px-4 py-4">
                           <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full border ${getRequestTypeColor(request.requestType)}`}>
-                            {getRequestTypeLabel(request.requestType)}
+                            {getTypeLabelTranslated(request.requestType)}
                           </span>
                         </td>
                         <td className="px-4 py-4">
                           <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full border ${getStatusColor(request.status)}`}>
-                            {getStatusLabel(request.status)}
+                            {getStatusLabelTranslated(request.status)}
                           </span>
                           {request.priority === 'urgent' && (
                             <span className={`ml-2 inline-flex px-2 py-1 text-xs font-medium rounded-full border ${getPriorityColor('urgent')}`}>
-                              {getPriorityLabel('urgent')}
+                              {getPriorityLabelTranslated('urgent')}
                             </span>
                           )}
                         </td>
@@ -404,7 +438,7 @@ export default function AllAccountingRequestsPage() {
             {totalPages > 1 && (
               <div className="flex items-center justify-between px-4 py-3 border-t border-gray-200 bg-gray-50">
                 <div className="text-sm text-gray-500">
-                  Showing {(page - 1) * pageSize + 1} to {Math.min(page * pageSize, total)} of {total}
+                  {t.common.showing} {(page - 1) * pageSize + 1} - {Math.min(page * pageSize, total)} {t.common.of} {total}
                 </div>
                 <div className="flex gap-2">
                   <button
@@ -412,14 +446,14 @@ export default function AllAccountingRequestsPage() {
                     disabled={page === 1}
                     className="px-3 py-1 border border-gray-300 rounded-lg text-sm hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    Previous
+                    {t.common.previous}
                   </button>
                   <button
                     onClick={() => setPage(page + 1)}
                     disabled={page === totalPages}
                     className="px-3 py-1 border border-gray-300 rounded-lg text-sm hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    Next
+                    {t.common.next}
                   </button>
                 </div>
               </div>

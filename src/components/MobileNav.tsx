@@ -18,16 +18,20 @@ import {
   UserPlus,
   BarChart3,
   UserCircle,
+  Calculator,
+  MessageSquare,
+  Inbox,
 } from 'lucide-react';
 import type { User, UserRole } from '@/types';
 import { getRoleLabel } from '@/lib/auth';
+import { useTranslation } from '@/contexts/LanguageContext';
 
 interface MobileNavProps {
   user: User;
 }
 
 interface NavItem {
-  name: string;
+  nameKey: string;
   href: string;
   icon: React.ComponentType<{ size?: number; className?: string }>;
   roles: UserRole[];
@@ -35,61 +39,79 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   {
-    name: 'Dashboard',
+    nameKey: 'dashboard',
     href: '/dashboard',
     icon: LayoutDashboard,
-    roles: ['general_manager', 'ceo', 'hr', 'recruiter', 'branch_manager', 'employee'],
+    roles: ['general_manager', 'ceo', 'hr', 'recruiter', 'branch_manager', 'employee', 'accountant', 'chief_accountant', 'legal_manager'],
   },
   {
-    name: 'My Portal',
+    nameKey: 'myPortal',
     href: '/my-portal',
     icon: UserCircle,
-    roles: ['general_manager', 'ceo', 'hr', 'recruiter', 'branch_manager', 'employee'],
+    roles: ['general_manager', 'ceo', 'hr', 'recruiter', 'branch_manager', 'employee', 'accountant', 'chief_accountant', 'legal_manager'],
   },
   {
-    name: 'Employees',
+    nameKey: 'employees',
     href: '/employees',
     icon: Users,
     roles: ['general_manager', 'ceo', 'hr', 'branch_manager'],
   },
   {
-    name: 'Branches',
+    nameKey: 'branches',
     href: '/branches',
     icon: MapPin,
     roles: ['general_manager', 'hr'],
   },
   {
-    name: 'Attendance',
+    nameKey: 'attendance',
     href: '/attendance',
     icon: Clock,
     roles: ['general_manager', 'ceo', 'hr', 'branch_manager'],
   },
   {
-    name: 'Payroll',
+    nameKey: 'payroll',
     href: '/payroll',
     icon: Wallet,
     roles: ['general_manager', 'ceo', 'hr'],
   },
   {
-    name: 'Recruitment',
+    nameKey: 'recruitment',
     href: '/recruitment',
     icon: UserPlus,
     roles: ['general_manager', 'hr', 'recruiter'],
   },
   {
-    name: 'Reports',
+    nameKey: 'reports',
     href: '/reports',
     icon: BarChart3,
     roles: ['general_manager', 'ceo'],
   },
   {
-    name: 'Departments',
+    nameKey: 'accounting',
+    href: '/accounting/my-requests',
+    icon: Calculator,
+    roles: ['general_manager', 'ceo', 'chief_accountant', 'accountant', 'branch_manager', 'legal_manager', 'hr', 'employee', 'recruiter'],
+  },
+  {
+    nameKey: 'departments',
     href: '/departments',
     icon: Building2,
     roles: ['general_manager', 'hr'],
   },
   {
-    name: 'Settings',
+    nameKey: 'feedback',
+    href: '/feedback',
+    icon: MessageSquare,
+    roles: ['employee', 'branch_manager', 'recruiter', 'hr', 'accountant', 'chief_accountant', 'legal_manager'],
+  },
+  {
+    nameKey: 'feedbackInbox',
+    href: '/feedback/review',
+    icon: Inbox,
+    roles: ['general_manager', 'ceo'],
+  },
+  {
+    nameKey: 'settings',
     href: '/settings',
     icon: Settings,
     roles: ['general_manager'],
@@ -99,6 +121,30 @@ const navItems: NavItem[] = [
 export default function MobileNav({ user }: MobileNavProps) {
   const [isOpen, setIsOpen] = useState(false);
   const pathname = usePathname();
+  const { t } = useTranslation();
+
+  // Translation helper for nav items
+  const getNavLabel = (key: string): string => {
+    const labels: Record<string, string> = {
+      dashboard: t.nav.dashboard,
+      myPortal: t.nav.myPortal,
+      employees: t.nav.employees,
+      branches: t.nav.branches,
+      attendance: t.nav.attendance,
+      payroll: t.nav.payroll,
+      recruitment: t.nav.recruitment,
+      reports: t.nav.reports,
+      accounting: t.nav.accounting,
+      myRequests: t.nav.myRequests,
+      allRequests: t.nav.allRequests,
+      approvals: t.nav.approvals,
+      departments: t.nav.departments,
+      feedback: 'Feedback',
+      feedbackInbox: 'Feedback Inbox',
+      settings: t.nav.settings,
+    };
+    return labels[key] || key;
+  };
 
   // Close menu when route changes
   useEffect(() => {
@@ -198,6 +244,7 @@ export default function MobileNav({ user }: MobileNavProps) {
             {filteredNavItems.map((item) => {
               const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
               const Icon = item.icon;
+              const itemName = getNavLabel(item.nameKey);
 
               return (
                 <li key={item.href}>
@@ -210,7 +257,7 @@ export default function MobileNav({ user }: MobileNavProps) {
                     }`}
                   >
                     <Icon size={20} className={isActive ? 'text-purple-600' : 'text-gray-400'} />
-                    {item.name}
+                    {itemName}
                   </Link>
                 </li>
               );
@@ -225,7 +272,7 @@ export default function MobileNav({ user }: MobileNavProps) {
             className="w-full flex items-center justify-center gap-2 px-4 py-3 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors"
           >
             <LogOut size={18} />
-            Sign out
+            {t.nav.logout}
           </button>
         </div>
       </div>
