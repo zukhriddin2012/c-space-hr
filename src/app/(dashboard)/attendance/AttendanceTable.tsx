@@ -100,6 +100,13 @@ function formatHours(hours: number | null): string {
   return `${hours.toFixed(1)}h`;
 }
 
+function formatShortDate(dateString: string | undefined): string {
+  if (!dateString) return '';
+  const date = new Date(dateString);
+  // Format as "Jan 21" for example
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
 const statusOrder: Record<string, number> = {
   present: 1,
   late: 2,
@@ -259,7 +266,9 @@ export default function AttendanceTable({ records, canEditAttendance }: Attendan
                         ) : (
                           <span className={`text-sm ${record.status === 'late' && !record.isOvernight ? 'text-orange-600 font-medium' : 'text-gray-900'}`}>
                             {formatTime(record.checkInTime)}
-                            {record.isOvernight && <span className="text-indigo-500 text-xs ml-1">(prev)</span>}
+                            {record.isOvernight && record.overnightFromDate && (
+                              <span className="text-indigo-500 text-xs ml-1">({formatShortDate(record.overnightFromDate)})</span>
+                            )}
                           </span>
                         )}
                       </td>
