@@ -1,7 +1,7 @@
 import { getSession } from '@/lib/auth-server';
 import { hasPermission } from '@/lib/auth';
 import { redirect } from 'next/navigation';
-import { getPayrollByMonth, getPayrollStats, getPaymentRequestsSummary, getPaidAdvancesByEmployee } from '@/lib/db';
+import { getPayrollByMonth, calculatePayrollStats, getPaymentRequestsSummary, getPaidAdvancesByEmployee } from '@/lib/db';
 import PayrollFilters from './PayrollFilters';
 import PayrollActions from './PayrollActions';
 import PaymentRequestsSection from './PaymentRequestsSection';
@@ -43,13 +43,15 @@ export default async function PayrollPage({
   const selectedMonth = parseInt(params.month || String(currentDate.getMonth() + 1));
   const selectedStatus = params.status || '';
 
-  // Fetch payroll data from database
-  const [payroll, stats, paymentRequestsSummary, paidAdvances] = await Promise.all([
+  // Fetch payroll data from database (3 queries in parallel instead of 4)
+  const [payroll, paymentRequestsSummary, paidAdvances] = await Promise.all([
     getPayrollByMonth(selectedYear, selectedMonth),
-    getPayrollStats(selectedYear, selectedMonth),
     getPaymentRequestsSummary(selectedYear, selectedMonth),
     getPaidAdvancesByEmployee(selectedYear, selectedMonth),
   ]);
+
+  // Calculate stats from payroll data (no extra DB call)
+  const stats = calculatePayrollStats(payroll);
 
   return (
     <div>

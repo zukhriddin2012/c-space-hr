@@ -950,38 +950,44 @@ export async function getPayrollByMonth(year: number, month: number): Promise<Pa
     return [];
   }
 
-  // Get all employees
-  const employees = await getEmployees();
+  // Run all 4 queries in parallel
+  const [employeesResult, primaryWagesResult, additionalWagesResult, payslipsResult] = await Promise.all([
+    // Get all employees
+    supabaseAdmin!
+      .from('employees')
+      .select('id, full_name, position')
+      .order('full_name'),
+    // Get all PRIMARY wages (bank - from legal entities)
+    supabaseAdmin!
+      .from('employee_wages')
+      .select('*, legal_entities(id, name, short_name)')
+      .eq('is_active', true),
+    // Get all ADDITIONAL wages (cash - from branches)
+    supabaseAdmin!
+      .from('employee_branch_wages')
+      .select('*, branches(id, name)')
+      .eq('is_active', true),
+    // Get existing payslips for this month (to check status)
+    supabaseAdmin!
+      .from('payslips')
+      .select('*')
+      .eq('year', year)
+      .eq('month', month),
+  ]);
 
-  // Get all PRIMARY wages (bank - from legal entities)
-  const { data: primaryWages, error: primaryError } = await supabaseAdmin!
-    .from('employee_wages')
-    .select('*, legal_entities(id, name, short_name)')
-    .eq('is_active', true);
+  const employees = employeesResult.data || [];
+  const primaryWages = primaryWagesResult.data || [];
+  const additionalWages = additionalWagesResult.data || [];
+  const payslips = payslipsResult.data || [];
 
-  if (primaryError) {
-    console.error('Error fetching primary wages:', primaryError);
+  if (primaryWagesResult.error) {
+    console.error('Error fetching primary wages:', primaryWagesResult.error);
   }
-
-  // Get all ADDITIONAL wages (cash - from branches)
-  const { data: additionalWages, error: additionalError } = await supabaseAdmin!
-    .from('employee_branch_wages')
-    .select('*, branches(id, name)')
-    .eq('is_active', true);
-
-  if (additionalError) {
-    console.error('Error fetching additional wages:', additionalError);
+  if (additionalWagesResult.error) {
+    console.error('Error fetching additional wages:', additionalWagesResult.error);
   }
-
-  // Get existing payslips for this month (to check status)
-  const { data: payslips, error: payslipsError } = await supabaseAdmin!
-    .from('payslips')
-    .select('*')
-    .eq('year', year)
-    .eq('month', month);
-
-  if (payslipsError) {
-    console.error('Error fetching payslips:', payslipsError);
+  if (payslipsResult.error) {
+    console.error('Error fetching payslips:', payslipsResult.error);
   }
 
   const payslipMap = new Map((payslips || []).map(p => [p.employee_id, p]));
@@ -1063,10 +1069,8 @@ export async function getPayrollByMonth(year: number, month: number): Promise<Pa
   return allRecords.sort((a, b) => b.net_salary - a.net_salary);
 }
 
-// Get payroll statistics for a month
-export async function getPayrollStats(year: number, month: number) {
-  const payroll = await getPayrollByMonth(year, month);
-
+// Calculate payroll statistics from payroll data (no extra DB call)
+export function calculatePayrollStats(payroll: PayrollRecord[]) {
   // Separate Primary and Additional wages
   const primaryPayroll = payroll.filter(p => p.wage_category === 'primary');
   const additionalPayroll = payroll.filter(p => p.wage_category === 'additional');
