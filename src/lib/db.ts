@@ -468,72 +468,69 @@ export async function getAttendanceByDate(date: string): Promise<Attendance[]> {
     return [];
   }
 
-  // Get attendance records for the requested date
-  const { data, error } = await supabaseAdmin!
-    .from('attendance')
-    .select(`
-      *,
-      employees(full_name, employee_id, position),
-      check_in_branch:branches!attendance_check_in_branch_id_fkey(name),
-      check_out_branch:branches!attendance_check_out_branch_id_fkey(name)
-    `)
-    .eq('date', date)
-    .order('check_in', { ascending: false });
+  // Run all 3 queries in parallel for better performance
+  const [todayResult, activeOvernightResult, checkoutOnDateResult] = await Promise.all([
+    // Query 1: Get attendance records for the requested date
+    supabaseAdmin!
+      .from('attendance')
+      .select(`
+        *,
+        employees(full_name, employee_id, position),
+        check_in_branch:branches!attendance_check_in_branch_id_fkey(name),
+        check_out_branch:branches!attendance_check_out_branch_id_fkey(name)
+      `)
+      .eq('date', date)
+      .order('check_in', { ascending: false }),
 
-  if (error) {
-    console.error('Error fetching attendance by date:', error);
-    return [];
+    // Query 2: Fetch records that started on a previous day but are still active (no checkout)
+    supabaseAdmin!
+      .from('attendance')
+      .select(`
+        *,
+        employees(full_name, employee_id, position),
+        check_in_branch:branches!attendance_check_in_branch_id_fkey(name),
+        check_out_branch:branches!attendance_check_out_branch_id_fkey(name)
+      `)
+      .lt('date', date)
+      .is('check_out', null),
+
+    // Query 3: Fetch records that checked out on the viewing date
+    supabaseAdmin!
+      .from('attendance')
+      .select(`
+        *,
+        employees(full_name, employee_id, position),
+        check_in_branch:branches!attendance_check_in_branch_id_fkey(name),
+        check_out_branch:branches!attendance_check_out_branch_id_fkey(name)
+      `)
+      .lt('date', date)
+      .not('check_out', 'is', null)
+      .gte('check_out_timestamp', `${date}T00:00:00`)
+      .lt('check_out_timestamp', `${date}T23:59:59`),
+  ]);
+
+  if (todayResult.error) {
+    console.error('Error fetching attendance by date:', todayResult.error);
+  }
+  if (activeOvernightResult.error) {
+    console.error('Error fetching active overnight attendance:', activeOvernightResult.error);
+  }
+  if (checkoutOnDateResult.error) {
+    console.error('Error fetching checkout-on-date attendance:', checkoutOnDateResult.error);
   }
 
-  // Also fetch multi-day shift records from previous days
-  // Case 1: Workers who checked in yesterday and haven't checked out yet (active overnight)
-  // Case 2: Workers who checked in on a previous day and checked out on THIS date
-  const previousDate = new Date(date);
-  previousDate.setDate(previousDate.getDate() - 1);
-  const previousDateStr = previousDate.toISOString().split('T')[0];
-
-  // Fetch records that started on a previous day but are still active (no checkout)
-  const { data: activeOvernightData, error: activeOvernightError } = await supabaseAdmin!
-    .from('attendance')
-    .select(`
-      *,
-      employees(full_name, employee_id, position),
-      check_in_branch:branches!attendance_check_in_branch_id_fkey(name),
-      check_out_branch:branches!attendance_check_out_branch_id_fkey(name)
-    `)
-    .lt('date', date) // Check-in was before viewing date
-    .is('check_out', null); // Still active (no checkout)
-
-  if (activeOvernightError) {
-    console.error('Error fetching active overnight attendance:', activeOvernightError);
-  }
-
-  // Fetch records that checked out on the viewing date using check_out_timestamp
-  const { data: checkoutOnDateData, error: checkoutOnDateError } = await supabaseAdmin!
-    .from('attendance')
-    .select(`
-      *,
-      employees(full_name, employee_id, position),
-      check_in_branch:branches!attendance_check_in_branch_id_fkey(name),
-      check_out_branch:branches!attendance_check_out_branch_id_fkey(name)
-    `)
-    .lt('date', date) // Check-in was before viewing date
-    .not('check_out', 'is', null) // Has checked out
-    .gte('check_out_timestamp', `${date}T00:00:00`) // Checkout timestamp is on this date
-    .lt('check_out_timestamp', `${date}T23:59:59`);
-
-  if (checkoutOnDateError) {
-    console.error('Error fetching checkout-on-date attendance:', checkoutOnDateError);
-  }
+  const data = todayResult.data || [];
+  const activeOvernightData = activeOvernightResult.data || [];
+  const checkoutOnDateData = checkoutOnDateResult.data || [];
 
   // Mark overnight records and combine with today's records
   const overnightRecords = [
-    ...(activeOvernightData || []).map(record => ({
+    ...activeOvernightData.map(record => ({
       ...record,
       is_overnight: true,
       overnight_from_date: record.date,
     })),
-    ...(checkoutOnDateData || []).map(record => ({
+    ...checkoutOnDateData.map(record => ({
       ...record,
       is_overnight: true,
       overnight_from_date: record.date,
@@ -542,12 +539,12 @@ export async function getAttendanceByDate(date: string): Promise<Attendance[]> {
   ];
 
   // Filter out employees who already have a record for today (avoid duplicates)
-  const todayEmployeeIds = new Set((data || []).map(r => r.employee_id));
+  const todayEmployeeIds = new Set(data.map(r => r.employee_id));
   const filteredOvernightRecords = overnightRecords.filter(
     r => !todayEmployeeIds.has(r.employee_id)
   );
 
-  return [...(data || []), ...filteredOvernightRecords];
+  return [...data, ...filteredOvernightRecords];
 }
 
 export async function getAttendanceByEmployee(employeeId: string, days: number = 30): Promise<Attendance[]> {
