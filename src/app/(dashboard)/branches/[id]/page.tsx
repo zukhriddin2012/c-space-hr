@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { MapPin, Save, ArrowLeft, Trash2, Navigation, Circle } from 'lucide-react';
+import { MapPin, Save, ArrowLeft, Trash2, Navigation, Circle, Wifi, Plus, X } from 'lucide-react';
 import Link from 'next/link';
 
 interface Branch {
@@ -12,6 +12,7 @@ interface Branch {
   latitude: number | null;
   longitude: number | null;
   geofence_radius: number;
+  office_ips: string[] | null;
 }
 
 export default function BranchDetailPage() {
@@ -31,7 +32,9 @@ export default function BranchDetailPage() {
     latitude: '',
     longitude: '',
     geofence_radius: '100',
+    office_ips: [] as string[],
   });
+  const [newIp, setNewIp] = useState('');
 
   useEffect(() => {
     if (!isNew) {
@@ -51,6 +54,7 @@ export default function BranchDetailPage() {
         latitude: branch.latitude?.toString() || '',
         longitude: branch.longitude?.toString() || '',
         geofence_radius: branch.geofence_radius?.toString() || '100',
+        office_ips: branch.office_ips || [],
       });
     } catch (err) {
       setError('Failed to load branch');
@@ -314,6 +318,89 @@ export default function BranchDetailPage() {
                 </a>
               </div>
             )}
+          </div>
+        </div>
+
+        {/* Office WiFi IP Verification */}
+        <div className="bg-white rounded-xl border border-gray-200 p-6">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+            <Wifi size={20} className="text-purple-600" />
+            Office WiFi Verification
+          </h2>
+          <p className="text-sm text-gray-500 mb-4">
+            Add office IP addresses for instant check-in via WiFi. Employees connected to office WiFi can check in with one tap.
+          </p>
+
+          <div className="space-y-4">
+            {/* Existing IPs */}
+            {formData.office_ips.length > 0 && (
+              <div className="space-y-2">
+                {formData.office_ips.map((ip, index) => (
+                  <div key={index} className="flex items-center gap-2">
+                    <div className="flex-1 px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg font-mono text-sm">
+                      {ip}
+                    </div>
+                    {index === 0 && (
+                      <span className="px-2 py-1 bg-green-100 text-green-700 text-xs font-medium rounded-full">
+                        Primary
+                      </span>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setFormData(prev => ({
+                          ...prev,
+                          office_ips: prev.office_ips.filter((_, i) => i !== index)
+                        }));
+                      }}
+                      className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                    >
+                      <X size={18} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Add new IP */}
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                value={newIp}
+                onChange={(e) => setNewIp(e.target.value)}
+                placeholder="e.g., 203.145.67.89"
+                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none font-mono"
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  if (newIp && !formData.office_ips.includes(newIp)) {
+                    setFormData(prev => ({
+                      ...prev,
+                      office_ips: [...prev.office_ips, newIp]
+                    }));
+                    setNewIp('');
+                  }
+                }}
+                disabled={!newIp}
+                className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-purple-600 bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <Plus size={16} />
+                Add IP
+              </button>
+            </div>
+
+            {/* Help text */}
+            <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
+              <p className="text-sm text-amber-800">
+                <strong>How to find your office IP:</strong>
+              </p>
+              <ol className="text-sm text-amber-700 mt-2 list-decimal list-inside space-y-1">
+                <li>Connect to office WiFi</li>
+                <li>Visit <a href="https://whatismyip.com" target="_blank" rel="noopener noreferrer" className="font-mono bg-amber-100 px-1 rounded underline">whatismyip.com</a></li>
+                <li>Copy the IP address shown and add it here</li>
+              </ol>
+            </div>
           </div>
         </div>
 

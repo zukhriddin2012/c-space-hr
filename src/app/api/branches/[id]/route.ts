@@ -39,7 +39,7 @@ export const PUT = withAuth(async (
     }
 
     const body = await request.json();
-    const { name, address, latitude, longitude, geofence_radius } = body;
+    const { name, address, latitude, longitude, geofence_radius, office_ips } = body;
 
     const updates: {
       name?: string;
@@ -47,6 +47,7 @@ export const PUT = withAuth(async (
       latitude?: number | null;
       longitude?: number | null;
       geofence_radius?: number;
+      office_ips?: string[];
     } = {};
 
     if (name !== undefined) updates.name = name;
@@ -54,6 +55,7 @@ export const PUT = withAuth(async (
     if (latitude !== undefined) updates.latitude = latitude ? parseFloat(latitude) : null;
     if (longitude !== undefined) updates.longitude = longitude ? parseFloat(longitude) : null;
     if (geofence_radius !== undefined) updates.geofence_radius = parseInt(geofence_radius);
+    if (office_ips !== undefined) updates.office_ips = office_ips;
 
     const result = await updateBranch(id, updates);
 

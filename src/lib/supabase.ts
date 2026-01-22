@@ -25,6 +25,7 @@ export interface Branch {
   latitude: number | null;
   longitude: number | null;
   geofence_radius: number;
+  office_ips?: string[] | null;
 }
 
 export interface Employee {
@@ -68,6 +69,9 @@ export interface Attendance {
   is_overnight?: boolean;
   overnight_from_date?: string;
   is_checkout_day?: boolean; // True when viewing the date this record was checked out (not checked in)
+  // IP verification fields
+  verification_type?: 'ip' | 'gps';
+  ip_address?: string | null;
 }
 
 export interface LeaveRequest {

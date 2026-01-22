@@ -356,6 +356,7 @@ export async function updateBranch(
     latitude?: number | null;
     longitude?: number | null;
     geofence_radius?: number;
+    office_ips?: string[];
   }
 ): Promise<{ success: boolean; branch?: Branch; error?: string }> {
   if (!isSupabaseAdminConfigured()) {
