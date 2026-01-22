@@ -135,6 +135,14 @@ export default function CandidateDetailModal({
     end: candidate.probation_end_date || '',
   });
 
+  // Sync probation dates when candidate data changes (after refresh)
+  useEffect(() => {
+    setProbationDates({
+      start: candidate.probation_start_date || '',
+      end: candidate.probation_end_date || '',
+    });
+  }, [candidate.probation_start_date, candidate.probation_end_date]);
+
   const handleProbationAction = async (action: string, extraData?: Record<string, string>) => {
     setProbationLoading(true);
     try {
