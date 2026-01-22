@@ -354,26 +354,40 @@ export default function Sidebar({ user }: SidebarProps) {
       {/* User Section */}
       <div className={`p-4 border-t border-gray-200 ${isCollapsed ? 'flex flex-col items-center' : ''}`}>
         {!isCollapsed && (
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+          <Link
+            href="/my-portal/profile"
+            className="flex items-center gap-3 mb-3 p-2 -m-2 rounded-lg hover:bg-purple-50 transition-colors cursor-pointer group"
+          >
+            <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center group-hover:bg-purple-200 transition-colors">
               <span className="text-purple-700 font-medium">
                 {user.name.charAt(0).toUpperCase()}
               </span>
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-gray-900 truncate">{user.name}</p>
+              <p className="text-sm font-medium text-gray-900 truncate group-hover:text-purple-700 transition-colors">{user.name}</p>
               <p className="text-xs text-gray-500 truncate">{getRoleLabel(user.role)}</p>
             </div>
-          </div>
+          </Link>
         )}
         {isCollapsed ? (
-          <button
-            onClick={handleLogout}
-            className="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-            title={t.nav.logout}
-          >
-            <LogOut size={20} />
-          </button>
+          <div className="flex flex-col items-center gap-2">
+            <Link
+              href="/my-portal/profile"
+              className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center hover:bg-purple-200 transition-colors"
+              title={user.name}
+            >
+              <span className="text-purple-700 font-medium">
+                {user.name.charAt(0).toUpperCase()}
+              </span>
+            </Link>
+            <button
+              onClick={handleLogout}
+              className="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+              title={t.nav.logout}
+            >
+              <LogOut size={20} />
+            </button>
+          </div>
         ) : (
           <button
             onClick={handleLogout}
