@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { withAuth } from '@/lib/api-auth';
 import { PERMISSIONS } from '@/lib/permissions';
 import { getEmployees, createEmployee } from '@/lib/db';
+import { supabaseAdmin, isSupabaseAdminConfigured } from '@/lib/supabase';
 
 // GET /api/employees - Get all employees
 export const GET = withAuth(async () => {
@@ -18,7 +19,7 @@ export const GET = withAuth(async () => {
 export const POST = withAuth(async (request: NextRequest) => {
   try {
     const body = await request.json();
-    const { full_name, position, level, branch_id, salary, phone, email, status, employment_type, hire_date, system_role } = body;
+    const { full_name, position, level, branch_id, salary, phone, email, status, employment_type, hire_date, system_role, candidate_id } = body;
 
     if (!full_name || !position) {
       return NextResponse.json({ error: 'Full name and position are required' }, { status: 400 });
@@ -40,6 +41,17 @@ export const POST = withAuth(async (request: NextRequest) => {
 
     if (!result.success) {
       return NextResponse.json({ error: result.error }, { status: 400 });
+    }
+
+    // If created from a candidate, mark probation_account_created on the candidate
+    if (candidate_id && isSupabaseAdminConfigured() && supabaseAdmin) {
+      await supabaseAdmin
+        .from('candidates')
+        .update({
+          probation_account_created: true,
+          probation_employee_id: result.employee?.id
+        })
+        .eq('id', candidate_id);
     }
 
     return NextResponse.json({ employee: result.employee }, { status: 201 });

@@ -35,11 +35,23 @@ interface Employee {
   system_role?: UserRole;
 }
 
+interface InitialEmployeeData {
+  full_name?: string;
+  position?: string;
+  phone?: string;
+  email?: string;
+  status?: string;
+  employment_type?: string;
+  hire_date?: string;
+  candidate_id?: string;
+}
+
 interface AddEmployeeModalProps {
   branches: Branch[];
   onClose: () => void;
   onAdd: (employee: Employee) => void;
   canAssignRoles?: boolean;
+  initialData?: InitialEmployeeData;
 }
 
 export default function AddEmployeeModal({
@@ -47,18 +59,20 @@ export default function AddEmployeeModal({
   onClose,
   onAdd,
   canAssignRoles = false,
+  initialData,
 }: AddEmployeeModalProps) {
   const [formData, setFormData] = useState({
-    full_name: '',
-    position: '',
+    full_name: initialData?.full_name || '',
+    position: initialData?.position || '',
     level: 'junior',
     branch_id: '',
-    phone: '',
-    email: '',
-    status: 'active',
-    employment_type: 'full-time',
-    hire_date: new Date().toISOString().split('T')[0],
+    phone: initialData?.phone || '',
+    email: initialData?.email || '',
+    status: initialData?.status || 'active',
+    employment_type: initialData?.employment_type || 'full-time',
+    hire_date: initialData?.hire_date || new Date().toISOString().split('T')[0],
     system_role: 'employee' as UserRole,
+    candidate_id: initialData?.candidate_id || '',
   });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -78,6 +92,7 @@ export default function AddEmployeeModal({
           ...formData,
           branch_id: formData.branch_id || null,
           system_role: canAssignRoles ? formData.system_role : 'employee',
+          candidate_id: formData.candidate_id || null,
         }),
       });
 

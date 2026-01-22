@@ -24,6 +24,7 @@ import {
   Play,
 } from 'lucide-react';
 import type { Candidate, CandidateStage, ChecklistItem, CandidateComment, CandidateEvent } from '@/lib/db';
+import AddEmployeeModal from './AddEmployeeModal';
 
 const STAGES: { id: CandidateStage; label: string; color: string; bgColor: string }[] = [
   { id: 'screening', label: 'Screening', color: 'text-blue-700', bgColor: 'bg-blue-50 border-blue-200' },
@@ -134,6 +135,8 @@ export default function CandidateDetailModal({
     start: candidate.probation_start_date || '',
     end: candidate.probation_end_date || '',
   });
+  const [showAddEmployeeModal, setShowAddEmployeeModal] = useState(false);
+  const [branches, setBranches] = useState<{ id: string; name: string }[]>([]);
 
   // Sync probation dates when candidate data changes (after refresh)
   useEffect(() => {
@@ -580,7 +583,24 @@ export default function CandidateDetailModal({
                         </div>
                       </div>
                       <button
-                        onClick={() => handleProbationAction(candidate.probation_account_created ? 'remove_account' : 'create_account')}
+                        onClick={async () => {
+                          if (candidate.probation_account_created) {
+                            // Just toggle the flag off
+                            handleProbationAction('remove_account');
+                          } else {
+                            // Fetch branches and show the add employee modal
+                            try {
+                              const res = await fetch('/api/branches');
+                              if (res.ok) {
+                                const data = await res.json();
+                                setBranches(data.branches || []);
+                              }
+                            } catch (error) {
+                              console.error('Error fetching branches:', error);
+                            }
+                            setShowAddEmployeeModal(true);
+                          }
+                        }}
                         disabled={probationLoading}
                         className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${
                           candidate.probation_account_created
@@ -903,6 +923,28 @@ export default function CandidateDetailModal({
           </button>
         </div>
       </div>
+
+      {/* Add Employee Modal for Probation Account */}
+      {showAddEmployeeModal && (
+        <AddEmployeeModal
+          branches={branches}
+          onClose={() => setShowAddEmployeeModal(false)}
+          onAdd={() => {
+            setShowAddEmployeeModal(false);
+            onRefresh();
+          }}
+          initialData={{
+            full_name: candidate.full_name,
+            position: candidate.applied_role,
+            phone: candidate.phone || '',
+            email: candidate.email,
+            status: 'probation',
+            employment_type: 'probation',
+            hire_date: candidate.probation_start_date || new Date().toISOString().split('T')[0],
+            candidate_id: candidate.id,
+          }}
+        />
+      )}
     </div>
   );
 }
