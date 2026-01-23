@@ -236,6 +236,11 @@ export default function EditEmployeePage({ params }: { params: Promise<{ id: str
   const [terminationDate, setTerminationDate] = useState('');
   const [submittingTermination, setSubmittingTermination] = useState(false);
 
+  // Delete employee state
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
+  const [deletingEmployee, setDeletingEmployee] = useState(false);
+
   // Wage change request state
   const [pendingWageChanges, setPendingWageChanges] = useState<PendingWageChange[]>([]);
   const [showWageChangeModal, setShowWageChangeModal] = useState(false);
@@ -441,6 +446,31 @@ export default function EditEmployeePage({ params }: { params: Promise<{ id: str
       setError(err instanceof Error ? err.message : 'Failed to submit termination request');
     } finally {
       setSubmittingTermination(false);
+    }
+  };
+
+  // Delete employee handler (permanent deletion)
+  const handleDeleteEmployee = async () => {
+    if (!employeeId || deleteConfirmText !== 'DELETE') return;
+
+    setDeletingEmployee(true);
+    setError(null);
+
+    try {
+      const response = await fetch(`/api/employees/${employeeId}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to delete employee');
+      }
+
+      // Redirect to employees list after successful deletion
+      router.push('/employees');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete employee');
+      setDeletingEmployee(false);
     }
   };
 
@@ -1675,6 +1705,30 @@ export default function EditEmployeePage({ params }: { params: Promise<{ id: str
           </div>
         )}
 
+        {/* Delete Employee Section - Permanent removal */}
+        <div className="bg-white rounded-xl border border-red-300 p-6 mb-6">
+          <div className="flex items-center gap-2 mb-4">
+            <Trash2 size={18} className="text-red-600" />
+            <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wider">
+              Delete Employee
+            </h3>
+          </div>
+
+          <div>
+            <p className="text-sm text-gray-600 mb-4">
+              Permanently delete this employee record from the system. This action cannot be undone. Use this only for mistakenly created accounts.
+            </p>
+            <button
+              type="button"
+              onClick={() => setShowDeleteModal(true)}
+              className="inline-flex items-center gap-2 px-4 py-2 text-white bg-red-600 border border-red-600 rounded-lg hover:bg-red-700 transition-colors font-medium"
+            >
+              <Trash2 size={18} />
+              Delete Employee
+            </button>
+          </div>
+        </div>
+
         {/* Action Buttons */}
         <div className="flex gap-3">
           <Link
@@ -1896,6 +1950,67 @@ export default function EditEmployeePage({ params }: { params: Promise<{ id: str
                 className="flex-1 px-4 py-2.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {submittingWageChange ? 'Submitting...' : 'Submit Request'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Employee Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-md mx-4 p-6">
+            <div className="flex items-center gap-4 mb-4">
+              <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+                <Trash2 size={24} className="text-red-600" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">Delete Employee</h3>
+                <p className="text-sm text-gray-500">This action cannot be undone</p>
+              </div>
+            </div>
+
+            <div className="space-y-4 mb-6">
+              <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+                <p className="text-sm text-red-800">
+                  You are about to permanently delete <strong>{employee.full_name}</strong> ({employee.employee_id}) from the system.
+                  This will remove all associated data including wages, documents, and attendance records.
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Type <strong>DELETE</strong> to confirm
+                </label>
+                <input
+                  type="text"
+                  value={deleteConfirmText}
+                  onChange={(e) => setDeleteConfirmText(e.target.value)}
+                  placeholder="DELETE"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none"
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowDeleteModal(false);
+                  setDeleteConfirmText('');
+                }}
+                disabled={deletingEmployee}
+                className="flex-1 px-4 py-2.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleDeleteEmployee}
+                disabled={deletingEmployee || deleteConfirmText !== 'DELETE'}
+                className="flex-1 px-4 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {deletingEmployee ? 'Deleting...' : 'Delete Employee'}
               </button>
             </div>
           </div>

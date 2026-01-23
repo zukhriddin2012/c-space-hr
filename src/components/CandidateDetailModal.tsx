@@ -973,18 +973,10 @@ export default function CandidateDetailModal({
                                 {creatingDocument ? 'Creating...' : 'Create Link'}
                               </button>
                             )}
-                            {hasSignedDocument ? (
+                            {hasSignedDocument && (
                               <span className="px-3 py-1.5 text-sm bg-green-100 text-green-700 rounded-lg">
                                 ✓ Signed
                               </span>
-                            ) : (
-                              <button
-                                onClick={() => handleProbationAction('sign_term_sheet')}
-                                disabled={probationLoading}
-                                className="px-3 py-1.5 text-sm bg-yellow-200 text-yellow-800 rounded-lg hover:bg-yellow-300"
-                              >
-                                Mark Signed
-                              </button>
                             )}
                           </div>
                         </div>
@@ -1052,12 +1044,13 @@ export default function CandidateDetailModal({
                           </p>
                         </div>
                       </div>
-                      <button
-                        onClick={async () => {
-                          if (candidate.probation_account_created) {
-                            // Just toggle the flag off
-                            handleProbationAction('remove_account');
-                          } else {
+                      {candidate.probation_account_created ? (
+                        <span className="px-3 py-1.5 text-sm bg-green-100 text-green-700 rounded-lg">
+                          ✓ Account Created
+                        </span>
+                      ) : (
+                        <button
+                          onClick={async () => {
                             // Fetch branches and show the add employee modal
                             try {
                               const res = await fetch('/api/branches');
@@ -1069,17 +1062,13 @@ export default function CandidateDetailModal({
                               console.error('Error fetching branches:', error);
                             }
                             setShowAddEmployeeModal(true);
-                          }
-                        }}
-                        disabled={probationLoading}
-                        className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${
-                          candidate.probation_account_created
-                            ? 'bg-green-100 text-green-700 hover:bg-green-200'
-                            : 'bg-yellow-200 text-yellow-800 hover:bg-yellow-300'
-                        }`}
-                      >
-                        {candidate.probation_account_created ? '✓ Created' : 'Create Account'}
-                      </button>
+                          }}
+                          disabled={probationLoading}
+                          className="px-3 py-1.5 text-sm bg-yellow-200 text-yellow-800 rounded-lg hover:bg-yellow-300 transition-colors"
+                        >
+                          Create Account
+                        </button>
+                      )}
                     </div>
                   </div>
 
