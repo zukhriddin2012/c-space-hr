@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams } from 'next/navigation';
 import Image from 'next/image';
-import { FileText, Lock, CheckCircle, ChevronRight, Trash2, Check, X } from 'lucide-react';
+import { FileText, Lock, CheckCircle, ChevronRight, Trash2, Check, X, Download } from 'lucide-react';
 
 // Brand color: #64177C (C-Space Purple)
 
@@ -1202,6 +1202,34 @@ export default function DocumentSigningPage() {
     );
   }
 
+  // Download PDF
+  const [downloading, setDownloading] = useState(false);
+
+  const handleDownloadPDF = async () => {
+    setDownloading(true);
+    try {
+      const res = await fetch(`/api/documents/sign/${token}/pdf`);
+      if (res.ok) {
+        const blob = await res.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = window.document.createElement('a');
+        a.href = url;
+        a.download = `term-sheet-${document?.candidate_name?.replace(/\s+/g, '-') || 'document'}.pdf`;
+        window.document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        a.remove();
+      } else {
+        const data = await res.json();
+        setError(data.error || 'Ошибка загрузки PDF');
+      }
+    } catch (err) {
+      setError('Ошибка загрузки PDF');
+    } finally {
+      setDownloading(false);
+    }
+  };
+
   // Step 4: Success
   if (step === 'success') {
     return (
@@ -1214,11 +1242,31 @@ export default function DocumentSigningPage() {
           <p className="text-gray-500 mb-6">
             Спасибо, {document?.candidate_name}! Ваша подпись успешно сохранена.
           </p>
-          <div className="bg-gray-50 rounded-xl p-4 text-left">
+          <div className="bg-gray-50 rounded-xl p-4 text-left mb-6">
             <p className="text-sm text-gray-600"><strong>Документ:</strong> {document?.document_type}</p>
-            <p className="text-sm text-gray-600 mt-1"><strong>Дата подписания:</strong> {new Date().toLocaleDateString('ru-RU')}</p>
+            <p className="text-sm text-gray-600 mt-1"><strong>Дата подписания:</strong> {document?.signed_at ? formatDate(document.signed_at) : new Date().toLocaleDateString('ru-RU')}</p>
           </div>
-          <p className="text-xs text-gray-400 mt-6">
+
+          {/* Download PDF Button */}
+          <button
+            onClick={handleDownloadPDF}
+            disabled={downloading}
+            className="w-full px-6 py-3 bg-purple-600 text-white rounded-xl font-medium hover:bg-purple-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed mb-4"
+          >
+            {downloading ? (
+              <>
+                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                Генерация PDF...
+              </>
+            ) : (
+              <>
+                <Download className="w-5 h-5" />
+                Скачать PDF
+              </>
+            )}
+          </button>
+
+          <p className="text-xs text-gray-400">
             Вы можете закрыть эту страницу. HR-менеджер получит уведомление о подписании.
           </p>
         </div>
