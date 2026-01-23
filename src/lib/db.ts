@@ -3257,8 +3257,7 @@ export async function getCandidates(stage?: CandidateStage): Promise<Candidate[]
     .from('candidates')
     .select(`
       *,
-      probation_employee:employees!probation_employee_id(full_name, employee_id),
-      signing_documents!candidate_id(id, signed_at)
+      probation_employee:employees!probation_employee_id(full_name, employee_id)
     `)
     .order('created_at', { ascending: false });
 
@@ -3273,14 +3272,31 @@ export async function getCandidates(stage?: CandidateStage): Promise<Candidate[]
     return [];
   }
 
+  // Fetch signing documents separately to check actual signed status
+  const candidateIds = (data || []).map((c: { id: string }) => c.id);
+
+  let signedDocuments: Record<string, boolean> = {};
+  if (candidateIds.length > 0) {
+    const { data: docs } = await supabaseAdmin!
+      .from('signing_documents')
+      .select('candidate_id, signed_at')
+      .in('candidate_id', candidateIds)
+      .not('signed_at', 'is', null);
+
+    // Create a map of candidate_id -> has signed document
+    if (docs) {
+      docs.forEach((doc: { candidate_id: string }) => {
+        signedDocuments[doc.candidate_id] = true;
+      });
+    }
+  }
+
   // Process data to set term_sheet_signed based on actual signed documents
-  const candidates = (data || []).map((candidate: Candidate & { signing_documents?: { id: string; signed_at: string | null }[] }) => {
-    const hasSignedDocument = candidate.signing_documents?.some(doc => doc.signed_at !== null) || false;
-    // Override term_sheet_signed with actual signed status from documents
+  const candidates = (data || []).map((candidate: Candidate) => {
+    const hasSignedDocument = signedDocuments[candidate.id] || false;
     return {
       ...candidate,
       term_sheet_signed: hasSignedDocument,
-      signing_documents: undefined, // Remove the joined data from response
     };
   });
 
