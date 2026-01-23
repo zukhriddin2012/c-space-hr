@@ -3257,7 +3257,8 @@ export async function getCandidates(stage?: CandidateStage): Promise<Candidate[]
     .from('candidates')
     .select(`
       *,
-      probation_employee:employees!probation_employee_id(full_name, employee_id)
+      probation_employee:employees!probation_employee_id(full_name, employee_id),
+      signing_documents!candidate_id(id, signed_at)
     `)
     .order('created_at', { ascending: false });
 
@@ -3272,7 +3273,18 @@ export async function getCandidates(stage?: CandidateStage): Promise<Candidate[]
     return [];
   }
 
-  return data || [];
+  // Process data to set term_sheet_signed based on actual signed documents
+  const candidates = (data || []).map((candidate: Candidate & { signing_documents?: { id: string; signed_at: string | null }[] }) => {
+    const hasSignedDocument = candidate.signing_documents?.some(doc => doc.signed_at !== null) || false;
+    // Override term_sheet_signed with actual signed status from documents
+    return {
+      ...candidate,
+      term_sheet_signed: hasSignedDocument,
+      signing_documents: undefined, // Remove the joined data from response
+    };
+  });
+
+  return candidates;
 }
 
 export async function getCandidateById(id: string): Promise<Candidate | null> {

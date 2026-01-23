@@ -375,9 +375,9 @@ export default function CandidateDetailModal({
   const handleOpenRecruiterSign = (docId: string) => {
     setSelectedDocForSigning(docId);
     setRecruiterSignature({
-      name: '',
-      position: '',
-      type: 'type',
+      name: currentUser?.name || '',
+      position: currentUser?.role || '',
+      type: 'draw',
       data: '',
     });
     setShowRecruiterSignModal(true);
