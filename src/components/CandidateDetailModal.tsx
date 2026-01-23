@@ -272,6 +272,7 @@ export default function CandidateDetailModal({
   const [aiAnalysis, setAiAnalysis] = useState<AIAnalysis | null>(candidate.ai_analysis || null);
   const [analyzingResume, setAnalyzingResume] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);
+  const [aiSectionExpanded, setAiSectionExpanded] = useState(false); // Start collapsed
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
     skills: true,
     experience: true,
@@ -817,57 +818,75 @@ export default function CandidateDetailModal({
               )}
 
               {/* HR AI Analysis Section */}
-              <div className="bg-gradient-to-br from-purple-50 to-indigo-50 rounded-lg p-4 border border-purple-100">
-                <div className="flex items-center justify-between mb-3">
+              <div className="bg-gradient-to-br from-purple-50 to-indigo-50 rounded-lg border border-purple-100 overflow-hidden">
+                {/* Collapsible Header */}
+                <div
+                  className="flex items-center justify-between p-4 cursor-pointer hover:bg-purple-100/30 transition-colors"
+                  onClick={() => setAiSectionExpanded(!aiSectionExpanded)}
+                >
                   <h4 className="font-medium text-gray-900 flex items-center gap-2">
                     <Sparkles size={16} className="text-purple-600" />
                     HR AI Analysis
-                  </h4>
-                  <button
-                    onClick={handleAnalyzeResume}
-                    disabled={analyzingResume || !candidate.resume_file_path}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg transition-all ${
-                      analyzingResume
-                        ? 'bg-purple-100 text-purple-600'
-                        : aiAnalysis
-                        ? 'bg-white text-purple-600 border border-purple-200 hover:bg-purple-50'
-                        : 'bg-purple-600 text-white hover:bg-purple-700'
-                    } disabled:opacity-50 disabled:cursor-not-allowed`}
-                  >
-                    {analyzingResume ? (
-                      <>
-                        <RefreshCw size={14} className="animate-spin" />
-                        Analyzing...
-                      </>
-                    ) : aiAnalysis ? (
-                      <>
-                        <RefreshCw size={14} />
-                        Re-analyze
-                      </>
-                    ) : (
-                      <>
-                        <Sparkles size={14} />
-                        Analyze Resume
-                      </>
+                    {aiAnalysis && (
+                      <span className="text-xs px-2 py-0.5 bg-green-100 text-green-700 rounded-full">
+                        {aiAnalysis.role_fit.score}% fit
+                      </span>
                     )}
-                  </button>
+                  </h4>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleAnalyzeResume();
+                      }}
+                      disabled={analyzingResume || !candidate.resume_file_path}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg transition-all ${
+                        analyzingResume
+                          ? 'bg-purple-100 text-purple-600'
+                          : aiAnalysis
+                          ? 'bg-white text-purple-600 border border-purple-200 hover:bg-purple-50'
+                          : 'bg-purple-600 text-white hover:bg-purple-700'
+                      } disabled:opacity-50 disabled:cursor-not-allowed`}
+                    >
+                      {analyzingResume ? (
+                        <>
+                          <RefreshCw size={14} className="animate-spin" />
+                          Analyzing...
+                        </>
+                      ) : aiAnalysis ? (
+                        <>
+                          <RefreshCw size={14} />
+                          Re-analyze
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles size={14} />
+                          Analyze
+                        </>
+                      )}
+                    </button>
+                    {aiSectionExpanded ? <ChevronUp size={18} className="text-gray-500" /> : <ChevronDown size={18} className="text-gray-500" />}
+                  </div>
                 </div>
 
-                {!candidate.resume_file_path && (
-                  <p className="text-sm text-gray-500">Upload a resume to enable AI analysis.</p>
-                )}
+                {/* Collapsible Content */}
+                {aiSectionExpanded && (
+                  <div className="px-4 pb-4 space-y-3">
+                    {!candidate.resume_file_path && (
+                      <p className="text-sm text-gray-500">Upload a resume to enable AI analysis.</p>
+                    )}
 
-                {aiError && (
-                  <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-3">
-                    <p className="text-sm text-red-700 flex items-center gap-2">
-                      <AlertTriangle size={14} />
-                      {aiError}
-                    </p>
-                  </div>
-                )}
+                    {aiError && (
+                      <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                        <p className="text-sm text-red-700 flex items-center gap-2">
+                          <AlertTriangle size={14} />
+                          {aiError}
+                        </p>
+                      </div>
+                    )}
 
-                {aiAnalysis && (
-                  <div className="space-y-3">
+                    {aiAnalysis && (
+                      <div className="space-y-3">
                     {/* Summary */}
                     <div className="bg-white rounded-lg p-3 border border-purple-100">
                       <p className="text-sm text-gray-700">{aiAnalysis.summary}</p>
@@ -1124,6 +1143,8 @@ export default function CandidateDetailModal({
                         </ul>
                       </div>
                     </div>
+                  </div>
+                )}
                   </div>
                 )}
               </div>
