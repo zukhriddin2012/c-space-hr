@@ -110,6 +110,14 @@ export const uz: Translations = {
     workingHours: 'Ish soatlari',
     totalHours: 'Jami soatlar',
     timesheet: 'Tabel',
+    onTime: "O'z vaqtida",
+    overnight: 'Tungi smena',
+    presentNow: 'Hozir ishda',
+    sessions: 'Seanslar',
+    verifiedBy: 'Tasdiqlangan',
+    ip: 'IP',
+    gps: 'GPS',
+    manual: "Qo'lda",
   },
 
   // Branches
@@ -255,8 +263,12 @@ export const uz: Translations = {
     security: 'Xavfsizlik',
     language: 'Til',
     theme: 'Mavzu',
-    darkMode: 'Qorong\'u mavzu',
-    lightMode: 'Yorug\' mavzu',
+    darkMode: "Qorong'u mavzu",
+    lightMode: "Yorug' mavzu",
+    selectLanguage: 'Tilni tanlang',
+    english: 'Inglizcha',
+    russian: 'Ruscha',
+    uzbek: "O'zbekcha",
   },
 
   // Errors

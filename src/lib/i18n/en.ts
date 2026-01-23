@@ -110,6 +110,14 @@ export const en: Translations = {
     workingHours: 'Working Hours',
     totalHours: 'Total Hours',
     timesheet: 'Timesheet',
+    onTime: 'On Time',
+    overnight: 'Overnight',
+    presentNow: 'Present Now',
+    sessions: 'Sessions',
+    verifiedBy: 'Verified By',
+    ip: 'IP',
+    gps: 'GPS',
+    manual: 'Manual',
   },
 
   // Branches
@@ -257,6 +265,10 @@ export const en: Translations = {
     theme: 'Theme',
     darkMode: 'Dark Mode',
     lightMode: 'Light Mode',
+    selectLanguage: 'Select Language',
+    english: 'English',
+    russian: 'Russian',
+    uzbek: 'Uzbek',
   },
 
   // Errors

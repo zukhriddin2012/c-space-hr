@@ -110,6 +110,14 @@ export interface Translations {
     workingHours: string;
     totalHours: string;
     timesheet: string;
+    onTime: string;
+    overnight: string;
+    presentNow: string;
+    sessions: string;
+    verifiedBy: string;
+    ip: string;
+    gps: string;
+    manual: string;
   };
 
   // Branches
@@ -257,6 +265,10 @@ export interface Translations {
     theme: string;
     darkMode: string;
     lightMode: string;
+    selectLanguage: string;
+    english: string;
+    russian: string;
+    uzbek: string;
   };
 
   // Errors

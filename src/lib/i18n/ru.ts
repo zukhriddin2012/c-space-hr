@@ -110,6 +110,14 @@ export const ru: Translations = {
     workingHours: 'Рабочие часы',
     totalHours: 'Всего часов',
     timesheet: 'Табель',
+    onTime: 'Вовремя',
+    overnight: 'Ночная смена',
+    presentNow: 'Сейчас на месте',
+    sessions: 'Сессии',
+    verifiedBy: 'Подтверждено',
+    ip: 'IP',
+    gps: 'GPS',
+    manual: 'Вручную',
   },
 
   // Branches
@@ -257,6 +265,10 @@ export const ru: Translations = {
     theme: 'Тема',
     darkMode: 'Темная тема',
     lightMode: 'Светлая тема',
+    selectLanguage: 'Выберите язык',
+    english: 'Английский',
+    russian: 'Русский',
+    uzbek: 'Узбекский',
   },
 
   // Errors
