@@ -136,25 +136,28 @@ export async function POST(request: NextRequest) {
       employeeName: employee.full_name,
     };
 
-    // Notify Telegram bot via webhook (fire and forget)
+    // Notify Telegram bot via webhook (must await for Vercel serverless)
     const botWebhookUrl = process.env.TELEGRAM_BOT_WEBHOOK_URL;
     const botWebhookSecret = process.env.TELEGRAM_BOT_WEBHOOK_SECRET;
 
     if (botWebhookUrl && botWebhookSecret) {
-      fetch(`${botWebhookUrl}/webhook/checkin`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${botWebhookSecret}`,
-        },
-        body: JSON.stringify({
-          telegramId,
-          success: true,
-          data: responseData,
-        }),
-      }).catch(err => {
-        console.error('Failed to notify bot webhook:', err.message);
-      });
+      try {
+        const webhookResponse = await fetch(`${botWebhookUrl}/webhook/checkin`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${botWebhookSecret}`,
+          },
+          body: JSON.stringify({
+            telegramId,
+            success: true,
+            data: responseData,
+          }),
+        });
+        console.log('Webhook response:', webhookResponse.status);
+      } catch (err) {
+        console.error('Failed to notify bot webhook:', err);
+      }
     }
 
     return NextResponse.json({
