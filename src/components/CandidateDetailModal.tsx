@@ -857,46 +857,52 @@ export default function CandidateDetailModal({
                   {/* Workflow Steps */}
                   <div className="space-y-3 pt-3 border-t border-yellow-200">
                     {/* Step 1: Term Sheet */}
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                          candidate.term_sheet_signed ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-400'
-                        }`}>
-                          <FileSignature size={16} />
+                    {(() => {
+                      // Derive signed status from documents array (more accurate than candidate.term_sheet_signed)
+                      const hasSignedDocument = documents.some(doc => doc.signed_at);
+                      return (
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                              hasSignedDocument ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-400'
+                            }`}>
+                              <FileSignature size={16} />
+                            </div>
+                            <div>
+                              <p className="font-medium text-sm">Term Sheet Signing</p>
+                              <p className="text-xs text-gray-500">
+                                {hasSignedDocument ? 'Signed by candidate' : 'Send signing link to candidate'}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {!hasSignedDocument && (
+                              <button
+                                onClick={handleCreateSigningLink}
+                                disabled={creatingDocument}
+                                className="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50"
+                              >
+                                <Link size={14} />
+                                {creatingDocument ? 'Creating...' : 'Create Link'}
+                              </button>
+                            )}
+                            {hasSignedDocument ? (
+                              <span className="px-3 py-1.5 text-sm bg-green-100 text-green-700 rounded-lg">
+                                ✓ Signed
+                              </span>
+                            ) : (
+                              <button
+                                onClick={() => handleProbationAction('sign_term_sheet')}
+                                disabled={probationLoading}
+                                className="px-3 py-1.5 text-sm bg-yellow-200 text-yellow-800 rounded-lg hover:bg-yellow-300"
+                              >
+                                Mark Signed
+                              </button>
+                            )}
+                          </div>
                         </div>
-                        <div>
-                          <p className="font-medium text-sm">Term Sheet Signing</p>
-                          <p className="text-xs text-gray-500">
-                            {candidate.term_sheet_signed ? 'Signed by candidate' : 'Send signing link to candidate'}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        {!candidate.term_sheet_signed && (
-                          <button
-                            onClick={handleCreateSigningLink}
-                            disabled={creatingDocument}
-                            className="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50"
-                          >
-                            <Link size={14} />
-                            {creatingDocument ? 'Creating...' : 'Create Link'}
-                          </button>
-                        )}
-                        {candidate.term_sheet_signed ? (
-                          <span className="px-3 py-1.5 text-sm bg-green-100 text-green-700 rounded-lg">
-                            ✓ Signed
-                          </span>
-                        ) : (
-                          <button
-                            onClick={() => handleProbationAction('sign_term_sheet')}
-                            disabled={probationLoading}
-                            className="px-3 py-1.5 text-sm bg-yellow-200 text-yellow-800 rounded-lg hover:bg-yellow-300"
-                          >
-                            Mark Signed
-                          </button>
-                        )}
-                      </div>
-                    </div>
+                      );
+                    })()}
 
                     {/* Documents list */}
                     {documents.length > 0 && (
