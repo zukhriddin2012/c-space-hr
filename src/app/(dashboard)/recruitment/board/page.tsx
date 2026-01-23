@@ -200,10 +200,12 @@ export default function RecruitmentBoardPage() {
     if (selectedCandidate && candidates.length > 0) {
       const updated = candidates.find(c => c.id === selectedCandidate.id);
       if (updated) {
-        // Check if key fields have changed (especially ai_analysis)
+        // Check if ai_analysis was added or updated (compare by analyzed_at timestamp)
+        const updatedAnalyzedAt = updated.ai_analyzed_at || null;
+        const selectedAnalyzedAt = selectedCandidate.ai_analyzed_at || null;
+
         const hasChanges =
-          updated.ai_analysis !== selectedCandidate.ai_analysis ||
-          updated.ai_analyzed_at !== selectedCandidate.ai_analyzed_at ||
+          updatedAnalyzedAt !== selectedAnalyzedAt ||
           updated.stage !== selectedCandidate.stage ||
           updated.updated_at !== selectedCandidate.updated_at;
 
@@ -212,7 +214,7 @@ export default function RecruitmentBoardPage() {
         }
       }
     }
-  }, [candidates, selectedCandidate]);
+  }, [candidates]);
 
   const fetchCandidates = async () => {
     setLoading(true);
@@ -1234,8 +1236,26 @@ export default function RecruitmentBoardPage() {
           onHire={handleHire}
           onDelete={handleDelete}
           onEdit={openEditMode}
-          onRefresh={() => {
-            fetchCandidates();
+          onRefresh={async () => {
+            // Fetch updated candidates
+            try {
+              const res = await fetch('/api/candidates');
+              if (res.ok) {
+                const data = await res.json();
+                const updatedCandidates = data.candidates || [];
+                setCandidates(updatedCandidates);
+
+                // Also update selectedCandidate if it exists in the updated list
+                if (selectedCandidate) {
+                  const updatedSelected = updatedCandidates.find((c: Candidate) => c.id === selectedCandidate.id);
+                  if (updatedSelected) {
+                    setSelectedCandidate(updatedSelected);
+                  }
+                }
+              }
+            } catch (error) {
+              console.error('Error refreshing candidates:', error);
+            }
             fetchStats();
           }}
           processing={processing}
