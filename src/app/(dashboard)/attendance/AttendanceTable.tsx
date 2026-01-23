@@ -58,6 +58,25 @@ interface AttendanceTableProps {
   canEditAttendance: boolean;
 }
 
+function VerificationBadge({ source }: { source: string | null }) {
+  if (!source) return null;
+
+  const config: Record<string, { label: string; className: string }> = {
+    web: { label: 'IP', className: 'bg-emerald-100 text-emerald-700 border-emerald-200' },
+    telegram: { label: 'GPS', className: 'bg-amber-100 text-amber-700 border-amber-200' },
+    manual: { label: 'Manual', className: 'bg-gray-100 text-gray-600 border-gray-200' },
+  };
+
+  const badge = config[source];
+  if (!badge) return null;
+
+  return (
+    <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium border ${badge.className}`}>
+      {badge.label}
+    </span>
+  );
+}
+
 function StatusBadge({ status, isOvernight }: { status: string; isOvernight?: boolean }) {
   const statusConfig: Record<
     string,
@@ -140,6 +159,11 @@ export default function AttendanceTable({ records, canEditAttendance }: Attendan
 
   const sortedRecords = useMemo(() => {
     return [...records].sort((a, b) => {
+      // Always sort "Present now" (hasActiveSession) first
+      const aActive = a.hasActiveSession && a.status !== 'absent' ? 1 : 0;
+      const bActive = b.hasActiveSession && b.status !== 'absent' ? 1 : 0;
+      if (aActive !== bActive) return bActive - aActive;
+
       let comparison = 0;
 
       switch (sortField) {
@@ -224,16 +248,16 @@ export default function AttendanceTable({ records, canEditAttendance }: Attendan
 
                 return (
                   <React.Fragment key={record.id}>
-                    <tr className="hover:bg-gray-50 transition-colors">
+                    <tr className={`hover:bg-gray-50 transition-colors ${record.hasActiveSession && record.status !== 'absent' ? 'bg-green-50/30' : ''}`}>
                       <td className="px-3 lg:px-4 xl:px-6 py-3 lg:py-4">
                         <div className="flex items-center gap-3">
                           <div className="relative">
                             <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0">
                               <span className="text-purple-700 text-sm font-medium">{record.employeeName.charAt(0)}</span>
                             </div>
-                            {/* Green dot for currently in office */}
+                            {/* Green dot for currently in office - bigger size */}
                             {record.hasActiveSession && record.status !== 'absent' && (
-                              <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 border-2 border-white rounded-full animate-pulse" />
+                              <span className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-green-500 border-2 border-white rounded-full animate-pulse" />
                             )}
                           </div>
                           <div className="min-w-0">
@@ -264,12 +288,15 @@ export default function AttendanceTable({ records, canEditAttendance }: Attendan
                         {hasMultipleSessions ? (
                           <span className="text-sm text-gray-500">-</span>
                         ) : (
-                          <span className={`text-sm ${record.status === 'late' && !record.isOvernight ? 'text-orange-600 font-medium' : 'text-gray-900'}`}>
-                            {formatTime(record.checkInTime)}
-                            {record.isOvernight && record.overnightFromDate && (
-                              <span className="text-indigo-500 text-xs ml-1">({formatShortDate(record.overnightFromDate)})</span>
-                            )}
-                          </span>
+                          <div className="flex items-center gap-2">
+                            <span className={`text-sm ${record.status === 'late' && !record.isOvernight ? 'text-orange-600 font-medium' : 'text-gray-900'}`}>
+                              {formatTime(record.checkInTime)}
+                              {record.isOvernight && record.overnightFromDate && (
+                                <span className="text-indigo-500 text-xs ml-1">({formatShortDate(record.overnightFromDate)})</span>
+                              )}
+                            </span>
+                            <VerificationBadge source={record.source} />
+                          </div>
                         )}
                       </td>
                       <td className="px-3 lg:px-4 xl:px-6 py-3 lg:py-4">
@@ -384,16 +411,16 @@ export default function AttendanceTable({ records, canEditAttendance }: Attendan
           </div>
         ) : (
           sortedRecords.map((record) => (
-            <div key={record.id} className="bg-white rounded-xl border border-gray-200 p-4">
+            <div key={record.id} className={`bg-white rounded-xl border border-gray-200 p-4 ${record.hasActiveSession && record.status !== 'absent' ? 'ring-2 ring-green-200' : ''}`}>
               <div className="flex items-start justify-between mb-3">
                 <div className="flex items-center gap-3">
                   <div className="relative">
                     <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0">
                       <span className="text-purple-700 font-medium">{record.employeeName.charAt(0)}</span>
                     </div>
-                    {/* Green dot for currently in office */}
-                    {record.checkInTime && !record.checkOutTime && record.status !== 'absent' && (
-                      <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full animate-pulse" />
+                    {/* Green dot for currently in office - bigger size */}
+                    {record.hasActiveSession && record.status !== 'absent' && (
+                      <span className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-green-500 border-2 border-white rounded-full animate-pulse" />
                     )}
                   </div>
                   <div className="min-w-0">
@@ -412,9 +439,12 @@ export default function AttendanceTable({ records, canEditAttendance }: Attendan
               <div className="grid grid-cols-3 gap-3 text-center bg-gray-50 rounded-lg p-3">
                 <div>
                   <p className="text-xs text-gray-500 mb-1">Check In</p>
-                  <p className={`text-sm font-medium ${record.status === 'late' ? 'text-orange-600' : 'text-gray-900'}`}>
-                    {formatTime(record.checkInTime)}
-                  </p>
+                  <div className="flex items-center justify-center gap-1">
+                    <p className={`text-sm font-medium ${record.status === 'late' ? 'text-orange-600' : 'text-gray-900'}`}>
+                      {formatTime(record.checkInTime)}
+                    </p>
+                    <VerificationBadge source={record.source} />
+                  </div>
                 </div>
                 <div>
                   <p className="text-xs text-gray-500 mb-1">Check Out</p>
