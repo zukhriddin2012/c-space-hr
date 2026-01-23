@@ -187,7 +187,21 @@ export default function CandidateDetailModal({
     }
   }, [currentUser]);
 
-  // Canvas drawing functions
+  // Canvas drawing functions - get coordinates adjusted for canvas scaling
+  const getCanvasCoordinates = (canvas: HTMLCanvasElement, e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+
+    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
+    const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+
+    return {
+      x: (clientX - rect.left) * scaleX,
+      y: (clientY - rect.top) * scaleY
+    };
+  };
+
   const startDrawing = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -195,9 +209,7 @@ export default function CandidateDetailModal({
     if (!ctx) return;
 
     setIsDrawing(true);
-    const rect = canvas.getBoundingClientRect();
-    const x = 'touches' in e ? e.touches[0].clientX - rect.left : e.clientX - rect.left;
-    const y = 'touches' in e ? e.touches[0].clientY - rect.top : e.clientY - rect.top;
+    const { x, y } = getCanvasCoordinates(canvas, e);
 
     ctx.beginPath();
     ctx.moveTo(x, y);
@@ -210,9 +222,7 @@ export default function CandidateDetailModal({
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    const rect = canvas.getBoundingClientRect();
-    const x = 'touches' in e ? e.touches[0].clientX - rect.left : e.clientX - rect.left;
-    const y = 'touches' in e ? e.touches[0].clientY - rect.top : e.clientY - rect.top;
+    const { x, y } = getCanvasCoordinates(canvas, e);
 
     ctx.lineWidth = 2;
     ctx.lineCap = 'round';
@@ -1600,48 +1610,56 @@ export default function CandidateDetailModal({
 
       {/* Recruiter Signature Modal */}
       {showRecruiterSignModal && (
-        <div className="fixed inset-0 bg-black/50 z-[60] flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl max-w-md w-full p-6">
-            <div className="text-center mb-6">
-              <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <FileSignature size={32} className="text-purple-600" />
+        <div className="fixed inset-0 bg-black/50 z-[60] flex items-end sm:items-center justify-center p-0 sm:p-4">
+          <div className="bg-white rounded-t-xl sm:rounded-xl max-w-md w-full p-4 sm:p-6 max-h-[90vh] overflow-y-auto">
+            <div className="text-center mb-4">
+              <div className="w-12 h-12 sm:w-16 sm:h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                <FileSignature size={24} className="text-purple-600 sm:hidden" />
+                <FileSignature size={32} className="text-purple-600 hidden sm:block" />
               </div>
-              <h3 className="text-xl font-semibold text-gray-900">Подпишите документ</h3>
-              <p className="text-gray-500 mt-2">
-                Ваша подпись утвердит условия. После этого документ можно отправить кандидату.
+              <h3 className="text-lg sm:text-xl font-semibold text-gray-900">Подпишите документ</h3>
+              <p className="text-sm text-gray-500 mt-1">
+                Ваша подпись утвердит условия для отправки кандидату.
               </p>
             </div>
 
-            <div className="space-y-4">
+            <div className="space-y-3">
               {/* User info display */}
-              <div className="bg-gray-50 rounded-lg p-3">
-                <p className="text-sm text-gray-600">Подписант:</p>
-                <p className="font-medium text-gray-900">{recruiterSignature.name || 'Не указано'}</p>
-                {recruiterSignature.position && (
-                  <p className="text-sm text-gray-500">{recruiterSignature.position}</p>
-                )}
+              <div className="bg-gray-50 rounded-lg p-2 sm:p-3 flex items-center gap-3">
+                <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0">
+                  <span className="text-purple-600 font-medium">
+                    {(recruiterSignature.name || 'U').charAt(0).toUpperCase()}
+                  </span>
+                </div>
+                <div className="min-w-0">
+                  <p className="font-medium text-gray-900 truncate">{recruiterSignature.name || 'Не указано'}</p>
+                  {recruiterSignature.position && (
+                    <p className="text-xs text-gray-500 truncate">{recruiterSignature.position}</p>
+                  )}
+                </div>
               </div>
 
               {/* Signature drawing area */}
               <div>
-                <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center justify-between mb-1">
                   <label className="block text-sm font-medium text-gray-700">
-                    Нарисуйте подпись *
+                    Подпись *
                   </label>
                   <button
                     type="button"
                     onClick={clearCanvas}
-                    className="text-xs text-purple-600 hover:text-purple-700"
+                    className="text-xs text-purple-600 hover:text-purple-700 px-2 py-1"
                   >
                     Очистить
                   </button>
                 </div>
-                <div className="border-2 border-dashed border-gray-300 rounded-lg bg-white">
+                <div className="border-2 border-dashed border-gray-300 rounded-lg bg-white overflow-hidden">
                   <canvas
                     ref={canvasRef}
-                    width={350}
-                    height={150}
-                    className="w-full cursor-crosshair touch-none"
+                    width={400}
+                    height={120}
+                    className="w-full h-[100px] sm:h-[120px] cursor-crosshair touch-none"
+                    style={{ touchAction: 'none' }}
                     onMouseDown={startDrawing}
                     onMouseMove={draw}
                     onMouseUp={stopDrawing}
@@ -1651,38 +1669,35 @@ export default function CandidateDetailModal({
                     onTouchEnd={stopDrawing}
                   />
                 </div>
-                <p className="text-xs text-gray-400 mt-1 text-center">
-                  Используйте мышь или палец для рисования подписи
-                </p>
               </div>
 
-              <label className="flex items-start gap-3 cursor-pointer">
+              <label className="flex items-start gap-2 cursor-pointer">
                 <input
                   type="checkbox"
                   id="recruiter-agree"
-                  className="w-5 h-5 mt-0.5 text-purple-600 rounded border-gray-300 focus:ring-purple-500"
+                  className="w-4 h-4 mt-0.5 text-purple-600 rounded border-gray-300 focus:ring-purple-500"
                 />
-                <span className="text-sm text-gray-600">
-                  Я подтверждаю, что ознакомился с условиями документа и утверждаю их для отправки кандидату.
+                <span className="text-xs sm:text-sm text-gray-600">
+                  Подтверждаю условия документа для отправки кандидату.
                 </span>
               </label>
             </div>
 
-            <div className="flex gap-3 mt-6">
+            <div className="flex gap-2 mt-4">
               <button
                 onClick={() => {
                   setShowRecruiterSignModal(false);
                   setSelectedDocForSigning(null);
                   clearCanvas();
                 }}
-                className="flex-1 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
+                className="flex-1 px-3 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 text-sm"
               >
                 Отмена
               </button>
               <button
                 onClick={handleRecruiterSign}
                 disabled={!recruiterSignature.name.trim() || !recruiterSignature.data || signingDocument}
-                className="flex-1 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                className="flex-1 px-3 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm"
               >
                 {signingDocument ? (
                   <>
