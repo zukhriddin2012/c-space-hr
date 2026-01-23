@@ -47,15 +47,32 @@ interface AIAnalysisResult {
   analyzed_at: string;
 }
 
-// Extract text from PDF using pdf-parse
+// Extract text from PDF using pdfjs-dist
 async function extractTextFromPdf(buffer: Buffer): Promise<string> {
   try {
-    // Import PDFParse class from pdf-parse
-    const { PDFParse } = await import('pdf-parse');
-    // Create parser with buffer data
-    const parser = new PDFParse({ data: new Uint8Array(buffer) });
-    const result = await parser.getText();
-    return result.text;
+    // Import pdfjs-dist for Node.js environment
+    const pdfjsLib = await import('pdfjs-dist/legacy/build/pdf.mjs');
+
+    // Load the PDF document
+    const loadingTask = pdfjsLib.getDocument({
+      data: new Uint8Array(buffer),
+      useSystemFonts: true,
+    });
+
+    const pdf = await loadingTask.promise;
+    const textParts: string[] = [];
+
+    // Extract text from each page
+    for (let i = 1; i <= pdf.numPages; i++) {
+      const page = await pdf.getPage(i);
+      const textContent = await page.getTextContent();
+      const pageText = textContent.items
+        .map((item) => ('str' in item ? item.str : ''))
+        .join(' ');
+      textParts.push(pageText);
+    }
+
+    return textParts.join('\n\n');
   } catch (error) {
     console.error('PDF parsing error:', error);
     throw new Error('Failed to parse PDF file');
