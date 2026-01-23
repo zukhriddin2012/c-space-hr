@@ -88,7 +88,29 @@ export async function POST(request: NextRequest) {
     }
 
     if (!matchedBranch) {
-      // IP doesn't match - return with instruction to use GPS
+      // IP doesn't match - notify bot to prompt for GPS
+      const botWebhookUrl = process.env.TELEGRAM_BOT_WEBHOOK_URL;
+      const botWebhookSecret = process.env.TELEGRAM_BOT_WEBHOOK_SECRET;
+
+      if (botWebhookUrl && botWebhookSecret) {
+        try {
+          await fetch(`${botWebhookUrl}/webhook/checkin`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${botWebhookSecret}`,
+            },
+            body: JSON.stringify({
+              telegramId,
+              success: false,
+              action: 'need_gps',
+            }),
+          });
+        } catch (err) {
+          console.error('Failed to notify bot webhook:', err);
+        }
+      }
+
       return NextResponse.json({
         success: false,
         error: 'ip_not_matched',
