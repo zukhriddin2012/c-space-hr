@@ -27,9 +27,9 @@ import type { Candidate, CandidateStage, ChecklistItem } from '@/lib/db';
 const STAGES: { id: CandidateStage; label: string; color: string; bgColor: string }[] = [
   { id: 'screening', label: 'Screening', color: 'text-blue-700', bgColor: 'bg-blue-50' },
   { id: 'interview_1', label: 'Interview 1', color: 'text-purple-700', bgColor: 'bg-purple-50' },
-  { id: 'interview_2', label: 'Interview 2', color: 'text-indigo-700', bgColor: 'bg-indigo-50' },
   { id: 'under_review', label: 'Under Review', color: 'text-orange-700', bgColor: 'bg-orange-50' },
   { id: 'probation', label: 'Probation', color: 'text-yellow-700', bgColor: 'bg-yellow-50' },
+  { id: 'interview_2', label: 'Interview 2', color: 'text-indigo-700', bgColor: 'bg-indigo-50' },
   { id: 'hired', label: 'Hired', color: 'text-green-700', bgColor: 'bg-green-50' },
   { id: 'rejected', label: 'Rejected', color: 'text-red-700', bgColor: 'bg-red-50' },
 ];

@@ -121,7 +121,7 @@ async function getAttendanceForDate(
       checkInTime: latestSession.check_in ? `${recordDate}T${latestSession.check_in}` : null,
       checkOutTime: latestSession.check_out ? `${date}T${latestSession.check_out}` : null,
       status: latestSession.status as 'present' | 'late' | 'absent' | 'early_leave',
-      source: 'telegram' as const,
+      source: latestSession.verification_type === 'ip' ? 'web' as const : 'telegram' as const,
       totalHours: latestSession.total_hours,
       isOvernight: latestSession.is_overnight || false,
       overnightFromDate: latestSession.overnight_from_date,
