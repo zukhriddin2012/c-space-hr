@@ -3223,6 +3223,15 @@ export interface AIAnalysis {
     gaps: string[];
     recommendation: string;
   };
+  values_fit?: {
+    overall_score: number;
+    do_the_right_thing: { score: number; evidence: string };
+    all_in: { score: number; evidence: string };
+    innovate: { score: number; evidence: string };
+    radical_transparency: { score: number; evidence: string };
+    architects_not_firefighters: { score: number; evidence: string };
+    culture_recommendation: string;
+  };
   red_flags: string[];
   interview_questions: {
     question: string;

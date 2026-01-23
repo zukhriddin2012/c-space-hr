@@ -278,6 +278,7 @@ export default function CandidateDetailModal({
     experience: true,
     education: false,
     role_fit: true,
+    values_fit: true,
     red_flags: true,
     interview_questions: false,
     company_research: false,
@@ -922,6 +923,100 @@ export default function CandidateDetailModal({
                       </div>
                       <p className="text-sm text-gray-600">{aiAnalysis.role_fit.recommendation}</p>
                     </div>
+
+                    {/* C-Space Values Fit Section */}
+                    {aiAnalysis.values_fit && (
+                      <div className="bg-white rounded-lg border border-purple-100 overflow-hidden">
+                        <button
+                          onClick={() => toggleSection('values_fit')}
+                          className="w-full flex items-center justify-between p-3 hover:bg-gray-50"
+                        >
+                          <div className="flex items-center gap-2">
+                            <Sparkles size={16} className="text-purple-600" />
+                            <span className="font-medium text-sm">C-Space Values Fit</span>
+                            <span className={`text-xs px-2 py-0.5 rounded-full ${
+                              aiAnalysis.values_fit.overall_score >= 75 ? 'bg-green-100 text-green-700' :
+                              aiAnalysis.values_fit.overall_score >= 50 ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'
+                            }`}>
+                              {aiAnalysis.values_fit.overall_score}%
+                            </span>
+                          </div>
+                          {expandedSections.values_fit ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                        </button>
+                        {expandedSections.values_fit && (
+                          <div className="px-3 pb-3 space-y-3">
+                            {/* Individual Values */}
+                            <div className="space-y-2">
+                              {/* Do The Right Thing */}
+                              <div className="border-l-2 border-blue-300 pl-3">
+                                <div className="flex items-center justify-between">
+                                  <span className="text-sm font-medium text-gray-700">Do The Right Thing</span>
+                                  <span className={`text-sm font-bold ${
+                                    aiAnalysis.values_fit.do_the_right_thing.score >= 75 ? 'text-green-600' :
+                                    aiAnalysis.values_fit.do_the_right_thing.score >= 50 ? 'text-yellow-600' : 'text-red-600'
+                                  }`}>{aiAnalysis.values_fit.do_the_right_thing.score}%</span>
+                                </div>
+                                <p className="text-xs text-gray-500 mt-0.5">{aiAnalysis.values_fit.do_the_right_thing.evidence}</p>
+                              </div>
+
+                              {/* All In */}
+                              <div className="border-l-2 border-orange-300 pl-3">
+                                <div className="flex items-center justify-between">
+                                  <span className="text-sm font-medium text-gray-700">All In</span>
+                                  <span className={`text-sm font-bold ${
+                                    aiAnalysis.values_fit.all_in.score >= 75 ? 'text-green-600' :
+                                    aiAnalysis.values_fit.all_in.score >= 50 ? 'text-yellow-600' : 'text-red-600'
+                                  }`}>{aiAnalysis.values_fit.all_in.score}%</span>
+                                </div>
+                                <p className="text-xs text-gray-500 mt-0.5">{aiAnalysis.values_fit.all_in.evidence}</p>
+                              </div>
+
+                              {/* Innovate */}
+                              <div className="border-l-2 border-green-300 pl-3">
+                                <div className="flex items-center justify-between">
+                                  <span className="text-sm font-medium text-gray-700">Innovate</span>
+                                  <span className={`text-sm font-bold ${
+                                    aiAnalysis.values_fit.innovate.score >= 75 ? 'text-green-600' :
+                                    aiAnalysis.values_fit.innovate.score >= 50 ? 'text-yellow-600' : 'text-red-600'
+                                  }`}>{aiAnalysis.values_fit.innovate.score}%</span>
+                                </div>
+                                <p className="text-xs text-gray-500 mt-0.5">{aiAnalysis.values_fit.innovate.evidence}</p>
+                              </div>
+
+                              {/* Radical Transparency */}
+                              <div className="border-l-2 border-purple-300 pl-3">
+                                <div className="flex items-center justify-between">
+                                  <span className="text-sm font-medium text-gray-700">Radical Transparency</span>
+                                  <span className={`text-sm font-bold ${
+                                    aiAnalysis.values_fit.radical_transparency.score >= 75 ? 'text-green-600' :
+                                    aiAnalysis.values_fit.radical_transparency.score >= 50 ? 'text-yellow-600' : 'text-red-600'
+                                  }`}>{aiAnalysis.values_fit.radical_transparency.score}%</span>
+                                </div>
+                                <p className="text-xs text-gray-500 mt-0.5">{aiAnalysis.values_fit.radical_transparency.evidence}</p>
+                              </div>
+
+                              {/* Architects Not Firefighters */}
+                              <div className="border-l-2 border-indigo-300 pl-3">
+                                <div className="flex items-center justify-between">
+                                  <span className="text-sm font-medium text-gray-700">Architects Not Firefighters</span>
+                                  <span className={`text-sm font-bold ${
+                                    aiAnalysis.values_fit.architects_not_firefighters.score >= 75 ? 'text-green-600' :
+                                    aiAnalysis.values_fit.architects_not_firefighters.score >= 50 ? 'text-yellow-600' : 'text-red-600'
+                                  }`}>{aiAnalysis.values_fit.architects_not_firefighters.score}%</span>
+                                </div>
+                                <p className="text-xs text-gray-500 mt-0.5">{aiAnalysis.values_fit.architects_not_firefighters.evidence}</p>
+                              </div>
+                            </div>
+
+                            {/* Culture Recommendation */}
+                            <div className="bg-purple-50 rounded-lg p-2">
+                              <p className="text-xs font-medium text-purple-700 mb-1">Culture Recommendation</p>
+                              <p className="text-sm text-gray-700">{aiAnalysis.values_fit.culture_recommendation}</p>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
 
                     {/* Skills Section */}
                     <div className="bg-white rounded-lg border border-purple-100 overflow-hidden">
