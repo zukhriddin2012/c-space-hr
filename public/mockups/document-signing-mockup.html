@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>C-Space HR - Подписание документа</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    .signature-canvas {
+      touch-action: none;
+      cursor: crosshair;
+    }
+    .typed-signature {
+      font-family: 'Brush Script MT', 'Segoe Script', cursive;
+    }
+    .step-active {
+      background: linear-gradient(135deg, #7c3aed, #6366f1);
+    }
+    .pdf-page {
+      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    }
+    .signature-preview {
+      border: 2px dashed #7c3aed;
+      background: rgba(124, 58, 237, 0.05);
+    }
+  </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+
+  <!-- Step 1: Email Verification -->
+  <div id="step-email" class="min-h-screen flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-xl max-w-md w-full p-8">
+      <!-- Logo -->
+      <div class="text-center mb-8">
+        <div class="w-16 h-16 bg-purple-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+          <svg class="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+          </svg>
+        </div>
+        <h1 class="text-2xl font-bold text-gray-900">Подписание документа</h1>
+        <p class="text-gray-500 mt-2">C-Space Coworking</p>
+      </div>
+
+      <!-- Progress Steps -->
+      <div class="flex items-center justify-center gap-2 mb-8">
+        <div class="w-8 h-8 rounded-full step-active text-white flex items-center justify-center text-sm font-medium">1</div>
+        <div class="w-12 h-1 bg-gray-200 rounded"></div>
+        <div class="w-8 h-8 rounded-full bg-gray-200 text-gray-500 flex items-center justify-center text-sm font-medium">2</div>
+        <div class="w-12 h-1 bg-gray-200 rounded"></div>
+        <div class="w-8 h-8 rounded-full bg-gray-200 text-gray-500 flex items-center justify-center text-sm font-medium">3</div>
+        <div class="w-12 h-1 bg-gray-200 rounded"></div>
+        <div class="w-8 h-8 rounded-full bg-gray-200 text-gray-500 flex items-center justify-center text-sm font-medium">4</div>
+      </div>
+
+      <!-- Email Form -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-2">Ваш email</label>
+        <input type="email" id="email-input" value="abror.mukhammadiyev@gmail.com"
+               class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all"
+               placeholder="example@email.com">
+        <p class="text-xs text-gray-500 mt-2">Введите email, указанный при подаче заявки</p>
+      </div>
+
+      <button onclick="showOTPStep()" class="w-full mt-6 px-6 py-3 bg-purple-600 text-white rounded-xl font-medium hover:bg-purple-700 transition-colors flex items-center justify-center gap-2">
+        Получить код подтверждения
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
+        </svg>
+      </button>
+
+      <p class="text-center text-xs text-gray-400 mt-6">
+        Документ: Условия трудоустройства<br>
+        Кандидат: Mukhammadiyev Abrorjon
+      </p>
+    </div>
+  </div>
+
+  <!-- Step 2: OTP Verification -->
+  <div id="step-otp" class="min-h-screen flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-2xl shadow-xl max-w-md w-full p-8">
+      <!-- Logo -->
+      <div class="text-center mb-8">
+        <div class="w-16 h-16 bg-green-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+          <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+          </svg>
+        </div>
+        <h1 class="text-2xl font-bold text-gray-900">Проверьте почту</h1>
+        <p class="text-gray-500 mt-2">Мы отправили 6-значный код на</p>
+        <p class="text-purple-600 font-medium">abror.mukhammadiyev@gmail.com</p>
+      </div>
+
+      <!-- Progress Steps -->
+      <div class="flex items-center justify-center gap-2 mb-8">
+        <div class="w-8 h-8 rounded-full bg-green-500 text-white flex items-center justify-center text-sm font-medium">✓</div>
+        <div class="w-12 h-1 bg-green-500 rounded"></div>
+        <div class="w-8 h-8 rounded-full step-active text-white flex items-center justify-center text-sm font-medium">2</div>
+        <div class="w-12 h-1 bg-gray-200 rounded"></div>
+        <div class="w-8 h-8 rounded-full bg-gray-200 text-gray-500 flex items-center justify-center text-sm font-medium">3</div>
+        <div class="w-12 h-1 bg-gray-200 rounded"></div>
+        <div class="w-8 h-8 rounded-full bg-gray-200 text-gray-500 flex items-center justify-center text-sm font-medium">4</div>
+      </div>
+
+      <!-- OTP Input -->
+      <div class="flex justify-center gap-3 mb-6">
+        <input type="text" maxlength="1" class="w-12 h-14 text-center text-2xl font-bold border-2 border-gray-300 rounded-xl focus:border-purple-500 outline-none" value="4">
+        <input type="text" maxlength="1" class="w-12 h-14 text-center text-2xl font-bold border-2 border-gray-300 rounded-xl focus:border-purple-500 outline-none" value="7">
+        <input type="text" maxlength="1" class="w-12 h-14 text-center text-2xl font-bold border-2 border-gray-300 rounded-xl focus:border-purple-500 outline-none" value="2">
+        <input type="text" maxlength="1" class="w-12 h-14 text-center text-2xl font-bold border-2 border-gray-300 rounded-xl focus:border-purple-500 outline-none" value="8">
+        <input type="text" maxlength="1" class="w-12 h-14 text-center text-2xl font-bold border-2 border-gray-300 rounded-xl focus:border-purple-500 outline-none" value="1">
+        <input type="text" maxlength="1" class="w-12 h-14 text-center text-2xl font-bold border-2 border-gray-300 rounded-xl focus:border-purple-500 outline-none" value="5">
+      </div>
+
+      <button onclick="showDocumentStep()" class="w-full px-6 py-3 bg-purple-600 text-white rounded-xl font-medium hover:bg-purple-700 transition-colors">
+        Подтвердить
+      </button>
+
+      <div class="text-center mt-4">
+        <button class="text-purple-600 text-sm hover:underline">Отправить код повторно</button>
+        <p class="text-xs text-gray-400 mt-2">Код действителен 10 минут</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 3: Document Review -->
+  <div id="step-document" class="min-h-screen bg-gray-100 hidden">
+    <!-- Header -->
+    <div class="bg-white border-b sticky top-0 z-40">
+      <div class="max-w-6xl mx-auto px-4 py-4">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-4">
+            <div class="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center">
+              <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+              </svg>
+            </div>
+            <div>
+              <h1 class="font-semibold text-gray-900">Условия трудоустройства</h1>
+              <p class="text-sm text-gray-500">Mukhammadiyev Abrorjon • Community Manager</p>
+            </div>
+          </div>
+          <!-- Progress Steps -->
+          <div class="flex items-center gap-2">
+            <div class="w-8 h-8 rounded-full bg-green-500 text-white flex items-center justify-center text-sm font-medium">✓</div>
+            <div class="w-8 h-1 bg-green-500 rounded"></div>
+            <div class="w-8 h-8 rounded-full bg-green-500 text-white flex items-center justify-center text-sm font-medium">✓</div>
+            <div class="w-8 h-1 bg-green-500 rounded"></div>
+            <div class="w-8 h-8 rounded-full step-active text-white flex items-center justify-center text-sm font-medium">3</div>
+            <div class="w-8 h-1 bg-gray-200 rounded"></div>
+            <div class="w-8 h-8 rounded-full bg-gray-200 text-gray-500 flex items-center justify-center text-sm font-medium">4</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="max-w-6xl mx-auto px-4 py-8">
+      <div class="grid grid-cols-3 gap-8">
+        <!-- PDF Preview -->
+        <div class="col-span-2">
+          <div class="bg-white rounded-2xl p-6 shadow-sm">
+            <div class="flex items-center justify-between mb-4">
+              <h2 class="font-semibold text-gray-900">Просмотр документа</h2>
+              <div class="flex items-center gap-2">
+                <button class="p-2 hover:bg-gray-100 rounded-lg" title="Предыдущая страница">
+                  <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                  </svg>
+                </button>
+                <span class="text-sm text-gray-600">Страница <span id="current-page">3</span> из 3</span>
+                <button class="p-2 hover:bg-gray-100 rounded-lg" title="Следующая страница">
+                  <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <!-- PDF Page 3 (Signature page) -->
+            <div class="pdf-page bg-white border rounded-lg p-8 min-h-[600px]">
+              <!-- Header -->
+              <div class="flex justify-between items-start mb-6">
+                <p class="text-xs text-gray-400">Условия трудоустройства</p>
+                <div class="text-right">
+                  <div class="w-20 h-8 bg-purple-100 rounded flex items-center justify-center">
+                    <span class="text-purple-600 font-bold text-xs">C-SPACE</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Escalation Box -->
+              <div class="bg-purple-50 border border-purple-200 rounded-lg p-4 mb-6">
+                <h3 class="text-purple-700 font-semibold text-sm mb-1">ЭСКАЛАЦИЯ ВОПРОСОВ</h3>
+                <p class="text-sm text-gray-700">
+                  <strong>Зухриддин Абдурахмонов (COO)</strong> - обращайтесь по любому вопросу, который не был решён в течение <span class="text-purple-600">более 3 дней</span>
+                </p>
+              </div>
+
+              <!-- Section 8 -->
+              <div class="mb-8">
+                <h2 class="text-purple-600 font-semibold text-lg mb-4">8. Подтверждение и подписи</h2>
+                <p class="text-sm text-gray-600 mb-6">
+                  Подписывая ниже, обе стороны подтверждают и соглашаются с условиями, изложенными в данном документе.
+                </p>
+
+                <!-- Signature Boxes -->
+                <div class="grid grid-cols-2 gap-6">
+                  <!-- Candidate Signature -->
+                  <div class="border-2 border-gray-200 rounded-xl p-4">
+                    <h4 class="text-purple-600 font-semibold text-sm mb-4">КАНДИДАТ</h4>
+                    <div class="space-y-3">
+                      <div>
+                        <p class="text-xs text-gray-500">ФИО:</p>
+                        <p class="text-sm font-medium">Мухаммадиев Аброр</p>
+                      </div>
+                      <div>
+                        <p class="text-xs text-gray-500 mb-1">Подпись:</p>
+                        <div id="signature-preview-box" class="signature-preview h-16 rounded-lg flex items-center justify-center cursor-pointer hover:bg-purple-50 transition-colors" onclick="showSignatureStep()">
+                          <span class="text-purple-600 text-sm font-medium">+ Нажмите, чтобы подписать</span>
+                        </div>
+                      </div>
+                      <div>
+                        <p class="text-xs text-gray-500">Дата:</p>
+                        <p class="text-sm text-gray-400">_______________________</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Company Signature -->
+                  <div class="border-2 border-gray-200 rounded-xl p-4">
+                    <h4 class="text-purple-600 font-semibold text-sm mb-4">ПРЕДСТАВИТЕЛЬ C-SPACE</h4>
+                    <div class="space-y-3">
+                      <div>
+                        <p class="text-xs text-gray-500">ФИО:</p>
+                        <p class="text-sm font-medium">Абдурахмонов Зухриддин</p>
+                      </div>
+                      <div>
+                        <p class="text-xs text-gray-500 mb-1">Подпись:</p>
+                        <div class="h-16 bg-gray-50 rounded-lg flex items-center justify-center">
+                          <span class="text-gray-400 text-sm">Ожидание подписи кандидата</span>
+                        </div>
+                      </div>
+                      <div>
+                        <p class="text-xs text-gray-500">Дата:</p>
+                        <p class="text-sm text-gray-400">_______________________</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Footer -->
+              <div class="text-center mt-8 pt-6 border-t">
+                <div class="w-16 h-8 bg-purple-100 rounded mx-auto mb-2 flex items-center justify-center">
+                  <span class="text-purple-600 font-bold text-xs">C-SPACE</span>
+                </div>
+                <p class="text-purple-600 italic text-sm">Right People. Right Place.</p>
+                <p class="text-xs text-gray-400 mt-1">Филиал Юнусабад | ул.Ахмад Дониш, 20А, Ташкент</p>
+              </div>
+
+              <p class="text-center text-xs text-gray-300 mt-4">Конфиденциально | C-Space Coworking</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Document Info Sidebar -->
+        <div class="space-y-6">
+          <!-- Document Details -->
+          <div class="bg-white rounded-2xl p-6 shadow-sm">
+            <h3 class="font-semibold text-gray-900 mb-4">Детали документа</h3>
+            <div class="space-y-3">
+              <div class="flex justify-between text-sm">
+                <span class="text-gray-500">Тип:</span>
+                <span class="text-gray-900">Условия трудоустройства</span>
+              </div>
+              <div class="flex justify-between text-sm">
+                <span class="text-gray-500">Должность:</span>
+                <span class="text-gray-900">Community Manager</span>
+              </div>
+              <div class="flex justify-between text-sm">
+                <span class="text-gray-500">Филиал:</span>
+                <span class="text-gray-900">C-Space Yunusabad</span>
+              </div>
+              <div class="flex justify-between text-sm">
+                <span class="text-gray-500">Дата начала:</span>
+                <span class="text-gray-900">24 января 2026</span>
+              </div>
+              <div class="flex justify-between text-sm">
+                <span class="text-gray-500">Испыт. срок:</span>
+                <span class="text-gray-900">2 недели</span>
+              </div>
+              <div class="flex justify-between text-sm">
+                <span class="text-gray-500">Зарплата:</span>
+                <span class="text-gray-900 font-medium">2 000 000 сум</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Key Points -->
+          <div class="bg-yellow-50 rounded-2xl p-6 border border-yellow-200">
+            <h3 class="font-semibold text-yellow-800 mb-3 flex items-center gap-2">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
+              Важные моменты
+            </h3>
+            <ul class="space-y-2 text-sm text-yellow-700">
+              <li class="flex items-start gap-2">
+                <span class="text-yellow-500 mt-1">•</span>
+                Испытательный срок: 24.01 - 07.02.2026
+              </li>
+              <li class="flex items-start gap-2">
+                <span class="text-yellow-500 mt-1">•</span>
+                Финальное интервью: 7 февраля, 16:00
+              </li>
+              <li class="flex items-start gap-2">
+                <span class="text-yellow-500 mt-1">•</span>
+                График работы: 9:00 - 18:00
+              </li>
+              <li class="flex items-start gap-2">
+                <span class="text-yellow-500 mt-1">•</span>
+                Требуется 0 опозданий за период
+              </li>
+            </ul>
+          </div>
+
+          <!-- Action Button -->
+          <button onclick="showSignatureStep()" class="w-full px-6 py-4 bg-purple-600 text-white rounded-xl font-medium hover:bg-purple-700 transition-colors flex items-center justify-center gap-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path>
+            </svg>
+            Подписать документ
+          </button>
+
+          <p class="text-xs text-gray-400 text-center">
+            Прочитайте документ полностью перед подписанием
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 4: Signature -->
+  <div id="step-signature" class="min-h-screen bg-gray-100 hidden">
+    <!-- Header -->
+    <div class="bg-white border-b sticky top-0 z-40">
+      <div class="max-w-4xl mx-auto px-4 py-4">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-4">
+            <button onclick="showDocumentStep()" class="p-2 hover:bg-gray-100 rounded-lg">
+              <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+              </svg>
+            </button>
+            <div>
+              <h1 class="font-semibold text-gray-900">Создайте подпись</h1>
+              <p class="text-sm text-gray-500">Выберите способ подписания</p>
+            </div>
+          </div>
+          <!-- Progress Steps -->
+          <div class="flex items-center gap-2">
+            <div class="w-8 h-8 rounded-full bg-green-500 text-white flex items-center justify-center text-sm font-medium">✓</div>
+            <div class="w-8 h-1 bg-green-500 rounded"></div>
+            <div class="w-8 h-8 rounded-full bg-green-500 text-white flex items-center justify-center text-sm font-medium">✓</div>
+            <div class="w-8 h-1 bg-green-500 rounded"></div>
+            <div class="w-8 h-8 rounded-full bg-green-500 text-white flex items-center justify-center text-sm font-medium">✓</div>
+            <div class="w-8 h-1 bg-green-500 rounded"></div>
+            <div class="w-8 h-8 rounded-full step-active text-white flex items-center justify-center text-sm font-medium">4</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="max-w-4xl mx-auto px-4 py-8">
+      <!-- Signature Tabs -->
+      <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
+        <div class="flex border-b">
+          <button onclick="showSignatureType('draw')" id="tab-draw" class="flex-1 px-6 py-4 font-medium text-purple-600 border-b-2 border-purple-600 bg-purple-50">
+            ✏️ Нарисовать подпись
+          </button>
+          <button onclick="showSignatureType('type')" id="tab-type" class="flex-1 px-6 py-4 font-medium text-gray-500 hover:text-gray-700">
+            ⌨️ Напечатать подпись
+          </button>
+        </div>
+
+        <!-- Draw Signature -->
+        <div id="signature-draw" class="p-8">
+          <p class="text-sm text-gray-600 mb-4">Используйте мышь или палец, чтобы нарисовать вашу подпись</p>
+
+          <div class="border-2 border-gray-200 rounded-xl overflow-hidden mb-4">
+            <canvas id="signature-canvas" class="signature-canvas w-full bg-white" height="200"></canvas>
+          </div>
+
+          <div class="flex items-center justify-between">
+            <button onclick="clearCanvas()" class="px-4 py-2 text-gray-600 hover:text-gray-800 flex items-center gap-2">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+              </svg>
+              Очистить
+            </button>
+            <div class="flex items-center gap-2">
+              <span class="text-sm text-gray-500">Цвет:</span>
+              <button class="w-8 h-8 bg-black rounded-full border-2 border-gray-300"></button>
+              <button class="w-8 h-8 bg-blue-800 rounded-full border-2 border-transparent"></button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Type Signature -->
+        <div id="signature-type" class="p-8 hidden">
+          <p class="text-sm text-gray-600 mb-4">Введите ваше полное имя, и мы создадим подпись</p>
+
+          <input type="text" id="typed-name" value="Мухаммадиев Аброр"
+                 class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none mb-6"
+                 placeholder="Введите ваше имя"
+                 oninput="updateTypedSignature()">
+
+          <p class="text-sm text-gray-500 mb-3">Выберите стиль:</p>
+          <div class="grid grid-cols-3 gap-4 mb-4">
+            <button onclick="selectStyle(1)" id="style-1" class="border-2 border-purple-500 rounded-xl p-4 hover:border-purple-500 transition-colors">
+              <p class="typed-signature text-2xl text-gray-800" style="font-family: 'Brush Script MT', cursive;">Мухаммадиев Аброр</p>
+            </button>
+            <button onclick="selectStyle(2)" id="style-2" class="border-2 border-gray-200 rounded-xl p-4 hover:border-purple-500 transition-colors">
+              <p class="text-2xl text-gray-800 italic" style="font-family: 'Georgia', serif;">Мухаммадиев Аброр</p>
+            </button>
+            <button onclick="selectStyle(3)" id="style-3" class="border-2 border-gray-200 rounded-xl p-4 hover:border-purple-500 transition-colors">
+              <p class="text-2xl text-gray-800" style="font-family: 'Segoe Script', cursive;">Мухаммадиев Аброр</p>
+            </button>
+          </div>
+
+          <div class="bg-gray-50 rounded-xl p-6 text-center">
+            <p class="text-sm text-gray-500 mb-2">Предпросмотр подписи:</p>
+            <p id="signature-preview-text" class="typed-signature text-4xl text-gray-800" style="font-family: 'Brush Script MT', cursive;">Мухаммадиев Аброр</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Agreement & Submit -->
+      <div class="mt-6 bg-white rounded-2xl p-6 shadow-sm">
+        <label class="flex items-start gap-3 cursor-pointer">
+          <input type="checkbox" id="agreement-checkbox" class="mt-1 w-5 h-5 text-purple-600 rounded focus:ring-purple-500" checked>
+          <span class="text-sm text-gray-600">
+            Я подтверждаю, что прочитал(а) и понял(а) все условия, изложенные в документе "Условия трудоустройства",
+            и добровольно соглашаюсь с ними. Моя электронная подпись имеет такую же юридическую силу, как и собственноручная.
+          </span>
+        </label>
+
+        <button onclick="submitSignature()" class="w-full mt-6 px-6 py-4 bg-green-600 text-white rounded-xl font-medium hover:bg-green-700 transition-colors flex items-center justify-center gap-2">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+          </svg>
+          Подписать и отправить
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 5: Success -->
+  <div id="step-success" class="min-h-screen flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-2xl shadow-xl max-w-md w-full p-8 text-center">
+      <!-- Success Animation -->
+      <div class="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+        <svg class="w-12 h-12 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+        </svg>
+      </div>
+
+      <h1 class="text-2xl font-bold text-gray-900 mb-2">Документ подписан!</h1>
+      <p class="text-gray-500 mb-6">
+        Ваша подпись успешно сохранена. Копия подписанного документа отправлена на вашу почту.
+      </p>
+
+      <!-- Signed Document Info -->
+      <div class="bg-gray-50 rounded-xl p-4 mb-6 text-left">
+        <div class="flex items-center gap-3 mb-3">
+          <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+            <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+            </svg>
+          </div>
+          <div>
+            <p class="font-medium text-gray-900">Условия трудоустройства</p>
+            <p class="text-sm text-gray-500">Подписано 23 января 2026, 15:42</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-2 text-sm text-green-600">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+          </svg>
+          Документ защищён электронной подписью
+        </div>
+      </div>
+
+      <!-- Next Steps -->
+      <div class="bg-blue-50 rounded-xl p-4 mb-6 text-left">
+        <h3 class="font-medium text-blue-900 mb-2">Следующие шаги:</h3>
+        <ul class="text-sm text-blue-700 space-y-1">
+          <li>• Приходите 24 января к 8:50 в C-Space Yunusabad</li>
+          <li>• Принесите паспорт для оформления</li>
+          <li>• Ознакомьтесь с программой адаптации</li>
+        </ul>
+      </div>
+
+      <button onclick="downloadPDF()" class="w-full px-6 py-3 bg-purple-600 text-white rounded-xl font-medium hover:bg-purple-700 transition-colors flex items-center justify-center gap-2 mb-3">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+        </svg>
+        Скачать подписанный PDF
+      </button>
+
+      <p class="text-xs text-gray-400">
+        Копия также отправлена на abror.mukhammadiyev@gmail.com
+      </p>
+    </div>
+  </div>
+
+  <script>
+    // Navigation functions
+    function showOTPStep() {
+      document.getElementById('step-email').classList.add('hidden');
+      document.getElementById('step-otp').classList.remove('hidden');
+    }
+
+    function showDocumentStep() {
+      document.getElementById('step-email').classList.add('hidden');
+      document.getElementById('step-otp').classList.add('hidden');
+      document.getElementById('step-signature').classList.add('hidden');
+      document.getElementById('step-document').classList.remove('hidden');
+    }
+
+    function showSignatureStep() {
+      document.getElementById('step-document').classList.add('hidden');
+      document.getElementById('step-signature').classList.remove('hidden');
+      initCanvas();
+    }
+
+    function submitSignature() {
+      document.getElementById('step-signature').classList.add('hidden');
+      document.getElementById('step-success').classList.remove('hidden');
+    }
+
+    function downloadPDF() {
+      alert('В реальном приложении здесь начнётся скачивание подписанного PDF');
+    }
+
+    // Signature type tabs
+    function showSignatureType(type) {
+      document.getElementById('signature-draw').classList.add('hidden');
+      document.getElementById('signature-type').classList.add('hidden');
+      document.getElementById('tab-draw').classList.remove('text-purple-600', 'border-b-2', 'border-purple-600', 'bg-purple-50');
+      document.getElementById('tab-type').classList.remove('text-purple-600', 'border-b-2', 'border-purple-600', 'bg-purple-50');
+      document.getElementById('tab-draw').classList.add('text-gray-500');
+      document.getElementById('tab-type').classList.add('text-gray-500');
+
+      document.getElementById('signature-' + type).classList.remove('hidden');
+      document.getElementById('tab-' + type).classList.add('text-purple-600', 'border-b-2', 'border-purple-600', 'bg-purple-50');
+      document.getElementById('tab-' + type).classList.remove('text-gray-500');
+    }
+
+    // Typed signature
+    function updateTypedSignature() {
+      const name = document.getElementById('typed-name').value;
+      document.getElementById('signature-preview-text').textContent = name || 'Ваша подпись';
+    }
+
+    function selectStyle(style) {
+      document.querySelectorAll('[id^="style-"]').forEach(el => {
+        el.classList.remove('border-purple-500');
+        el.classList.add('border-gray-200');
+      });
+      document.getElementById('style-' + style).classList.remove('border-gray-200');
+      document.getElementById('style-' + style).classList.add('border-purple-500');
+    }
+
+    // Canvas drawing
+    let canvas, ctx, isDrawing = false;
+
+    function initCanvas() {
+      canvas = document.getElementById('signature-canvas');
+      if (!canvas) return;
+
+      ctx = canvas.getContext('2d');
+      canvas.width = canvas.offsetWidth;
+      canvas.height = 200;
+
+      ctx.strokeStyle = '#000';
+      ctx.lineWidth = 2;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+
+      canvas.addEventListener('mousedown', startDrawing);
+      canvas.addEventListener('mousemove', draw);
+      canvas.addEventListener('mouseup', stopDrawing);
+      canvas.addEventListener('mouseout', stopDrawing);
+
+      // Touch support
+      canvas.addEventListener('touchstart', handleTouch);
+      canvas.addEventListener('touchmove', handleTouch);
+      canvas.addEventListener('touchend', stopDrawing);
+    }
+
+    function startDrawing(e) {
+      isDrawing = true;
+      ctx.beginPath();
+      ctx.moveTo(e.offsetX, e.offsetY);
+    }
+
+    function draw(e) {
+      if (!isDrawing) return;
+      ctx.lineTo(e.offsetX, e.offsetY);
+      ctx.stroke();
+    }
+
+    function stopDrawing() {
+      isDrawing = false;
+    }
+
+    function handleTouch(e) {
+      e.preventDefault();
+      const touch = e.touches[0];
+      const rect = canvas.getBoundingClientRect();
+      const x = touch.clientX - rect.left;
+      const y = touch.clientY - rect.top;
+
+      if (e.type === 'touchstart') {
+        isDrawing = true;
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+      } else if (e.type === 'touchmove' && isDrawing) {
+        ctx.lineTo(x, y);
+        ctx.stroke();
+      }
+    }
+
+    function clearCanvas() {
+      if (ctx) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+      }
+    }
+  </script>
+</body>
+</html>

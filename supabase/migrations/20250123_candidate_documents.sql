@@ -1,0 +1,103 @@
+-- Candidate Documents table for Term Sheets and other signing documents
+-- This table stores documents that candidates need to sign electronically
+
+CREATE TABLE IF NOT EXISTS candidate_documents (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  candidate_id UUID NOT NULL REFERENCES candidates(id) ON DELETE CASCADE,
+
+  -- Document info
+  document_type VARCHAR(100) NOT NULL DEFAULT 'Условия трудоустройства',
+  branch VARCHAR(100),
+  salary VARCHAR(100),
+  work_hours VARCHAR(50) DEFAULT '9:00 - 18:00',
+  start_date DATE,
+  end_date DATE,
+
+  -- Signing flow
+  signing_token VARCHAR(64) UNIQUE NOT NULL,
+  status VARCHAR(20) DEFAULT 'pending' CHECK (status IN ('pending', 'sent', 'viewed', 'signed', 'expired')),
+
+  -- OTP verification
+  otp_code VARCHAR(6),
+  otp_expires_at TIMESTAMPTZ,
+  otp_verified_at TIMESTAMPTZ,
+
+  -- Signature data
+  signature_type VARCHAR(20) CHECK (signature_type IN ('draw', 'type')),
+  signature_data TEXT, -- Base64 image for drawn, JSON for typed
+  signed_at TIMESTAMPTZ,
+
+  -- Audit trail
+  signer_ip VARCHAR(50),
+  signer_user_agent TEXT,
+
+  -- PDF storage (optional - for generated PDFs)
+  pdf_file_path TEXT,
+  pdf_file_size INTEGER,
+
+  -- Timestamps
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+
+  -- Who created the document
+  created_by UUID REFERENCES auth.users(id)
+);
+
+-- Create indexes
+CREATE INDEX idx_candidate_documents_candidate ON candidate_documents(candidate_id);
+CREATE INDEX idx_candidate_documents_token ON candidate_documents(signing_token);
+CREATE INDEX idx_candidate_documents_status ON candidate_documents(status);
+
+-- Update trigger for updated_at
+CREATE OR REPLACE FUNCTION update_candidate_documents_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = NOW();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trigger_candidate_documents_updated_at
+  BEFORE UPDATE ON candidate_documents
+  FOR EACH ROW
+  EXECUTE FUNCTION update_candidate_documents_updated_at();
+
+-- Enable RLS
+ALTER TABLE candidate_documents ENABLE ROW LEVEL SECURITY;
+
+-- RLS policies
+-- Allow service role full access
+CREATE POLICY "Service role can do anything with candidate_documents"
+  ON candidate_documents
+  FOR ALL
+  TO service_role
+  USING (true)
+  WITH CHECK (true);
+
+-- Allow authenticated users to read documents
+CREATE POLICY "Authenticated users can read candidate_documents"
+  ON candidate_documents
+  FOR SELECT
+  TO authenticated
+  USING (true);
+
+-- Allow authenticated users to create documents
+CREATE POLICY "Authenticated users can create candidate_documents"
+  ON candidate_documents
+  FOR INSERT
+  TO authenticated
+  WITH CHECK (true);
+
+-- Allow authenticated users to update documents
+CREATE POLICY "Authenticated users can update candidate_documents"
+  ON candidate_documents
+  FOR UPDATE
+  TO authenticated
+  USING (true)
+  WITH CHECK (true);
+
+-- Comments
+COMMENT ON TABLE candidate_documents IS 'Stores documents (Term Sheets) for candidates to sign electronically';
+COMMENT ON COLUMN candidate_documents.signing_token IS 'Unique token for the signing URL';
+COMMENT ON COLUMN candidate_documents.otp_code IS 'One-time password for email verification';
+COMMENT ON COLUMN candidate_documents.signature_data IS 'Base64 PNG for drawn signatures, JSON for typed signatures';

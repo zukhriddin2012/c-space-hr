@@ -729,6 +729,18 @@ export default function RecruitmentBoardPage() {
                                     {candidate.mbti_type}
                                   </span>
                                 )}
+
+                                {/* Term Sheet Status (Probation) */}
+                                {candidate.stage === 'probation' && (
+                                  <span className={`text-xs px-2 py-0.5 rounded-full flex items-center gap-1 ${
+                                    candidate.term_sheet_signed
+                                      ? 'bg-green-100 text-green-600'
+                                      : 'bg-red-100 text-red-600'
+                                  }`}>
+                                    <FileText size={10} />
+                                    {candidate.term_sheet_signed ? 'Signed' : 'Unsigned'}
+                                  </span>
+                                )}
                               </div>
 
                               {/* Checklist Progress (Probation) */}

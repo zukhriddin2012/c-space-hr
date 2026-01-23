@@ -22,6 +22,9 @@ import {
   FileSignature,
   UserPlus,
   Play,
+  Link,
+  Copy,
+  ExternalLink,
 } from 'lucide-react';
 import type { Candidate, CandidateStage, ChecklistItem, CandidateComment, CandidateEvent } from '@/lib/db';
 import AddEmployeeModal from './AddEmployeeModal';
@@ -138,6 +141,20 @@ export default function CandidateDetailModal({
   const [showAddEmployeeModal, setShowAddEmployeeModal] = useState(false);
   const [branches, setBranches] = useState<{ id: string; name: string }[]>([]);
 
+  // Document signing
+  const [documents, setDocuments] = useState<{
+    id: string;
+    document_type: string;
+    signing_token: string;
+    status: string;
+    signed_at: string | null;
+    created_at: string;
+  }[]>([]);
+  const [loadingDocuments, setLoadingDocuments] = useState(false);
+  const [creatingDocument, setCreatingDocument] = useState(false);
+  const [signingUrl, setSigningUrl] = useState<string | null>(null);
+  const [showDocumentModal, setShowDocumentModal] = useState(false);
+
   // Sync probation dates when candidate data changes (after refresh)
   useEffect(() => {
     setProbationDates({
@@ -145,6 +162,64 @@ export default function CandidateDetailModal({
       end: candidate.probation_end_date || '',
     });
   }, [candidate.probation_start_date, candidate.probation_end_date]);
+
+  // Fetch documents when in probation stage
+  useEffect(() => {
+    if (candidate.stage === 'probation') {
+      fetchDocuments();
+    }
+  }, [candidate.id, candidate.stage]);
+
+  const fetchDocuments = async () => {
+    setLoadingDocuments(true);
+    try {
+      const res = await fetch(`/api/candidates/${candidate.id}/documents`);
+      if (res.ok) {
+        const data = await res.json();
+        setDocuments(data.documents || []);
+      }
+    } catch (error) {
+      console.error('Error fetching documents:', error);
+    } finally {
+      setLoadingDocuments(false);
+    }
+  };
+
+  const handleCreateSigningLink = async () => {
+    setCreatingDocument(true);
+    try {
+      const res = await fetch(`/api/candidates/${candidate.id}/documents`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          document_type: 'Условия трудоустройства',
+          branch: 'C-Space Yunusabad', // Could be dynamic based on candidate assignment
+          salary: '2 000 000 сум',
+          work_hours: '9:00 - 18:00',
+        }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setSigningUrl(data.signing_url);
+        setShowDocumentModal(true);
+        fetchDocuments();
+      } else {
+        const data = await res.json();
+        alert(data.error || 'Failed to create signing link');
+      }
+    } catch (error) {
+      console.error('Error creating document:', error);
+      alert('Failed to create signing link');
+    } finally {
+      setCreatingDocument(false);
+    }
+  };
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    alert('Link copied to clipboard!');
+  };
 
   const handleProbationAction = async (action: string, extraData?: Record<string, string>) => {
     setProbationLoading(true);
@@ -440,6 +515,84 @@ export default function CandidateDetailModal({
                 </div>
               )}
 
+              {/* Documents Section - Always visible */}
+              <div className="bg-gray-50 rounded-lg p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="font-medium text-gray-900 flex items-center gap-2">
+                    <FileSignature size={16} />
+                    Documents
+                  </h4>
+                  <button
+                    onClick={handleCreateSigningLink}
+                    disabled={creatingDocument}
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50"
+                  >
+                    <Link size={14} />
+                    {creatingDocument ? 'Creating...' : 'Create Signing Link'}
+                  </button>
+                </div>
+
+                {documents.length > 0 ? (
+                  <div className="space-y-2">
+                    {documents.map((doc) => (
+                      <div key={doc.id} className="flex items-center justify-between bg-white rounded-lg p-3 border border-gray-200">
+                        <div className="flex items-center gap-3">
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                            doc.signed_at ? 'bg-green-100 text-green-600' : 'bg-yellow-100 text-yellow-600'
+                          }`}>
+                            <FileText size={14} />
+                          </div>
+                          <div>
+                            <p className="font-medium text-sm">{doc.document_type}</p>
+                            <p className="text-xs text-gray-500">
+                              Created {formatDate(doc.created_at)}
+                              {doc.signed_at && ` • Signed ${formatDate(doc.signed_at)}`}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className={`text-xs px-2 py-1 rounded-full ${
+                            doc.signed_at ? 'bg-green-100 text-green-600' : 'bg-yellow-100 text-yellow-600'
+                          }`}>
+                            {doc.signed_at ? '✓ Signed' : 'Pending'}
+                          </span>
+                          {!doc.signed_at && (
+                            <button
+                              onClick={() => {
+                                const url = `${window.location.origin}/sign/${doc.signing_token}`;
+                                copyToClipboard(url);
+                                setSigningLinkModalData({
+                                  url,
+                                  candidateName: candidate.full_name,
+                                  candidateEmail: candidate.email || '',
+                                });
+                              }}
+                              className="flex items-center gap-1 px-2 py-1 text-xs text-purple-600 hover:bg-purple-50 rounded"
+                              title="Copy & share link"
+                            >
+                              <Copy size={12} />
+                              Share
+                            </button>
+                          )}
+                          <a
+                            href={`/sign/${doc.signing_token}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-1 px-2 py-1 text-xs text-gray-600 hover:bg-gray-100 rounded"
+                            title="Preview signing page"
+                          >
+                            <ExternalLink size={12} />
+                            View
+                          </a>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-gray-500">No documents created yet. Click "Create Signing Link" to generate a Term Sheet for the candidate to sign.</p>
+                )}
+              </div>
+
               {/* Start Probation Button (for under_review stage) */}
               {candidate.stage === 'under_review' && (
                 <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
@@ -550,22 +703,75 @@ export default function CandidateDetailModal({
                         <div>
                           <p className="font-medium text-sm">Term Sheet Signing</p>
                           <p className="text-xs text-gray-500">
-                            {candidate.term_sheet_signed ? 'Signed by candidate' : 'Meeting with candidate to sign probation terms'}
+                            {candidate.term_sheet_signed ? 'Signed by candidate' : 'Send signing link to candidate'}
                           </p>
                         </div>
                       </div>
-                      <button
-                        onClick={() => handleProbationAction(candidate.term_sheet_signed ? 'unsign_term_sheet' : 'sign_term_sheet')}
-                        disabled={probationLoading}
-                        className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${
-                          candidate.term_sheet_signed
-                            ? 'bg-green-100 text-green-700 hover:bg-green-200'
-                            : 'bg-yellow-200 text-yellow-800 hover:bg-yellow-300'
-                        }`}
-                      >
-                        {candidate.term_sheet_signed ? '✓ Signed' : 'Mark Signed'}
-                      </button>
+                      <div className="flex items-center gap-2">
+                        {!candidate.term_sheet_signed && (
+                          <button
+                            onClick={handleCreateSigningLink}
+                            disabled={creatingDocument}
+                            className="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50"
+                          >
+                            <Link size={14} />
+                            {creatingDocument ? 'Creating...' : 'Create Link'}
+                          </button>
+                        )}
+                        {candidate.term_sheet_signed ? (
+                          <span className="px-3 py-1.5 text-sm bg-green-100 text-green-700 rounded-lg">
+                            ✓ Signed
+                          </span>
+                        ) : (
+                          <button
+                            onClick={() => handleProbationAction('sign_term_sheet')}
+                            disabled={probationLoading}
+                            className="px-3 py-1.5 text-sm bg-yellow-200 text-yellow-800 rounded-lg hover:bg-yellow-300"
+                          >
+                            Mark Signed
+                          </button>
+                        )}
+                      </div>
                     </div>
+
+                    {/* Documents list */}
+                    {documents.length > 0 && (
+                      <div className="ml-11 space-y-2">
+                        {documents.map((doc) => (
+                          <div key={doc.id} className="flex items-center justify-between bg-white rounded-lg p-2 text-sm">
+                            <div className="flex items-center gap-2">
+                              <FileText size={14} className="text-gray-400" />
+                              <span className="text-gray-600">{doc.document_type}</span>
+                              <span className={`text-xs px-2 py-0.5 rounded ${
+                                doc.signed_at ? 'bg-green-100 text-green-600' : 'bg-yellow-100 text-yellow-600'
+                              }`}>
+                                {doc.signed_at ? 'Signed' : 'Pending'}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              {!doc.signed_at && (
+                                <button
+                                  onClick={() => copyToClipboard(`${window.location.origin}/sign/${doc.signing_token}`)}
+                                  className="p-1 text-gray-400 hover:text-purple-600"
+                                  title="Copy signing link"
+                                >
+                                  <Copy size={14} />
+                                </button>
+                              )}
+                              <a
+                                href={`/sign/${doc.signing_token}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="p-1 text-gray-400 hover:text-purple-600"
+                                title="Open signing page"
+                              >
+                                <ExternalLink size={14} />
+                              </a>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
 
                     {/* Step 2: Create Account */}
                     <div className="flex items-center justify-between">
@@ -944,6 +1150,74 @@ export default function CandidateDetailModal({
             candidate_id: candidate.id,
           }}
         />
+      )}
+
+      {/* Signing Link Modal */}
+      {showDocumentModal && signingUrl && (
+        <div className="fixed inset-0 bg-black/50 z-[60] flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl max-w-lg w-full p-6">
+            <div className="text-center mb-6">
+              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <CheckCircle size={32} className="text-green-600" />
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900">Signing Link Created!</h3>
+              <p className="text-gray-500 mt-2">
+                Send this link to {candidate.full_name} to sign the Term Sheet
+              </p>
+            </div>
+
+            <div className="bg-gray-50 rounded-lg p-4 mb-6">
+              <p className="text-sm text-gray-500 mb-2">Signing URL:</p>
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  readOnly
+                  value={signingUrl}
+                  className="flex-1 px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm"
+                />
+                <button
+                  onClick={() => copyToClipboard(signingUrl)}
+                  className="p-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
+                  title="Copy to clipboard"
+                >
+                  <Copy size={18} />
+                </button>
+              </div>
+            </div>
+
+            <div className="bg-blue-50 rounded-lg p-4 mb-6">
+              <h4 className="font-medium text-blue-800 mb-2">Send via:</h4>
+              <div className="flex gap-3">
+                <a
+                  href={`mailto:${candidate.email}?subject=Условия трудоустройства - C-Space&body=Здравствуйте, ${candidate.full_name}!%0A%0AПожалуйста, перейдите по ссылке для подписания документа:%0A${encodeURIComponent(signingUrl)}%0A%0AС уважением,%0AC-Space HR`}
+                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                >
+                  <Mail size={16} />
+                  Email
+                </a>
+                <a
+                  href={`https://t.me/share/url?url=${encodeURIComponent(signingUrl)}&text=Пожалуйста, подпишите документ "Условия трудоустройства"`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-sky-500 text-white rounded-lg hover:bg-sky-600"
+                >
+                  <Send size={16} />
+                  Telegram
+                </a>
+              </div>
+            </div>
+
+            <button
+              onClick={() => {
+                setShowDocumentModal(false);
+                setSigningUrl(null);
+              }}
+              className="w-full px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
+            >
+              Close
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );

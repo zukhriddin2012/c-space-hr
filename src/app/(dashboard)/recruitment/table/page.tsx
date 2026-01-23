@@ -464,6 +464,9 @@ export default function RecruitmentTablePage() {
                   <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                     Resume
                   </th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                    Docs
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
@@ -528,6 +531,23 @@ export default function RecruitmentTablePage() {
                             <FileText size={14} />
                             <span className="truncate max-w-[100px]">{candidate.resume_file_name}</span>
                           </span>
+                        ) : (
+                          <span className="text-gray-400 text-sm">—</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-4">
+                        {candidate.stage === 'probation' ? (
+                          candidate.term_sheet_signed ? (
+                            <span className="px-2 py-0.5 bg-green-100 text-green-600 text-xs rounded-full flex items-center gap-1 w-fit">
+                              <FileText size={12} />
+                              Signed
+                            </span>
+                          ) : (
+                            <span className="px-2 py-0.5 bg-red-100 text-red-600 text-xs rounded-full flex items-center gap-1 w-fit">
+                              <FileText size={12} />
+                              Pending
+                            </span>
+                          )
                         ) : (
                           <span className="text-gray-400 text-sm">—</span>
                         )}

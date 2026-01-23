@@ -1,0 +1,1106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>C-Space HR - Growth & Schedule Features Mockup</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    .tab-active { border-bottom: 2px solid #7c3aed; color: #7c3aed; }
+    .progress-bar { transition: width 0.5s ease; }
+    .card-hover:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(0,0,0,0.1); }
+    .pulse { animation: pulse 2s infinite; }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+    .chapter-card:hover { border-color: #7c3aed; }
+    .video-thumbnail { position: relative; }
+    .video-thumbnail::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 50px;
+      height: 50px;
+      background: rgba(0,0,0,0.7);
+      border-radius: 50%;
+    }
+    .video-thumbnail::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 52%;
+      transform: translate(-50%, -50%);
+      border-left: 18px solid white;
+      border-top: 10px solid transparent;
+      border-bottom: 10px solid transparent;
+      z-index: 1;
+    }
+    .modal-overlay {
+      background: rgba(0,0,0,0.5);
+      backdrop-filter: blur(4px);
+    }
+    .timeline-line {
+      position: absolute;
+      left: 24px;
+      top: 40px;
+      bottom: 0;
+      width: 2px;
+      background: linear-gradient(to bottom, #c4b5fd, #e9d5ff);
+    }
+  </style>
+</head>
+<body class="bg-gray-100">
+  <!-- Navigation Tabs -->
+  <div class="bg-white border-b sticky top-0 z-40">
+    <div class="max-w-7xl mx-auto px-4">
+      <div class="flex items-center justify-between py-4">
+        <h1 class="text-xl font-bold text-gray-900">C-Space HR - Feature Mockups</h1>
+        <div class="flex gap-2">
+          <button onclick="showSection('growth')" id="btn-growth" class="px-4 py-2 rounded-lg font-medium tab-active bg-purple-50">
+            📈 Growth Section
+          </button>
+          <button onclick="showSection('schedule')" id="btn-schedule" class="px-4 py-2 rounded-lg font-medium text-gray-600 hover:bg-gray-100">
+            📅 Branch Schedule
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================ -->
+  <!-- DAY DETAIL MODAL -->
+  <!-- ============================================ -->
+  <div id="day-detail-modal" class="fixed inset-0 z-50 hidden">
+    <div class="modal-overlay absolute inset-0" onclick="closeDayDetail()"></div>
+    <div class="absolute inset-4 md:inset-8 lg:inset-12 bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col">
+      <!-- Modal Header -->
+      <div class="bg-gradient-to-r from-purple-600 to-indigo-600 text-white p-6">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-4">
+            <button onclick="closeDayDetail()" class="p-2 hover:bg-white/20 rounded-lg transition-colors">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+              </svg>
+            </button>
+            <div>
+              <div class="flex items-center gap-3 mb-1">
+                <span class="px-3 py-1 bg-white/20 rounded-full text-sm font-medium">День 1</span>
+                <span class="px-3 py-1 bg-green-400/30 text-green-100 rounded-full text-xs font-medium">✓ Завершено</span>
+              </div>
+              <h2 class="text-2xl font-bold">Введение в мир коворкинга</h2>
+              <p class="text-purple-200 mt-1">История, философия и ценности C-Space</p>
+            </div>
+          </div>
+          <div class="text-right">
+            <div class="flex items-center gap-4">
+              <div class="text-center">
+                <p class="text-3xl font-bold">6</p>
+                <p class="text-purple-200 text-sm">глав</p>
+              </div>
+              <div class="text-center">
+                <p class="text-3xl font-bold">1</p>
+                <p class="text-purple-200 text-sm">видео</p>
+              </div>
+              <div class="text-center">
+                <p class="text-3xl font-bold">8</p>
+                <p class="text-purple-200 text-sm">вопросов</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal Content -->
+      <div class="flex-1 overflow-y-auto">
+        <div class="max-w-4xl mx-auto p-8">
+
+          <!-- Welcome Section -->
+          <div class="bg-gradient-to-r from-blue-50 to-purple-50 rounded-2xl p-6 mb-8 border border-purple-100">
+            <div class="flex items-start gap-4">
+              <div class="w-16 h-16 bg-purple-100 rounded-2xl flex items-center justify-center flex-shrink-0">
+                <span class="text-3xl">👋</span>
+              </div>
+              <div>
+                <h3 class="text-lg font-semibold text-gray-900 mb-2">Добро пожаловать в C-Space!</h3>
+                <p class="text-gray-600">
+                  Сегодня начинается твоё путешествие в мир коворкинга - индустрии, которая изменила представление о том, как люди работают.
+                  Этот документ - твой путеводитель по первому дню.
+                </p>
+                <div class="mt-4 p-3 bg-white rounded-lg border border-purple-200">
+                  <p class="text-purple-700 italic text-sm">
+                    «Что такое коворкинг на самом деле? И почему C-Space - это нечто большее, чем просто аренда столов?»
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Video Section -->
+          <div class="mb-8">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+              <span class="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center">
+                <svg class="w-4 h-4 text-red-600" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814z"/>
+                  <path fill="white" d="M9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+                </svg>
+              </span>
+              Видеоурок
+            </h3>
+            <div class="bg-gray-900 rounded-2xl overflow-hidden">
+              <div class="aspect-video relative">
+                <img src="https://img.youtube.com/vi/dQw4w9WgXcQ/maxresdefault.jpg" alt="Video thumbnail" class="w-full h-full object-cover opacity-80">
+                <div class="absolute inset-0 flex items-center justify-center">
+                  <button class="w-20 h-20 bg-red-600 rounded-full flex items-center justify-center hover:bg-red-700 transition-colors shadow-lg">
+                    <svg class="w-8 h-8 text-white ml-1" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M8 5v14l11-7z"/>
+                    </svg>
+                  </button>
+                </div>
+                <div class="absolute bottom-4 left-4 right-4 flex items-center justify-between">
+                  <span class="px-3 py-1 bg-black/70 text-white rounded-lg text-sm">Введение в C-Space</span>
+                  <span class="px-3 py-1 bg-black/70 text-white rounded-lg text-sm">12:34</span>
+                </div>
+              </div>
+            </div>
+            <div class="mt-3 flex items-center justify-between">
+              <p class="text-sm text-gray-500">Посмотри видео перед чтением материала</p>
+              <span class="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium">✓ Просмотрено</span>
+            </div>
+          </div>
+
+          <!-- Chapters -->
+          <div class="mb-8">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+              <span class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
+                <svg class="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                </svg>
+              </span>
+              Главы для изучения
+            </h3>
+
+            <div class="space-y-4">
+              <!-- Chapter 1 -->
+              <div class="bg-white rounded-xl border-2 border-green-200 p-5 chapter-card transition-colors">
+                <div class="flex items-start gap-4">
+                  <div class="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0">
+                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                  </div>
+                  <div class="flex-1">
+                    <div class="flex items-center justify-between mb-2">
+                      <h4 class="font-semibold text-gray-900">Глава 1: Что такое коворкинг?</h4>
+                      <span class="text-sm text-green-600 font-medium">Прочитано</span>
+                    </div>
+                    <p class="text-sm text-gray-600 mb-3">Философия коворкинга, проблемы которые он решает, и концепция "поддерживаемой автономии".</p>
+                    <div class="flex flex-wrap gap-2">
+                      <span class="px-2 py-1 bg-purple-50 text-purple-600 rounded text-xs">Философия</span>
+                      <span class="px-2 py-1 bg-blue-50 text-blue-600 rounded text-xs">Проблемы фрилансеров</span>
+                      <span class="px-2 py-1 bg-green-50 text-green-600 rounded text-xs">Решения</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="mt-4 p-3 bg-gray-50 rounded-lg">
+                  <p class="text-gray-700 text-sm italic">
+                    «Коворкинг - это не про аренду стола. Это про создание среды, где самостоятельность и поддержка сообщества идут рука об руку.»
+                  </p>
+                </div>
+              </div>
+
+              <!-- Chapter 2 -->
+              <div class="bg-white rounded-xl border-2 border-green-200 p-5 chapter-card transition-colors">
+                <div class="flex items-start gap-4">
+                  <div class="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0">
+                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                  </div>
+                  <div class="flex-1">
+                    <div class="flex items-center justify-between mb-2">
+                      <h4 class="font-semibold text-gray-900">Глава 2: История коворкинга</h4>
+                      <span class="text-sm text-green-600 font-medium">Прочитано</span>
+                    </div>
+                    <p class="text-sm text-gray-600 mb-3">От первого хакерспейса C-Base в Берлине (1995) до рождения термина в Сан-Франциско (2005).</p>
+                    <div class="flex flex-wrap gap-2">
+                      <span class="px-2 py-1 bg-yellow-50 text-yellow-600 rounded text-xs">1995 - Берлин</span>
+                      <span class="px-2 py-1 bg-orange-50 text-orange-600 rounded text-xs">2005 - Сан-Франциско</span>
+                      <span class="px-2 py-1 bg-red-50 text-red-600 rounded text-xs">Брэд Ньюберг</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Chapter 3 -->
+              <div class="bg-white rounded-xl border-2 border-green-200 p-5 chapter-card transition-colors">
+                <div class="flex items-start gap-4">
+                  <div class="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0">
+                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                  </div>
+                  <div class="flex-1">
+                    <div class="flex items-center justify-between mb-2">
+                      <h4 class="font-semibold text-gray-900">Глава 3: Структура коворкинга</h4>
+                      <span class="text-sm text-green-600 font-medium">Прочитано</span>
+                    </div>
+                    <p class="text-sm text-gray-600 mb-3">Типы пространств (Open Space, офисы, гибриды) и элементы комфорта.</p>
+
+                    <!-- Mini table -->
+                    <div class="bg-gray-50 rounded-lg p-3 mt-3">
+                      <table class="w-full text-sm">
+                        <tr class="border-b border-gray-200">
+                          <td class="py-2 font-medium text-gray-700">Open Space</td>
+                          <td class="py-2 text-gray-600">Открытые пространства для совместной работы</td>
+                        </tr>
+                        <tr class="border-b border-gray-200">
+                          <td class="py-2 font-medium text-gray-700">Офисы</td>
+                          <td class="py-2 text-gray-600">Личные кабинеты для команд</td>
+                        </tr>
+                        <tr>
+                          <td class="py-2 font-medium text-gray-700">Гибридные</td>
+                          <td class="py-2 text-gray-600">Сочетание открытых и личных</td>
+                        </tr>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Chapter 4 -->
+              <div class="bg-white rounded-xl border-2 border-green-200 p-5 chapter-card transition-colors">
+                <div class="flex items-start gap-4">
+                  <div class="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0">
+                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                  </div>
+                  <div class="flex-1">
+                    <div class="flex items-center justify-between mb-2">
+                      <h4 class="font-semibold text-gray-900">Глава 4: История C-Space</h4>
+                      <span class="text-sm text-green-600 font-medium">Прочитано</span>
+                    </div>
+                    <p class="text-sm text-gray-600 mb-3">От одного этажа до крупнейшей сети коворкингов в Узбекистане.</p>
+
+                    <!-- Timeline -->
+                    <div class="mt-4 relative pl-8 space-y-3">
+                      <div class="absolute left-3 top-2 bottom-2 w-0.5 bg-purple-200"></div>
+                      <div class="relative flex items-center gap-3">
+                        <div class="absolute left-[-20px] w-4 h-4 bg-purple-500 rounded-full border-2 border-white"></div>
+                        <span class="text-xs text-gray-500 w-20">Май 2018</span>
+                        <span class="text-sm text-gray-700">🚀 Первый филиал</span>
+                      </div>
+                      <div class="relative flex items-center gap-3">
+                        <div class="absolute left-[-20px] w-4 h-4 bg-purple-400 rounded-full border-2 border-white"></div>
+                        <span class="text-xs text-gray-500 w-20">Июнь 2021</span>
+                        <span class="text-sm text-gray-700">🎉 C-Space Лабзак</span>
+                      </div>
+                      <div class="relative flex items-center gap-3">
+                        <div class="absolute left-[-20px] w-4 h-4 bg-purple-300 rounded-full border-2 border-white"></div>
+                        <span class="text-xs text-gray-500 w-20">2025</span>
+                        <span class="text-sm text-gray-700">🚀 13 филиалов, 14,000+ м²</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Chapter 5 - Values -->
+              <div class="bg-white rounded-xl border-2 border-green-200 p-5 chapter-card transition-colors">
+                <div class="flex items-start gap-4">
+                  <div class="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0">
+                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                  </div>
+                  <div class="flex-1">
+                    <div class="flex items-center justify-between mb-2">
+                      <h4 class="font-semibold text-gray-900">Глава 5: Ценности C-Space</h4>
+                      <span class="text-sm text-green-600 font-medium">Прочитано</span>
+                    </div>
+                    <p class="text-sm text-gray-600 mb-3">5 ключевых ценностей, которые направляют всё, что мы делаем.</p>
+
+                    <!-- Values grid -->
+                    <div class="grid grid-cols-5 gap-2 mt-4">
+                      <div class="text-center p-2 bg-blue-50 rounded-lg">
+                        <div class="text-lg mb-1">✅</div>
+                        <p class="text-xs text-blue-700 font-medium">Делай правильно</p>
+                      </div>
+                      <div class="text-center p-2 bg-green-50 rounded-lg">
+                        <div class="text-lg mb-1">💪</div>
+                        <p class="text-xs text-green-700 font-medium">Все силы в дело</p>
+                      </div>
+                      <div class="text-center p-2 bg-purple-50 rounded-lg">
+                        <div class="text-lg mb-1">💡</div>
+                        <p class="text-xs text-purple-700 font-medium">Инновируй</p>
+                      </div>
+                      <div class="text-center p-2 bg-orange-50 rounded-lg">
+                        <div class="text-lg mb-1">👁️</div>
+                        <p class="text-xs text-orange-700 font-medium">Радикальная прозрачность</p>
+                      </div>
+                      <div class="text-center p-2 bg-red-50 rounded-lg">
+                        <div class="text-lg mb-1">🏗️</div>
+                        <p class="text-xs text-red-700 font-medium">Архитекторы</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Chapter 6 -->
+              <div class="bg-white rounded-xl border-2 border-green-200 p-5 chapter-card transition-colors">
+                <div class="flex items-start gap-4">
+                  <div class="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0">
+                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                  </div>
+                  <div class="flex-1">
+                    <div class="flex items-center justify-between mb-2">
+                      <h4 class="font-semibold text-gray-900">Глава 6: Твой филиал</h4>
+                      <span class="text-sm text-green-600 font-medium">Прочитано</span>
+                    </div>
+                    <p class="text-sm text-gray-600 mb-3">C-Space Лабзак - 4-этажное здание для 150+ резидентов.</p>
+
+                    <div class="flex flex-wrap gap-2 mt-3">
+                      <span class="px-3 py-1.5 bg-gray-100 rounded-lg text-sm flex items-center gap-1">☕ Кофе-машины</span>
+                      <span class="px-3 py-1.5 bg-gray-100 rounded-lg text-sm flex items-center gap-1">📚 Библиотека</span>
+                      <span class="px-3 py-1.5 bg-gray-100 rounded-lg text-sm flex items-center gap-1">🍳 Кухня</span>
+                      <span class="px-3 py-1.5 bg-gray-100 rounded-lg text-sm flex items-center gap-1">🛋️ Лаунж</span>
+                      <span class="px-3 py-1.5 bg-gray-100 rounded-lg text-sm flex items-center gap-1">🎤 Переговорные</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Elevator Pitch Card -->
+          <div class="mb-8 bg-gradient-to-r from-purple-600 to-indigo-600 rounded-2xl p-6 text-white">
+            <div class="flex items-start gap-4">
+              <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center flex-shrink-0">
+                <span class="text-2xl">🎯</span>
+              </div>
+              <div>
+                <h4 class="font-semibold text-lg mb-2">Elevator Pitch - Запомни!</h4>
+                <p class="text-purple-100 leading-relaxed">
+                  «C-Space - это комфортный сервисный офис Ташкента. Мы обещаем три вещи:
+                  <strong class="text-white">гостиничное гостеприимство</strong> - ты гость, а не арендатор.
+                  <strong class="text-white">Правильное сообщество</strong> - работай рядом с людьми, разделяющими твои ценности.
+                  И <strong class="text-white">роуминг локаций</strong> - работай из любого из 10+ наших филиалов по городу.»
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Test Section -->
+          <div class="bg-blue-50 rounded-2xl border-2 border-blue-200 p-6">
+            <div class="flex items-center gap-3 mb-4">
+              <div class="w-12 h-12 bg-blue-500 rounded-xl flex items-center justify-center">
+                <span class="text-2xl">📝</span>
+              </div>
+              <div>
+                <h4 class="font-semibold text-gray-900 text-lg">Тест Дня 1</h4>
+                <p class="text-sm text-gray-600">8 вопросов • Необходимо 70% для прохождения</p>
+              </div>
+              <div class="ml-auto">
+                <span class="px-4 py-2 bg-green-500 text-white rounded-lg font-medium">✓ 92% Пройден</span>
+              </div>
+            </div>
+
+            <div class="space-y-4">
+              <div class="bg-white rounded-xl p-4 border border-blue-100">
+                <h5 class="font-medium text-gray-700 mb-3">Часть 1: Понимание коворкинга (3 вопроса)</h5>
+                <div class="space-y-3">
+                  <div class="flex items-start gap-3">
+                    <span class="w-6 h-6 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-sm font-medium flex-shrink-0">1</span>
+                    <div>
+                      <p class="text-sm text-gray-700">Что такое коворкинг простыми словами? (2-3 предложения)</p>
+                      <p class="text-xs text-green-600 mt-1">✓ Правильно</p>
+                    </div>
+                  </div>
+                  <div class="flex items-start gap-3">
+                    <span class="w-6 h-6 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-sm font-medium flex-shrink-0">2</span>
+                    <div>
+                      <p class="text-sm text-gray-700">Назови 3 основные проблемы, которые решает коворкинг для фрилансеров.</p>
+                      <p class="text-xs text-green-600 mt-1">✓ Правильно</p>
+                    </div>
+                  </div>
+                  <div class="flex items-start gap-3">
+                    <span class="w-6 h-6 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-sm font-medium flex-shrink-0">3</span>
+                    <div>
+                      <p class="text-sm text-gray-700">В каком году и где был открыт первый хакерспейс?</p>
+                      <p class="text-xs text-green-600 mt-1">✓ Правильно</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="bg-white rounded-xl p-4 border border-blue-100">
+                <h5 class="font-medium text-gray-700 mb-3">Часть 2: Ценности (3 вопроса)</h5>
+                <div class="space-y-3">
+                  <div class="flex items-start gap-3">
+                    <span class="w-6 h-6 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-sm font-medium flex-shrink-0">4</span>
+                    <div>
+                      <p class="text-sm text-gray-700">Назови все 5 ценностей C-Space.</p>
+                      <p class="text-xs text-green-600 mt-1">✓ Правильно</p>
+                    </div>
+                  </div>
+                  <div class="flex items-start gap-3">
+                    <span class="w-6 h-6 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-sm font-medium flex-shrink-0">5</span>
+                    <div>
+                      <p class="text-sm text-gray-700">Пример ситуации, когда ценность «Делай правильно» важнее «лёгкого пути».</p>
+                      <p class="text-xs text-green-600 mt-1">✓ Правильно</p>
+                    </div>
+                  </div>
+                  <div class="flex items-start gap-3">
+                    <span class="w-6 h-6 bg-red-100 text-red-600 rounded-full flex items-center justify-center text-sm font-medium flex-shrink-0">6</span>
+                    <div>
+                      <p class="text-sm text-gray-700">Что означает «Архитекторы, не пожарные» на практике?</p>
+                      <p class="text-xs text-red-600 mt-1">✗ Неполный ответ</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="bg-white rounded-xl p-4 border border-blue-100">
+                <h5 class="font-medium text-gray-700 mb-3">Часть 3: Практика (2 вопроса)</h5>
+                <div class="space-y-3">
+                  <div class="flex items-start gap-3">
+                    <span class="w-6 h-6 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-sm font-medium flex-shrink-0">7</span>
+                    <div>
+                      <p class="text-sm text-gray-700">Напиши Elevator Pitch C-Space своими словами.</p>
+                      <p class="text-xs text-green-600 mt-1">✓ Правильно</p>
+                    </div>
+                  </div>
+                  <div class="flex items-start gap-3">
+                    <span class="w-6 h-6 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-sm font-medium flex-shrink-0">8</span>
+                    <div>
+                      <p class="text-sm text-gray-700">Как ответить на вопрос «Чем C-Space отличается от обычной аренды?»</p>
+                      <p class="text-xs text-green-600 mt-1">✓ Правильно</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="mt-4 flex items-center justify-between">
+              <div class="flex items-center gap-2 text-sm text-gray-600">
+                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                </svg>
+                Завершено: 18 января 2026, 14:32
+              </div>
+              <button class="px-4 py-2 border border-blue-300 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors">
+                Пересдать тест
+              </button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="border-t bg-gray-50 p-4">
+        <div class="max-w-4xl mx-auto flex items-center justify-between">
+          <button class="px-4 py-2 text-gray-600 hover:text-gray-800 flex items-center gap-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+            </svg>
+            Предыдущий день
+          </button>
+          <div class="flex items-center gap-2">
+            <span class="text-sm text-gray-500">День 1 из 14</span>
+            <div class="flex gap-1">
+              <div class="w-2 h-2 rounded-full bg-green-500"></div>
+              <div class="w-2 h-2 rounded-full bg-green-500"></div>
+              <div class="w-2 h-2 rounded-full bg-green-500"></div>
+              <div class="w-2 h-2 rounded-full bg-green-500"></div>
+              <div class="w-2 h-2 rounded-full bg-blue-500"></div>
+              <div class="w-2 h-2 rounded-full bg-gray-300"></div>
+              <div class="w-2 h-2 rounded-full bg-gray-300"></div>
+              <div class="w-2 h-2 rounded-full bg-gray-300"></div>
+              <div class="w-2 h-2 rounded-full bg-gray-300"></div>
+              <div class="w-2 h-2 rounded-full bg-gray-300"></div>
+              <div class="w-2 h-2 rounded-full bg-gray-300"></div>
+              <div class="w-2 h-2 rounded-full bg-gray-300"></div>
+              <div class="w-2 h-2 rounded-full bg-gray-300"></div>
+              <div class="w-2 h-2 rounded-full bg-gray-300"></div>
+            </div>
+          </div>
+          <button class="px-6 py-2 bg-purple-600 text-white rounded-lg font-medium hover:bg-purple-700 flex items-center gap-2">
+            Следующий день
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================ -->
+  <!-- GROWTH SECTION -->
+  <!-- ============================================ -->
+  <div id="section-growth" class="py-6">
+    <div class="max-w-7xl mx-auto px-4">
+
+      <!-- Section Header -->
+      <div class="bg-gradient-to-r from-purple-600 to-indigo-600 rounded-2xl p-8 mb-8 text-white">
+        <h2 class="text-3xl font-bold mb-2">📈 Growth Section</h2>
+        <p class="text-purple-100 text-lg">Обучение, развитие и онбординг сотрудников</p>
+        <div class="mt-4 flex gap-4">
+          <span class="px-3 py-1 bg-white/20 rounded-full text-sm">2-недельный онбординг</span>
+          <span class="px-3 py-1 bg-white/20 rounded-full text-sm">Видеоуроки</span>
+          <span class="px-3 py-1 bg-white/20 rounded-full text-sm">Тесты</span>
+          <span class="px-3 py-1 bg-white/20 rounded-full text-sm">Отслеживание прогресса</span>
+        </div>
+      </div>
+
+      <!-- Role Tabs -->
+      <div class="bg-white rounded-xl border mb-6">
+        <div class="flex border-b">
+          <button onclick="showGrowthView('employee')" id="growth-tab-employee" class="px-6 py-4 font-medium text-purple-600 border-b-2 border-purple-600">
+            👤 Вид сотрудника
+          </button>
+          <button onclick="showGrowthView('manager')" id="growth-tab-manager" class="px-6 py-4 font-medium text-gray-500 hover:text-gray-700">
+            👥 Вид HR/Менеджера
+          </button>
+          <button onclick="showGrowthView('admin')" id="growth-tab-admin" class="px-6 py-4 font-medium text-gray-500 hover:text-gray-700">
+            ⚙️ Администрирование
+          </button>
+        </div>
+
+        <!-- Employee View -->
+        <div id="growth-view-employee" class="p-6">
+          <!-- Current Track Banner -->
+          <div class="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-6 mb-6 border border-purple-100">
+            <div class="flex items-start justify-between">
+              <div>
+                <div class="flex items-center gap-2 mb-2">
+                  <span class="px-2 py-1 bg-orange-100 text-orange-700 rounded text-xs font-medium">ИСПЫТАТЕЛЬНЫЙ СРОК</span>
+                  <span class="text-gray-500 text-sm">Автоназначено</span>
+                </div>
+                <h3 class="text-xl font-bold text-gray-900 mb-1">🎯 2-недельная программа онбординга</h3>
+                <p class="text-gray-600">Пройди онбординг, чтобы стать полноценным членом команды</p>
+              </div>
+              <div class="text-right">
+                <p class="text-3xl font-bold text-purple-600">День 5</p>
+                <p class="text-gray-500 text-sm">из 14 дней</p>
+              </div>
+            </div>
+
+            <!-- Progress Bar -->
+            <div class="mt-4">
+              <div class="flex justify-between text-sm mb-2">
+                <span class="text-gray-600">Общий прогресс</span>
+                <span class="font-medium text-purple-600">35% завершено</span>
+              </div>
+              <div class="h-3 bg-gray-200 rounded-full overflow-hidden">
+                <div class="h-full bg-gradient-to-r from-purple-500 to-indigo-500 rounded-full progress-bar" style="width: 35%"></div>
+              </div>
+            </div>
+
+            <!-- Quick Stats -->
+            <div class="grid grid-cols-4 gap-4 mt-6">
+              <div class="bg-white rounded-lg p-3 text-center">
+                <p class="text-2xl font-bold text-green-600">4</p>
+                <p class="text-xs text-gray-500">Завершено</p>
+              </div>
+              <div class="bg-white rounded-lg p-3 text-center">
+                <p class="text-2xl font-bold text-blue-600">1</p>
+                <p class="text-xs text-gray-500">В процессе</p>
+              </div>
+              <div class="bg-white rounded-lg p-3 text-center">
+                <p class="text-2xl font-bold text-gray-400">9</p>
+                <p class="text-xs text-gray-500">Осталось</p>
+              </div>
+              <div class="bg-white rounded-lg p-3 text-center">
+                <p class="text-2xl font-bold text-purple-600">92%</p>
+                <p class="text-xs text-gray-500">Средний балл</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Week 1 -->
+          <div class="mb-6">
+            <div class="flex items-center gap-3 mb-4">
+              <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                <span class="text-green-600 font-bold">1</span>
+              </div>
+              <div>
+                <h4 class="font-semibold text-gray-900">Неделя 1: Теоретический онбординг</h4>
+                <p class="text-sm text-gray-500">Основы компании, история и системы</p>
+              </div>
+              <span class="ml-auto px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium">4/5 дней</span>
+            </div>
+
+            <div class="space-y-3 ml-5 border-l-2 border-green-200 pl-8">
+              <!-- Day 1 - Completed - CLICKABLE -->
+              <div onclick="openDayDetail(1)" class="bg-white rounded-xl border p-4 flex items-center gap-4 hover:border-purple-300 hover:shadow-md transition-all cursor-pointer group">
+                <div class="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0">
+                  <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                  </svg>
+                </div>
+                <div class="flex-1">
+                  <div class="flex items-center gap-2">
+                    <h5 class="font-medium text-gray-900 group-hover:text-purple-700">День 1: Введение в мир коворкинга</h5>
+                    <span class="px-2 py-0.5 bg-red-100 text-red-600 rounded text-xs">📹 Видео</span>
+                    <span class="px-2 py-0.5 bg-blue-100 text-blue-600 rounded text-xs">📝 Тест</span>
+                  </div>
+                  <p class="text-sm text-gray-500">История, философия и 5 ценностей C-Space • 6 глав • 8 вопросов</p>
+                </div>
+                <div class="text-right">
+                  <span class="text-green-600 font-medium">92%</span>
+                  <p class="text-xs text-gray-400">18 янв 2026</p>
+                </div>
+                <svg class="w-5 h-5 text-gray-400 group-hover:text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                </svg>
+              </div>
+
+              <!-- Day 2 - Completed -->
+              <div onclick="openDayDetail(2)" class="bg-white rounded-xl border p-4 flex items-center gap-4 hover:border-purple-300 hover:shadow-md transition-all cursor-pointer group">
+                <div class="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0">
+                  <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                  </svg>
+                </div>
+                <div class="flex-1">
+                  <div class="flex items-center gap-2">
+                    <h5 class="font-medium text-gray-900 group-hover:text-purple-700">День 2: Внешний вид, звонки и клиенты</h5>
+                    <span class="px-2 py-0.5 bg-red-100 text-red-600 rounded text-xs">📹 Видео</span>
+                    <span class="px-2 py-0.5 bg-blue-100 text-blue-600 rounded text-xs">📝 Тест</span>
+                  </div>
+                  <p class="text-sm text-gray-500">Дресс-код, график работы, обязанности CM • 5 глав • 10 вопросов</p>
+                </div>
+                <div class="text-right">
+                  <span class="text-green-600 font-medium">95%</span>
+                  <p class="text-xs text-gray-400">19 янв 2026</p>
+                </div>
+                <svg class="w-5 h-5 text-gray-400 group-hover:text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                </svg>
+              </div>
+
+              <!-- Day 3 - Completed -->
+              <div onclick="openDayDetail(3)" class="bg-white rounded-xl border p-4 flex items-center gap-4 hover:border-purple-300 hover:shadow-md transition-all cursor-pointer group">
+                <div class="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0">
+                  <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                  </svg>
+                </div>
+                <div class="flex-1">
+                  <div class="flex items-center gap-2">
+                    <h5 class="font-medium text-gray-900 group-hover:text-purple-700">День 3: Системы C-Space</h5>
+                    <span class="px-2 py-0.5 bg-red-100 text-red-600 rounded text-xs">📹 Видео</span>
+                    <span class="px-2 py-0.5 bg-purple-100 text-purple-600 rounded text-xs">🖥️ Практика</span>
+                  </div>
+                  <p class="text-sm text-gray-500">CRM, Spacebring, HR-система, Telegram-бот • 4 главы</p>
+                </div>
+                <div class="text-right">
+                  <span class="text-green-600 font-medium">88%</span>
+                  <p class="text-xs text-gray-400">20 янв 2026</p>
+                </div>
+                <svg class="w-5 h-5 text-gray-400 group-hover:text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                </svg>
+              </div>
+
+              <!-- Day 4 - Completed -->
+              <div onclick="openDayDetail(4)" class="bg-white rounded-xl border p-4 flex items-center gap-4 hover:border-purple-300 hover:shadow-md transition-all cursor-pointer group">
+                <div class="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0">
+                  <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                  </svg>
+                </div>
+                <div class="flex-1">
+                  <div class="flex items-center gap-2">
+                    <h5 class="font-medium text-gray-900 group-hover:text-purple-700">День 4: Экскурсии и продажи</h5>
+                    <span class="px-2 py-0.5 bg-red-100 text-red-600 rounded text-xs">📹 Видео</span>
+                    <span class="px-2 py-0.5 bg-green-100 text-green-600 rounded text-xs">🎭 Ролевая игра</span>
+                  </div>
+                  <p class="text-sm text-gray-500">Проведение туров, работа с возражениями • 5 глав • Практика</p>
+                </div>
+                <div class="text-right">
+                  <span class="text-green-600 font-medium">90%</span>
+                  <p class="text-xs text-gray-400">21 янв 2026</p>
+                </div>
+                <svg class="w-5 h-5 text-gray-400 group-hover:text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                </svg>
+              </div>
+
+              <!-- Day 5 - In Progress -->
+              <div onclick="openDayDetail(5)" class="bg-blue-50 rounded-xl border-2 border-blue-300 p-4 flex items-center gap-4 cursor-pointer hover:shadow-md transition-all group">
+                <div class="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0 pulse">
+                  <span class="text-white font-bold text-sm">5</span>
+                </div>
+                <div class="flex-1">
+                  <div class="flex items-center gap-2">
+                    <h5 class="font-medium text-gray-900 group-hover:text-blue-700">День 5: Тарифы, правила и финальный тест</h5>
+                    <span class="px-2 py-0.5 bg-blue-100 text-blue-600 rounded text-xs">📝 Финальный тест</span>
+                    <span class="px-2 py-0.5 bg-yellow-100 text-yellow-700 rounded text-xs">Требуется 70%</span>
+                  </div>
+                  <p class="text-sm text-gray-500">Все тарифы C-Space, политики, привилегии резидентов • Итоговый тест недели</p>
+                </div>
+                <button class="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700">
+                  Продолжить →
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Week 2 - Locked -->
+          <div class="mb-6 opacity-60">
+            <div class="flex items-center gap-3 mb-4">
+              <div class="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
+                <span class="text-gray-500 font-bold">2</span>
+              </div>
+              <div>
+                <h4 class="font-semibold text-gray-700">Неделя 2: Практический онбординг</h4>
+                <p class="text-sm text-gray-500">Работа под наблюдением и самостоятельная практика</p>
+              </div>
+              <span class="ml-auto px-3 py-1 bg-gray-100 text-gray-500 rounded-full text-sm font-medium flex items-center gap-1">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                </svg>
+                Заблокировано
+              </span>
+            </div>
+
+            <div class="space-y-3 ml-5 border-l-2 border-gray-200 pl-8">
+              <div class="bg-gray-50 rounded-xl border border-gray-200 p-4 flex items-center gap-4">
+                <div class="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center flex-shrink-0">
+                  <span class="text-gray-500 text-sm font-bold">6-7</span>
+                </div>
+                <div class="flex-1">
+                  <h5 class="font-medium text-gray-600">Дни 6-7: Работа под наблюдением</h5>
+                  <p class="text-sm text-gray-400">Shadowing опытного CM, первые самостоятельные действия</p>
+                </div>
+              </div>
+
+              <div class="bg-gray-50 rounded-xl border border-gray-200 p-4 flex items-center gap-4">
+                <div class="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center flex-shrink-0">
+                  <span class="text-gray-500 text-sm font-bold">8-9</span>
+                </div>
+                <div class="flex-1">
+                  <h5 class="font-medium text-gray-600">Дни 8-9: Самостоятельная работа</h5>
+                  <p class="text-sm text-gray-400">Первые смены без наставника, ведение WorkLog</p>
+                </div>
+              </div>
+
+              <div class="bg-gray-50 rounded-xl border border-gray-200 p-4 flex items-center gap-4">
+                <div class="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center flex-shrink-0">
+                  <span class="text-gray-500 text-sm font-bold">10</span>
+                </div>
+                <div class="flex-1">
+                  <div class="flex items-center gap-2">
+                    <h5 class="font-medium text-gray-600">День 10: Финальный рабочий день</h5>
+                    <span class="px-2 py-0.5 bg-gray-200 text-gray-500 rounded text-xs">📋 Отчёт</span>
+                  </div>
+                  <p class="text-sm text-gray-400">Полностью самостоятельная смена + отчёт</p>
+                </div>
+              </div>
+
+              <div class="bg-gray-50 rounded-xl border border-gray-200 p-4 flex items-center gap-4">
+                <div class="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center flex-shrink-0">
+                  <span class="text-gray-500 text-sm font-bold">11-14</span>
+                </div>
+                <div class="flex-1">
+                  <div class="flex items-center gap-2">
+                    <h5 class="font-medium text-gray-600">Дни 11-14: Завершение и интервью</h5>
+                    <span class="px-2 py-0.5 bg-gray-200 text-gray-500 rounded text-xs">🎤 Интервью с COO</span>
+                  </div>
+                  <p class="text-sm text-gray-400">Финальное интервью и завершение онбординга</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Available Learning Paths (after onboarding) -->
+          <div class="mt-8">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">📚 Доступные курсы</h3>
+            <p class="text-gray-500 mb-4">Заверши онбординг, чтобы открыть дополнительные курсы</p>
+
+            <div class="grid grid-cols-3 gap-4">
+              <div class="bg-white rounded-xl border p-5 opacity-50 card-hover">
+                <div class="w-12 h-12 bg-yellow-100 rounded-xl flex items-center justify-center mb-4">
+                  <span class="text-2xl">🎓</span>
+                </div>
+                <h4 class="font-semibold text-gray-900 mb-1">Лидерство</h4>
+                <p class="text-sm text-gray-500 mb-3">Развитие управленческих навыков</p>
+                <div class="flex items-center justify-between">
+                  <span class="text-xs text-gray-400">8 модулей • 12ч</span>
+                  <span class="text-xs text-gray-400">🔒</span>
+                </div>
+              </div>
+
+              <div class="bg-white rounded-xl border p-5 opacity-50 card-hover">
+                <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mb-4">
+                  <span class="text-2xl">💼</span>
+                </div>
+                <h4 class="font-semibold text-gray-900 mb-1">Продажи</h4>
+                <p class="text-sm text-gray-500 mb-3">Техники продаж и работа с клиентами</p>
+                <div class="flex items-center justify-between">
+                  <span class="text-xs text-gray-400">6 модулей • 8ч</span>
+                  <span class="text-xs text-gray-400">🔒</span>
+                </div>
+              </div>
+
+              <div class="bg-white rounded-xl border p-5 opacity-50 card-hover">
+                <div class="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center mb-4">
+                  <span class="text-2xl">🛠️</span>
+                </div>
+                <h4 class="font-semibold text-gray-900 mb-1">Операции</h4>
+                <p class="text-sm text-gray-500 mb-3">Продвинутые системы и процессы</p>
+                <div class="flex items-center justify-between">
+                  <span class="text-xs text-gray-400">10 модулей • 15ч</span>
+                  <span class="text-xs text-gray-400">🔒</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Manager View -->
+        <div id="growth-view-manager" class="p-6 hidden">
+          <!-- Stats Overview -->
+          <div class="grid grid-cols-4 gap-4 mb-6">
+            <div class="bg-white rounded-xl border p-4">
+              <div class="flex items-center gap-2 text-orange-600 mb-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <span class="text-sm font-medium">На онбординге</span>
+              </div>
+              <p class="text-3xl font-bold text-gray-900">5</p>
+              <p class="text-xs text-gray-500">сотрудников</p>
+            </div>
+            <div class="bg-white rounded-xl border p-4">
+              <div class="flex items-center gap-2 text-red-600 mb-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                </svg>
+                <span class="text-sm font-medium">Отстают</span>
+              </div>
+              <p class="text-3xl font-bold text-gray-900">2</p>
+              <p class="text-xs text-gray-500">требуют внимания</p>
+            </div>
+            <div class="bg-white rounded-xl border p-4">
+              <div class="flex items-center gap-2 text-green-600 mb-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <span class="text-sm font-medium">Завершили (месяц)</span>
+              </div>
+              <p class="text-3xl font-bold text-gray-900">8</p>
+              <p class="text-xs text-gray-500">в этом месяце</p>
+            </div>
+            <div class="bg-white rounded-xl border p-4">
+              <div class="flex items-center gap-2 text-purple-600 mb-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+                </svg>
+                <span class="text-sm font-medium">Средний балл</span>
+              </div>
+              <p class="text-3xl font-bold text-gray-900">87%</p>
+              <p class="text-xs text-gray-500">по всем тестам</p>
+            </div>
+          </div>
+
+          <!-- Needs Attention -->
+          <div class="mb-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+              <span class="w-3 h-3 bg-red-500 rounded-full"></span>
+              Требуют внимания (отстают от графика)
+            </h3>
+            <div class="space-y-3">
+              <div class="bg-red-50 rounded-xl border border-red-200 p-4 flex items-center gap-4">
+                <div class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+                  <span class="text-red-700 font-bold">АК</span>
+                </div>
+                <div class="flex-1">
+                  <div class="flex items-center gap-2">
+                    <h4 class="font-medium text-gray-900">Азиз Каримов</h4>
+                    <span class="px-2 py-0.5 bg-red-100 text-red-700 rounded text-xs">Отстаёт на 3 дня</span>
+                  </div>
+                  <p class="text-sm text-gray-500">CM • C-Space Лабзак • 2-недельный онбординг</p>
+                </div>
+                <div class="text-center">
+                  <p class="text-sm text-gray-500">День 8 из 14</p>
+                  <div class="w-24 h-2 bg-gray-200 rounded-full mt-1">
+                    <div class="h-full bg-red-500 rounded-full" style="width: 35%"></div>
+                  </div>
+                  <p class="text-xs text-red-600 mt-1">35%</p>
+                </div>
+                <button class="px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700">
+                  Напомнить
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- On Track -->
+          <div class="mb-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+              <span class="w-3 h-3 bg-green-500 rounded-full"></span>
+              По графику
+            </h3>
+            <div class="space-y-3">
+              <div class="bg-white rounded-xl border p-4 flex items-center gap-4">
+                <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
+                  <span class="text-purple-700 font-bold">ДР</span>
+                </div>
+                <div class="flex-1">
+                  <h4 class="font-medium text-gray-900">Дильшод Рахимов</h4>
+                  <p class="text-sm text-gray-500">CM • C-Space Aero • 2-недельный онбординг</p>
+                </div>
+                <div class="text-center">
+                  <p class="text-sm text-gray-500">День 5 из 14</p>
+                  <div class="w-24 h-2 bg-gray-200 rounded-full mt-1">
+                    <div class="h-full bg-green-500 rounded-full" style="width: 45%"></div>
+                  </div>
+                  <p class="text-xs text-green-600 mt-1">45%</p>
+                </div>
+                <button class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50">
+                  Подробнее
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Admin View -->
+        <div id="growth-view-admin" class="p-6 hidden">
+          <div class="flex justify-between items-center mb-6">
+            <h3 class="text-lg font-semibold text-gray-900">Управление курсами</h3>
+            <button class="px-4 py-2 bg-purple-600 text-white rounded-lg font-medium hover:bg-purple-700 flex items-center gap-2">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+              </svg>
+              Создать курс
+            </button>
+          </div>
+
+          <div class="space-y-4">
+            <!-- 2-Week Onboarding -->
+            <div class="bg-white rounded-xl border p-5">
+              <div class="flex items-start justify-between">
+                <div class="flex items-center gap-4">
+                  <div class="w-14 h-14 bg-orange-100 rounded-xl flex items-center justify-center">
+                    <span class="text-2xl">🎯</span>
+                  </div>
+                  <div>
+                    <div class="flex items-center gap-2">
+                      <h4 class="font-semibold text-gray-900">2-недельный онбординг</h4>
+                      <span class="px-2 py-0.5 bg-orange-100 text-orange-700 rounded text-xs">Обязательный</span>
+                      <span class="px-2 py-0.5 bg-green-100 text-green-700 rounded text-xs">Авто-назначение</span>
+                    </div>
+                    <p class="text-sm text-gray-500 mt-1">Полный онбординг для всех новых сотрудников на испытательном сроке</p>
+                    <div class="flex items-center gap-4 mt-2 text-xs text-gray-400">
+                      <span>14 дней</span>
+                      <span>•</span>
+                      <span>10 модулей</span>
+                      <span>•</span>
+                      <span>5 тестов</span>
+                      <span>•</span>
+                      <span>8 видео</span>
+                    </div>
+                  </div>
+                </div>
+                <button class="p-2 hover:bg-gray-100 rounded-lg">
+                  <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path>
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================ -->
+  <!-- SCHEDULE SECTION (simplified) -->
+  <!-- ============================================ -->
+  <div id="section-schedule" class="py-6 hidden">
+    <div class="max-w-7xl mx-auto px-4">
+      <div class="bg-gradient-to-r from-blue-600 to-cyan-600 rounded-2xl p-8 mb-8 text-white">
+        <h2 class="text-3xl font-bold mb-2">📅 Branch Schedule</h2>
+        <p class="text-blue-100 text-lg">Планирование смен, расписание сотрудников</p>
+        <div class="mt-4 flex gap-4">
+          <span class="px-3 py-1 bg-white/20 rounded-full text-sm">Дневная смена (09:00-18:00)</span>
+          <span class="px-3 py-1 bg-white/20 rounded-full text-sm">Ночная смена (18:00-09:00)</span>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-xl border p-8 text-center">
+        <div class="w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <span class="text-4xl">📅</span>
+        </div>
+        <h3 class="text-xl font-semibold text-gray-900 mb-2">Branch Schedule</h3>
+        <p class="text-gray-500 max-w-md mx-auto">
+          Эта секция будет содержать календарь смен, назначение сотрудников и обнаружение конфликтов.
+          См. первый mockup для полного дизайна.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function showSection(section) {
+      document.getElementById('section-growth').classList.add('hidden');
+      document.getElementById('section-schedule').classList.add('hidden');
+      document.getElementById('btn-growth').classList.remove('tab-active', 'bg-purple-50');
+      document.getElementById('btn-schedule').classList.remove('tab-active', 'bg-purple-50');
+      document.getElementById('btn-growth').classList.add('text-gray-600');
+      document.getElementById('btn-schedule').classList.add('text-gray-600');
+
+      document.getElementById('section-' + section).classList.remove('hidden');
+      document.getElementById('btn-' + section).classList.add('tab-active', 'bg-purple-50');
+      document.getElementById('btn-' + section).classList.remove('text-gray-600');
+    }
+
+    function showGrowthView(view) {
+      document.getElementById('growth-view-employee').classList.add('hidden');
+      document.getElementById('growth-view-manager').classList.add('hidden');
+      document.getElementById('growth-view-admin').classList.add('hidden');
+      document.getElementById('growth-tab-employee').classList.remove('text-purple-600', 'border-b-2', 'border-purple-600');
+      document.getElementById('growth-tab-manager').classList.remove('text-purple-600', 'border-b-2', 'border-purple-600');
+      document.getElementById('growth-tab-admin').classList.remove('text-purple-600', 'border-b-2', 'border-purple-600');
+      document.getElementById('growth-tab-employee').classList.add('text-gray-500');
+      document.getElementById('growth-tab-manager').classList.add('text-gray-500');
+      document.getElementById('growth-tab-admin').classList.add('text-gray-500');
+
+      document.getElementById('growth-view-' + view).classList.remove('hidden');
+      document.getElementById('growth-tab-' + view).classList.add('text-purple-600', 'border-b-2', 'border-purple-600');
+      document.getElementById('growth-tab-' + view).classList.remove('text-gray-500');
+    }
+
+    function openDayDetail(day) {
+      document.getElementById('day-detail-modal').classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeDayDetail() {
+      document.getElementById('day-detail-modal').classList.add('hidden');
+      document.body.style.overflow = 'auto';
+    }
+
+    // Close modal with Escape key
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') {
+        closeDayDetail();
+      }
+    });
+  </script>
+</body>
+</html>
