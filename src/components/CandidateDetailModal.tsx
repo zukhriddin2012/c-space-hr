@@ -155,7 +155,6 @@ export default function CandidateDetailModal({
   const [creatingDocument, setCreatingDocument] = useState(false);
   const [signingUrl, setSigningUrl] = useState<string | null>(null);
   const [showDocumentModal, setShowDocumentModal] = useState(false);
-  const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [documentPassword, setDocumentPassword] = useState('');
   const [showTermSheetForm, setShowTermSheetForm] = useState(false);
 
@@ -1199,49 +1198,6 @@ export default function CandidateDetailModal({
         />
       )}
 
-      {/* Password Input Modal */}
-      {showPasswordModal && (
-        <div className="fixed inset-0 bg-black/50 z-[60] flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl max-w-md w-full p-6">
-            <h3 className="text-xl font-semibold text-gray-900 mb-4">Создать ссылку для подписания</h3>
-            <p className="text-gray-500 mb-4">
-              Установите пароль доступа для кандидата. Пароль нужно будет сообщить кандидату вместе со ссылкой.
-            </p>
-
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">Пароль для доступа</label>
-              <input
-                type="text"
-                value={documentPassword}
-                onChange={(e) => setDocumentPassword(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg text-lg font-mono tracking-wider focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                placeholder="1234"
-              />
-              <p className="text-xs text-gray-500 mt-1">Минимум 4 символа. Можете изменить автоматически сгенерированный пароль.</p>
-            </div>
-
-            <div className="flex gap-3">
-              <button
-                onClick={() => {
-                  setShowPasswordModal(false);
-                  setDocumentPassword('');
-                }}
-                className="flex-1 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
-              >
-                Отмена
-              </button>
-              <button
-                onClick={handleConfirmCreateLink}
-                disabled={documentPassword.length < 4}
-                className="flex-1 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Создать ссылку
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Signing Link Modal */}
       {showDocumentModal && signingUrl && (
         <div className="fixed inset-0 bg-black/50 z-[60] flex items-center justify-center p-4">
@@ -1336,8 +1292,8 @@ export default function CandidateDetailModal({
             full_name: candidate.full_name,
             email: candidate.email || '',
             applied_role: candidate.applied_role,
-            probation_start_date: candidate.probation_start_date,
-            probation_end_date: candidate.probation_end_date,
+            probation_start_date: candidate.probation_start_date || undefined,
+            probation_end_date: candidate.probation_end_date || undefined,
           }}
           branches={branches}
           onClose={() => setShowTermSheetForm(false)}
