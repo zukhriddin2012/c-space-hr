@@ -47,32 +47,14 @@ interface AIAnalysisResult {
   analyzed_at: string;
 }
 
-// Extract text from PDF using pdfjs-dist
+// Extract text from PDF using unpdf (serverless-compatible)
 async function extractTextFromPdf(buffer: Buffer): Promise<string> {
   try {
-    // Import pdfjs-dist for Node.js environment
-    const pdfjsLib = await import('pdfjs-dist/legacy/build/pdf.mjs');
-
-    // Load the PDF document
-    const loadingTask = pdfjsLib.getDocument({
-      data: new Uint8Array(buffer),
-      useSystemFonts: true,
-    });
-
-    const pdf = await loadingTask.promise;
-    const textParts: string[] = [];
-
-    // Extract text from each page
-    for (let i = 1; i <= pdf.numPages; i++) {
-      const page = await pdf.getPage(i);
-      const textContent = await page.getTextContent();
-      const pageText = textContent.items
-        .map((item) => ('str' in item ? item.str : ''))
-        .join(' ');
-      textParts.push(pageText);
-    }
-
-    return textParts.join('\n\n');
+    const { extractText } = await import('unpdf');
+    const result = await extractText(new Uint8Array(buffer));
+    // result.text is an array of strings (one per page)
+    const textArray = result.text;
+    return Array.isArray(textArray) ? textArray.join('\n\n') : String(textArray || '');
   } catch (error) {
     console.error('PDF parsing error:', error);
     throw new Error('Failed to parse PDF file');
