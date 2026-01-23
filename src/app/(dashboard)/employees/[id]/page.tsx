@@ -30,6 +30,25 @@ function formatTime(timeString: string | null): string {
   return timeString.substring(0, 5);
 }
 
+function VerificationBadge({ source }: { source: string | null | undefined }) {
+  if (!source) return null;
+
+  const config: Record<string, { label: string; className: string }> = {
+    web: { label: 'IP', className: 'bg-emerald-100 text-emerald-700 border-emerald-200' },
+    telegram: { label: 'GPS', className: 'bg-amber-100 text-amber-700 border-amber-200' },
+    manual: { label: 'Manual', className: 'bg-gray-100 text-gray-600 border-gray-200' },
+  };
+
+  const badge = config[source];
+  if (!badge) return null;
+
+  return (
+    <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium border ${badge.className}`}>
+      {badge.label}
+    </span>
+  );
+}
+
 function StatusBadge({ status }: { status: string }) {
   const statusConfig: Record<string, { label: string; className: string; icon: React.ComponentType<{ size?: number }> }> = {
     present: { label: 'Present', className: 'bg-green-50 text-green-700', icon: CheckCircle },
@@ -342,7 +361,14 @@ export default async function EmployeeDetailPage({ params, searchParams }: PageP
                     <td className="px-4 py-3 text-sm text-gray-900">
                       {new Date(record.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-900">{formatTime(record.check_in)}</td>
+                    <td className="px-4 py-3 text-sm text-gray-900">
+                      <div className="flex items-center gap-2">
+                        <span className={record.status === 'late' ? 'text-orange-600 font-medium' : ''}>
+                          {formatTime(record.check_in)}
+                        </span>
+                        <VerificationBadge source={record.source} />
+                      </div>
+                    </td>
                     <td className="px-4 py-3 text-sm text-gray-900">{formatTime(record.check_out)}</td>
                     <td className="px-4 py-3 text-sm text-gray-900">
                       {record.check_in_branch?.name || (record.check_in_branch_id ? branchMap.get(record.check_in_branch_id) : null) || '-'}

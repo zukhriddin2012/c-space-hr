@@ -72,6 +72,7 @@ export interface Attendance {
   // IP verification fields
   verification_type?: 'ip' | 'gps';
   ip_address?: string | null;
+  source?: 'telegram' | 'web' | 'manual' | null;
 }
 
 export interface LeaveRequest {
