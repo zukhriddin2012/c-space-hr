@@ -10,6 +10,7 @@ import {
   ChevronRight,
   Check,
   X,
+  Globe,
 } from 'lucide-react';
 import { RoleGuard, PageGuard } from '@/components/RoleGuard';
 import { PERMISSIONS } from '@/lib/permissions';
@@ -21,14 +22,18 @@ import {
   ROLE_PERMISSIONS,
   PERMISSION_GROUPS,
 } from '@/lib/permissions';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { languages, type Language } from '@/lib/i18n';
 
-type SettingsTab = 'roles' | 'branches' | 'notifications' | 'security';
+type SettingsTab = 'roles' | 'branches' | 'notifications' | 'security' | 'language';
 
 export default function SettingsPage() {
-  const [activeTab, setActiveTab] = useState<SettingsTab>('roles');
+  const [activeTab, setActiveTab] = useState<SettingsTab>('language');
   const [selectedRole, setSelectedRole] = useState<UserRole | null>(null);
+  const { language, setLanguage, t } = useLanguage();
 
   const tabs = [
+    { id: 'language' as const, name: t.settings.language, icon: Globe, permission: PERMISSIONS.SETTINGS_VIEW },
     { id: 'roles' as const, name: 'Roles & Permissions', icon: Shield, permission: PERMISSIONS.USERS_ASSIGN_ROLES },
     { id: 'branches' as const, name: 'Branch Settings', icon: Building2, permission: PERMISSIONS.BRANCHES_EDIT },
     { id: 'notifications' as const, name: 'Notifications', icon: Bell, permission: PERMISSIONS.SETTINGS_VIEW },
@@ -40,10 +45,18 @@ export default function SettingsPage() {
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-4 lg:mb-8">
-          <h1 className="text-xl lg:text-2xl font-bold text-gray-900">Settings</h1>
+          <h1 className="text-xl lg:text-2xl font-bold text-gray-900">{t.settings.title}</h1>
           <p className="text-sm lg:text-base text-gray-600 mt-1">
-            <span className="hidden sm:inline">Manage roles, permissions, and system configuration</span>
-            <span className="sm:hidden">System configuration</span>
+            <span className="hidden sm:inline">
+              {language === 'en' && 'Manage roles, permissions, and system configuration'}
+              {language === 'ru' && 'Управление ролями, разрешениями и конфигурацией системы'}
+              {language === 'uz' && 'Rollar, ruxsatlar va tizim sozlamalarini boshqarish'}
+            </span>
+            <span className="sm:hidden">
+              {language === 'en' && 'System configuration'}
+              {language === 'ru' && 'Конфигурация'}
+              {language === 'uz' && 'Sozlamalar'}
+            </span>
           </p>
         </div>
 
@@ -107,6 +120,51 @@ export default function SettingsPage() {
 
           {/* Content Area */}
           <div className="flex-1">
+            {activeTab === 'language' && (
+              <div className="bg-white rounded-xl border border-gray-200 p-4 lg:p-6">
+                <h2 className="text-base lg:text-lg font-semibold text-gray-900 mb-2">{t.settings.language}</h2>
+                <p className="text-sm text-gray-500 mb-4 lg:mb-6">{t.settings.selectLanguage}</p>
+
+                <div className="space-y-3">
+                  {languages.map((lang) => (
+                    <button
+                      key={lang.code}
+                      onClick={() => setLanguage(lang.code)}
+                      className={`w-full flex items-center justify-between p-4 border rounded-xl transition-all ${
+                        language === lang.code
+                          ? 'border-purple-500 bg-purple-50 ring-2 ring-purple-100'
+                          : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                      }`}
+                    >
+                      <div className="flex items-center gap-4">
+                        <span className="text-2xl">{lang.flag}</span>
+                        <div className="text-left">
+                          <p className={`font-medium ${language === lang.code ? 'text-purple-700' : 'text-gray-900'}`}>
+                            {lang.nativeName}
+                          </p>
+                          <p className="text-sm text-gray-500">{lang.name}</p>
+                        </div>
+                      </div>
+                      {language === lang.code && (
+                        <div className="w-6 h-6 bg-purple-600 rounded-full flex items-center justify-center">
+                          <Check size={14} className="text-white" />
+                        </div>
+                      )}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+                  <p className="text-sm text-gray-600">
+                    <Globe size={16} className="inline mr-2" />
+                    {language === 'en' && 'Language preference will be saved and applied across all pages.'}
+                    {language === 'ru' && 'Настройка языка будет сохранена и применена на всех страницах.'}
+                    {language === 'uz' && 'Til sozlamalari saqlanadi va barcha sahifalarda qo\'llaniladi.'}
+                  </p>
+                </div>
+              </div>
+            )}
+
             {activeTab === 'roles' && (
               <div className="space-y-4 lg:space-y-6">
                 {/* Role Cards */}
