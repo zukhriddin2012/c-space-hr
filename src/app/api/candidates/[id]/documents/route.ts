@@ -176,7 +176,7 @@ export async function POST(
 
         signing_token: signingToken,
         access_password: password,
-        status: 'pending',
+        status: 'draft', // Draft until recruiter signs
       })
       .select()
       .single();
