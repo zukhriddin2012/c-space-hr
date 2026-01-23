@@ -195,6 +195,25 @@ export default function RecruitmentBoardPage() {
     fetchStats();
   }, []);
 
+  // Sync selectedCandidate with updated candidates list (for AI analysis refresh, etc.)
+  useEffect(() => {
+    if (selectedCandidate && candidates.length > 0) {
+      const updated = candidates.find(c => c.id === selectedCandidate.id);
+      if (updated) {
+        // Check if key fields have changed (especially ai_analysis)
+        const hasChanges =
+          updated.ai_analysis !== selectedCandidate.ai_analysis ||
+          updated.ai_analyzed_at !== selectedCandidate.ai_analyzed_at ||
+          updated.stage !== selectedCandidate.stage ||
+          updated.updated_at !== selectedCandidate.updated_at;
+
+        if (hasChanges) {
+          setSelectedCandidate(updated);
+        }
+      }
+    }
+  }, [candidates, selectedCandidate]);
+
   const fetchCandidates = async () => {
     setLoading(true);
     try {
@@ -727,6 +746,12 @@ export default function RecruitmentBoardPage() {
                                       {candidate.mbti_type}
                                     </span>
                                   )}
+                                  {candidate.ai_analysis && (
+                                    <span className="text-xs px-2 py-0.5 bg-indigo-100 text-indigo-600 rounded-full flex items-center gap-1">
+                                      <Brain size={10} />
+                                      AI
+                                    </span>
+                                  )}
                                   {candidate.stage === 'probation' && (
                                     <span className={`text-xs px-2 py-0.5 rounded-full flex items-center gap-1 ${
                                       candidate.term_sheet_signed
@@ -863,6 +888,12 @@ export default function RecruitmentBoardPage() {
                           {candidate.mbti_type && (
                             <span className="text-xs px-2 py-0.5 bg-purple-100 text-purple-600 rounded-full">
                               {candidate.mbti_type}
+                            </span>
+                          )}
+                          {candidate.ai_analysis && (
+                            <span className="text-xs px-2 py-0.5 bg-indigo-100 text-indigo-600 rounded-full flex items-center gap-1">
+                              <Brain size={10} />
+                              AI
                             </span>
                           )}
                           {candidate.stage === 'probation' && (
