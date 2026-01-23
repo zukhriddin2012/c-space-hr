@@ -42,6 +42,15 @@ export const uz: Translations = {
     of: 'dan',
     results: 'natija',
     page: 'Sahifa',
+    today: 'Bugun',
+    yesterday: 'Kecha',
+    lastWeek: "O'tgan hafta",
+    monthStart: 'Oy boshi',
+    allBranches: 'Barcha filiallar',
+    allStatus: 'Barcha holatlar',
+    apply: "Qo'llash",
+    reset: 'Tozalash',
+    export: 'Eksport',
   },
 
   // Navigation

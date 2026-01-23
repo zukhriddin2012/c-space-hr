@@ -42,6 +42,15 @@ export interface Translations {
     of: string;
     results: string;
     page: string;
+    today: string;
+    yesterday: string;
+    lastWeek: string;
+    monthStart: string;
+    allBranches: string;
+    allStatus: string;
+    apply: string;
+    reset: string;
+    export: string;
   };
 
   // Navigation

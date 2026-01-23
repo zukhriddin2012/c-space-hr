@@ -42,6 +42,15 @@ export const ru: Translations = {
     of: 'из',
     results: 'результатов',
     page: 'Страница',
+    today: 'Сегодня',
+    yesterday: 'Вчера',
+    lastWeek: 'Неделя назад',
+    monthStart: 'Начало месяца',
+    allBranches: 'Все филиалы',
+    allStatus: 'Все статусы',
+    apply: 'Применить',
+    reset: 'Сбросить',
+    export: 'Экспорт',
   },
 
   // Navigation

@@ -42,6 +42,15 @@ export const en: Translations = {
     of: 'of',
     results: 'results',
     page: 'Page',
+    today: 'Today',
+    yesterday: 'Yesterday',
+    lastWeek: 'Last Week',
+    monthStart: 'Month Start',
+    allBranches: 'All Branches',
+    allStatus: 'All Status',
+    apply: 'Apply',
+    reset: 'Reset',
+    export: 'Export',
   },
 
   // Navigation

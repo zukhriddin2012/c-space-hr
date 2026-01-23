@@ -3,6 +3,7 @@
 import { useState, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Calendar, Search, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useTranslation } from '@/contexts/LanguageContext';
 
 interface Branch {
   id: string;
@@ -52,6 +53,7 @@ function getQuickDates() {
 }
 
 export default function AttendanceFilters({ branches, isEmployee }: AttendanceFiltersProps) {
+  const { t } = useTranslation();
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -114,7 +116,6 @@ export default function AttendanceFilters({ branches, isEmployee }: AttendanceFi
     <div className="bg-white rounded-xl border border-gray-200 p-3 lg:p-4 mb-4 lg:mb-6">
       {/* Quick Date Buttons */}
       <div className="flex flex-wrap items-center gap-1.5 lg:gap-2 mb-3 lg:mb-4">
-        <span className="text-xs font-medium text-gray-500 mr-1 lg:mr-2 hidden sm:inline">Quick:</span>
         <button
           onClick={() => selectQuickDate(quickDates.today)}
           className={`px-2 lg:px-3 py-1 lg:py-1.5 text-xs font-medium rounded-lg transition-colors ${
@@ -123,7 +124,7 @@ export default function AttendanceFilters({ branches, isEmployee }: AttendanceFi
               : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
           }`}
         >
-          Today
+          {t.common.today}
         </button>
         <button
           onClick={() => selectQuickDate(quickDates.yesterday)}
@@ -133,7 +134,7 @@ export default function AttendanceFilters({ branches, isEmployee }: AttendanceFi
               : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
           }`}
         >
-          Yesterday
+          {t.common.yesterday}
         </button>
         <button
           onClick={() => selectQuickDate(quickDates.weekAgo)}
@@ -143,7 +144,7 @@ export default function AttendanceFilters({ branches, isEmployee }: AttendanceFi
               : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
           }`}
         >
-          Last Week
+          {t.common.lastWeek}
         </button>
         <button
           onClick={() => selectQuickDate(quickDates.monthStart)}
@@ -153,14 +154,14 @@ export default function AttendanceFilters({ branches, isEmployee }: AttendanceFi
               : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
           }`}
         >
-          Month Start
+          {t.common.monthStart}
         </button>
       </div>
 
       <div className="flex flex-col lg:flex-row lg:items-end gap-3 lg:gap-4">
         {/* Date Picker with Navigation */}
         <div>
-          <label className="block text-xs font-medium text-gray-500 mb-1">Date</label>
+          <label className="block text-xs font-medium text-gray-500 mb-1">{t.common.date}</label>
           <div className="flex items-center gap-1">
             <button
               onClick={() => navigateDay('prev')}
@@ -203,13 +204,13 @@ export default function AttendanceFilters({ branches, isEmployee }: AttendanceFi
           <>
             {/* Branch Filter */}
             <div>
-              <label className="block text-xs font-medium text-gray-500 mb-1">Branch</label>
+              <label className="block text-xs font-medium text-gray-500 mb-1">{t.employees.branch}</label>
               <select
                 value={branch}
                 onChange={(e) => setBranch(e.target.value)}
                 className="w-full lg:w-auto px-3 lg:px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none text-sm min-w-[160px]"
               >
-                <option value="">All Branches</option>
+                <option value="">{t.common.allBranches}</option>
                 {branches.map((b) => (
                   <option key={b.id} value={b.id}>
                     {b.name}
@@ -220,17 +221,17 @@ export default function AttendanceFilters({ branches, isEmployee }: AttendanceFi
 
             {/* Status Filter */}
             <div>
-              <label className="block text-xs font-medium text-gray-500 mb-1">Status</label>
+              <label className="block text-xs font-medium text-gray-500 mb-1">{t.common.status}</label>
               <select
                 value={status}
                 onChange={(e) => setStatus(e.target.value)}
                 className="w-full lg:w-auto px-3 lg:px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none text-sm min-w-[130px]"
               >
-                <option value="">All Status</option>
-                <option value="present">Present</option>
-                <option value="late">Late</option>
-                <option value="absent">Absent</option>
-                <option value="early_leave">Early Leave</option>
+                <option value="">{t.common.allStatus}</option>
+                <option value="present">{t.attendance.present}</option>
+                <option value="late">{t.attendance.late}</option>
+                <option value="absent">{t.attendance.absent}</option>
+                <option value="early_leave">{t.attendance.earlyLeave}</option>
               </select>
             </div>
           </>
@@ -243,13 +244,13 @@ export default function AttendanceFilters({ branches, isEmployee }: AttendanceFi
             className="flex-1 lg:flex-initial inline-flex items-center justify-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium"
           >
             <Search size={16} />
-            Apply
+            {t.common.apply}
           </button>
           <button
             onClick={handleReset}
             className="flex-1 lg:flex-initial inline-flex items-center justify-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm"
           >
-            Reset
+            {t.common.reset}
           </button>
         </div>
       </div>
