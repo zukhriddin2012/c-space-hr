@@ -160,7 +160,7 @@ Be thorough but concise. Focus on actionable insights for HR.`;
       'anthropic-version': '2023-06-01',
     },
     body: JSON.stringify({
-      model: 'claude-sonnet-4-20250514',
+      model: 'claude-3-5-sonnet-20241022',
       max_tokens: 4096,
       messages: [
         {
@@ -174,8 +174,8 @@ Be thorough but concise. Focus on actionable insights for HR.`;
 
   if (!response.ok) {
     const errorText = await response.text();
-    console.error('Claude API error:', errorText);
-    throw new Error(`Claude API error: ${response.status}`);
+    console.error('Claude API error:', response.status, errorText);
+    throw new Error(`Claude API error: ${response.status} - ${errorText}`);
   }
 
   const result = await response.json();
