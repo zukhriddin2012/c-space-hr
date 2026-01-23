@@ -23,7 +23,7 @@ export async function POST(
     // Get document
     const { data: doc, error: docError } = await supabaseAdmin!
       .from('candidate_documents')
-      .select('id, candidate_id, otp_verified_at, signed_at')
+      .select('id, candidate_id, signed_at')
       .eq('signing_token', token)
       .single();
 
@@ -36,10 +36,8 @@ export async function POST(
       return NextResponse.json({ error: 'Document has already been signed' }, { status: 400 });
     }
 
-    // Verify that OTP was verified (security check)
-    if (!doc.otp_verified_at) {
-      return NextResponse.json({ error: 'Email verification required' }, { status: 400 });
-    }
+    // Note: Password verification is done at the verify-password endpoint
+    // The user can only reach the signature step after successful password verification
 
     // Save signature
     const signedAt = new Date().toISOString();

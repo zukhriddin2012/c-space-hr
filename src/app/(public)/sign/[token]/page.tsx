@@ -1134,13 +1134,13 @@ export default function DocumentSigningPage() {
                   <button
                     key={style}
                     onClick={() => setSelectedStyle(style)}
-                    className={`p-4 border-2 rounded-xl transition-all ${
+                    className={`p-4 border-2 rounded-xl transition-all overflow-hidden ${
                       selectedStyle === style
                         ? 'border-purple-500 bg-purple-50'
                         : 'border-gray-200 hover:border-gray-300'
                     }`}
                   >
-                    <p className={`text-lg ${
+                    <p className={`text-sm leading-tight break-words ${
                       style === 1 ? 'font-serif italic' :
                       style === 2 ? 'font-mono' :
                       'font-sans font-bold'
