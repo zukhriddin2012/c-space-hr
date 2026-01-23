@@ -629,29 +629,27 @@ export default function CandidateDetailModal({
                           }`}>
                             {doc.signed_at ? '✓ Signed' : 'Pending'}
                           </span>
-                          {!doc.signed_at && (
-                            <>
-                              <button
-                                onClick={() => {
-                                  const url = `${window.location.origin}/sign/${doc.signing_token}`;
-                                  setSigningUrl(url);
-                                  setShowDocumentModal(true);
-                                }}
-                                className="flex items-center gap-1 px-2 py-1 text-xs text-purple-600 hover:bg-purple-50 rounded"
-                                title="Copy & share link"
-                              >
-                                <Copy size={12} />
-                                Share
-                              </button>
-                              <button
-                                onClick={() => handleDeleteDocument(doc.id)}
-                                className="flex items-center gap-1 px-2 py-1 text-xs text-red-600 hover:bg-red-50 rounded"
-                                title="Delete"
-                              >
-                                <Trash2 size={12} />
-                              </button>
-                            </>
+{!doc.signed_at && (
+                            <button
+                              onClick={() => {
+                                const url = `${window.location.origin}/sign/${doc.signing_token}`;
+                                setSigningUrl(url);
+                                setShowDocumentModal(true);
+                              }}
+                              className="flex items-center gap-1 px-2 py-1 text-xs text-purple-600 hover:bg-purple-50 rounded"
+                              title="Copy & share link"
+                            >
+                              <Copy size={12} />
+                              Share
+                            </button>
                           )}
+                          <button
+                            onClick={() => handleDeleteDocument(doc.id)}
+                            className="flex items-center gap-1 px-2 py-1 text-xs text-red-600 hover:bg-red-50 rounded"
+                            title="Delete document"
+                          >
+                            <Trash2 size={12} />
+                          </button>
                           <a
                             href={`/sign/${doc.signing_token}`}
                             target="_blank"
@@ -828,23 +826,21 @@ export default function CandidateDetailModal({
                             </div>
                             <div className="flex items-center gap-2">
                               {!doc.signed_at && (
-                                <>
-                                  <button
-                                    onClick={() => copyToClipboard(`${window.location.origin}/sign/${doc.signing_token}`)}
-                                    className="p-1 text-gray-400 hover:text-purple-600"
-                                    title="Copy signing link"
-                                  >
-                                    <Copy size={14} />
-                                  </button>
-                                  <button
-                                    onClick={() => handleDeleteDocument(doc.id)}
-                                    className="p-1 text-gray-400 hover:text-red-600"
-                                    title="Delete"
-                                  >
-                                    <Trash2 size={14} />
-                                  </button>
-                                </>
+                                <button
+                                  onClick={() => copyToClipboard(`${window.location.origin}/sign/${doc.signing_token}`)}
+                                  className="p-1 text-gray-400 hover:text-purple-600"
+                                  title="Copy signing link"
+                                >
+                                  <Copy size={14} />
+                                </button>
                               )}
+                              <button
+                                onClick={() => handleDeleteDocument(doc.id)}
+                                className="p-1 text-gray-400 hover:text-red-600"
+                                title="Delete document"
+                              >
+                                <Trash2 size={14} />
+                              </button>
                               <a
                                 href={`/sign/${doc.signing_token}`}
                                 target="_blank"
