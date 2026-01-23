@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin, isSupabaseAdminConfigured } from '@/lib/supabase';
-import jsPDF from 'jspdf';
+import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
+import fontkit from '@pdf-lib/fontkit';
 
 interface DocumentData {
   id: string;
@@ -117,432 +118,458 @@ export async function GET(
       created_at: doc.created_at,
     };
 
-    // Generate PDF
-    const pdf = new jsPDF({
-      orientation: 'portrait',
-      unit: 'mm',
-      format: 'a4',
-    });
+    // Create PDF document
+    const pdfDoc = await PDFDocument.create();
+    pdfDoc.registerFontkit(fontkit);
 
-    const pageWidth = pdf.internal.pageSize.getWidth();
-    const pageHeight = pdf.internal.pageSize.getHeight();
-    const margin = 20;
+    // Fetch and embed a font that supports Cyrillic
+    // Using Google Fonts Roboto which supports Cyrillic
+    const fontUrl = 'https://github.com/googlefonts/roboto/raw/main/src/hinted/Roboto-Regular.ttf';
+    const fontBoldUrl = 'https://github.com/googlefonts/roboto/raw/main/src/hinted/Roboto-Bold.ttf';
+
+    let font;
+    let fontBold;
+
+    try {
+      const fontResponse = await fetch(fontUrl);
+      const fontBoldResponse = await fetch(fontBoldUrl);
+
+      if (fontResponse.ok && fontBoldResponse.ok) {
+        const fontBytes = await fontResponse.arrayBuffer();
+        const fontBoldBytes = await fontBoldResponse.arrayBuffer();
+        font = await pdfDoc.embedFont(fontBytes);
+        fontBold = await pdfDoc.embedFont(fontBoldBytes);
+      } else {
+        throw new Error('Failed to fetch fonts');
+      }
+    } catch (e) {
+      // Fallback to standard font (won't support Cyrillic properly)
+      console.error('Failed to load Cyrillic font, using fallback:', e);
+      font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+      fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+    }
+
+    const pageWidth = 595.28; // A4 width in points
+    const pageHeight = 841.89; // A4 height in points
+    const margin = 50;
     const contentWidth = pageWidth - margin * 2;
-    let y = margin;
 
     // Brand color
-    const brandColor = { r: 100, g: 23, b: 124 }; // #64177C
+    const brandColor = rgb(100 / 255, 23 / 255, 124 / 255); // #64177C
+    const grayColor = rgb(100 / 255, 100 / 255, 100 / 255);
+    const greenColor = rgb(34 / 255, 197 / 255, 94 / 255);
+    const redColor = rgb(239 / 255, 68 / 255, 68 / 255);
+    const lightGray = rgb(245 / 255, 245 / 255, 245 / 255);
 
-    // Helper function to add text with word wrapping
-    const addWrappedText = (text: string, x: number, y: number, maxWidth: number, lineHeight: number): number => {
-      const lines = pdf.splitTextToSize(text, maxWidth);
-      lines.forEach((line: string, index: number) => {
-        if (y + lineHeight > pageHeight - margin) {
-          pdf.addPage();
-          y = margin;
-        }
-        pdf.text(line, x, y + index * lineHeight);
-      });
-      return y + lines.length * lineHeight;
+    let page = pdfDoc.addPage([pageWidth, pageHeight]);
+    let y = pageHeight - margin;
+
+    // Helper function to add new page if needed
+    const checkPageBreak = (requiredHeight: number) => {
+      if (y - requiredHeight < margin) {
+        page = pdfDoc.addPage([pageWidth, pageHeight]);
+        y = pageHeight - margin;
+      }
     };
 
-    // Helper to check and add new page if needed
-    const checkPageBreak = (requiredHeight: number): void => {
-      if (y + requiredHeight > pageHeight - margin) {
-        pdf.addPage();
-        y = margin;
+    // Helper to draw text with word wrapping
+    const drawText = (text: string, x: number, yPos: number, options: { font?: typeof font; size?: number; color?: typeof brandColor; maxWidth?: number } = {}) => {
+      const usedFont = options.font || font;
+      const size = options.size || 10;
+      const color = options.color || rgb(0, 0, 0);
+      const maxWidth = options.maxWidth || contentWidth;
+
+      // Simple word wrapping
+      const words = text.split(' ');
+      let line = '';
+      let currentY = yPos;
+
+      for (const word of words) {
+        const testLine = line ? `${line} ${word}` : word;
+        const testWidth = usedFont.widthOfTextAtSize(testLine, size);
+
+        if (testWidth > maxWidth && line) {
+          checkPageBreak(size + 4);
+          page.drawText(line, { x, y: currentY, size, font: usedFont, color });
+          currentY -= size + 4;
+          line = word;
+        } else {
+          line = testLine;
+        }
       }
+
+      if (line) {
+        checkPageBreak(size + 4);
+        page.drawText(line, { x, y: currentY, size, font: usedFont, color });
+        currentY -= size + 4;
+      }
+
+      return currentY;
     };
 
     // === HEADER ===
-    pdf.setFillColor(brandColor.r, brandColor.g, brandColor.b);
-    pdf.rect(0, 0, pageWidth, 45, 'F');
+    page.drawRectangle({
+      x: 0,
+      y: pageHeight - 100,
+      width: pageWidth,
+      height: 100,
+      color: brandColor,
+    });
 
-    pdf.setTextColor(255, 255, 255);
-    pdf.setFontSize(10);
-    pdf.text('Условия трудоустройства', margin, 15);
+    page.drawText('Условия трудоустройства', {
+      x: margin,
+      y: pageHeight - 30,
+      size: 10,
+      font,
+      color: rgb(1, 1, 1),
+    });
 
-    pdf.setFontSize(18);
-    pdf.setFont('helvetica', 'bold');
-    pdf.text('УСЛОВИЯ ТРУДОУСТРОЙСТВА', margin, 25);
+    page.drawText('УСЛОВИЯ ТРУДОУСТРОЙСТВА', {
+      x: margin,
+      y: pageHeight - 50,
+      size: 18,
+      font: fontBold,
+      color: rgb(1, 1, 1),
+    });
 
-    pdf.setFontSize(12);
-    pdf.setFont('helvetica', 'normal');
-    pdf.text(`Должность: ${document.position}`, margin, 35);
+    page.drawText(`Должность: ${document.position}`, {
+      x: margin,
+      y: pageHeight - 70,
+      size: 12,
+      font,
+      color: rgb(1, 1, 1),
+    });
 
     if (document.branch_name) {
-      pdf.setFontSize(10);
-      pdf.setTextColor(255, 255, 255, 0.7);
-      pdf.text(`Филиал ${document.branch_name}`, margin, 42);
+      page.drawText(`Филиал ${document.branch_name}`, {
+        x: margin,
+        y: pageHeight - 85,
+        size: 10,
+        font,
+        color: rgb(1, 1, 1),
+      });
     }
 
-    y = 55;
-    pdf.setTextColor(0, 0, 0);
+    y = pageHeight - 120;
 
     // === SECTION 1: Candidate Info ===
-    pdf.setFontSize(14);
-    pdf.setFont('helvetica', 'bold');
-    pdf.setTextColor(brandColor.r, brandColor.g, brandColor.b);
-    pdf.text('1. Информация о кандидате', margin, y);
-    y += 8;
-
-    pdf.setFontSize(10);
-    pdf.setFont('helvetica', 'normal');
-    pdf.setTextColor(0, 0, 0);
+    page.drawText('1. Информация о кандидате', {
+      x: margin,
+      y,
+      size: 14,
+      font: fontBold,
+      color: brandColor,
+    });
+    y -= 20;
 
     const candidateInfo = [
-      ['ФИО', document.candidate_name],
-      ['Должность', document.position],
-      ['Филиал', document.branch_name],
-      ['Подчинение', document.reporting_to],
+      ['ФИО:', document.candidate_name],
+      ['Должность:', document.position],
+      ['Филиал:', document.branch_name],
+      ['Подчинение:', document.reporting_to],
     ];
 
-    candidateInfo.forEach(([label, value]) => {
-      pdf.setFont('helvetica', 'bold');
-      pdf.text(`${label}:`, margin, y);
-      pdf.setFont('helvetica', 'normal');
-      pdf.text(value || '-', margin + 35, y);
-      y += 6;
-    });
-    y += 5;
+    for (const [label, value] of candidateInfo) {
+      page.drawText(label, { x: margin, y, size: 10, font: fontBold, color: grayColor });
+      page.drawText(value || '-', { x: margin + 100, y, size: 10, font, color: rgb(0, 0, 0) });
+      y -= 16;
+    }
+    y -= 10;
 
     // === SECTION 2: Selection Results ===
-    checkPageBreak(30);
-    pdf.setFontSize(14);
-    pdf.setFont('helvetica', 'bold');
-    pdf.setTextColor(brandColor.r, brandColor.g, brandColor.b);
-    pdf.text('2. Результаты отбора', margin, y);
-    y += 8;
-
-    pdf.setFontSize(10);
-    pdf.setTextColor(0, 0, 0);
+    checkPageBreak(80);
+    page.drawText('2. Результаты отбора', {
+      x: margin,
+      y,
+      size: 14,
+      font: fontBold,
+      color: brandColor,
+    });
+    y -= 20;
 
     const selectionResults = [
-      ['Скрининг', document.screening_passed ? 'ПРОЙДЕН' : 'НЕ ПРОЙДЕН'],
-      ['Интервью 1', document.interview1_passed ? 'ПРОЙДЕН' : 'НЕ ПРОЙДЕН'],
+      ['Скрининг', document.screening_passed],
+      ['Интервью 1', document.interview1_passed],
     ];
 
     if (document.interview2_passed) {
-      selectionResults.push(['Интервью 2', 'ПРОЙДЕН']);
+      selectionResults.push(['Интервью 2', true]);
     }
 
-    selectionResults.forEach(([stage, result]) => {
-      pdf.setFont('helvetica', 'normal');
-      pdf.text(stage, margin, y);
-      if (result === 'ПРОЙДЕН') {
-        pdf.setTextColor(34, 197, 94); // green
-      } else {
-        pdf.setTextColor(239, 68, 68); // red
-      }
-      pdf.setFont('helvetica', 'bold');
-      pdf.text(result, margin + 50, y);
-      pdf.setTextColor(0, 0, 0);
-      y += 6;
-    });
-    y += 5;
+    for (const [stage, passed] of selectionResults) {
+      page.drawText(stage as string, { x: margin, y, size: 10, font, color: rgb(0, 0, 0) });
+      page.drawText(passed ? 'ПРОЙДЕН' : 'НЕ ПРОЙДЕН', {
+        x: margin + 120,
+        y,
+        size: 10,
+        font: fontBold,
+        color: passed ? greenColor : redColor,
+      });
+      y -= 16;
+    }
+    y -= 10;
 
     // === SECTION 3: Employment Terms ===
-    checkPageBreak(40);
-    pdf.setFontSize(14);
-    pdf.setFont('helvetica', 'bold');
-    pdf.setTextColor(brandColor.r, brandColor.g, brandColor.b);
-    pdf.text('3. Условия трудоустройства', margin, y);
-    y += 5;
-
-    pdf.setFontSize(10);
-    pdf.setTextColor(100, 100, 100);
+    checkPageBreak(100);
+    page.drawText('3. Условия трудоустройства', {
+      x: margin,
+      y,
+      size: 14,
+      font: fontBold,
+      color: brandColor,
+    });
+    y -= 16;
 
     const isProbation = document.document_type === 'probation_term_sheet';
-    pdf.text(isProbation ? 'Испытательный срок' : 'Полная занятость (при успешном прохождении)', margin, y);
-    y += 8;
+    page.drawText(isProbation ? 'Испытательный срок' : 'Полная занятость (при успешном прохождении)', {
+      x: margin,
+      y,
+      size: 10,
+      font,
+      color: grayColor,
+    });
+    y -= 20;
 
-    pdf.setTextColor(0, 0, 0);
-
-    let employmentTerms;
+    let employmentTerms: [string, string][];
     if (isProbation) {
       employmentTerms = [
-        ['Продолжительность', document.probation_duration],
-        ['Дата начала', formatDate(document.probation_start_date)],
-        ['Дата окончания', formatDate(document.probation_end_date)],
-        ['Рабочие часы', document.working_hours],
-        ['Зарплата (испыт. срок)', document.probation_salary],
+        ['Продолжительность:', document.probation_duration],
+        ['Дата начала:', formatDate(document.probation_start_date)],
+        ['Дата окончания:', formatDate(document.probation_end_date)],
+        ['Рабочие часы:', document.working_hours],
+        ['Зарплата (испыт. срок):', document.probation_salary],
       ];
     } else {
       employmentTerms = [
-        ['Тип договора', document.contract_type],
-        ['Дата вступления в силу', formatDate(document.start_date)],
-        ['Ежемесячная зарплата', `${document.salary} сум (на руки)`],
-        ['Пересмотр зарплаты', document.salary_review],
+        ['Тип договора:', document.contract_type],
+        ['Дата вступления в силу:', formatDate(document.start_date)],
+        ['Ежемесячная зарплата:', `${document.salary} сум (на руки)`],
+        ['Пересмотр зарплаты:', document.salary_review],
       ];
     }
 
-    employmentTerms.forEach(([label, value]) => {
-      pdf.setFont('helvetica', 'bold');
-      pdf.text(`${label}:`, margin, y);
-      pdf.setFont('helvetica', 'normal');
-      const valueX = margin + 55;
-      if (label.includes('Зарплата') || label.includes('зарплата')) {
-        pdf.setTextColor(brandColor.r, brandColor.g, brandColor.b);
-        pdf.setFont('helvetica', 'bold');
-      }
-      pdf.text(value || '-', valueX, y);
-      pdf.setTextColor(0, 0, 0);
-      pdf.setFont('helvetica', 'normal');
-      y += 6;
-    });
-    y += 5;
+    for (const [label, value] of employmentTerms) {
+      page.drawText(label, { x: margin, y, size: 10, font: fontBold, color: grayColor });
+      const isHighlight = label.includes('Зарплата') || label.includes('зарплата');
+      page.drawText(value || '-', {
+        x: margin + 140,
+        y,
+        size: 10,
+        font: isHighlight ? fontBold : font,
+        color: isHighlight ? brandColor : rgb(0, 0, 0),
+      });
+      y -= 16;
+    }
+    y -= 10;
 
     // === SECTION 4: Probation Metrics ===
     if (document.probation_metrics && document.probation_metrics.length > 0) {
-      checkPageBreak(30 + document.probation_metrics.length * 12);
-      pdf.setFontSize(14);
-      pdf.setFont('helvetica', 'bold');
-      pdf.setTextColor(brandColor.r, brandColor.g, brandColor.b);
-      pdf.text('4. Критерии оценки испытательного срока', margin, y);
-      y += 8;
-
-      pdf.setFontSize(10);
-      pdf.setTextColor(0, 0, 0);
+      checkPageBreak(60 + document.probation_metrics.length * 20);
+      page.drawText('4. Критерии оценки испытательного срока', {
+        x: margin,
+        y,
+        size: 14,
+        font: fontBold,
+        color: brandColor,
+      });
+      y -= 20;
 
       // Table header
-      pdf.setFillColor(245, 245, 245);
-      pdf.rect(margin, y - 3, contentWidth, 8, 'F');
-      pdf.setFont('helvetica', 'bold');
-      pdf.text('Метрика', margin + 2, y + 2);
-      pdf.text('Ожидаемый результат', margin + 80, y + 2);
-      y += 10;
+      page.drawRectangle({ x: margin, y: y - 5, width: contentWidth, height: 20, color: lightGray });
+      page.drawText('Метрика', { x: margin + 5, y: y + 2, size: 10, font: fontBold, color: brandColor });
+      page.drawText('Ожидаемый результат', { x: margin + 250, y: y + 2, size: 10, font: fontBold, color: brandColor });
+      y -= 25;
 
-      pdf.setFont('helvetica', 'normal');
-      document.probation_metrics.forEach((metric) => {
-        checkPageBreak(12);
-        const metricLines = pdf.splitTextToSize(metric.metric, 75);
-        const resultLines = pdf.splitTextToSize(metric.expected_result, 75);
-        const maxLines = Math.max(metricLines.length, resultLines.length);
-
-        metricLines.forEach((line: string, i: number) => {
-          pdf.text(line, margin + 2, y + i * 5);
-        });
-        resultLines.forEach((line: string, i: number) => {
-          pdf.text(line, margin + 80, y + i * 5);
-        });
-
-        y += maxLines * 5 + 3;
-      });
-      y += 5;
+      for (const metric of document.probation_metrics) {
+        checkPageBreak(20);
+        y = drawText(metric.metric, margin + 5, y, { size: 9, maxWidth: 230 });
+        const metricY = y + 14; // Align with first line
+        drawText(metric.expected_result, margin + 250, metricY, { size: 9, maxWidth: 230 });
+        y -= 5;
+      }
+      y -= 10;
     }
 
     // === SECTION 5: Final Interview ===
     if (document.final_interview_date) {
-      checkPageBreak(35);
-      pdf.setFontSize(14);
-      pdf.setFont('helvetica', 'bold');
-      pdf.setTextColor(brandColor.r, brandColor.g, brandColor.b);
-      pdf.text('5. Финальное интервью и утверждение', margin, y);
-      y += 8;
+      checkPageBreak(80);
+      page.drawText('5. Финальное интервью и утверждение', {
+        x: margin,
+        y,
+        size: 14,
+        font: fontBold,
+        color: brandColor,
+      });
+      y -= 20;
 
-      pdf.setFontSize(10);
-      pdf.setTextColor(0, 0, 0);
+      page.drawRectangle({ x: margin, y: y - 55, width: contentWidth, height: 70, color: rgb(245 / 255, 240 / 255, 250 / 255) });
 
-      pdf.setFillColor(245, 240, 250);
-      pdf.rect(margin, y - 2, contentWidth, 28, 'F');
+      page.drawText('ДЕТАЛИ ФИНАЛЬНОГО ИНТЕРВЬЮ', { x: margin + 10, y: y - 5, size: 11, font: fontBold, color: brandColor });
+      y -= 20;
 
-      pdf.setFont('helvetica', 'bold');
-      pdf.text('ДЕТАЛИ ФИНАЛЬНОГО ИНТЕРВЬЮ', margin + 2, y + 3);
-      y += 8;
-
-      pdf.setFont('helvetica', 'normal');
-      pdf.text(`Дата: ${formatDate(document.final_interview_date)}`, margin + 2, y);
-      y += 5;
-      pdf.text(`Время: ${document.final_interview_time}`, margin + 2, y);
-      y += 5;
-      pdf.text(`Интервьюер: ${document.final_interview_interviewer}`, margin + 2, y);
-      y += 5;
-      pdf.text(`Цель: ${document.final_interview_purpose}`, margin + 2, y);
-      y += 12;
+      page.drawText(`Дата: ${formatDate(document.final_interview_date)}`, { x: margin + 10, y, size: 10, font, color: rgb(0, 0, 0) });
+      y -= 14;
+      page.drawText(`Время: ${document.final_interview_time}`, { x: margin + 10, y, size: 10, font, color: rgb(0, 0, 0) });
+      y -= 14;
+      page.drawText(`Интервьюер: ${document.final_interview_interviewer}`, { x: margin + 10, y, size: 10, font, color: rgb(0, 0, 0) });
+      y -= 14;
+      page.drawText(`Цель: ${document.final_interview_purpose}`, { x: margin + 10, y, size: 10, font, color: rgb(0, 0, 0) });
+      y -= 25;
     }
 
     // === SECTION 6: Onboarding ===
     if (document.onboarding_weeks && document.onboarding_weeks.length > 0) {
-      checkPageBreak(20);
-      pdf.setFontSize(14);
-      pdf.setFont('helvetica', 'bold');
-      pdf.setTextColor(brandColor.r, brandColor.g, brandColor.b);
-      pdf.text(`6. Обзор адаптации (филиал ${document.branch_name})`, margin, y);
-      y += 8;
-
-      pdf.setFontSize(10);
-      pdf.setTextColor(0, 0, 0);
-
-      document.onboarding_weeks.forEach((week) => {
-        checkPageBreak(15 + week.items.length * 6);
-
-        pdf.setFont('helvetica', 'bold');
-        pdf.text(`${week.title} (${week.date_range})`, margin, y);
-        y += 6;
-
-        pdf.setFont('helvetica', 'normal');
-        week.items.forEach((item, idx) => {
-          const itemText = `${idx + 1}. ${item}`;
-          y = addWrappedText(itemText, margin + 5, y, contentWidth - 5, 5);
-        });
-        y += 3;
+      checkPageBreak(40);
+      page.drawText(`6. Обзор адаптации (филиал ${document.branch_name})`, {
+        x: margin,
+        y,
+        size: 14,
+        font: fontBold,
+        color: brandColor,
       });
-      y += 5;
+      y -= 20;
+
+      for (const week of document.onboarding_weeks) {
+        checkPageBreak(30 + week.items.length * 14);
+        page.drawText(`${week.title} (${week.date_range})`, { x: margin, y, size: 11, font: fontBold, color: rgb(0, 0, 0) });
+        y -= 16;
+
+        for (let i = 0; i < week.items.length; i++) {
+          checkPageBreak(14);
+          y = drawText(`${i + 1}. ${week.items[i]}`, margin + 10, y, { size: 9, maxWidth: contentWidth - 20 });
+        }
+        y -= 10;
+      }
     }
 
     // === SECTION 7: Contacts ===
     if (document.contacts && document.contacts.length > 0) {
-      checkPageBreak(25 + document.contacts.length * 8);
-      pdf.setFontSize(14);
-      pdf.setFont('helvetica', 'bold');
-      pdf.setTextColor(brandColor.r, brandColor.g, brandColor.b);
-      pdf.text('7. Контактные лица', margin, y);
-      y += 8;
-
-      pdf.setFontSize(10);
-      pdf.setTextColor(0, 0, 0);
+      checkPageBreak(60 + document.contacts.length * 18);
+      page.drawText('7. Контактные лица', {
+        x: margin,
+        y,
+        size: 14,
+        font: fontBold,
+        color: brandColor,
+      });
+      y -= 20;
 
       // Table header
-      pdf.setFillColor(245, 245, 245);
-      pdf.rect(margin, y - 3, contentWidth, 8, 'F');
-      pdf.setFont('helvetica', 'bold');
-      pdf.text('Имя', margin + 2, y + 2);
-      pdf.text('Должность', margin + 50, y + 2);
-      pdf.text('Зона ответственности', margin + 100, y + 2);
-      y += 10;
+      page.drawRectangle({ x: margin, y: y - 5, width: contentWidth, height: 20, color: lightGray });
+      page.drawText('Имя', { x: margin + 5, y: y + 2, size: 10, font: fontBold, color: brandColor });
+      page.drawText('Должность', { x: margin + 140, y: y + 2, size: 10, font: fontBold, color: brandColor });
+      page.drawText('Зона ответственности', { x: margin + 300, y: y + 2, size: 10, font: fontBold, color: brandColor });
+      y -= 25;
 
-      pdf.setFont('helvetica', 'normal');
-      document.contacts.forEach((contact) => {
-        checkPageBreak(8);
-        pdf.text(contact.name, margin + 2, y);
-        pdf.setTextColor(brandColor.r, brandColor.g, brandColor.b);
-        pdf.text(contact.position, margin + 50, y);
-        pdf.setTextColor(0, 0, 0);
-        pdf.text(contact.responsibility, margin + 100, y);
-        y += 6;
-      });
+      for (const contact of document.contacts) {
+        checkPageBreak(16);
+        page.drawText(contact.name, { x: margin + 5, y, size: 9, font, color: rgb(0, 0, 0) });
+        page.drawText(contact.position, { x: margin + 140, y, size: 9, font, color: brandColor });
+        page.drawText(contact.responsibility, { x: margin + 300, y, size: 9, font, color: rgb(0, 0, 0) });
+        y -= 16;
+      }
 
       // Escalation contact
       if (document.escalation_contact) {
-        y += 3;
-        pdf.setFillColor(254, 249, 195); // yellow background
-        pdf.rect(margin, y - 2, contentWidth, 12, 'F');
-        pdf.setFont('helvetica', 'bold');
-        pdf.text('ЭСКАЛАЦИЯ ВОПРОСОВ', margin + 2, y + 3);
-        y += 7;
-        pdf.setFont('helvetica', 'normal');
-        pdf.text(`${document.escalation_contact} (${document.escalation_contact_position})`, margin + 2, y);
-        y += 10;
+        y -= 5;
+        checkPageBreak(30);
+        page.drawRectangle({ x: margin, y: y - 15, width: contentWidth, height: 30, color: rgb(254 / 255, 249 / 255, 195 / 255) });
+        page.drawText('ЭСКАЛАЦИЯ ВОПРОСОВ', { x: margin + 5, y: y - 2, size: 10, font: fontBold, color: rgb(161 / 255, 98 / 255, 7 / 255) });
+        page.drawText(`${document.escalation_contact} (${document.escalation_contact_position})`, { x: margin + 5, y: y - 14, size: 9, font, color: rgb(161 / 255, 98 / 255, 7 / 255) });
+        y -= 30;
       }
-      y += 5;
+      y -= 10;
     }
 
     // === SECTION 8: Signatures ===
-    checkPageBreak(60);
-    pdf.setFontSize(14);
-    pdf.setFont('helvetica', 'bold');
-    pdf.setTextColor(brandColor.r, brandColor.g, brandColor.b);
-    pdf.text('8. Подтверждение и подписи', margin, y);
-    y += 8;
+    checkPageBreak(120);
+    page.drawText('8. Подтверждение и подписи', {
+      x: margin,
+      y,
+      size: 14,
+      font: fontBold,
+      color: brandColor,
+    });
+    y -= 16;
 
-    pdf.setFontSize(9);
-    pdf.setTextColor(100, 100, 100);
-    pdf.setFont('helvetica', 'normal');
-    pdf.text('Подписывая ниже, обе стороны подтверждают и соглашаются с условиями, изложенными в данном документе.', margin, y);
-    y += 10;
+    page.drawText('Подписывая ниже, обе стороны подтверждают и соглашаются с условиями, изложенными в данном документе.', {
+      x: margin,
+      y,
+      size: 9,
+      font,
+      color: grayColor,
+    });
+    y -= 25;
 
     // Signature boxes
-    const boxWidth = (contentWidth - 10) / 2;
-    const signatureBoxHeight = 45;
+    const boxWidth = (contentWidth - 20) / 2;
+    const boxHeight = 80;
 
     // Candidate signature box
-    pdf.setDrawColor(200, 200, 200);
-    pdf.setFillColor(250, 250, 250);
-    pdf.rect(margin, y, boxWidth, signatureBoxHeight, 'FD');
+    page.drawRectangle({ x: margin, y: y - boxHeight, width: boxWidth, height: boxHeight, color: lightGray, borderColor: rgb(200 / 255, 200 / 255, 200 / 255), borderWidth: 1 });
 
-    pdf.setFontSize(11);
-    pdf.setFont('helvetica', 'bold');
-    pdf.setTextColor(brandColor.r, brandColor.g, brandColor.b);
-    pdf.text('КАНДИДАТ', margin + 5, y + 8);
-
-    pdf.setFontSize(9);
-    pdf.setFont('helvetica', 'normal');
-    pdf.setTextColor(0, 0, 0);
-    pdf.text(`ФИО: ${document.candidate_name}`, margin + 5, y + 16);
+    page.drawText('КАНДИДАТ', { x: margin + 10, y: y - 15, size: 11, font: fontBold, color: brandColor });
+    page.drawText(`ФИО: ${document.candidate_name}`, { x: margin + 10, y: y - 30, size: 9, font, color: rgb(0, 0, 0) });
+    page.drawText('Подпись:', { x: margin + 10, y: y - 45, size: 9, font, color: rgb(0, 0, 0) });
 
     // Add signature
-    pdf.text('Подпись:', margin + 5, y + 24);
-
-    if (document.signature_type === 'draw' && document.signature_data) {
-      // Draw signature image
+    if (document.signature_type === 'draw' && document.signature_data && document.signature_data.startsWith('data:image')) {
       try {
-        pdf.addImage(document.signature_data, 'PNG', margin + 25, y + 18, 40, 15);
+        const base64Data = document.signature_data.split(',')[1];
+        const signatureImage = await pdfDoc.embedPng(Buffer.from(base64Data, 'base64'));
+        const signatureDims = signatureImage.scale(0.3);
+        page.drawImage(signatureImage, {
+          x: margin + 60,
+          y: y - 65,
+          width: Math.min(signatureDims.width, 80),
+          height: Math.min(signatureDims.height, 30),
+        });
       } catch (e) {
-        console.error('Error adding signature image:', e);
-        pdf.text('[Подпись]', margin + 25, y + 28);
+        console.error('Error embedding signature image:', e);
+        page.drawText('[Подпись]', { x: margin + 60, y: y - 50, size: 10, font, color: rgb(0, 0, 0) });
       }
     } else if (document.signature_type === 'typed' && document.signature_data) {
       try {
         const sigData = JSON.parse(document.signature_data);
-        const fontStyle = sigData.style === 1 ? 'italic' : sigData.style === 2 ? 'normal' : 'bold';
-        pdf.setFont('helvetica', fontStyle);
-        pdf.setFontSize(14);
-        pdf.text(sigData.name, margin + 25, y + 28);
-        pdf.setFont('helvetica', 'normal');
-        pdf.setFontSize(9);
+        page.drawText(sigData.name, { x: margin + 60, y: y - 50, size: 12, font: fontBold, color: rgb(0, 0, 0) });
       } catch (e) {
-        pdf.text('[Подпись]', margin + 25, y + 28);
+        page.drawText('[Подпись]', { x: margin + 60, y: y - 50, size: 10, font, color: rgb(0, 0, 0) });
       }
     }
 
-    pdf.text(`Дата: ${formatDate(document.signed_at)}`, margin + 5, y + 40);
+    page.drawText(`Дата: ${formatDate(document.signed_at)}`, { x: margin + 10, y: y - 72, size: 9, font, color: rgb(0, 0, 0) });
 
     // Representative signature box
-    const repBoxX = margin + boxWidth + 10;
-    pdf.setDrawColor(200, 200, 200);
-    pdf.setFillColor(250, 250, 250);
-    pdf.rect(repBoxX, y, boxWidth, signatureBoxHeight, 'FD');
+    const repBoxX = margin + boxWidth + 20;
+    page.drawRectangle({ x: repBoxX, y: y - boxHeight, width: boxWidth, height: boxHeight, color: lightGray, borderColor: rgb(200 / 255, 200 / 255, 200 / 255), borderWidth: 1 });
 
-    pdf.setFontSize(11);
-    pdf.setFont('helvetica', 'bold');
-    pdf.setTextColor(brandColor.r, brandColor.g, brandColor.b);
-    pdf.text('ПРЕДСТАВИТЕЛЬ C-SPACE', repBoxX + 5, y + 8);
+    page.drawText('ПРЕДСТАВИТЕЛЬ C-SPACE', { x: repBoxX + 10, y: y - 15, size: 11, font: fontBold, color: brandColor });
+    page.drawText(`ФИО: ${document.representative_name || '_________________'}`, { x: repBoxX + 10, y: y - 30, size: 9, font, color: rgb(0, 0, 0) });
+    page.drawText('Подпись: _________________', { x: repBoxX + 10, y: y - 45, size: 9, font, color: rgb(0, 0, 0) });
+    page.drawText('Дата: _________________', { x: repBoxX + 10, y: y - 72, size: 9, font, color: rgb(0, 0, 0) });
 
-    pdf.setFontSize(9);
-    pdf.setFont('helvetica', 'normal');
-    pdf.setTextColor(0, 0, 0);
-    pdf.text(`ФИО: ${document.representative_name || '_________________'}`, repBoxX + 5, y + 16);
-    pdf.text('Подпись: _________________', repBoxX + 5, y + 24);
-    pdf.text('Дата: _________________', repBoxX + 5, y + 40);
-
-    y += signatureBoxHeight + 15;
+    y -= boxHeight + 20;
 
     // === FOOTER ===
-    checkPageBreak(25);
-    pdf.setDrawColor(200, 200, 200);
-    pdf.line(margin, y, pageWidth - margin, y);
-    y += 8;
+    checkPageBreak(40);
+    page.drawLine({ start: { x: margin, y }, end: { x: pageWidth - margin, y }, thickness: 1, color: rgb(200 / 255, 200 / 255, 200 / 255) });
+    y -= 15;
 
-    pdf.setFontSize(10);
-    pdf.setFont('helvetica', 'italic');
-    pdf.setTextColor(100, 100, 100);
-    pdf.text('Right People. Right Place.', pageWidth / 2, y, { align: 'center' });
-    y += 5;
+    page.drawText('Right People. Right Place.', { x: pageWidth / 2 - 50, y, size: 10, font, color: grayColor });
+    y -= 12;
 
     if (document.branch_address) {
-      pdf.setFontSize(8);
-      pdf.text(`${document.branch_name} | ${document.branch_address}`, pageWidth / 2, y, { align: 'center' });
-      y += 4;
+      page.drawText(`${document.branch_name} | ${document.branch_address}`, { x: pageWidth / 2 - 100, y, size: 8, font, color: grayColor });
+      y -= 10;
     }
 
-    pdf.setFontSize(8);
-    pdf.text('Конфиденциально | C-Space Coworking', pageWidth / 2, y, { align: 'center' });
+    page.drawText('Конфиденциально | C-Space Coworking', { x: pageWidth / 2 - 70, y, size: 8, font, color: grayColor });
 
-    // Generate PDF buffer
-    const pdfBuffer = Buffer.from(pdf.output('arraybuffer'));
+    // Generate PDF bytes
+    const pdfBytes = await pdfDoc.save();
 
     // Return PDF response
-    return new NextResponse(pdfBuffer, {
+    return new NextResponse(Buffer.from(pdfBytes), {
       headers: {
         'Content-Type': 'application/pdf',
         'Content-Disposition': `attachment; filename="term-sheet-${document.candidate_name.replace(/\s+/g, '-')}.pdf"`,
