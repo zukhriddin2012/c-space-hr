@@ -259,23 +259,33 @@ export const POST = withAuth(async (
     });
 
     // Store the analysis in the database
-    const { error: updateError } = await supabaseAdmin
+    const { data: updateData, error: updateError } = await supabaseAdmin
       .from('candidates')
       .update({
         ai_analysis: analysis,
         ai_analyzed_at: analysis.analyzed_at,
         updated_at: new Date().toISOString(),
       })
-      .eq('id', id);
+      .eq('id', id)
+      .select('ai_analysis, ai_analyzed_at')
+      .single();
 
     if (updateError) {
       console.error('Error storing analysis:', updateError);
-      // Still return the analysis even if storage fails
+      return NextResponse.json({
+        success: true,
+        analysis,
+        warning: `Analysis completed but failed to save: ${updateError.message}`,
+        saveError: updateError.message,
+      });
     }
+
+    console.log('Analysis saved successfully:', updateData?.ai_analyzed_at);
 
     return NextResponse.json({
       success: true,
       analysis,
+      saved: true,
     });
 
   } catch (error) {

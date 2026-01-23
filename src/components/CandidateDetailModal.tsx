@@ -339,6 +339,13 @@ export default function CandidateDetailModal({
       }
 
       setAiAnalysis(data.analysis);
+
+      // Show warning if save failed
+      if (data.saveError) {
+        console.error('Analysis save error:', data.saveError);
+        setAiError(`Analysis complete but failed to save: ${data.saveError}. The columns may not exist in the database.`);
+      }
+
       onRefresh(); // Refresh candidate data to update ai_analyzed_at
     } catch (error) {
       console.error('Error analyzing resume:', error);
