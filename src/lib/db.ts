@@ -239,7 +239,7 @@ export async function createBranch(branch: {
   longitude?: number;
   geofence_radius?: number;
   // New configuration fields
-  operational_status?: 'under_construction' | 'operational';
+  operational_status?: 'under_construction' | 'operational' | 'rented' | 'facility_management';
   has_night_shift?: boolean;
   smart_lock_enabled?: boolean;
   smart_lock_start_time?: string;
@@ -307,7 +307,7 @@ export async function updateBranch(
     geofence_radius?: number;
     office_ips?: string[];
     // New configuration fields
-    operational_status?: 'under_construction' | 'operational';
+    operational_status?: 'under_construction' | 'operational' | 'rented' | 'facility_management';
     has_night_shift?: boolean;
     smart_lock_enabled?: boolean;
     smart_lock_start_time?: string | null;

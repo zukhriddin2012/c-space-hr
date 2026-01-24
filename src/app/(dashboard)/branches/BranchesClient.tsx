@@ -1,7 +1,15 @@
 'use client';
 
 import { useState } from 'react';
-import { Plus, MapPin, Users, CheckCircle, Clock, Wallet, Edit, Circle, LayoutGrid, List, Moon, Sun, Lock, Construction, Star } from 'lucide-react';
+import { Plus, MapPin, Users, CheckCircle, Clock, Wallet, Edit, Circle, LayoutGrid, List, Moon, Sun, Lock, Construction, Star, Building2, Wrench } from 'lucide-react';
+
+// Operational status configuration
+const statusConfig: Record<string, { icon: React.ElementType; label: string; bg: string; text: string; border: string }> = {
+  'operational': { icon: CheckCircle, label: 'Operational', bg: 'bg-green-50', text: 'text-green-700', border: 'border-gray-200' },
+  'under_construction': { icon: Construction, label: 'Under Construction', bg: 'bg-orange-100', text: 'text-orange-700', border: 'border-orange-200' },
+  'rented': { icon: Building2, label: 'Rented', bg: 'bg-cyan-100', text: 'text-cyan-700', border: 'border-cyan-200' },
+  'facility_management': { icon: Wrench, label: 'Facility Mgmt', bg: 'bg-slate-100', text: 'text-slate-700', border: 'border-slate-200' },
+};
 import Link from 'next/link';
 import BranchMap from '@/components/BranchMap';
 import type { BranchWithStats } from './page';
@@ -35,16 +43,18 @@ function BranchCard({
     : 0;
 
   const hasGeofence = branch.latitude && branch.longitude;
-  const isUnderConstruction = branch.operational_status === 'under_construction';
+  const status = statusConfig[branch.operational_status] || statusConfig['operational'];
+  const StatusIcon = status.icon;
   const classColor = classColors[branch.branch_class] || classColors['B'];
+  const isSpecialStatus = branch.operational_status !== 'operational';
 
   return (
-    <div className={`bg-white rounded-xl border ${isUnderConstruction ? 'border-orange-200 bg-orange-50/30' : 'border-gray-200'} p-5 hover:shadow-md transition-shadow`}>
+    <div className={`bg-white rounded-xl border ${isSpecialStatus ? status.border : 'border-gray-200'} ${isSpecialStatus ? status.bg + '/30' : ''} p-5 hover:shadow-md transition-shadow`}>
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center gap-3">
-          <div className={`w-12 h-12 ${isUnderConstruction ? 'bg-orange-100' : 'bg-purple-100'} rounded-lg flex items-center justify-center`}>
-            {isUnderConstruction ? (
-              <Construction size={24} className="text-orange-600" />
+          <div className={`w-12 h-12 ${isSpecialStatus ? status.bg : 'bg-purple-100'} rounded-lg flex items-center justify-center`}>
+            {isSpecialStatus ? (
+              <StatusIcon size={24} className={status.text} />
             ) : (
               <MapPin size={24} className="text-purple-600" />
             )}
@@ -63,24 +73,17 @@ function BranchCard({
 
       {/* Status Badges Row */}
       <div className="flex flex-wrap items-center gap-2 mb-4">
-        {isUnderConstruction ? (
-          <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-orange-100 text-orange-700 rounded-full text-xs font-medium">
-            <Construction size={12} />
-            Under Construction
-          </span>
-        ) : (
-          <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-green-50 text-green-700 rounded-full text-xs font-medium">
-            <CheckCircle size={12} />
-            Operational
-          </span>
-        )}
-        {branch.has_night_shift && (
+        <span className={`inline-flex items-center gap-1 px-2.5 py-1 ${status.bg} ${status.text} rounded-full text-xs font-medium`}>
+          <StatusIcon size={12} />
+          {status.label}
+        </span>
+        {branch.operational_status === 'operational' && branch.has_night_shift && (
           <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-indigo-50 text-indigo-700 rounded-full text-xs font-medium">
             <Moon size={12} />
             Night Shift
           </span>
         )}
-        {branch.smart_lock_enabled && !branch.has_night_shift && (
+        {branch.operational_status === 'operational' && branch.smart_lock_enabled && !branch.has_night_shift && (
           <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-blue-50 text-blue-700 rounded-full text-xs font-medium">
             <Lock size={12} />
             Smart Lock
@@ -196,17 +199,19 @@ function BranchRow({
     : 0;
 
   const hasGeofence = branch.latitude && branch.longitude;
-  const isUnderConstruction = branch.operational_status === 'under_construction';
+  const status = statusConfig[branch.operational_status] || statusConfig['operational'];
+  const StatusIcon = status.icon;
   const classColor = classColors[branch.branch_class] || classColors['B'];
+  const isSpecialStatus = branch.operational_status !== 'operational';
 
   return (
     <>
       {/* Desktop List Row */}
-      <div className={`hidden md:flex items-center justify-between p-4 border ${isUnderConstruction ? 'border-orange-200 bg-orange-50/30' : 'border-gray-200'} rounded-lg hover:border-purple-200 hover:bg-purple-50/30 transition-all`}>
+      <div className={`hidden md:flex items-center justify-between p-4 border ${isSpecialStatus ? status.border : 'border-gray-200'} ${isSpecialStatus ? status.bg + '/30' : ''} rounded-lg hover:border-purple-200 hover:bg-purple-50/30 transition-all`}>
         <div className="flex items-center gap-4">
-          <div className={`w-10 h-10 ${isUnderConstruction ? 'bg-orange-100' : 'bg-purple-100'} rounded-lg flex items-center justify-center`}>
-            {isUnderConstruction ? (
-              <Construction size={20} className="text-orange-600" />
+          <div className={`w-10 h-10 ${isSpecialStatus ? status.bg : 'bg-purple-100'} rounded-lg flex items-center justify-center`}>
+            {isSpecialStatus ? (
+              <StatusIcon size={20} className={status.text} />
             ) : (
               <MapPin size={20} className="text-purple-600" />
             )}
@@ -219,10 +224,10 @@ function BranchRow({
                 {branch.branch_class}
               </span>
               {/* Status badges */}
-              {isUnderConstruction ? (
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-orange-100 text-orange-700 rounded-full text-xs font-medium">
-                  <Construction size={10} />
-                  Construction
+              {isSpecialStatus ? (
+                <span className={`inline-flex items-center gap-1 px-2 py-0.5 ${status.bg} ${status.text} rounded-full text-xs font-medium`}>
+                  <StatusIcon size={10} />
+                  {status.label}
                 </span>
               ) : (
                 <>
@@ -285,12 +290,12 @@ function BranchRow({
       </div>
 
       {/* Mobile List Card */}
-      <div className={`md:hidden p-4 border ${isUnderConstruction ? 'border-orange-200 bg-orange-50/30' : 'border-gray-200'} rounded-lg`}>
+      <div className={`md:hidden p-4 border ${isSpecialStatus ? status.border : 'border-gray-200'} ${isSpecialStatus ? status.bg + '/30' : ''} rounded-lg`}>
         <div className="flex items-start justify-between mb-3">
           <div className="flex items-center gap-3">
-            <div className={`w-10 h-10 ${isUnderConstruction ? 'bg-orange-100' : 'bg-purple-100'} rounded-lg flex items-center justify-center flex-shrink-0`}>
-              {isUnderConstruction ? (
-                <Construction size={18} className="text-orange-600" />
+            <div className={`w-10 h-10 ${isSpecialStatus ? status.bg : 'bg-purple-100'} rounded-lg flex items-center justify-center flex-shrink-0`}>
+              {isSpecialStatus ? (
+                <StatusIcon size={18} className={status.text} />
               ) : (
                 <MapPin size={18} className="text-purple-600" />
               )}
@@ -306,9 +311,9 @@ function BranchRow({
             </div>
           </div>
           <div className="flex flex-col gap-1 items-end flex-shrink-0">
-            {isUnderConstruction ? (
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-orange-100 text-orange-700 rounded-full text-xs font-medium">
-                <Construction size={10} />
+            {isSpecialStatus ? (
+              <span className={`inline-flex items-center gap-1 px-2 py-0.5 ${status.bg} ${status.text} rounded-full text-xs font-medium`}>
+                <StatusIcon size={10} />
               </span>
             ) : (
               <>

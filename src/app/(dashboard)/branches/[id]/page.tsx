@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { MapPin, Save, ArrowLeft, Trash2, Navigation, Circle, Wifi, Plus, X, Moon, Sun, Lock, Construction, Star, User } from 'lucide-react';
+import { MapPin, Save, ArrowLeft, Trash2, Navigation, Circle, Wifi, Plus, X, Moon, Sun, Lock, Construction, Star, User, Building2, Wrench } from 'lucide-react';
 import Link from 'next/link';
 
 interface Branch {
@@ -14,7 +14,7 @@ interface Branch {
   geofence_radius: number;
   office_ips: string[] | null;
   // New configuration fields
-  operational_status: 'under_construction' | 'operational';
+  operational_status: 'under_construction' | 'operational' | 'rented' | 'facility_management';
   has_night_shift: boolean;
   smart_lock_enabled: boolean;
   smart_lock_start_time: string | null;
@@ -49,7 +49,7 @@ export default function BranchDetailPage() {
     geofence_radius: '100',
     office_ips: [] as string[],
     // New configuration fields
-    operational_status: 'operational' as 'under_construction' | 'operational',
+    operational_status: 'operational' as 'under_construction' | 'operational' | 'rented' | 'facility_management',
     has_night_shift: false,
     smart_lock_enabled: false,
     smart_lock_start_time: '18:00',
@@ -301,8 +301,8 @@ export default function BranchDetailPage() {
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Operational Status
               </label>
-              <div className="flex gap-4">
-                <label className={`flex-1 flex items-center gap-3 p-4 border rounded-lg cursor-pointer transition-all ${
+              <div className="grid grid-cols-2 gap-3">
+                <label className={`flex items-center gap-3 p-4 border rounded-lg cursor-pointer transition-all ${
                   formData.operational_status === 'operational'
                     ? 'border-green-500 bg-green-50'
                     : 'border-gray-200 hover:border-gray-300'
@@ -312,7 +312,7 @@ export default function BranchDetailPage() {
                     name="operational_status"
                     value="operational"
                     checked={formData.operational_status === 'operational'}
-                    onChange={(e) => setFormData(prev => ({ ...prev, operational_status: e.target.value as 'operational' | 'under_construction' }))}
+                    onChange={(e) => setFormData(prev => ({ ...prev, operational_status: e.target.value as typeof formData.operational_status }))}
                     className="sr-only"
                   />
                   <Sun size={20} className={formData.operational_status === 'operational' ? 'text-green-600' : 'text-gray-400'} />
@@ -321,7 +321,7 @@ export default function BranchDetailPage() {
                     <p className="text-xs text-gray-500">Fully running with staff</p>
                   </div>
                 </label>
-                <label className={`flex-1 flex items-center gap-3 p-4 border rounded-lg cursor-pointer transition-all ${
+                <label className={`flex items-center gap-3 p-4 border rounded-lg cursor-pointer transition-all ${
                   formData.operational_status === 'under_construction'
                     ? 'border-orange-500 bg-orange-50'
                     : 'border-gray-200 hover:border-gray-300'
@@ -331,13 +331,51 @@ export default function BranchDetailPage() {
                     name="operational_status"
                     value="under_construction"
                     checked={formData.operational_status === 'under_construction'}
-                    onChange={(e) => setFormData(prev => ({ ...prev, operational_status: e.target.value as 'operational' | 'under_construction' }))}
+                    onChange={(e) => setFormData(prev => ({ ...prev, operational_status: e.target.value as typeof formData.operational_status }))}
                     className="sr-only"
                   />
                   <Construction size={20} className={formData.operational_status === 'under_construction' ? 'text-orange-600' : 'text-gray-400'} />
                   <div>
                     <p className="font-medium text-gray-900">Under Construction</p>
                     <p className="text-xs text-gray-500">No CM/NS needed</p>
+                  </div>
+                </label>
+                <label className={`flex items-center gap-3 p-4 border rounded-lg cursor-pointer transition-all ${
+                  formData.operational_status === 'rented'
+                    ? 'border-cyan-500 bg-cyan-50'
+                    : 'border-gray-200 hover:border-gray-300'
+                }`}>
+                  <input
+                    type="radio"
+                    name="operational_status"
+                    value="rented"
+                    checked={formData.operational_status === 'rented'}
+                    onChange={(e) => setFormData(prev => ({ ...prev, operational_status: e.target.value as typeof formData.operational_status }))}
+                    className="sr-only"
+                  />
+                  <Building2 size={20} className={formData.operational_status === 'rented' ? 'text-cyan-600' : 'text-gray-400'} />
+                  <div>
+                    <p className="font-medium text-gray-900">Rented</p>
+                    <p className="text-xs text-gray-500">Rented to external company</p>
+                  </div>
+                </label>
+                <label className={`flex items-center gap-3 p-4 border rounded-lg cursor-pointer transition-all ${
+                  formData.operational_status === 'facility_management'
+                    ? 'border-slate-500 bg-slate-50'
+                    : 'border-gray-200 hover:border-gray-300'
+                }`}>
+                  <input
+                    type="radio"
+                    name="operational_status"
+                    value="facility_management"
+                    checked={formData.operational_status === 'facility_management'}
+                    onChange={(e) => setFormData(prev => ({ ...prev, operational_status: e.target.value as typeof formData.operational_status }))}
+                    className="sr-only"
+                  />
+                  <Wrench size={20} className={formData.operational_status === 'facility_management' ? 'text-slate-600' : 'text-gray-400'} />
+                  <div>
+                    <p className="font-medium text-gray-900">Facility Mgmt</p>
+                    <p className="text-xs text-gray-500">Cleaning, procurement, etc.</p>
                   </div>
                 </label>
               </div>

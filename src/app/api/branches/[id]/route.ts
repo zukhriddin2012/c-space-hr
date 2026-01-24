@@ -53,7 +53,7 @@ export const PUT = withAuth(async (
       longitude?: number | null;
       geofence_radius?: number;
       office_ips?: string[];
-      operational_status?: 'under_construction' | 'operational';
+      operational_status?: 'under_construction' | 'operational' | 'rented' | 'facility_management';
       has_night_shift?: boolean;
       smart_lock_enabled?: boolean;
       smart_lock_start_time?: string | null;
