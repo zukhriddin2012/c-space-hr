@@ -764,16 +764,22 @@ export async function authenticateEmployee(email: string, password: string): Pro
     return null;
   }
 
+  // Find employee by email and password (don't filter by status to allow NULL status)
   const { data, error } = await supabaseAdmin!
     .from('employees')
     .select('*, branches(name)')
     .eq('email', email)
     .eq('password', password)
-    .eq('status', 'active')
     .single();
 
   if (error) {
-    // No matching employee found or other error
+    console.error('Authentication error:', error);
+    return null;
+  }
+
+  // Only block terminated employees
+  if (data?.status === 'terminated') {
+    console.log('Employee account is terminated');
     return null;
   }
 
