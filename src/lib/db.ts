@@ -15,31 +15,10 @@ function getTashkentDateString(): string {
 // EMPLOYEES
 // ============================================
 
-// Helper to get static employees
-async function getStaticEmployees(): Promise<Employee[]> {
-  const { employees } = await import('@/data/employees');
-  return employees.map(e => ({
-    id: e.id,
-    employee_id: e.employeeId,
-    full_name: e.fullName,
-    position: e.position,
-    level: e.level,
-    branch_id: e.branchId,
-    salary: e.salary,
-    phone: e.phone || null,
-    email: e.email || null,
-    telegram_id: null,
-    default_shift: 'day',
-    can_rotate: false,
-    status: 'active',
-    employment_type: 'full-time',
-    hire_date: e.hireDate || new Date().toISOString().split('T')[0],
-  }));
-}
-
 export async function getEmployees(): Promise<Employee[]> {
   if (!isSupabaseAdminConfigured()) {
-    return getStaticEmployees();
+    console.error('Supabase not configured');
+    return [];
   }
 
   const { data, error } = await supabaseAdmin!
@@ -48,45 +27,17 @@ export async function getEmployees(): Promise<Employee[]> {
     .order('full_name');
 
   if (error) {
-    console.error('Error fetching employees, using static data:', error);
-    return getStaticEmployees();
+    console.error('Error fetching employees:', error);
+    return [];
   }
 
-  // Fall back to static data if Supabase is empty
-  if (!data || data.length === 0) {
-    return getStaticEmployees();
-  }
-
-  return data;
-}
-
-// Helper to get static employee by ID
-async function getStaticEmployeeById(id: string): Promise<Employee | null> {
-  const { employees } = await import('@/data/employees');
-  const emp = employees.find(e => e.id === id);
-  if (!emp) return null;
-  return {
-    id: emp.id,
-    employee_id: emp.employeeId,
-    full_name: emp.fullName,
-    position: emp.position,
-    level: emp.level,
-    branch_id: emp.branchId,
-    salary: emp.salary,
-    phone: emp.phone || null,
-    email: emp.email || null,
-    telegram_id: null,
-    default_shift: 'day',
-    can_rotate: false,
-    status: 'active',
-    employment_type: 'full-time',
-    hire_date: emp.hireDate || new Date().toISOString().split('T')[0],
-  };
+  return data || [];
 }
 
 export async function getEmployeeById(id: string): Promise<Employee | null> {
   if (!isSupabaseAdminConfigured()) {
-    return getStaticEmployeeById(id);
+    console.error('Supabase not configured');
+    return null;
   }
 
   const { data, error } = await supabaseAdmin!
@@ -95,41 +46,18 @@ export async function getEmployeeById(id: string): Promise<Employee | null> {
     .eq('id', id)
     .single();
 
-  if (error || !data) {
-    // Fall back to static data
-    return getStaticEmployeeById(id);
+  if (error) {
+    console.error('Error fetching employee by id:', error);
+    return null;
   }
 
   return data;
 }
 
-// Helper to get static employees by branch
-async function getStaticEmployeesByBranch(branchId: string): Promise<Employee[]> {
-  const { employees } = await import('@/data/employees');
-  return employees
-    .filter(e => e.branchId === branchId)
-    .map(e => ({
-      id: e.id,
-      employee_id: e.employeeId,
-      full_name: e.fullName,
-      position: e.position,
-      level: e.level,
-      branch_id: e.branchId,
-      salary: e.salary,
-      phone: e.phone || null,
-      email: e.email || null,
-      telegram_id: null,
-      default_shift: 'day',
-      can_rotate: false,
-      status: 'active',
-      employment_type: 'full-time',
-      hire_date: e.hireDate || new Date().toISOString().split('T')[0],
-    }));
-}
-
 export async function getEmployeesByBranch(branchId: string): Promise<Employee[]> {
   if (!isSupabaseAdminConfigured()) {
-    return getStaticEmployeesByBranch(branchId);
+    console.error('Supabase not configured');
+    return [];
   }
 
   const { data, error } = await supabaseAdmin!
@@ -139,16 +67,11 @@ export async function getEmployeesByBranch(branchId: string): Promise<Employee[]
     .order('full_name');
 
   if (error) {
-    console.error('Error fetching employees by branch, using static data:', error);
-    return getStaticEmployeesByBranch(branchId);
+    console.error('Error fetching employees by branch:', error);
+    return [];
   }
 
-  // Fall back to static if empty
-  if (!data || data.length === 0) {
-    return getStaticEmployeesByBranch(branchId);
-  }
-
-  return data;
+  return data || [];
 }
 
 export async function updateEmployee(
@@ -270,22 +193,10 @@ export async function deleteEmployee(id: string): Promise<{ success: boolean; er
 // BRANCHES
 // ============================================
 
-// Helper to get static branches
-async function getStaticBranches(): Promise<Branch[]> {
-  const { branches } = await import('@/data/branches');
-  return branches.map(b => ({
-    id: b.id,
-    name: b.name,
-    address: b.address,
-    latitude: b.latitude || null,
-    longitude: b.longitude || null,
-    geofence_radius: 100,
-  }));
-}
-
 export async function getBranches(): Promise<Branch[]> {
   if (!isSupabaseAdminConfigured()) {
-    return getStaticBranches();
+    console.error('Supabase not configured');
+    return [];
   }
 
   const { data, error } = await supabaseAdmin!
@@ -294,36 +205,17 @@ export async function getBranches(): Promise<Branch[]> {
     .order('name');
 
   if (error) {
-    console.error('Error fetching branches, using static data:', error);
-    return getStaticBranches();
+    console.error('Error fetching branches:', error);
+    return [];
   }
 
-  // Fall back to static if empty
-  if (!data || data.length === 0) {
-    return getStaticBranches();
-  }
-
-  return data;
-}
-
-// Helper to get static branch by ID
-async function getStaticBranchById(id: string): Promise<Branch | null> {
-  const { branches } = await import('@/data/branches');
-  const branch = branches.find(b => b.id === id);
-  if (!branch) return null;
-  return {
-    id: branch.id,
-    name: branch.name,
-    address: branch.address,
-    latitude: branch.latitude || null,
-    longitude: branch.longitude || null,
-    geofence_radius: 100,
-  };
+  return data || [];
 }
 
 export async function getBranchById(id: string): Promise<Branch | null> {
   if (!isSupabaseAdminConfigured()) {
-    return getStaticBranchById(id);
+    console.error('Supabase not configured');
+    return null;
   }
 
   const { data, error } = await supabaseAdmin!
@@ -332,9 +224,9 @@ export async function getBranchById(id: string): Promise<Branch | null> {
     .eq('id', id)
     .single();
 
-  if (error || !data) {
-    // Fall back to static data
-    return getStaticBranchById(id);
+  if (error) {
+    console.error('Error fetching branch by id:', error);
+    return null;
   }
 
   return data;
