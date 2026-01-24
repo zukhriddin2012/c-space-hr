@@ -1,10 +1,20 @@
 'use client';
 
 import { useState } from 'react';
-import { Plus, MapPin, Users, CheckCircle, Clock, Wallet, Edit, Circle, LayoutGrid, List } from 'lucide-react';
+import { Plus, MapPin, Users, CheckCircle, Clock, Wallet, Edit, Circle, LayoutGrid, List, Moon, Sun, Lock, Construction, Star } from 'lucide-react';
 import Link from 'next/link';
 import BranchMap from '@/components/BranchMap';
 import type { BranchWithStats } from './page';
+
+// Branch class badge colors
+const classColors: Record<string, { bg: string; text: string }> = {
+  'A+': { bg: 'bg-purple-100', text: 'text-purple-700' },
+  'A': { bg: 'bg-blue-100', text: 'text-blue-700' },
+  'B+': { bg: 'bg-green-100', text: 'text-green-700' },
+  'B': { bg: 'bg-teal-100', text: 'text-teal-700' },
+  'C+': { bg: 'bg-yellow-100', text: 'text-yellow-700' },
+  'C': { bg: 'bg-orange-100', text: 'text-orange-700' },
+};
 
 function formatSalary(amount: number): string {
   if (amount === 0) return '-';
@@ -25,27 +35,55 @@ function BranchCard({
     : 0;
 
   const hasGeofence = branch.latitude && branch.longitude;
+  const isUnderConstruction = branch.operational_status === 'under_construction';
+  const classColor = classColors[branch.branch_class] || classColors['B'];
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-5 hover:shadow-md transition-shadow">
-      <div className="flex items-start justify-between mb-4">
+    <div className={`bg-white rounded-xl border ${isUnderConstruction ? 'border-orange-200 bg-orange-50/30' : 'border-gray-200'} p-5 hover:shadow-md transition-shadow`}>
+      <div className="flex items-start justify-between mb-3">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-            <MapPin size={24} className="text-purple-600" />
+          <div className={`w-12 h-12 ${isUnderConstruction ? 'bg-orange-100' : 'bg-purple-100'} rounded-lg flex items-center justify-center`}>
+            {isUnderConstruction ? (
+              <Construction size={24} className="text-orange-600" />
+            ) : (
+              <MapPin size={24} className="text-purple-600" />
+            )}
           </div>
           <div>
             <h3 className="font-semibold text-gray-900">{branch.name}</h3>
             <p className="text-sm text-gray-500">{branch.address || 'No address'}</p>
           </div>
         </div>
-        {branch.isActive ? (
-          <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-green-50 text-green-700 rounded-full text-xs font-medium">
-            <CheckCircle size={12} />
-            Active
+        {/* Branch Class Badge */}
+        <span className={`inline-flex items-center gap-1 px-2.5 py-1 ${classColor.bg} ${classColor.text} rounded-full text-xs font-bold`}>
+          <Star size={12} />
+          {branch.branch_class}
+        </span>
+      </div>
+
+      {/* Status Badges Row */}
+      <div className="flex flex-wrap items-center gap-2 mb-4">
+        {isUnderConstruction ? (
+          <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-orange-100 text-orange-700 rounded-full text-xs font-medium">
+            <Construction size={12} />
+            Under Construction
           </span>
         ) : (
-          <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-gray-50 text-gray-600 rounded-full text-xs font-medium">
-            No Staff
+          <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-green-50 text-green-700 rounded-full text-xs font-medium">
+            <CheckCircle size={12} />
+            Operational
+          </span>
+        )}
+        {branch.has_night_shift && (
+          <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-indigo-50 text-indigo-700 rounded-full text-xs font-medium">
+            <Moon size={12} />
+            Night Shift
+          </span>
+        )}
+        {branch.smart_lock_enabled && !branch.has_night_shift && (
+          <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-blue-50 text-blue-700 rounded-full text-xs font-medium">
+            <Lock size={12} />
+            Smart Lock
           </span>
         )}
       </div>
@@ -105,6 +143,14 @@ function BranchCard({
         </div>
       )}
 
+      {/* Community Manager */}
+      {branch.community_manager_name && (
+        <div className="flex items-center gap-2 text-sm text-gray-600 mb-3 bg-gray-50 rounded-lg px-3 py-2">
+          <Users size={14} className="text-purple-500" />
+          <span>CM: <strong>{branch.community_manager_name}</strong></span>
+        </div>
+      )}
+
       {/* Geofence Info */}
       <div className="flex items-center gap-2 text-sm text-gray-500 mb-4">
         <Circle size={14} className={hasGeofence ? 'text-green-500' : 'text-gray-300'} />
@@ -150,26 +196,49 @@ function BranchRow({
     : 0;
 
   const hasGeofence = branch.latitude && branch.longitude;
+  const isUnderConstruction = branch.operational_status === 'under_construction';
+  const classColor = classColors[branch.branch_class] || classColors['B'];
 
   return (
     <>
       {/* Desktop List Row */}
-      <div className="hidden md:flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:border-purple-200 hover:bg-purple-50/30 transition-all">
+      <div className={`hidden md:flex items-center justify-between p-4 border ${isUnderConstruction ? 'border-orange-200 bg-orange-50/30' : 'border-gray-200'} rounded-lg hover:border-purple-200 hover:bg-purple-50/30 transition-all`}>
         <div className="flex items-center gap-4">
-          <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-            <MapPin size={20} className="text-purple-600" />
+          <div className={`w-10 h-10 ${isUnderConstruction ? 'bg-orange-100' : 'bg-purple-100'} rounded-lg flex items-center justify-center`}>
+            {isUnderConstruction ? (
+              <Construction size={20} className="text-orange-600" />
+            ) : (
+              <MapPin size={20} className="text-purple-600" />
+            )}
           </div>
           <div>
             <div className="flex items-center gap-2">
               <h3 className="font-medium text-gray-900">{branch.name}</h3>
-              {branch.isActive ? (
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-green-50 text-green-700 rounded-full text-xs font-medium">
-                  Active
+              {/* Branch Class */}
+              <span className={`px-2 py-0.5 ${classColor.bg} ${classColor.text} rounded-full text-xs font-bold`}>
+                {branch.branch_class}
+              </span>
+              {/* Status badges */}
+              {isUnderConstruction ? (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-orange-100 text-orange-700 rounded-full text-xs font-medium">
+                  <Construction size={10} />
+                  Construction
                 </span>
               ) : (
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-gray-50 text-gray-600 rounded-full text-xs font-medium">
-                  No Staff
-                </span>
+                <>
+                  {branch.has_night_shift && (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-indigo-50 text-indigo-700 rounded-full text-xs font-medium">
+                      <Moon size={10} />
+                      NS
+                    </span>
+                  )}
+                  {branch.smart_lock_enabled && !branch.has_night_shift && (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-50 text-blue-700 rounded-full text-xs font-medium">
+                      <Lock size={10} />
+                      SL
+                    </span>
+                  )}
+                </>
               )}
             </div>
             <p className="text-sm text-gray-500">{branch.address || 'No address'}</p>
@@ -216,26 +285,46 @@ function BranchRow({
       </div>
 
       {/* Mobile List Card */}
-      <div className="md:hidden p-4 border border-gray-200 rounded-lg">
+      <div className={`md:hidden p-4 border ${isUnderConstruction ? 'border-orange-200 bg-orange-50/30' : 'border-gray-200'} rounded-lg`}>
         <div className="flex items-start justify-between mb-3">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
-              <MapPin size={18} className="text-purple-600" />
+            <div className={`w-10 h-10 ${isUnderConstruction ? 'bg-orange-100' : 'bg-purple-100'} rounded-lg flex items-center justify-center flex-shrink-0`}>
+              {isUnderConstruction ? (
+                <Construction size={18} className="text-orange-600" />
+              ) : (
+                <MapPin size={18} className="text-purple-600" />
+              )}
             </div>
             <div className="min-w-0">
-              <h3 className="font-medium text-gray-900">{branch.name}</h3>
+              <div className="flex items-center gap-2">
+                <h3 className="font-medium text-gray-900">{branch.name}</h3>
+                <span className={`px-1.5 py-0.5 ${classColor.bg} ${classColor.text} rounded text-xs font-bold`}>
+                  {branch.branch_class}
+                </span>
+              </div>
               <p className="text-xs text-gray-500 truncate">{branch.address || 'No address'}</p>
             </div>
           </div>
-          {branch.isActive ? (
-            <span className="inline-flex items-center px-2 py-0.5 bg-green-50 text-green-700 rounded-full text-xs font-medium flex-shrink-0">
-              Active
-            </span>
-          ) : (
-            <span className="inline-flex items-center px-2 py-0.5 bg-gray-50 text-gray-600 rounded-full text-xs font-medium flex-shrink-0">
-              No Staff
-            </span>
-          )}
+          <div className="flex flex-col gap-1 items-end flex-shrink-0">
+            {isUnderConstruction ? (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-orange-100 text-orange-700 rounded-full text-xs font-medium">
+                <Construction size={10} />
+              </span>
+            ) : (
+              <>
+                {branch.has_night_shift && (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-indigo-50 text-indigo-700 rounded-full text-xs font-medium">
+                    <Moon size={10} />
+                  </span>
+                )}
+                {branch.smart_lock_enabled && !branch.has_night_shift && (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-50 text-blue-700 rounded-full text-xs font-medium">
+                    <Lock size={10} />
+                  </span>
+                )}
+              </>
+            )}
+          </div>
         </div>
 
         <div className="grid grid-cols-3 gap-3 text-center bg-gray-50 rounded-lg p-3 mb-3">

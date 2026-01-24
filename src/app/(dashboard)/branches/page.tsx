@@ -16,6 +16,12 @@ export interface BranchWithStats {
   totalEmployees: number;
   presentToday: number;
   salaryBudget: number;
+  // New branch configuration fields
+  operational_status: 'under_construction' | 'operational';
+  has_night_shift: boolean;
+  smart_lock_enabled: boolean;
+  branch_class: 'A+' | 'A' | 'B+' | 'B' | 'C+' | 'C';
+  community_manager_name?: string;
 }
 
 // Cache branches for 5 minutes
@@ -61,12 +67,22 @@ async function getBranchesWithStats(): Promise<BranchWithStats[]> {
 
   return branches.map(branch => {
     const stats = branchStats.get(branch.id) || { count: 0, salary: 0 };
+    // Find community manager name if assigned
+    const cmName = branch.community_manager_id
+      ? employees.find(e => e.id === branch.community_manager_id)?.full_name
+      : undefined;
     return {
       ...branch,
       isActive: stats.count > 0,
       totalEmployees: stats.count,
       presentToday: presentByBranch.get(branch.id) || 0,
       salaryBudget: stats.salary,
+      // New fields with defaults for backwards compatibility
+      operational_status: branch.operational_status || 'operational',
+      has_night_shift: branch.has_night_shift || false,
+      smart_lock_enabled: branch.smart_lock_enabled || false,
+      branch_class: branch.branch_class || 'B',
+      community_manager_name: cmName,
     };
   });
 }

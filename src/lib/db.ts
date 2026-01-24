@@ -238,6 +238,15 @@ export async function createBranch(branch: {
   latitude?: number;
   longitude?: number;
   geofence_radius?: number;
+  // New configuration fields
+  operational_status?: 'under_construction' | 'operational';
+  has_night_shift?: boolean;
+  smart_lock_enabled?: boolean;
+  smart_lock_start_time?: string;
+  smart_lock_end_time?: string;
+  branch_class?: 'A+' | 'A' | 'B+' | 'B' | 'C+' | 'C';
+  description?: string | null;
+  community_manager_id?: string | null;
 }): Promise<{ success: boolean; branch?: Branch; error?: string }> {
   if (!isSupabaseAdminConfigured()) {
     return { success: false, error: 'Database not configured' };
@@ -267,6 +276,15 @@ export async function createBranch(branch: {
       latitude: branch.latitude || null,
       longitude: branch.longitude || null,
       geofence_radius: branch.geofence_radius || 100,
+      // New configuration fields
+      operational_status: branch.operational_status || 'operational',
+      has_night_shift: branch.has_night_shift || false,
+      smart_lock_enabled: branch.smart_lock_enabled || false,
+      smart_lock_start_time: branch.smart_lock_start_time || '18:00',
+      smart_lock_end_time: branch.smart_lock_end_time || '09:00',
+      branch_class: branch.branch_class || 'B',
+      description: branch.description || null,
+      community_manager_id: branch.community_manager_id || null,
     })
     .select()
     .single();
@@ -288,6 +306,15 @@ export async function updateBranch(
     longitude?: number | null;
     geofence_radius?: number;
     office_ips?: string[];
+    // New configuration fields
+    operational_status?: 'under_construction' | 'operational';
+    has_night_shift?: boolean;
+    smart_lock_enabled?: boolean;
+    smart_lock_start_time?: string | null;
+    smart_lock_end_time?: string | null;
+    branch_class?: 'A+' | 'A' | 'B+' | 'B' | 'C+' | 'C';
+    description?: string | null;
+    community_manager_id?: string | null;
   }
 ): Promise<{ success: boolean; branch?: Branch; error?: string }> {
   if (!isSupabaseAdminConfigured()) {

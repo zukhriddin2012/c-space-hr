@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { MapPin, Save, ArrowLeft, Trash2, Navigation, Circle, Wifi, Plus, X } from 'lucide-react';
+import { MapPin, Save, ArrowLeft, Trash2, Navigation, Circle, Wifi, Plus, X, Moon, Sun, Lock, Construction, Star, User } from 'lucide-react';
 import Link from 'next/link';
 
 interface Branch {
@@ -13,6 +13,21 @@ interface Branch {
   longitude: number | null;
   geofence_radius: number;
   office_ips: string[] | null;
+  // New configuration fields
+  operational_status: 'under_construction' | 'operational';
+  has_night_shift: boolean;
+  smart_lock_enabled: boolean;
+  smart_lock_start_time: string | null;
+  smart_lock_end_time: string | null;
+  branch_class: 'A+' | 'A' | 'B+' | 'B' | 'C+' | 'C';
+  description: string | null;
+  community_manager_id: string | null;
+}
+
+interface Employee {
+  id: string;
+  full_name: string;
+  position: string;
 }
 
 export default function BranchDetailPage() {
@@ -33,14 +48,39 @@ export default function BranchDetailPage() {
     longitude: '',
     geofence_radius: '100',
     office_ips: [] as string[],
+    // New configuration fields
+    operational_status: 'operational' as 'under_construction' | 'operational',
+    has_night_shift: false,
+    smart_lock_enabled: false,
+    smart_lock_start_time: '18:00',
+    smart_lock_end_time: '09:00',
+    branch_class: 'B' as 'A+' | 'A' | 'B+' | 'B' | 'C+' | 'C',
+    description: '',
+    community_manager_id: '',
   });
   const [newIp, setNewIp] = useState('');
+  const [employees, setEmployees] = useState<Employee[]>([]);
 
   useEffect(() => {
+    // Fetch employees for CM dropdown
+    fetchEmployees();
     if (!isNew) {
       fetchBranch();
     }
   }, [branchId, isNew]);
+
+  const fetchEmployees = async () => {
+    try {
+      const res = await fetch('/api/employees');
+      if (res.ok) {
+        const data = await res.json();
+        // Filter for potential CMs (community managers or managers)
+        setEmployees(data.employees || []);
+      }
+    } catch (err) {
+      console.error('Failed to fetch employees');
+    }
+  };
 
   const fetchBranch = async () => {
     try {
@@ -55,6 +95,15 @@ export default function BranchDetailPage() {
         longitude: branch.longitude?.toString() || '',
         geofence_radius: branch.geofence_radius?.toString() || '100',
         office_ips: branch.office_ips || [],
+        // New configuration fields
+        operational_status: branch.operational_status || 'operational',
+        has_night_shift: branch.has_night_shift || false,
+        smart_lock_enabled: branch.smart_lock_enabled || false,
+        smart_lock_start_time: branch.smart_lock_start_time || '18:00',
+        smart_lock_end_time: branch.smart_lock_end_time || '09:00',
+        branch_class: branch.branch_class || 'B',
+        description: branch.description || '',
+        community_manager_id: branch.community_manager_id || '',
       });
     } catch (err) {
       setError('Failed to load branch');
@@ -223,6 +272,206 @@ export default function BranchDetailPage() {
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none"
               />
             </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Description
+              </label>
+              <textarea
+                value={formData.description}
+                onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                placeholder="Additional notes about this branch..."
+                rows={2}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none resize-none"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Branch Configuration */}
+        <div className="bg-white rounded-xl border border-gray-200 p-6">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+            <Star size={20} className="text-purple-600" />
+            Branch Configuration
+          </h2>
+
+          <div className="space-y-4">
+            {/* Operational Status */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Operational Status
+              </label>
+              <div className="flex gap-4">
+                <label className={`flex-1 flex items-center gap-3 p-4 border rounded-lg cursor-pointer transition-all ${
+                  formData.operational_status === 'operational'
+                    ? 'border-green-500 bg-green-50'
+                    : 'border-gray-200 hover:border-gray-300'
+                }`}>
+                  <input
+                    type="radio"
+                    name="operational_status"
+                    value="operational"
+                    checked={formData.operational_status === 'operational'}
+                    onChange={(e) => setFormData(prev => ({ ...prev, operational_status: e.target.value as 'operational' | 'under_construction' }))}
+                    className="sr-only"
+                  />
+                  <Sun size={20} className={formData.operational_status === 'operational' ? 'text-green-600' : 'text-gray-400'} />
+                  <div>
+                    <p className="font-medium text-gray-900">Operational</p>
+                    <p className="text-xs text-gray-500">Fully running with staff</p>
+                  </div>
+                </label>
+                <label className={`flex-1 flex items-center gap-3 p-4 border rounded-lg cursor-pointer transition-all ${
+                  formData.operational_status === 'under_construction'
+                    ? 'border-orange-500 bg-orange-50'
+                    : 'border-gray-200 hover:border-gray-300'
+                }`}>
+                  <input
+                    type="radio"
+                    name="operational_status"
+                    value="under_construction"
+                    checked={formData.operational_status === 'under_construction'}
+                    onChange={(e) => setFormData(prev => ({ ...prev, operational_status: e.target.value as 'operational' | 'under_construction' }))}
+                    className="sr-only"
+                  />
+                  <Construction size={20} className={formData.operational_status === 'under_construction' ? 'text-orange-600' : 'text-gray-400'} />
+                  <div>
+                    <p className="font-medium text-gray-900">Under Construction</p>
+                    <p className="text-xs text-gray-500">No CM/NS needed</p>
+                  </div>
+                </label>
+              </div>
+            </div>
+
+            {/* Branch Class */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Branch Class
+              </label>
+              <div className="grid grid-cols-6 gap-2">
+                {(['A+', 'A', 'B+', 'B', 'C+', 'C'] as const).map((cls) => (
+                  <label
+                    key={cls}
+                    className={`flex items-center justify-center p-3 border rounded-lg cursor-pointer transition-all ${
+                      formData.branch_class === cls
+                        ? 'border-purple-500 bg-purple-50 text-purple-700 font-bold'
+                        : 'border-gray-200 hover:border-gray-300 text-gray-700'
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="branch_class"
+                      value={cls}
+                      checked={formData.branch_class === cls}
+                      onChange={(e) => setFormData(prev => ({ ...prev, branch_class: e.target.value as typeof formData.branch_class }))}
+                      className="sr-only"
+                    />
+                    {cls}
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            {/* Community Manager */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Community Manager (CM)
+              </label>
+              <div className="relative">
+                <User size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                <select
+                  value={formData.community_manager_id}
+                  onChange={(e) => setFormData(prev => ({ ...prev, community_manager_id: e.target.value }))}
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none appearance-none bg-white"
+                >
+                  <option value="">No CM assigned</option>
+                  {employees.map((emp) => (
+                    <option key={emp.id} value={emp.id}>
+                      {emp.full_name} - {emp.position}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {/* Night Shift Toggle */}
+            <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
+              <div className="flex items-center gap-3">
+                <Moon size={20} className="text-indigo-600" />
+                <div>
+                  <p className="font-medium text-gray-900">Night Shift</p>
+                  <p className="text-xs text-gray-500">Branch operates night shifts (NS)</p>
+                </div>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={formData.has_night_shift}
+                  onChange={(e) => setFormData(prev => ({
+                    ...prev,
+                    has_night_shift: e.target.checked,
+                    // If night shift enabled, disable smart lock
+                    smart_lock_enabled: e.target.checked ? false : prev.smart_lock_enabled
+                  }))}
+                  className="sr-only peer"
+                />
+                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+              </label>
+            </div>
+
+            {/* Smart Lock Toggle (only if no night shift) */}
+            {!formData.has_night_shift && (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <Lock size={20} className="text-blue-600" />
+                    <div>
+                      <p className="font-medium text-gray-900">Smart Lock</p>
+                      <p className="text-xs text-gray-500">Auto-lock after hours</p>
+                    </div>
+                  </div>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={formData.smart_lock_enabled}
+                      onChange={(e) => setFormData(prev => ({ ...prev, smart_lock_enabled: e.target.checked }))}
+                      className="sr-only peer"
+                    />
+                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                  </label>
+                </div>
+
+                {/* Smart Lock Hours (only if smart lock enabled) */}
+                {formData.smart_lock_enabled && (
+                  <div className="ml-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <p className="text-sm font-medium text-blue-800 mb-3">Smart Lock Hours</p>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-xs text-blue-700 mb-1">Lock starts at</label>
+                        <input
+                          type="time"
+                          value={formData.smart_lock_start_time}
+                          onChange={(e) => setFormData(prev => ({ ...prev, smart_lock_start_time: e.target.value }))}
+                          className="w-full px-3 py-2 border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs text-blue-700 mb-1">Lock ends at</label>
+                        <input
+                          type="time"
+                          value={formData.smart_lock_end_time}
+                          onChange={(e) => setFormData(prev => ({ ...prev, smart_lock_end_time: e.target.value }))}
+                          className="w-full px-3 py-2 border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white"
+                        />
+                      </div>
+                    </div>
+                    <p className="text-xs text-blue-600 mt-2">
+                      Smart lock will be active from {formData.smart_lock_start_time} to {formData.smart_lock_end_time}
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
 

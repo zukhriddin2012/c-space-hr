@@ -18,7 +18,12 @@ export const GET = withAuth(async () => {
 export const POST = withAuth(async (request: NextRequest) => {
   try {
     const body = await request.json();
-    const { name, address, latitude, longitude, geofence_radius } = body;
+    const {
+      name, address, latitude, longitude, geofence_radius,
+      operational_status, has_night_shift, smart_lock_enabled,
+      smart_lock_start_time, smart_lock_end_time, branch_class,
+      description, community_manager_id
+    } = body;
 
     if (!name || !address) {
       return NextResponse.json({ error: 'Name and address are required' }, { status: 400 });
@@ -30,6 +35,15 @@ export const POST = withAuth(async (request: NextRequest) => {
       latitude: latitude ? parseFloat(latitude) : undefined,
       longitude: longitude ? parseFloat(longitude) : undefined,
       geofence_radius: geofence_radius ? parseInt(geofence_radius) : 100,
+      // New configuration fields
+      operational_status: operational_status || 'operational',
+      has_night_shift: has_night_shift || false,
+      smart_lock_enabled: smart_lock_enabled || false,
+      smart_lock_start_time: smart_lock_start_time || '18:00',
+      smart_lock_end_time: smart_lock_end_time || '09:00',
+      branch_class: branch_class || 'B',
+      description: description || null,
+      community_manager_id: community_manager_id || null,
     });
 
     if (!result.success) {
