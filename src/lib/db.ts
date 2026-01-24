@@ -23,7 +23,7 @@ export async function getEmployees(): Promise<Employee[]> {
 
   const { data, error } = await supabaseAdmin!
     .from('employees')
-    .select('*, branches(name)')
+    .select('*, branches!employees_branch_id_fkey(name)')
     .order('full_name');
 
   if (error) {
@@ -42,7 +42,7 @@ export async function getEmployeeById(id: string): Promise<Employee | null> {
 
   const { data, error } = await supabaseAdmin!
     .from('employees')
-    .select('*, branches(name)')
+    .select('*, branches!employees_branch_id_fkey(name)')
     .eq('id', id)
     .single();
 
@@ -62,7 +62,7 @@ export async function getEmployeesByBranch(branchId: string): Promise<Employee[]
 
   const { data, error } = await supabaseAdmin!
     .from('employees')
-    .select('*, branches(name)')
+    .select('*, branches!employees_branch_id_fkey(name)')
     .eq('branch_id', branchId)
     .order('full_name');
 
@@ -97,7 +97,7 @@ export async function updateEmployee(
     .from('employees')
     .update(updates)
     .eq('id', id)
-    .select('*, branches(name)')
+    .select('*, branches!employees_branch_id_fkey(name)')
     .single();
 
   if (error) {
@@ -153,7 +153,7 @@ export async function createEmployee(employeeData: {
       hire_date: employeeData.hire_date || new Date().toISOString().split('T')[0],
       system_role: employeeData.system_role || 'employee',
     })
-    .select('*, branches(name)')
+    .select('*, branches!employees_branch_id_fkey(name)')
     .single();
 
   if (error) {
@@ -745,7 +745,7 @@ export async function getEmployeeByEmail(email: string): Promise<Employee | null
 
   const { data, error } = await supabaseAdmin!
     .from('employees')
-    .select('*, branches(name)')
+    .select('*, branches!employees_branch_id_fkey(name)')
     .eq('email', email)
     .single();
 
@@ -784,9 +784,10 @@ export async function authenticateEmployee(email: string, password: string): Pro
   }
 
   // Find employee by email (case-insensitive) and password
+  // Use explicit relationship name to avoid ambiguity with community_manager_id FK
   const { data, error } = await supabaseAdmin!
     .from('employees')
-    .select('*, branches(name)')
+    .select('*, branches!employees_branch_id_fkey(name)')
     .ilike('email', email)
     .eq('password', password)
     .single();
@@ -1201,7 +1202,7 @@ export async function getLegalEntities(): Promise<LegalEntity[]> {
 
   const { data, error } = await supabaseAdmin!
     .from('legal_entities')
-    .select('*, branches(name)')
+    .select('*, branches!employees_branch_id_fkey(name)')
     .eq('status', 'active')
     .order('name');
 
@@ -1220,7 +1221,7 @@ export async function getLegalEntityById(id: string): Promise<LegalEntity | null
 
   const { data, error } = await supabaseAdmin!
     .from('legal_entities')
-    .select('*, branches(name)')
+    .select('*, branches!employees_branch_id_fkey(name)')
     .eq('id', id)
     .single();
 
@@ -2352,7 +2353,7 @@ export async function getTerminationRequests(
       *,
       employee:employees!termination_requests_employee_id_fkey(
         id, employee_id, full_name, position, branch_id,
-        branches(name)
+        branches!employees_branch_id_fkey(name)
       ),
       requester:employees!termination_requests_requested_by_fkey(id, full_name),
       approver:employees!termination_requests_approved_by_fkey(id, full_name)
@@ -2384,7 +2385,7 @@ export async function getTerminationRequestById(id: string): Promise<Termination
       *,
       employee:employees!termination_requests_employee_id_fkey(
         id, employee_id, full_name, position, branch_id,
-        branches(name)
+        branches!employees_branch_id_fkey(name)
       ),
       requester:employees!termination_requests_requested_by_fkey(id, full_name),
       approver:employees!termination_requests_approved_by_fkey(id, full_name)
@@ -3538,7 +3539,7 @@ export async function convertCandidateToEmployee(
         employment_type: employmentType,
       })
       .eq('id', candidate.probation_employee_id)
-      .select('*, branches(name)')
+      .select('*, branches!employees_branch_id_fkey(name)')
       .single();
 
     if (updateError) {
