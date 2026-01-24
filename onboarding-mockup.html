@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>C-Space HR - Employee Onboarding Flow</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .chat-bubble-bot {
+      background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+    }
+    .typing-dot {
+      animation: typing 1.4s infinite;
+    }
+    .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+    .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes typing {
+      0%, 60%, 100% { opacity: 0.3; transform: translateY(0); }
+      30% { opacity: 1; transform: translateY(-4px); }
+    }
+    .progress-step.completed .step-circle { background: #7c3aed; border-color: #7c3aed; color: white; }
+    .progress-step.active .step-circle { border-color: #7c3aed; color: #7c3aed; }
+    .progress-step.pending .step-circle { border-color: #d1d5db; color: #9ca3af; }
+    .fade-in { animation: fadeIn 0.3s ease-in; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+
+  <!-- Header -->
+  <header class="bg-white border-b border-gray-200 sticky top-0 z-50">
+    <div class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 bg-purple-600 rounded-lg flex items-center justify-center">
+          <span class="text-white font-bold text-lg">C</span>
+        </div>
+        <div>
+          <h1 class="font-semibold text-gray-900">C-Space People</h1>
+          <p class="text-xs text-gray-500">Employee Onboarding</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-4">
+        <span class="text-sm text-gray-600">Need help? Contact HR</span>
+        <div class="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+          <span class="text-purple-700 font-medium">A</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="max-w-6xl mx-auto px-4 py-8">
+
+    <!-- Welcome Banner -->
+    <div class="bg-gradient-to-r from-purple-600 to-purple-700 rounded-2xl p-8 mb-8 text-white">
+      <div class="flex items-center gap-6">
+        <div class="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center text-3xl font-bold">
+          A
+        </div>
+        <div>
+          <h2 class="text-2xl font-bold mb-1">Welcome to C-Space, Abror!</h2>
+          <p class="text-purple-200">We're excited to have you join our team. Let's get you set up!</p>
+          <div class="flex items-center gap-4 mt-3">
+            <span class="bg-white/20 px-3 py-1 rounded-full text-sm">Software Developer</span>
+            <span class="bg-white/20 px-3 py-1 rounded-full text-sm">IT Department</span>
+            <span class="bg-white/20 px-3 py-1 rounded-full text-sm">Start Date: Jan 27, 2025</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Progress Steps -->
+    <div class="bg-white rounded-xl border border-gray-200 p-6 mb-8">
+      <h3 class="font-semibold text-gray-900 mb-6">Your Onboarding Progress</h3>
+      <div class="flex items-center justify-between">
+        <div class="progress-step completed flex flex-col items-center">
+          <div class="step-circle w-10 h-10 rounded-full border-2 flex items-center justify-center font-medium mb-2">
+            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+          </div>
+          <span class="text-xs text-gray-600">Account Created</span>
+        </div>
+        <div class="flex-1 h-1 bg-purple-600 mx-2"></div>
+        <div class="progress-step completed flex flex-col items-center">
+          <div class="step-circle w-10 h-10 rounded-full border-2 flex items-center justify-center font-medium mb-2">
+            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+          </div>
+          <span class="text-xs text-gray-600">Personal Info</span>
+        </div>
+        <div class="flex-1 h-1 bg-purple-600 mx-2"></div>
+        <div class="progress-step active flex flex-col items-center">
+          <div class="step-circle w-10 h-10 rounded-full border-2 flex items-center justify-center font-medium mb-2">3</div>
+          <span class="text-xs text-purple-600 font-medium">Documents</span>
+        </div>
+        <div class="flex-1 h-1 bg-gray-200 mx-2"></div>
+        <div class="progress-step pending flex flex-col items-center">
+          <div class="step-circle w-10 h-10 rounded-full border-2 flex items-center justify-center font-medium mb-2">4</div>
+          <span class="text-xs text-gray-500">Training</span>
+        </div>
+        <div class="flex-1 h-1 bg-gray-200 mx-2"></div>
+        <div class="progress-step pending flex flex-col items-center">
+          <div class="step-circle w-10 h-10 rounded-full border-2 flex items-center justify-center font-medium mb-2">5</div>
+          <span class="text-xs text-gray-500">Complete</span>
+        </div>
+      </div>
+      <div class="mt-4 bg-gray-100 rounded-full h-2">
+        <div class="bg-purple-600 h-2 rounded-full" style="width: 50%"></div>
+      </div>
+      <p class="text-sm text-gray-500 mt-2">50% complete - 3 tasks remaining</p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+      <!-- Main Content - Onboarding Tasks -->
+      <div class="lg:col-span-2 space-y-6">
+
+        <!-- Current Task: Documents -->
+        <div class="bg-white rounded-xl border border-gray-200 p-6">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+              <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+              </svg>
+            </div>
+            <div>
+              <h3 class="font-semibold text-gray-900">Step 3: Review & Sign Documents</h3>
+              <p class="text-sm text-gray-500">Please review and sign the following documents</p>
+            </div>
+          </div>
+
+          <div class="space-y-3">
+            <!-- Document 1 - Signed -->
+            <div class="flex items-center justify-between p-4 bg-green-50 border border-green-200 rounded-lg">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                  <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                  </svg>
+                </div>
+                <div>
+                  <p class="font-medium text-gray-900">Employment Contract</p>
+                  <p class="text-sm text-green-600">Signed on Jan 24, 2025</p>
+                </div>
+              </div>
+              <button class="px-4 py-2 text-sm text-green-700 bg-green-100 rounded-lg">View</button>
+            </div>
+
+            <!-- Document 2 - Pending -->
+            <div class="flex items-center justify-between p-4 bg-amber-50 border border-amber-200 rounded-lg">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
+                  <svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                  </svg>
+                </div>
+                <div>
+                  <p class="font-medium text-gray-900">NDA (Non-Disclosure Agreement)</p>
+                  <p class="text-sm text-amber-600">Awaiting your signature</p>
+                </div>
+              </div>
+              <button class="px-4 py-2 text-sm text-white bg-purple-600 rounded-lg hover:bg-purple-700">Sign Now</button>
+            </div>
+
+            <!-- Document 3 - Pending -->
+            <div class="flex items-center justify-between p-4 bg-gray-50 border border-gray-200 rounded-lg">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
+                  <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                  </svg>
+                </div>
+                <div>
+                  <p class="font-medium text-gray-900">Company Policy Acknowledgment</p>
+                  <p class="text-sm text-gray-500">Review after NDA is signed</p>
+                </div>
+              </div>
+              <button class="px-4 py-2 text-sm text-gray-400 bg-gray-100 rounded-lg cursor-not-allowed">Locked</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Upcoming Tasks -->
+        <div class="bg-white rounded-xl border border-gray-200 p-6">
+          <h3 class="font-semibold text-gray-900 mb-4">Upcoming Tasks</h3>
+
+          <div class="space-y-4">
+            <div class="flex items-center gap-4 p-4 bg-gray-50 rounded-lg">
+              <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                </svg>
+              </div>
+              <div class="flex-1">
+                <p class="font-medium text-gray-900">Complete Training Videos</p>
+                <p class="text-sm text-gray-500">Watch orientation videos about company culture</p>
+              </div>
+              <span class="text-sm text-gray-400">Step 4</span>
+            </div>
+
+            <div class="flex items-center gap-4 p-4 bg-gray-50 rounded-lg">
+              <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                </svg>
+              </div>
+              <div class="flex-1">
+                <p class="font-medium text-gray-900">Meet Your Team</p>
+                <p class="text-sm text-gray-500">Introduction meeting scheduled for Jan 27</p>
+              </div>
+              <span class="text-sm text-gray-400">Step 5</span>
+            </div>
+
+            <div class="flex items-center gap-4 p-4 bg-gray-50 rounded-lg">
+              <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                </svg>
+              </div>
+              <div class="flex-1">
+                <p class="font-medium text-gray-900">Set Up Workstation</p>
+                <p class="text-sm text-gray-500">IT will help you configure your equipment</p>
+              </div>
+              <span class="text-sm text-gray-400">On Day 1</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Important Information -->
+        <div class="bg-white rounded-xl border border-gray-200 p-6">
+          <h3 class="font-semibold text-gray-900 mb-4">Important Information</h3>
+
+          <div class="grid grid-cols-2 gap-4">
+            <div class="p-4 bg-purple-50 rounded-lg">
+              <p class="text-sm text-purple-600 font-medium">Your Manager</p>
+              <p class="font-semibold text-gray-900">Sardor Toshmatov</p>
+              <p class="text-sm text-gray-500">IT Team Lead</p>
+            </div>
+            <div class="p-4 bg-blue-50 rounded-lg">
+              <p class="text-sm text-blue-600 font-medium">Office Location</p>
+              <p class="font-semibold text-gray-900">C-Space Yunusabad</p>
+              <p class="text-sm text-gray-500">3rd Floor, Room 305</p>
+            </div>
+            <div class="p-4 bg-green-50 rounded-lg">
+              <p class="text-sm text-green-600 font-medium">Working Hours</p>
+              <p class="font-semibold text-gray-900">9:00 AM - 6:00 PM</p>
+              <p class="text-sm text-gray-500">Monday - Friday</p>
+            </div>
+            <div class="p-4 bg-orange-50 rounded-lg">
+              <p class="text-sm text-orange-600 font-medium">HR Contact</p>
+              <p class="font-semibold text-gray-900">Nigina Umaraliyeva</p>
+              <p class="text-sm text-gray-500">hr@cspace.uz</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sidebar - AI Assistant Bot -->
+      <div class="lg:col-span-1">
+        <div class="bg-white rounded-xl border border-gray-200 sticky top-24 overflow-hidden">
+          <!-- Bot Header -->
+          <div class="bg-gradient-to-r from-purple-600 to-purple-700 p-4 text-white">
+            <div class="flex items-center gap-3">
+              <div class="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
+                <svg class="w-7 h-7" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
+                </svg>
+              </div>
+              <div>
+                <h3 class="font-semibold">C-Space Assistant</h3>
+                <p class="text-purple-200 text-sm">Here to help you onboard</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Chat Area -->
+          <div class="h-96 overflow-y-auto p-4 space-y-4 bg-gray-50" id="chat-area">
+
+            <!-- Bot Welcome Message -->
+            <div class="flex gap-3 fade-in">
+              <div class="w-8 h-8 bg-purple-600 rounded-full flex-shrink-0 flex items-center justify-center">
+                <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/>
+                </svg>
+              </div>
+              <div class="chat-bubble-bot text-white p-3 rounded-2xl rounded-tl-none max-w-xs">
+                <p class="text-sm">Hi Abror! Welcome to C-Space! I'm your onboarding assistant. I'll help you through each step of your onboarding process.</p>
+              </div>
+            </div>
+
+            <!-- Bot Second Message -->
+            <div class="flex gap-3 fade-in">
+              <div class="w-8 h-8 bg-purple-600 rounded-full flex-shrink-0 flex items-center justify-center">
+                <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/>
+                </svg>
+              </div>
+              <div class="chat-bubble-bot text-white p-3 rounded-2xl rounded-tl-none max-w-xs">
+                <p class="text-sm">I see you've completed your personal information. Great job! Now let's move on to signing your documents.</p>
+              </div>
+            </div>
+
+            <!-- User Message -->
+            <div class="flex gap-3 justify-end fade-in">
+              <div class="bg-gray-200 text-gray-800 p-3 rounded-2xl rounded-tr-none max-w-xs">
+                <p class="text-sm">What documents do I need to sign?</p>
+              </div>
+              <div class="w-8 h-8 bg-purple-100 rounded-full flex-shrink-0 flex items-center justify-center">
+                <span class="text-purple-700 text-sm font-medium">A</span>
+              </div>
+            </div>
+
+            <!-- Bot Response -->
+            <div class="flex gap-3 fade-in">
+              <div class="w-8 h-8 bg-purple-600 rounded-full flex-shrink-0 flex items-center justify-center">
+                <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/>
+                </svg>
+              </div>
+              <div class="chat-bubble-bot text-white p-3 rounded-2xl rounded-tl-none max-w-xs">
+                <p class="text-sm">You have 3 documents to sign:</p>
+                <ul class="text-sm mt-2 space-y-1">
+                  <li>1. Employment Contract - Signed</li>
+                  <li>2. NDA - Pending</li>
+                  <li>3. Policy Acknowledgment - After NDA</li>
+                </ul>
+                <p class="text-sm mt-2">Would you like me to explain what the NDA covers?</p>
+              </div>
+            </div>
+
+            <!-- Quick Action Buttons from Bot -->
+            <div class="flex gap-2 ml-11 flex-wrap">
+              <button class="px-3 py-1.5 bg-white border border-purple-200 text-purple-600 rounded-full text-xs hover:bg-purple-50">Yes, explain NDA</button>
+              <button class="px-3 py-1.5 bg-white border border-purple-200 text-purple-600 rounded-full text-xs hover:bg-purple-50">Sign NDA now</button>
+              <button class="px-3 py-1.5 bg-white border border-purple-200 text-purple-600 rounded-full text-xs hover:bg-purple-50">Ask HR</button>
+            </div>
+
+            <!-- Bot Typing Indicator -->
+            <div class="flex gap-3 fade-in" id="typing-indicator" style="display: none;">
+              <div class="w-8 h-8 bg-purple-600 rounded-full flex-shrink-0 flex items-center justify-center">
+                <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/>
+                </svg>
+              </div>
+              <div class="bg-gray-200 p-3 rounded-2xl rounded-tl-none flex items-center gap-1">
+                <div class="typing-dot w-2 h-2 bg-gray-400 rounded-full"></div>
+                <div class="typing-dot w-2 h-2 bg-gray-400 rounded-full"></div>
+                <div class="typing-dot w-2 h-2 bg-gray-400 rounded-full"></div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Chat Input -->
+          <div class="p-4 border-t border-gray-200 bg-white">
+            <div class="flex gap-2">
+              <input
+                type="text"
+                placeholder="Ask me anything about onboarding..."
+                class="flex-1 px-4 py-2 border border-gray-200 rounded-full text-sm focus:outline-none focus:border-purple-400"
+              />
+              <button class="w-10 h-10 bg-purple-600 rounded-full flex items-center justify-center text-white hover:bg-purple-700">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
+                </svg>
+              </button>
+            </div>
+
+            <!-- Quick Questions -->
+            <div class="mt-3">
+              <p class="text-xs text-gray-500 mb-2">Quick questions:</p>
+              <div class="flex flex-wrap gap-2">
+                <button class="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs hover:bg-gray-200">What's my first day schedule?</button>
+                <button class="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs hover:bg-gray-200">Office location?</button>
+                <button class="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs hover:bg-gray-200">Dress code?</button>
+                <button class="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs hover:bg-gray-200">Benefits info</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ============================================ -->
+    <!-- SECTION 2: Full Chat Interface View -->
+    <!-- ============================================ -->
+    <div class="mt-16 mb-8">
+      <h2 class="text-2xl font-bold text-gray-800 mb-2 text-center">Alternative View: Full-Screen Chat Onboarding</h2>
+      <p class="text-gray-500 text-center mb-8">For a more conversational onboarding experience</p>
+    </div>
+
+    <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden max-w-2xl mx-auto" style="height: 700px;">
+      <!-- Chat Header -->
+      <div class="bg-gradient-to-r from-purple-600 to-purple-700 p-4 text-white">
+        <div class="flex items-center gap-3">
+          <div class="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
+            <svg class="w-7 h-7" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
+            </svg>
+          </div>
+          <div class="flex-1">
+            <h3 class="font-semibold">C-Space Onboarding Assistant</h3>
+            <div class="flex items-center gap-2">
+              <div class="w-2 h-2 bg-green-400 rounded-full"></div>
+              <span class="text-purple-200 text-sm">Online - Ready to help</span>
+            </div>
+          </div>
+          <div class="text-right">
+            <p class="text-sm text-purple-200">Progress</p>
+            <p class="font-semibold">50%</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Full Chat Messages -->
+      <div class="h-96 overflow-y-auto p-6 space-y-4 bg-gray-50">
+
+        <!-- Welcome -->
+        <div class="flex gap-3">
+          <div class="w-10 h-10 bg-purple-600 rounded-full flex-shrink-0 flex items-center justify-center">
+            <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/>
+            </svg>
+          </div>
+          <div class="flex-1">
+            <div class="chat-bubble-bot text-white p-4 rounded-2xl rounded-tl-none">
+              <p>Welcome to C-Space, Abror! I'm excited to guide you through your onboarding journey.</p>
+              <p class="mt-2">Let's start with the basics. I'll help you:</p>
+              <ul class="mt-2 space-y-1 text-sm">
+                <li>Complete required documents</li>
+                <li>Learn about company policies</li>
+                <li>Set up your workspace</li>
+                <li>Meet your team</li>
+              </ul>
+            </div>
+            <span class="text-xs text-gray-400 mt-1 block">10:30 AM</span>
+          </div>
+        </div>
+
+        <!-- Progress Card from Bot -->
+        <div class="flex gap-3">
+          <div class="w-10 h-10 bg-purple-600 rounded-full flex-shrink-0 flex items-center justify-center">
+            <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/>
+            </svg>
+          </div>
+          <div class="flex-1">
+            <div class="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
+              <p class="font-medium text-gray-900 mb-3">Your Current Progress</p>
+              <div class="space-y-2">
+                <div class="flex items-center gap-2">
+                  <div class="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
+                    <svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                  </div>
+                  <span class="text-sm text-gray-600">Account Created</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <div class="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
+                    <svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                  </div>
+                  <span class="text-sm text-gray-600">Personal Information</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <div class="w-5 h-5 bg-purple-500 rounded-full flex items-center justify-center">
+                    <span class="text-white text-xs font-bold">3</span>
+                  </div>
+                  <span class="text-sm text-purple-600 font-medium">Sign Documents (In Progress)</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <div class="w-5 h-5 bg-gray-300 rounded-full flex items-center justify-center">
+                    <span class="text-white text-xs font-bold">4</span>
+                  </div>
+                  <span class="text-sm text-gray-400">Complete Training</span>
+                </div>
+              </div>
+              <div class="mt-3 bg-gray-100 rounded-full h-2">
+                <div class="bg-purple-600 h-2 rounded-full" style="width: 50%"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Document Action Card -->
+        <div class="flex gap-3">
+          <div class="w-10 h-10 bg-purple-600 rounded-full flex-shrink-0 flex items-center justify-center">
+            <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/>
+            </svg>
+          </div>
+          <div class="flex-1">
+            <div class="chat-bubble-bot text-white p-4 rounded-2xl rounded-tl-none">
+              <p>Now, let's sign your NDA. This document protects both you and the company by keeping confidential information secure.</p>
+            </div>
+
+            <!-- Document Preview Card -->
+            <div class="bg-white border border-gray-200 rounded-xl p-4 mt-2 shadow-sm">
+              <div class="flex items-center gap-3 mb-3">
+                <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
+                  <svg class="w-6 h-6 text-red-600" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
+                  </svg>
+                </div>
+                <div class="flex-1">
+                  <p class="font-medium text-gray-900">NDA_CSpace_2025.pdf</p>
+                  <p class="text-sm text-gray-500">2 pages - Ready for signature</p>
+                </div>
+              </div>
+              <div class="flex gap-2">
+                <button class="flex-1 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm hover:bg-gray-200">Preview</button>
+                <button class="flex-1 py-2 bg-purple-600 text-white rounded-lg text-sm hover:bg-purple-700">Sign Document</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- User Response -->
+        <div class="flex gap-3 justify-end">
+          <div class="flex-1 max-w-sm">
+            <div class="bg-purple-100 text-purple-900 p-4 rounded-2xl rounded-tr-none ml-auto">
+              <p>I've signed the NDA. What's next?</p>
+            </div>
+            <span class="text-xs text-gray-400 mt-1 block text-right">10:45 AM</span>
+          </div>
+          <div class="w-10 h-10 bg-purple-200 rounded-full flex-shrink-0 flex items-center justify-center">
+            <span class="text-purple-700 font-medium">A</span>
+          </div>
+        </div>
+
+        <!-- Bot Celebration -->
+        <div class="flex gap-3">
+          <div class="w-10 h-10 bg-purple-600 rounded-full flex-shrink-0 flex items-center justify-center">
+            <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/>
+            </svg>
+          </div>
+          <div class="flex-1">
+            <div class="chat-bubble-bot text-white p-4 rounded-2xl rounded-tl-none">
+              <p>Excellent work, Abror! You're making great progress.</p>
+              <p class="mt-2">Next up is the Company Policy Acknowledgment. This covers:</p>
+              <ul class="mt-2 space-y-1 text-sm">
+                <li>Code of conduct</li>
+                <li>Work hours & attendance</li>
+                <li>Leave policies</li>
+                <li>IT & security guidelines</li>
+              </ul>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex gap-2 mt-2">
+              <button class="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm hover:bg-purple-700">Review Policy</button>
+              <button class="px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-lg text-sm hover:bg-gray-50">Ask Questions</button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Input Area -->
+      <div class="p-4 border-t border-gray-200 bg-white">
+        <div class="flex gap-3">
+          <button class="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center text-gray-500 hover:bg-gray-200">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/>
+            </svg>
+          </button>
+          <input
+            type="text"
+            placeholder="Type your message or question..."
+            class="flex-1 px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-purple-400"
+          />
+          <button class="w-10 h-10 bg-purple-600 rounded-full flex items-center justify-center text-white hover:bg-purple-700">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- SECTION 3: Onboarding Checklist View -->
+    <!-- ============================================ -->
+    <div class="mt-16 mb-8">
+      <h2 class="text-2xl font-bold text-gray-800 mb-2 text-center">Alternative View: Checklist with Bot Helper</h2>
+      <p class="text-gray-500 text-center mb-8">Task-focused onboarding with contextual AI assistance</p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-5xl mx-auto">
+
+      <!-- Checklist -->
+      <div class="bg-white rounded-xl border border-gray-200 p-6">
+        <h3 class="font-semibold text-gray-900 mb-4">Onboarding Checklist</h3>
+
+        <div class="space-y-3">
+          <!-- Completed Items -->
+          <div class="flex items-start gap-3 p-3 bg-green-50 rounded-lg">
+            <input type="checkbox" checked disabled class="mt-1 w-5 h-5 text-green-600 rounded">
+            <div class="flex-1">
+              <p class="font-medium text-gray-900 line-through">Create your account</p>
+              <p class="text-sm text-gray-500">Set up login credentials</p>
+            </div>
+            <span class="text-xs text-green-600 bg-green-100 px-2 py-1 rounded">Done</span>
+          </div>
+
+          <div class="flex items-start gap-3 p-3 bg-green-50 rounded-lg">
+            <input type="checkbox" checked disabled class="mt-1 w-5 h-5 text-green-600 rounded">
+            <div class="flex-1">
+              <p class="font-medium text-gray-900 line-through">Fill personal information</p>
+              <p class="text-sm text-gray-500">Contact details, emergency contacts</p>
+            </div>
+            <span class="text-xs text-green-600 bg-green-100 px-2 py-1 rounded">Done</span>
+          </div>
+
+          <div class="flex items-start gap-3 p-3 bg-green-50 rounded-lg">
+            <input type="checkbox" checked disabled class="mt-1 w-5 h-5 text-green-600 rounded">
+            <div class="flex-1">
+              <p class="font-medium text-gray-900 line-through">Sign Employment Contract</p>
+              <p class="text-sm text-gray-500">Review and sign your contract</p>
+            </div>
+            <span class="text-xs text-green-600 bg-green-100 px-2 py-1 rounded">Done</span>
+          </div>
+
+          <!-- Current Item -->
+          <div class="flex items-start gap-3 p-3 bg-purple-50 border-2 border-purple-300 rounded-lg">
+            <input type="checkbox" class="mt-1 w-5 h-5 text-purple-600 rounded border-purple-300">
+            <div class="flex-1">
+              <p class="font-medium text-purple-900">Sign NDA</p>
+              <p class="text-sm text-purple-700">Non-Disclosure Agreement</p>
+              <button class="mt-2 px-3 py-1 bg-purple-600 text-white text-sm rounded hover:bg-purple-700">Sign Now</button>
+            </div>
+            <span class="text-xs text-purple-600 bg-purple-100 px-2 py-1 rounded">Current</span>
+          </div>
+
+          <!-- Pending Items -->
+          <div class="flex items-start gap-3 p-3 bg-gray-50 rounded-lg opacity-60">
+            <input type="checkbox" disabled class="mt-1 w-5 h-5 rounded border-gray-300">
+            <div class="flex-1">
+              <p class="font-medium text-gray-700">Sign Company Policy</p>
+              <p class="text-sm text-gray-500">Acknowledge company policies</p>
+            </div>
+            <span class="text-xs text-gray-500 bg-gray-200 px-2 py-1 rounded">Locked</span>
+          </div>
+
+          <div class="flex items-start gap-3 p-3 bg-gray-50 rounded-lg opacity-60">
+            <input type="checkbox" disabled class="mt-1 w-5 h-5 rounded border-gray-300">
+            <div class="flex-1">
+              <p class="font-medium text-gray-700">Watch orientation videos</p>
+              <p class="text-sm text-gray-500">Learn about C-Space culture</p>
+            </div>
+            <span class="text-xs text-gray-500 bg-gray-200 px-2 py-1 rounded">Pending</span>
+          </div>
+
+          <div class="flex items-start gap-3 p-3 bg-gray-50 rounded-lg opacity-60">
+            <input type="checkbox" disabled class="mt-1 w-5 h-5 rounded border-gray-300">
+            <div class="flex-1">
+              <p class="font-medium text-gray-700">Complete IT setup</p>
+              <p class="text-sm text-gray-500">Get your equipment ready</p>
+            </div>
+            <span class="text-xs text-gray-500 bg-gray-200 px-2 py-1 rounded">Day 1</span>
+          </div>
+
+          <div class="flex items-start gap-3 p-3 bg-gray-50 rounded-lg opacity-60">
+            <input type="checkbox" disabled class="mt-1 w-5 h-5 rounded border-gray-300">
+            <div class="flex-1">
+              <p class="font-medium text-gray-700">Meet your team</p>
+              <p class="text-sm text-gray-500">Introduction meeting</p>
+            </div>
+            <span class="text-xs text-gray-500 bg-gray-200 px-2 py-1 rounded">Day 1</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Contextual Bot Help -->
+      <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
+        <div class="bg-purple-600 p-4 text-white">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
+              <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/>
+              </svg>
+            </div>
+            <div>
+              <h3 class="font-semibold">Need help with NDA?</h3>
+              <p class="text-purple-200 text-sm">I can explain anything</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="p-4 space-y-4">
+          <div class="chat-bubble-bot text-white p-3 rounded-xl">
+            <p class="text-sm">The NDA (Non-Disclosure Agreement) is a standard document that:</p>
+            <ul class="text-sm mt-2 space-y-1">
+              <li>Protects company trade secrets</li>
+              <li>Covers client information</li>
+              <li>Includes project details</li>
+            </ul>
+          </div>
+
+          <div class="bg-blue-50 border border-blue-200 rounded-lg p-3">
+            <p class="text-sm text-blue-800 font-medium">Common Questions:</p>
+            <div class="mt-2 space-y-2">
+              <button class="w-full text-left p-2 bg-white rounded border border-blue-100 text-sm text-blue-700 hover:bg-blue-50">What happens if I violate the NDA?</button>
+              <button class="w-full text-left p-2 bg-white rounded border border-blue-100 text-sm text-blue-700 hover:bg-blue-50">How long does the NDA last?</button>
+              <button class="w-full text-left p-2 bg-white rounded border border-blue-100 text-sm text-blue-700 hover:bg-blue-50">Can I discuss my work with family?</button>
+            </div>
+          </div>
+
+          <div class="flex gap-2">
+            <input type="text" placeholder="Ask about NDA..." class="flex-1 px-3 py-2 border rounded-lg text-sm">
+            <button class="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm">Ask</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <div class="text-center text-gray-500 mt-16 mb-8">
+    <p>C-Space HR Platform - Employee Onboarding Flow Mockup</p>
+  </div>
+
+</body>
+</html>

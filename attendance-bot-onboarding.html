@@ -1,0 +1,857 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>C-Space Attendance Bot - Онбординг</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .chat-bubble-bot {
+      background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+    }
+    .typing-dot {
+      animation: typing 1.4s infinite;
+    }
+    .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+    .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes typing {
+      0%, 60%, 100% { opacity: 0.3; transform: translateY(0); }
+      30% { opacity: 1; transform: translateY(-4px); }
+    }
+    .fade-in { animation: fadeIn 0.3s ease-in; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    .telegram-bg { background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%); }
+    .phone-frame {
+      background: #1a1a2e;
+      border-radius: 40px;
+      padding: 12px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    }
+    .phone-screen {
+      background: #0f0f1a;
+      border-radius: 32px;
+      overflow: hidden;
+    }
+    .phone-notch {
+      width: 120px;
+      height: 28px;
+      background: #1a1a2e;
+      border-radius: 0 0 16px 16px;
+      margin: 0 auto;
+    }
+  </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+
+  <!-- Header -->
+  <header class="bg-white border-b border-gray-200">
+    <div class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <svg width="48" height="48" viewBox="0 0 282 308" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path fill-rule="evenodd" clip-rule="evenodd" d="M116.381 6.59274C131.498 -2.16311 150.239 -2.16311 165.357 6.59274L256.785 59.1278C272.006 67.8837 281.325 83.9533 281.325 101.362V206.432C281.325 223.841 271.902 239.91 256.785 248.666L165.357 301.201C150.239 309.957 131.498 309.957 116.381 301.201L24.9523 248.666C9.73147 239.91 0.412598 223.841 0.412598 206.432V101.362C0.412598 83.9533 9.73147 67.8837 24.9523 59.1278L116.381 6.59274ZM208.016 175.014H190.932C187.618 175.014 185.34 176.456 183.891 179.444C180.784 186.757 176.021 192.629 169.602 196.955C165.046 200.046 159.765 202.003 153.76 202.827C151.896 203.136 150.446 203.96 149.307 205.299C148.168 206.638 147.547 208.286 147.547 210.244V225.695C147.547 228.064 148.376 229.918 150.136 231.155C151.378 232.391 153.035 233.009 155.002 233.009H156.038C168.256 231.052 179.128 226.725 188.757 220.133C201.182 211.274 209.88 199.531 215.057 184.8C215.886 182.431 215.575 180.165 214.229 178.001C212.572 176.147 210.501 175.014 208.016 175.014ZM125.078 75.8155C109.858 78.8028 96.9147 86.0135 86.4568 97.5506C72.8927 112.59 66.1624 131.441 66.1624 154C66.1624 176.559 72.8927 195.307 86.4568 210.45C97.0182 221.884 109.858 229.197 125.078 232.391H126.528C128.495 232.391 130.152 231.876 131.394 230.743C133.258 229.3 134.19 227.446 134.19 225.077V208.389C134.19 206.844 133.672 205.402 132.533 204.063C131.498 202.724 130.152 201.797 128.599 201.385C120.73 199.118 114.31 195.204 109.236 189.539C101.056 180.474 97.0182 168.731 97.0182 154C97.0182 139.476 101.056 127.63 109.236 118.462C113.274 114.135 118.141 110.633 123.836 108.058C124.975 107.543 126.528 107.028 128.599 106.615C130.152 106.1 131.498 105.07 132.533 103.731C133.569 102.392 134.19 100.95 134.19 99.4048V82.9232C134.294 80.5539 133.362 78.5967 131.498 77.2576C129.531 75.7125 127.356 75.1974 125.078 75.8155ZM150.032 76.3305C148.272 77.5666 147.444 79.4208 147.444 81.7901V97.2416C147.444 99.1987 147.961 100.847 149.204 102.186C150.343 103.834 151.896 104.658 153.967 104.864C159.351 105.688 164.528 107.646 169.602 110.736C176.021 115.062 180.784 120.934 183.891 128.248C185.34 131.235 187.618 132.677 190.932 132.677H208.016C210.605 132.677 212.676 131.647 214.229 129.484C215.678 127.32 215.989 125.157 215.057 122.685C209.88 108.058 201.182 96.3145 188.757 87.3526C179.231 80.76 168.359 76.4335 156.038 74.4763C153.76 74.1673 151.792 74.7854 150.032 76.3305Z" fill="#64177C"/>
+        </svg>
+        <div>
+          <h1 class="font-semibold text-gray-900">C-Space Attendance Bot</h1>
+          <p class="text-xs text-gray-500">Руководство по использованию</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="text-sm text-gray-500">Telegram Bot</span>
+        <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+          <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.161c-.18 1.897-.962 6.502-1.359 8.627-.168.9-.5 1.201-.82 1.23-.697.064-1.226-.461-1.901-.903-1.056-.692-1.653-1.123-2.678-1.799-1.185-.781-.417-1.21.258-1.911.177-.184 3.247-2.977 3.307-3.23.007-.032.015-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.139-5.062 3.345-.479.329-.913.489-1.302.481-.428-.008-1.252-.241-1.865-.44-.751-.244-1.349-.374-1.297-.789.027-.216.324-.437.893-.663 3.498-1.524 5.831-2.529 6.998-3.015 3.333-1.386 4.025-1.627 4.477-1.635.099-.002.321.023.465.141.121.099.154.232.17.325.015.094.034.31.019.478z"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="max-w-6xl mx-auto px-4 py-8">
+
+    <!-- Hero Section -->
+    <div class="bg-gradient-to-r from-purple-600 to-purple-700 rounded-2xl p-8 mb-8 text-white">
+      <div class="flex items-center justify-between">
+        <div class="max-w-xl">
+          <h2 class="text-3xl font-bold mb-3">Добро пожаловать в C-Space!</h2>
+          <p class="text-purple-200 text-lg mb-4">Это руководство поможет вам начать работу с ботом учёта посещаемости</p>
+          <div class="flex items-center gap-4">
+            <a href="https://t.me/cspace_attendance_bot" class="bg-white text-purple-700 px-6 py-3 rounded-lg font-medium hover:bg-purple-50 transition-colors flex items-center gap-2">
+              <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.161c-.18 1.897-.962 6.502-1.359 8.627-.168.9-.5 1.201-.82 1.23-.697.064-1.226-.461-1.901-.903-1.056-.692-1.653-1.123-2.678-1.799-1.185-.781-.417-1.21.258-1.911.177-.184 3.247-2.977 3.307-3.23.007-.032.015-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.139-5.062 3.345-.479.329-.913.489-1.302.481-.428-.008-1.252-.241-1.865-.44-.751-.244-1.349-.374-1.297-.789.027-.216.324-.437.893-.663 3.498-1.524 5.831-2.529 6.998-3.015 3.333-1.386 4.025-1.627 4.477-1.635.099-.002.321.023.465.141.121.099.154.232.17.325.015.094.034.31.019.478z"/>
+              </svg>
+              Открыть бота
+            </a>
+          </div>
+        </div>
+        <div class="hidden lg:block">
+          <svg width="150" height="150" viewBox="0 0 282 308" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path fill-rule="evenodd" clip-rule="evenodd" d="M116.381 6.59274C131.498 -2.16311 150.239 -2.16311 165.357 6.59274L256.785 59.1278C272.006 67.8837 281.325 83.9533 281.325 101.362V206.432C281.325 223.841 271.902 239.91 256.785 248.666L165.357 301.201C150.239 309.957 131.498 309.957 116.381 301.201L24.9523 248.666C9.73147 239.91 0.412598 223.841 0.412598 206.432V101.362C0.412598 83.9533 9.73147 67.8837 24.9523 59.1278L116.381 6.59274ZM208.016 175.014H190.932C187.618 175.014 185.34 176.456 183.891 179.444C180.784 186.757 176.021 192.629 169.602 196.955C165.046 200.046 159.765 202.003 153.76 202.827C151.896 203.136 150.446 203.96 149.307 205.299C148.168 206.638 147.547 208.286 147.547 210.244V225.695C147.547 228.064 148.376 229.918 150.136 231.155C151.378 232.391 153.035 233.009 155.002 233.009H156.038C168.256 231.052 179.128 226.725 188.757 220.133C201.182 211.274 209.88 199.531 215.057 184.8C215.886 182.431 215.575 180.165 214.229 178.001C212.572 176.147 210.501 175.014 208.016 175.014ZM125.078 75.8155C109.858 78.8028 96.9147 86.0135 86.4568 97.5506C72.8927 112.59 66.1624 131.441 66.1624 154C66.1624 176.559 72.8927 195.307 86.4568 210.45C97.0182 221.884 109.858 229.197 125.078 232.391H126.528C128.495 232.391 130.152 231.876 131.394 230.743C133.258 229.3 134.19 227.446 134.19 225.077V208.389C134.19 206.844 133.672 205.402 132.533 204.063C131.498 202.724 130.152 201.797 128.599 201.385C120.73 199.118 114.31 195.204 109.236 189.539C101.056 180.474 97.0182 168.731 97.0182 154C97.0182 139.476 101.056 127.63 109.236 118.462C113.274 114.135 118.141 110.633 123.836 108.058C124.975 107.543 126.528 107.028 128.599 106.615C130.152 106.1 131.498 105.07 132.533 103.731C133.569 102.392 134.19 100.95 134.19 99.4048V82.9232C134.294 80.5539 133.362 78.5967 131.498 77.2576C129.531 75.7125 127.356 75.1974 125.078 75.8155ZM150.032 76.3305C148.272 77.5666 147.444 79.4208 147.444 81.7901V97.2416C147.444 99.1987 147.961 100.847 149.204 102.186C150.343 103.834 151.896 104.658 153.967 104.864C159.351 105.688 164.528 107.646 169.602 110.736C176.021 115.062 180.784 120.934 183.891 128.248C185.34 131.235 187.618 132.677 190.932 132.677H208.016C210.605 132.677 212.676 131.647 214.229 129.484C215.678 127.32 215.989 125.157 215.057 122.685C209.88 108.058 201.182 96.3145 188.757 87.3526C179.231 80.76 168.359 76.4335 156.038 74.4763C153.76 74.1673 151.792 74.7854 150.032 76.3305Z" fill="white" fill-opacity="0.2"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- Steps Overview -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-12">
+      <div class="bg-white rounded-xl border border-gray-200 p-5 text-center">
+        <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-3">
+          <span class="text-purple-700 font-bold text-lg">1</span>
+        </div>
+        <h3 class="font-semibold text-gray-900 mb-1">Регистрация</h3>
+        <p class="text-sm text-gray-500">Привяжите Telegram к вашему аккаунту</p>
+      </div>
+      <div class="bg-white rounded-xl border border-gray-200 p-5 text-center">
+        <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-3">
+          <span class="text-purple-700 font-bold text-lg">2</span>
+        </div>
+        <h3 class="font-semibold text-gray-900 mb-1">Приход на работу</h3>
+        <p class="text-sm text-gray-500">Отметьте начало рабочего дня</p>
+      </div>
+      <div class="bg-white rounded-xl border border-gray-200 p-5 text-center">
+        <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-3">
+          <span class="text-purple-700 font-bold text-lg">3</span>
+        </div>
+        <h3 class="font-semibold text-gray-900 mb-1">Уход с работы</h3>
+        <p class="text-sm text-gray-500">Отметьте конец рабочего дня</p>
+      </div>
+      <div class="bg-white rounded-xl border border-gray-200 p-5 text-center">
+        <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-3">
+          <span class="text-purple-700 font-bold text-lg">4</span>
+        </div>
+        <h3 class="font-semibold text-gray-900 mb-1">Мини-приложение</h3>
+        <p class="text-sm text-gray-500">Просматривайте статистику</p>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- STEP 1: REGISTRATION -->
+    <!-- ============================================ -->
+    <div class="mb-16">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="w-10 h-10 bg-purple-600 rounded-full flex items-center justify-center">
+          <span class="text-white font-bold">1</span>
+        </div>
+        <h2 class="text-2xl font-bold text-gray-900">Регистрация в боте</h2>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <!-- Instructions -->
+        <div class="space-y-4">
+          <div class="bg-white rounded-xl border border-gray-200 p-6">
+            <h3 class="font-semibold text-gray-900 mb-4">Как зарегистрироваться:</h3>
+            <ol class="space-y-4">
+              <li class="flex gap-3">
+                <div class="w-6 h-6 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <span class="text-purple-700 text-sm font-medium">1</span>
+                </div>
+                <div>
+                  <p class="text-gray-900 font-medium">Откройте бота в Telegram</p>
+                  <p class="text-sm text-gray-500">Найдите @cspace_attendance_bot или перейдите по ссылке</p>
+                </div>
+              </li>
+              <li class="flex gap-3">
+                <div class="w-6 h-6 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <span class="text-purple-700 text-sm font-medium">2</span>
+                </div>
+                <div>
+                  <p class="text-gray-900 font-medium">Нажмите кнопку "Start" или отправьте /start</p>
+                  <p class="text-sm text-gray-500">Бот приветствует вас и покажет меню</p>
+                </div>
+              </li>
+              <li class="flex gap-3">
+                <div class="w-6 h-6 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <span class="text-purple-700 text-sm font-medium">3</span>
+                </div>
+                <div>
+                  <p class="text-gray-900 font-medium">Нажмите "Регистрация"</p>
+                  <p class="text-sm text-gray-500">Бот запросит вашу корпоративную почту</p>
+                </div>
+              </li>
+              <li class="flex gap-3">
+                <div class="w-6 h-6 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <span class="text-purple-700 text-sm font-medium">4</span>
+                </div>
+                <div>
+                  <p class="text-gray-900 font-medium">Введите вашу рабочую почту</p>
+                  <p class="text-sm text-gray-500">Например: ivan.petrov@cspace.uz</p>
+                </div>
+              </li>
+              <li class="flex gap-3">
+                <div class="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <svg class="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                  </svg>
+                </div>
+                <div>
+                  <p class="text-gray-900 font-medium">Готово!</p>
+                  <p class="text-sm text-gray-500">Ваш Telegram привязан к аккаунту C-Space</p>
+                </div>
+              </li>
+            </ol>
+          </div>
+
+          <div class="bg-blue-50 border border-blue-200 rounded-xl p-4">
+            <div class="flex gap-3">
+              <svg class="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+              </svg>
+              <div>
+                <p class="text-blue-800 font-medium">Важно!</p>
+                <p class="text-sm text-blue-700">Используйте ту же почту, которая указана в вашем профиле C-Space People. Если вы не знаете свою корпоративную почту, обратитесь в HR.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Phone Mockup -->
+        <div class="flex justify-center">
+          <div class="phone-frame" style="width: 300px;">
+            <div class="phone-screen">
+              <div class="phone-notch"></div>
+              <!-- Telegram Header -->
+              <div class="bg-purple-700 px-4 py-3 flex items-center gap-3">
+                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                </svg>
+                <div class="w-10 h-10 bg-purple-500 rounded-full flex items-center justify-center">
+                  <svg width="24" height="24" viewBox="0 0 282 308" fill="white">
+                    <path fill-rule="evenodd" clip-rule="evenodd" d="M116.381 6.59274C131.498 -2.16311 150.239 -2.16311 165.357 6.59274L256.785 59.1278C272.006 67.8837 281.325 83.9533 281.325 101.362V206.432C281.325 223.841 271.902 239.91 256.785 248.666L165.357 301.201C150.239 309.957 131.498 309.957 116.381 301.201L24.9523 248.666C9.73147 239.91 0.412598 223.841 0.412598 206.432V101.362C0.412598 83.9533 9.73147 67.8837 24.9523 59.1278L116.381 6.59274Z" fill="white"/>
+                  </svg>
+                </div>
+                <div class="flex-1">
+                  <p class="text-white font-medium text-sm">C-Space Attendance</p>
+                  <p class="text-purple-200 text-xs">бот</p>
+                </div>
+              </div>
+
+              <!-- Chat Messages -->
+              <div class="bg-gray-900 p-4 space-y-3" style="min-height: 400px;">
+                <!-- Bot Message -->
+                <div class="flex gap-2">
+                  <div class="w-8 h-8 bg-purple-600 rounded-full flex-shrink-0 flex items-center justify-center">
+                    <svg width="16" height="16" viewBox="0 0 282 308" fill="white">
+                      <path fill-rule="evenodd" clip-rule="evenodd" d="M116.381 6.59274C131.498 -2.16311 150.239 -2.16311 165.357 6.59274L256.785 59.1278C272.006 67.8837 281.325 83.9533 281.325 101.362V206.432C281.325 223.841 271.902 239.91 256.785 248.666L165.357 301.201C150.239 309.957 131.498 309.957 116.381 301.201L24.9523 248.666C9.73147 239.91 0.412598 223.841 0.412598 206.432V101.362C0.412598 83.9533 9.73147 67.8837 24.9523 59.1278L116.381 6.59274Z" fill="white"/>
+                    </svg>
+                  </div>
+                  <div class="bg-gray-800 text-white p-3 rounded-2xl rounded-tl-none max-w-[200px]">
+                    <p class="text-sm">Добро пожаловать в C-Space Attendance Bot! 👋</p>
+                    <p class="text-sm mt-2">Для начала работы необходимо пройти регистрацию.</p>
+                  </div>
+                </div>
+
+                <!-- Keyboard Buttons -->
+                <div class="flex flex-col gap-2 mt-4">
+                  <button class="w-full bg-purple-600 text-white py-3 rounded-xl text-sm font-medium">
+                    📝 Регистрация
+                  </button>
+                  <button class="w-full bg-gray-700 text-white py-3 rounded-xl text-sm font-medium">
+                    ❓ Помощь
+                  </button>
+                </div>
+
+                <!-- User Message -->
+                <div class="flex justify-end mt-4">
+                  <div class="bg-purple-600 text-white p-3 rounded-2xl rounded-tr-none max-w-[200px]">
+                    <p class="text-sm">ivan.petrov@cspace.uz</p>
+                  </div>
+                </div>
+
+                <!-- Bot Response -->
+                <div class="flex gap-2">
+                  <div class="w-8 h-8 bg-purple-600 rounded-full flex-shrink-0 flex items-center justify-center">
+                    <svg width="16" height="16" viewBox="0 0 282 308" fill="white">
+                      <path fill-rule="evenodd" clip-rule="evenodd" d="M116.381 6.59274C131.498 -2.16311 150.239 -2.16311 165.357 6.59274L256.785 59.1278C272.006 67.8837 281.325 83.9533 281.325 101.362V206.432C281.325 223.841 271.902 239.91 256.785 248.666L165.357 301.201C150.239 309.957 131.498 309.957 116.381 301.201L24.9523 248.666C9.73147 239.91 0.412598 223.841 0.412598 206.432V101.362C0.412598 83.9533 9.73147 67.8837 24.9523 59.1278L116.381 6.59274Z" fill="white"/>
+                    </svg>
+                  </div>
+                  <div class="bg-gray-800 text-white p-3 rounded-2xl rounded-tl-none max-w-[200px]">
+                    <p class="text-sm">✅ Регистрация успешна!</p>
+                    <p class="text-sm mt-1">Добро пожаловать, Иван Петров!</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- STEP 2: CHECK IN -->
+    <!-- ============================================ -->
+    <div class="mb-16">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="w-10 h-10 bg-green-600 rounded-full flex items-center justify-center">
+          <span class="text-white font-bold">2</span>
+        </div>
+        <h2 class="text-2xl font-bold text-gray-900">Отметка прихода на работу</h2>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <!-- Phone Mockup -->
+        <div class="flex justify-center order-2 lg:order-1">
+          <div class="phone-frame" style="width: 300px;">
+            <div class="phone-screen">
+              <div class="phone-notch"></div>
+              <!-- Telegram Header -->
+              <div class="bg-purple-700 px-4 py-3 flex items-center gap-3">
+                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                </svg>
+                <div class="w-10 h-10 bg-purple-500 rounded-full flex items-center justify-center">
+                  <svg width="24" height="24" viewBox="0 0 282 308" fill="white">
+                    <path fill-rule="evenodd" clip-rule="evenodd" d="M116.381 6.59274C131.498 -2.16311 150.239 -2.16311 165.357 6.59274L256.785 59.1278C272.006 67.8837 281.325 83.9533 281.325 101.362V206.432C281.325 223.841 271.902 239.91 256.785 248.666L165.357 301.201C150.239 309.957 131.498 309.957 116.381 301.201L24.9523 248.666C9.73147 239.91 0.412598 223.841 0.412598 206.432V101.362C0.412598 83.9533 9.73147 67.8837 24.9523 59.1278L116.381 6.59274Z" fill="white"/>
+                  </svg>
+                </div>
+                <div class="flex-1">
+                  <p class="text-white font-medium text-sm">C-Space Attendance</p>
+                  <p class="text-purple-200 text-xs">бот</p>
+                </div>
+              </div>
+
+              <!-- Chat Messages -->
+              <div class="bg-gray-900 p-4 space-y-3" style="min-height: 400px;">
+                <!-- Main Menu -->
+                <div class="flex gap-2">
+                  <div class="w-8 h-8 bg-purple-600 rounded-full flex-shrink-0 flex items-center justify-center">
+                    <svg width="16" height="16" viewBox="0 0 282 308" fill="white">
+                      <path fill-rule="evenodd" clip-rule="evenodd" d="M116.381 6.59274C131.498 -2.16311 150.239 -2.16311 165.357 6.59274L256.785 59.1278C272.006 67.8837 281.325 83.9533 281.325 101.362V206.432C281.325 223.841 271.902 239.91 256.785 248.666L165.357 301.201C150.239 309.957 131.498 309.957 116.381 301.201L24.9523 248.666C9.73147 239.91 0.412598 223.841 0.412598 206.432V101.362C0.412598 83.9533 9.73147 67.8837 24.9523 59.1278L116.381 6.59274Z" fill="white"/>
+                    </svg>
+                  </div>
+                  <div class="bg-gray-800 text-white p-3 rounded-2xl rounded-tl-none max-w-[200px]">
+                    <p class="text-sm">Главное меню</p>
+                    <p class="text-sm mt-1 text-gray-400">Выберите действие:</p>
+                  </div>
+                </div>
+
+                <!-- Menu Buttons -->
+                <div class="flex flex-col gap-2 mt-4">
+                  <button class="w-full bg-green-600 text-white py-3 rounded-xl text-sm font-medium flex items-center justify-center gap-2">
+                    ✅ Пришёл на работу
+                  </button>
+                  <button class="w-full bg-gray-700 text-white py-3 rounded-xl text-sm font-medium">
+                    🚪 Ушёл с работы
+                  </button>
+                  <button class="w-full bg-gray-700 text-white py-3 rounded-xl text-sm font-medium">
+                    📊 Моя статистика
+                  </button>
+                </div>
+
+                <!-- Success Response -->
+                <div class="flex gap-2 mt-4">
+                  <div class="w-8 h-8 bg-purple-600 rounded-full flex-shrink-0 flex items-center justify-center">
+                    <svg width="16" height="16" viewBox="0 0 282 308" fill="white">
+                      <path fill-rule="evenodd" clip-rule="evenodd" d="M116.381 6.59274C131.498 -2.16311 150.239 -2.16311 165.357 6.59274L256.785 59.1278C272.006 67.8837 281.325 83.9533 281.325 101.362V206.432C281.325 223.841 271.902 239.91 256.785 248.666L165.357 301.201C150.239 309.957 131.498 309.957 116.381 301.201L24.9523 248.666C9.73147 239.91 0.412598 223.841 0.412598 206.432V101.362C0.412598 83.9533 9.73147 67.8837 24.9523 59.1278L116.381 6.59274Z" fill="white"/>
+                    </svg>
+                  </div>
+                  <div class="bg-green-800 text-white p-3 rounded-2xl rounded-tl-none max-w-[220px]">
+                    <p class="text-sm font-medium">✅ Приход отмечен!</p>
+                    <p class="text-sm mt-2">📅 27 января 2025</p>
+                    <p class="text-sm">🕐 Время: 09:00</p>
+                    <p class="text-sm">📍 Филиал: C-Space Yunusabad</p>
+                    <p class="text-sm mt-2 text-green-300">Хорошего рабочего дня!</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Instructions -->
+        <div class="space-y-4 order-1 lg:order-2">
+          <div class="bg-white rounded-xl border border-gray-200 p-6">
+            <h3 class="font-semibold text-gray-900 mb-4">Как отметить приход:</h3>
+            <ol class="space-y-4">
+              <li class="flex gap-3">
+                <div class="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <span class="text-green-700 text-sm font-medium">1</span>
+                </div>
+                <div>
+                  <p class="text-gray-900 font-medium">Откройте бота</p>
+                  <p class="text-sm text-gray-500">Вы увидите главное меню с кнопками</p>
+                </div>
+              </li>
+              <li class="flex gap-3">
+                <div class="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <span class="text-green-700 text-sm font-medium">2</span>
+                </div>
+                <div>
+                  <p class="text-gray-900 font-medium">Нажмите "✅ Пришёл на работу"</p>
+                  <p class="text-sm text-gray-500">Кнопка находится в главном меню</p>
+                </div>
+              </li>
+              <li class="flex gap-3">
+                <div class="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <span class="text-green-700 text-sm font-medium">3</span>
+                </div>
+                <div>
+                  <p class="text-gray-900 font-medium">Выберите филиал</p>
+                  <p class="text-sm text-gray-500">Укажите, в каком офисе вы находитесь</p>
+                </div>
+              </li>
+              <li class="flex gap-3">
+                <div class="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <svg class="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                  </svg>
+                </div>
+                <div>
+                  <p class="text-gray-900 font-medium">Готово!</p>
+                  <p class="text-sm text-gray-500">Бот подтвердит время и место прихода</p>
+                </div>
+              </li>
+            </ol>
+          </div>
+
+          <div class="bg-amber-50 border border-amber-200 rounded-xl p-4">
+            <div class="flex gap-3">
+              <svg class="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+              </svg>
+              <div>
+                <p class="text-amber-800 font-medium">Не забывайте!</p>
+                <p class="text-sm text-amber-700">Отмечайте приход сразу по прибытии на работу. Опоздания фиксируются автоматически после 09:00.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- STEP 3: CHECK OUT -->
+    <!-- ============================================ -->
+    <div class="mb-16">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="w-10 h-10 bg-orange-600 rounded-full flex items-center justify-center">
+          <span class="text-white font-bold">3</span>
+        </div>
+        <h2 class="text-2xl font-bold text-gray-900">Отметка ухода с работы</h2>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <!-- Instructions -->
+        <div class="space-y-4">
+          <div class="bg-white rounded-xl border border-gray-200 p-6">
+            <h3 class="font-semibold text-gray-900 mb-4">Как отметить уход:</h3>
+            <ol class="space-y-4">
+              <li class="flex gap-3">
+                <div class="w-6 h-6 bg-orange-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <span class="text-orange-700 text-sm font-medium">1</span>
+                </div>
+                <div>
+                  <p class="text-gray-900 font-medium">Откройте бота</p>
+                  <p class="text-sm text-gray-500">Перейдите в главное меню</p>
+                </div>
+              </li>
+              <li class="flex gap-3">
+                <div class="w-6 h-6 bg-orange-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <span class="text-orange-700 text-sm font-medium">2</span>
+                </div>
+                <div>
+                  <p class="text-gray-900 font-medium">Нажмите "🚪 Ушёл с работы"</p>
+                  <p class="text-sm text-gray-500">Эта кнопка активна после отметки прихода</p>
+                </div>
+              </li>
+              <li class="flex gap-3">
+                <div class="w-6 h-6 bg-orange-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <span class="text-orange-700 text-sm font-medium">3</span>
+                </div>
+                <div>
+                  <p class="text-gray-900 font-medium">Подтвердите уход</p>
+                  <p class="text-sm text-gray-500">Бот покажет итоги рабочего дня</p>
+                </div>
+              </li>
+            </ol>
+          </div>
+
+          <div class="bg-green-50 border border-green-200 rounded-xl p-4">
+            <div class="flex gap-3">
+              <svg class="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+              </svg>
+              <div>
+                <p class="text-green-800 font-medium">После ухода вы увидите:</p>
+                <ul class="text-sm text-green-700 mt-1 space-y-1">
+                  <li>• Время прихода и ухода</li>
+                  <li>• Общее количество отработанных часов</li>
+                  <li>• Статус дня (полный день / ранний уход)</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Phone Mockup -->
+        <div class="flex justify-center">
+          <div class="phone-frame" style="width: 300px;">
+            <div class="phone-screen">
+              <div class="phone-notch"></div>
+              <!-- Telegram Header -->
+              <div class="bg-purple-700 px-4 py-3 flex items-center gap-3">
+                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                </svg>
+                <div class="w-10 h-10 bg-purple-500 rounded-full flex items-center justify-center">
+                  <svg width="24" height="24" viewBox="0 0 282 308" fill="white">
+                    <path fill-rule="evenodd" clip-rule="evenodd" d="M116.381 6.59274C131.498 -2.16311 150.239 -2.16311 165.357 6.59274L256.785 59.1278C272.006 67.8837 281.325 83.9533 281.325 101.362V206.432C281.325 223.841 271.902 239.91 256.785 248.666L165.357 301.201C150.239 309.957 131.498 309.957 116.381 301.201L24.9523 248.666C9.73147 239.91 0.412598 223.841 0.412598 206.432V101.362C0.412598 83.9533 9.73147 67.8837 24.9523 59.1278L116.381 6.59274Z" fill="white"/>
+                  </svg>
+                </div>
+                <div class="flex-1">
+                  <p class="text-white font-medium text-sm">C-Space Attendance</p>
+                  <p class="text-purple-200 text-xs">бот</p>
+                </div>
+              </div>
+
+              <!-- Chat Messages -->
+              <div class="bg-gray-900 p-4 space-y-3" style="min-height: 400px;">
+                <!-- User clicks checkout -->
+                <div class="flex justify-end">
+                  <div class="bg-purple-600 text-white p-3 rounded-2xl rounded-tr-none">
+                    <p class="text-sm">🚪 Ушёл с работы</p>
+                  </div>
+                </div>
+
+                <!-- Bot Response -->
+                <div class="flex gap-2 mt-4">
+                  <div class="w-8 h-8 bg-purple-600 rounded-full flex-shrink-0 flex items-center justify-center">
+                    <svg width="16" height="16" viewBox="0 0 282 308" fill="white">
+                      <path fill-rule="evenodd" clip-rule="evenodd" d="M116.381 6.59274C131.498 -2.16311 150.239 -2.16311 165.357 6.59274L256.785 59.1278C272.006 67.8837 281.325 83.9533 281.325 101.362V206.432C281.325 223.841 271.902 239.91 256.785 248.666L165.357 301.201C150.239 309.957 131.498 309.957 116.381 301.201L24.9523 248.666C9.73147 239.91 0.412598 223.841 0.412598 206.432V101.362C0.412598 83.9533 9.73147 67.8837 24.9523 59.1278L116.381 6.59274Z" fill="white"/>
+                    </svg>
+                  </div>
+                  <div class="bg-orange-800 text-white p-3 rounded-2xl rounded-tl-none max-w-[220px]">
+                    <p class="text-sm font-medium">🚪 Уход отмечен!</p>
+                    <p class="text-sm mt-2">📅 27 января 2025</p>
+                    <div class="mt-2 p-2 bg-orange-900 rounded-lg">
+                      <p class="text-sm">🕐 Приход: 09:00</p>
+                      <p class="text-sm">🕕 Уход: 18:15</p>
+                      <p class="text-sm font-medium mt-1">⏱ Итого: 9ч 15мин</p>
+                    </div>
+                    <p class="text-sm mt-2 text-orange-300">✅ Полный рабочий день</p>
+                    <p class="text-sm text-orange-300">Хорошего вечера!</p>
+                  </div>
+                </div>
+
+                <!-- Menu Buttons -->
+                <div class="flex flex-col gap-2 mt-4">
+                  <button class="w-full bg-gray-700 text-white py-3 rounded-xl text-sm font-medium">
+                    📊 Моя статистика
+                  </button>
+                  <button class="w-full bg-gray-700 text-white py-3 rounded-xl text-sm font-medium">
+                    📱 Открыть приложение
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- STEP 4: MINI APP -->
+    <!-- ============================================ -->
+    <div class="mb-16">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center">
+          <span class="text-white font-bold">4</span>
+        </div>
+        <h2 class="text-2xl font-bold text-gray-900">Мини-приложение</h2>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <!-- Phone Mockup - Mini App -->
+        <div class="flex justify-center">
+          <div class="phone-frame" style="width: 300px;">
+            <div class="phone-screen">
+              <div class="phone-notch"></div>
+              <!-- Mini App Header -->
+              <div class="bg-purple-700 px-4 py-3 flex items-center gap-3">
+                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+                <div class="flex-1 text-center">
+                  <p class="text-white font-medium text-sm">C-Space Attendance</p>
+                </div>
+                <div class="w-6"></div>
+              </div>
+
+              <!-- Mini App Content -->
+              <div class="bg-gray-50 p-4" style="min-height: 400px;">
+                <!-- User Card -->
+                <div class="bg-gradient-to-r from-purple-600 to-purple-700 rounded-xl p-4 text-white mb-4">
+                  <div class="flex items-center gap-3">
+                    <div class="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center text-lg font-bold">
+                      И
+                    </div>
+                    <div>
+                      <p class="font-semibold">Иван Петров</p>
+                      <p class="text-purple-200 text-sm">Разработчик</p>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Today Status -->
+                <div class="bg-white rounded-xl border border-gray-200 p-4 mb-4">
+                  <p class="text-sm text-gray-500 mb-2">Сегодня</p>
+                  <div class="flex items-center justify-between">
+                    <div class="text-center">
+                      <p class="text-green-600 font-semibold">09:00</p>
+                      <p class="text-xs text-gray-500">Приход</p>
+                    </div>
+                    <div class="flex-1 h-1 bg-green-200 mx-3 rounded">
+                      <div class="h-1 bg-green-500 rounded" style="width: 75%"></div>
+                    </div>
+                    <div class="text-center">
+                      <p class="text-gray-400 font-semibold">--:--</p>
+                      <p class="text-xs text-gray-500">Уход</p>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Stats Grid -->
+                <div class="grid grid-cols-2 gap-3 mb-4">
+                  <div class="bg-white rounded-xl border border-gray-200 p-3 text-center">
+                    <p class="text-2xl font-bold text-purple-600">18</p>
+                    <p class="text-xs text-gray-500">Дней в этом месяце</p>
+                  </div>
+                  <div class="bg-white rounded-xl border border-gray-200 p-3 text-center">
+                    <p class="text-2xl font-bold text-green-600">144ч</p>
+                    <p class="text-xs text-gray-500">Отработано</p>
+                  </div>
+                </div>
+
+                <!-- Recent Activity -->
+                <div class="bg-white rounded-xl border border-gray-200 p-4">
+                  <p class="text-sm font-medium text-gray-900 mb-3">Последние дни</p>
+                  <div class="space-y-2">
+                    <div class="flex justify-between items-center text-sm">
+                      <span class="text-gray-600">Пн, 27 янв</span>
+                      <span class="text-green-600">09:00 - В работе</span>
+                    </div>
+                    <div class="flex justify-between items-center text-sm">
+                      <span class="text-gray-600">Пт, 24 янв</span>
+                      <span class="text-gray-900">09:05 - 18:20</span>
+                    </div>
+                    <div class="flex justify-between items-center text-sm">
+                      <span class="text-gray-600">Чт, 23 янв</span>
+                      <span class="text-gray-900">08:55 - 18:10</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Instructions -->
+        <div class="space-y-4">
+          <div class="bg-white rounded-xl border border-gray-200 p-6">
+            <h3 class="font-semibold text-gray-900 mb-4">Возможности мини-приложения:</h3>
+            <div class="space-y-4">
+              <div class="flex gap-3">
+                <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                  </svg>
+                </div>
+                <div>
+                  <p class="text-gray-900 font-medium">Статистика посещаемости</p>
+                  <p class="text-sm text-gray-500">Смотрите количество отработанных дней и часов за месяц</p>
+                </div>
+              </div>
+
+              <div class="flex gap-3">
+                <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                  </svg>
+                </div>
+                <div>
+                  <p class="text-gray-900 font-medium">Текущий статус</p>
+                  <p class="text-sm text-gray-500">Видите время прихода и сколько уже отработали сегодня</p>
+                </div>
+              </div>
+
+              <div class="flex gap-3">
+                <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                  </svg>
+                </div>
+                <div>
+                  <p class="text-gray-900 font-medium">История посещений</p>
+                  <p class="text-sm text-gray-500">Просматривайте записи за предыдущие дни</p>
+                </div>
+              </div>
+
+              <div class="flex gap-3">
+                <div class="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <svg class="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+                  </svg>
+                </div>
+                <div>
+                  <p class="text-gray-900 font-medium">Напоминания</p>
+                  <p class="text-sm text-gray-500">Получайте уведомления об отметке прихода/ухода</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-purple-50 border border-purple-200 rounded-xl p-4">
+            <div class="flex gap-3">
+              <svg class="w-5 h-5 text-purple-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M11 3a1 1 0 10-2 0v1a1 1 0 102 0V3zM15.657 5.757a1 1 0 00-1.414-1.414l-.707.707a1 1 0 001.414 1.414l.707-.707zM18 10a1 1 0 01-1 1h-1a1 1 0 110-2h1a1 1 0 011 1zM5.05 6.464A1 1 0 106.464 5.05l-.707-.707a1 1 0 00-1.414 1.414l.707.707zM5 10a1 1 0 01-1 1H3a1 1 0 110-2h1a1 1 0 011 1zM8 16v-1h4v1a2 2 0 11-4 0zM12 14c.015-.34.208-.646.477-.859a4 4 0 10-4.954 0c.27.213.462.519.476.859h4.002z"/>
+              </svg>
+              <div>
+                <p class="text-purple-800 font-medium">Как открыть мини-приложение</p>
+                <p class="text-sm text-purple-700 mt-1">Нажмите кнопку "📱 Открыть приложение" в меню бота или кнопку меню слева от поля ввода сообщения.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- UNREGISTRATION -->
+    <!-- ============================================ -->
+    <div class="mb-16">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="w-10 h-10 bg-red-600 rounded-full flex items-center justify-center">
+          <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+          </svg>
+        </div>
+        <h2 class="text-2xl font-bold text-gray-900">Отвязка аккаунта</h2>
+      </div>
+
+      <div class="bg-white rounded-xl border border-gray-200 p-6">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div>
+            <h3 class="font-semibold text-gray-900 mb-4">Когда может понадобиться:</h3>
+            <ul class="space-y-3">
+              <li class="flex gap-3">
+                <svg class="w-5 h-5 text-gray-400 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                </svg>
+                <span class="text-gray-600">Смена номера телефона / аккаунта Telegram</span>
+              </li>
+              <li class="flex gap-3">
+                <svg class="w-5 h-5 text-gray-400 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                </svg>
+                <span class="text-gray-600">Ошибка при регистрации (неверная почта)</span>
+              </li>
+              <li class="flex gap-3">
+                <svg class="w-5 h-5 text-gray-400 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                </svg>
+                <span class="text-gray-600">Увольнение из компании</span>
+              </li>
+            </ul>
+          </div>
+
+          <div>
+            <h3 class="font-semibold text-gray-900 mb-4">Как отвязать аккаунт:</h3>
+            <ol class="space-y-3">
+              <li class="flex gap-3">
+                <div class="w-6 h-6 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
+                  <span class="text-red-700 text-sm font-medium">1</span>
+                </div>
+                <span class="text-gray-600">Откройте меню бота</span>
+              </li>
+              <li class="flex gap-3">
+                <div class="w-6 h-6 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
+                  <span class="text-red-700 text-sm font-medium">2</span>
+                </div>
+                <span class="text-gray-600">Нажмите "⚙️ Настройки"</span>
+              </li>
+              <li class="flex gap-3">
+                <div class="w-6 h-6 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
+                  <span class="text-red-700 text-sm font-medium">3</span>
+                </div>
+                <span class="text-gray-600">Выберите "🚫 Отвязать аккаунт"</span>
+              </li>
+              <li class="flex gap-3">
+                <div class="w-6 h-6 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
+                  <span class="text-red-700 text-sm font-medium">4</span>
+                </div>
+                <span class="text-gray-600">Подтвердите действие</span>
+              </li>
+            </ol>
+          </div>
+        </div>
+
+        <div class="mt-6 bg-red-50 border border-red-200 rounded-xl p-4">
+          <div class="flex gap-3">
+            <svg class="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+            </svg>
+            <div>
+              <p class="text-red-800 font-medium">Внимание!</p>
+              <p class="text-sm text-red-700">После отвязки вам нужно будет заново пройти регистрацию, чтобы использовать бота. История посещаемости сохраняется в системе.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- FAQ -->
+    <!-- ============================================ -->
+    <div class="mb-16">
+      <h2 class="text-2xl font-bold text-gray-900 mb-6">Часто задаваемые вопросы</h2>
+
+      <div class="space-y-4">
+        <div class="bg-white rounded-xl border border-gray-200 p-5">
+          <h3 class="font-semibold text-gray-900 mb-2">Что делать, если я забыл отметить приход?</h3>
+          <p class="text-gray-600">Обратитесь к вашему руководителю или в HR-отдел. Они могут внести корректировку в систему.</p>
+        </div>
+
+        <div class="bg-white rounded-xl border border-gray-200 p-5">
+          <h3 class="font-semibold text-gray-900 mb-2">Могу ли я отметиться из дома?</h3>
+          <p class="text-gray-600">Да, вы можете отметить приход из любого места. При отметке выберите соответствующий филиал или "Удалённая работа", если работаете из дома.</p>
+        </div>
+
+        <div class="bg-white rounded-xl border border-gray-200 p-5">
+          <h3 class="font-semibold text-gray-900 mb-2">Бот не находит мою почту. Что делать?</h3>
+          <p class="text-gray-600">Убедитесь, что вы ввели почту правильно. Если проблема сохраняется, свяжитесь с HR — возможно, ваш профиль ещё не создан в системе.</p>
+        </div>
+
+        <div class="bg-white rounded-xl border border-gray-200 p-5">
+          <h3 class="font-semibold text-gray-900 mb-2">Как изменить филиал по умолчанию?</h3>
+          <p class="text-gray-600">Зайдите в "⚙️ Настройки" в меню бота и выберите "Изменить филиал". Вы можете выбрать филиал, который будет предлагаться по умолчанию.</p>
+        </div>
+
+        <div class="bg-white rounded-xl border border-gray-200 p-5">
+          <h3 class="font-semibold text-gray-900 mb-2">Кто видит мою посещаемость?</h3>
+          <p class="text-gray-600">Ваша статистика доступна вам, вашему руководителю и HR-отделу. Информация используется только для учёта рабочего времени.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Contact -->
+    <div class="bg-gradient-to-r from-purple-600 to-purple-700 rounded-2xl p-8 text-white text-center">
+      <h2 class="text-2xl font-bold mb-2">Нужна помощь?</h2>
+      <p class="text-purple-200 mb-6">Если у вас возникли вопросы или проблемы с ботом</p>
+      <div class="flex flex-col sm:flex-row gap-4 justify-center">
+        <a href="mailto:hr@cspace.uz" class="bg-white text-purple-700 px-6 py-3 rounded-lg font-medium hover:bg-purple-50 transition-colors">
+          📧 Написать в HR
+        </a>
+        <a href="https://t.me/cspace_support" class="bg-white/20 text-white px-6 py-3 rounded-lg font-medium hover:bg-white/30 transition-colors">
+          💬 Telegram поддержка
+        </a>
+      </div>
+    </div>
+
+  </div>
+
+  <footer class="bg-white border-t border-gray-200 mt-16">
+    <div class="max-w-6xl mx-auto px-4 py-6 text-center text-gray-500 text-sm">
+      <p>© 2025 C-Space Coworking. Все права защищены.</p>
+    </div>
+  </footer>
+
+</body>
+</html>
