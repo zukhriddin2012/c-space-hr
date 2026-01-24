@@ -26,15 +26,15 @@ export interface Branch {
   longitude: number | null;
   geofence_radius: number;
   office_ips?: string[] | null;
-  // Branch configuration fields
-  operational_status: 'under_construction' | 'operational';
-  has_night_shift: boolean;
-  smart_lock_enabled: boolean;
-  smart_lock_start_time: string | null; // TIME format: "18:00"
-  smart_lock_end_time: string | null;   // TIME format: "09:00"
-  branch_class: 'A+' | 'A' | 'B+' | 'B' | 'C+' | 'C';
-  description: string | null;
-  community_manager_id: string | null;
+  // Branch configuration fields (optional for backwards compatibility)
+  operational_status?: 'under_construction' | 'operational';
+  has_night_shift?: boolean;
+  smart_lock_enabled?: boolean;
+  smart_lock_start_time?: string | null; // TIME format: "18:00"
+  smart_lock_end_time?: string | null;   // TIME format: "09:00"
+  branch_class?: 'A+' | 'A' | 'B+' | 'B' | 'C+' | 'C';
+  description?: string | null;
+  community_manager_id?: string | null;
   // Joined data
   community_manager?: Employee;
 }

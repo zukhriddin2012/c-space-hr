@@ -57,11 +57,15 @@ async function getBranchesWithStats(): Promise<BranchWithStats[]> {
     }
   }
 
-  // Pre-compute present count by branch (O(n) instead of O(n*m))
-  const presentByBranch = new Map<string, number>();
+  // Pre-compute present count by branch - count UNIQUE employees, not check-in records
+  // An employee with multiple sessions should only be counted once
+  const presentByBranch = new Map<string, Set<string>>();
   for (const a of attendance) {
-    if (a.check_in_branch_id) {
-      presentByBranch.set(a.check_in_branch_id, (presentByBranch.get(a.check_in_branch_id) || 0) + 1);
+    if (a.check_in_branch_id && a.employee_id) {
+      if (!presentByBranch.has(a.check_in_branch_id)) {
+        presentByBranch.set(a.check_in_branch_id, new Set());
+      }
+      presentByBranch.get(a.check_in_branch_id)!.add(a.employee_id);
     }
   }
 
@@ -75,7 +79,7 @@ async function getBranchesWithStats(): Promise<BranchWithStats[]> {
       ...branch,
       isActive: stats.count > 0,
       totalEmployees: stats.count,
-      presentToday: presentByBranch.get(branch.id) || 0,
+      presentToday: presentByBranch.get(branch.id)?.size || 0,
       salaryBudget: stats.salary,
       // New fields with defaults for backwards compatibility
       operational_status: branch.operational_status || 'operational',
