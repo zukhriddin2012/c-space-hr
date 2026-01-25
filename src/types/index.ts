@@ -43,6 +43,7 @@ export interface Employee {
   telegramId?: string;
   notes?: string; // Any notes like "Will be fired from Nov."
   status: 'active' | 'inactive' | 'terminated' | 'probation';
+  isGrowthTeam?: boolean; // Part of the Growth Team with access to strategic projects
   createdAt: Date;
   updatedAt: Date;
 }

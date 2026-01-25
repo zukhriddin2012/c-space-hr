@@ -19,6 +19,7 @@ import {
   ArrowRight,
   FileText,
   Banknote,
+  Rocket,
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -382,6 +383,52 @@ export default async function MyPortalPage() {
           <div className="p-4 lg:p-6 text-center text-gray-500 text-sm">No payslips available</div>
         )}
       </div>
+
+      {/* Growth Team Card - Only shown for Growth Team members */}
+      {(employee as { is_growth_team?: boolean }).is_growth_team ? (
+        <div className="bg-gradient-to-r from-orange-500 to-amber-500 rounded-xl p-4 lg:p-6 text-white col-span-1 lg:col-span-2">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 lg:w-12 lg:h-12 bg-white/20 rounded-xl flex items-center justify-center">
+                <Rocket size={20} className="lg:hidden" />
+                <Rocket size={24} className="hidden lg:block" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-lg">Growth Dashboard</h3>
+                <p className="text-orange-100 text-sm">Strategic projects & leadership alignment</p>
+              </div>
+            </div>
+            <Link
+              href="/my-portal/growth"
+              className="px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
+            >
+              Open Dashboard <ArrowRight size={16} />
+            </Link>
+          </div>
+        </div>
+      ) : (
+        /* Company Updates Card - Shown for non-Growth Team members */
+        <div className="bg-white rounded-xl border border-gray-200 p-4 lg:p-6 col-span-1 lg:col-span-2">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 lg:w-12 lg:h-12 bg-purple-100 rounded-xl flex items-center justify-center">
+                <Calendar size={20} className="lg:hidden text-purple-600" />
+                <Calendar size={24} className="hidden lg:block text-purple-600" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-lg text-gray-900">Company Updates</h3>
+                <p className="text-gray-500 text-sm">Key dates and announcements</p>
+              </div>
+            </div>
+            <Link
+              href="/my-portal/company-updates"
+              className="px-4 py-2 bg-purple-100 hover:bg-purple-200 text-purple-700 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
+            >
+              View Updates <ArrowRight size={16} />
+            </Link>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -30,6 +30,7 @@ import {
   ArrowUpCircle,
   ArrowDownCircle,
   Edit3,
+  Rocket,
 } from 'lucide-react';
 import type { UserRole } from '@/types';
 
@@ -98,6 +99,7 @@ interface Employee {
   telegram_id?: string | null;
   branches?: { name: string };
   system_role?: UserRole;
+  is_growth_team?: boolean;
 }
 
 interface PageData {
@@ -197,6 +199,7 @@ export default function EditEmployeePage({ params }: { params: Promise<{ id: str
     date_of_birth: '',
     gender: '',
     notes: '',
+    is_growth_team: false,
   });
   const [saving, setSaving] = useState(false);
   const [telegramId, setTelegramId] = useState<string | null>(null);
@@ -299,6 +302,7 @@ export default function EditEmployeePage({ params }: { params: Promise<{ id: str
           date_of_birth: data.employee.date_of_birth || '',
           gender: data.employee.gender || '',
           notes: data.employee.notes || '',
+          is_growth_team: data.employee.is_growth_team || false,
         });
         setTelegramId(data.employee.telegram_id || null);
       } catch (err) {
@@ -690,6 +694,7 @@ export default function EditEmployeePage({ params }: { params: Promise<{ id: str
           date_of_birth: formData.date_of_birth || null,
           gender: formData.gender || null,
           notes: formData.notes || null,
+          is_growth_team: pageData.canAssignRoles ? formData.is_growth_team : undefined,
         }),
       });
 
@@ -1151,6 +1156,47 @@ export default function EditEmployeePage({ params }: { params: Promise<{ id: str
               <div className="mt-4 p-3 bg-teal-50 border border-teal-200 rounded-lg">
                 <p className="text-sm text-teal-700">
                   <strong>Note:</strong> Branch Manager will have access to manage employees in the branch selected above ({branches.find(b => b.id === formData.branch_id)?.name || 'No branch selected'}).
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Growth Team Section - only for users who can assign roles */}
+        {canAssignRoles && (
+          <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
+            <div className="flex items-center gap-2 mb-4">
+              <Rocket size={18} className="text-orange-500" />
+              <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wider">
+                Growth Team
+              </h3>
+            </div>
+
+            <label className={`flex items-start gap-3 p-4 border rounded-lg cursor-pointer transition-colors ${
+              formData.is_growth_team
+                ? 'border-orange-400 bg-orange-50'
+                : 'border-gray-200 hover:border-gray-300'
+            }`}>
+              <input
+                type="checkbox"
+                checked={formData.is_growth_team}
+                onChange={(e) => setFormData({ ...formData, is_growth_team: e.target.checked })}
+                className="mt-1 h-4 w-4 text-orange-500 focus:ring-orange-500 rounded"
+              />
+              <div>
+                <p className="text-sm font-medium text-gray-900">Growth Team Member</p>
+                <p className="text-xs text-gray-500 mt-1">
+                  Enable to give this employee access to the Growth section with strategic projects,
+                  Metronome Sync updates, and leadership alignment information.
+                </p>
+              </div>
+            </label>
+
+            {formData.is_growth_team && (
+              <div className="mt-4 p-3 bg-orange-50 border border-orange-200 rounded-lg">
+                <p className="text-sm text-orange-700">
+                  <strong>Access granted:</strong> This employee will see the Growth section in their My Portal
+                  with visibility into all strategic projects and company updates.
                 </p>
               </div>
             )}

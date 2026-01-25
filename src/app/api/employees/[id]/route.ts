@@ -42,7 +42,8 @@ export const PUT = withAuth(async (
     const {
       full_name, position, level, branch_id, salary, phone, email,
       status, employment_type, system_role,
-      hire_date, birth_date, gender // Added missing fields!
+      hire_date, birth_date, gender, // Added missing fields!
+      is_growth_team // Growth Team flag
     } = body;
 
     const updates: {
@@ -59,6 +60,7 @@ export const PUT = withAuth(async (
       hire_date?: string;
       birth_date?: string | null;
       gender?: string | null;
+      is_growth_team?: boolean;
     } = {};
 
     if (full_name !== undefined) updates.full_name = full_name;
@@ -75,6 +77,8 @@ export const PUT = withAuth(async (
     if (hire_date !== undefined) updates.hire_date = hire_date;
     if (birth_date !== undefined) updates.birth_date = birth_date || null;
     if (gender !== undefined) updates.gender = gender || null;
+    // Growth Team flag
+    if (is_growth_team !== undefined) updates.is_growth_team = is_growth_team;
 
     const result = await updateEmployee(id, updates);
 
