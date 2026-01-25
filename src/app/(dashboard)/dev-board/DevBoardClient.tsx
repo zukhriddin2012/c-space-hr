@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Plus,
   Filter,
@@ -24,6 +24,9 @@ import {
   Archive,
   ArrowRight,
   Trash2,
+  Download,
+  Upload,
+  Bot,
 } from 'lucide-react';
 
 // Types
@@ -129,6 +132,7 @@ export default function DevBoardClient({ userName }: DevBoardClientProps) {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [draggedTask, setDraggedTask] = useState<Task | null>(null);
   const [showSprintPanel, setShowSprintPanel] = useState(false);
+  const [showJarvisSync, setShowJarvisSync] = useState(false);
 
   // Fetch data
   useEffect(() => {
@@ -220,6 +224,14 @@ export default function DevBoardClient({ userName }: DevBoardClientProps) {
             <p className="text-gray-600">Track platform development together</p>
           </div>
           <div className="flex items-center gap-2">
+            <button
+              onClick={() => setShowJarvisSync(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition-colors"
+              title="Sync with Jarvis AI"
+            >
+              <Bot size={18} />
+              Jarvis
+            </button>
             <button
               onClick={() => setShowSprintPanel(true)}
               className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
@@ -426,6 +438,17 @@ export default function DevBoardClient({ userName }: DevBoardClientProps) {
           onClose={() => setShowSprintPanel(false)}
           onUpdated={() => {
             setShowSprintPanel(false);
+            fetchData();
+          }}
+        />
+      )}
+
+      {/* Jarvis Sync Panel */}
+      {showJarvisSync && (
+        <JarvisSyncPanel
+          onClose={() => setShowJarvisSync(false)}
+          onImported={() => {
+            setShowJarvisSync(false);
             fetchData();
           }}
         />
@@ -1437,6 +1460,212 @@ function SprintManagementPanel({
                   {loading ? 'Completing...' : 'Complete Sprint'}
                 </button>
               </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Jarvis Sync Panel - Export/Import for AI collaboration
+function JarvisSyncPanel({
+  onClose,
+  onImported,
+}: {
+  onClose: () => void;
+  onImported: () => void;
+}) {
+  const [loading, setLoading] = useState(false);
+  const [importResult, setImportResult] = useState<{
+    success: boolean;
+    comments_added?: number;
+    tasks_updated?: number;
+    jarvis_summary?: string;
+    jarvis_recommendations?: string[];
+    errors?: string[];
+  } | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleExport = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch('/api/dev-board/export');
+      const data = await res.json();
+
+      // Create and download file
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `devboard-export-${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Export failed:', error);
+      alert('Failed to export data');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setLoading(true);
+    setImportResult(null);
+
+    try {
+      const text = await file.text();
+      const data = JSON.parse(text);
+
+      const res = await fetch('/api/dev-board/import', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+
+      const result = await res.json();
+
+      if (result.success) {
+        setImportResult(result);
+        // Refresh board after short delay to show results
+        setTimeout(() => {
+          onImported();
+        }, 3000);
+      } else {
+        setImportResult({ success: false, errors: [result.error || 'Import failed'] });
+      }
+    } catch (error) {
+      console.error('Import failed:', error);
+      setImportResult({ success: false, errors: ['Failed to parse file or import data'] });
+    } finally {
+      setLoading(false);
+      // Reset file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/50" onClick={onClose} />
+      <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden">
+        {/* Header */}
+        <div className="flex items-center justify-between p-4 border-b bg-gradient-to-r from-purple-600 to-indigo-600">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
+              <Bot className="text-white" size={24} />
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold text-white">Jarvis Sync</h2>
+              <p className="text-purple-200 text-sm">Export & Import AI responses</p>
+            </div>
+          </div>
+          <button onClick={onClose} className="p-1 hover:bg-white/20 rounded text-white">
+            <X size={20} />
+          </button>
+        </div>
+
+        <div className="p-6 space-y-6">
+          {/* How it works */}
+          <div className="bg-purple-50 rounded-lg p-4">
+            <h3 className="font-medium text-purple-900 mb-2">🤖 How it works</h3>
+            <ol className="text-sm text-purple-800 space-y-1">
+              <li>1. <strong>Export</strong> your board data as JSON</li>
+              <li>2. <strong>Share</strong> the file with Jarvis (paste in chat)</li>
+              <li>3. <strong>Get responses</strong> - Jarvis will analyze and add comments</li>
+              <li>4. <strong>Import</strong> the updated file back here</li>
+            </ol>
+          </div>
+
+          {/* Export Section */}
+          <div className="space-y-3">
+            <h3 className="font-medium text-gray-900 flex items-center gap-2">
+              <Download size={18} className="text-purple-600" />
+              Export Board Data
+            </h3>
+            <p className="text-sm text-gray-600">
+              Download all tasks, comments, and sprints as a JSON file to share with Jarvis.
+            </p>
+            <button
+              onClick={handleExport}
+              disabled={loading}
+              className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 transition-colors"
+            >
+              <Download size={18} />
+              {loading ? 'Exporting...' : 'Export to JSON'}
+            </button>
+          </div>
+
+          <div className="border-t" />
+
+          {/* Import Section */}
+          <div className="space-y-3">
+            <h3 className="font-medium text-gray-900 flex items-center gap-2">
+              <Upload size={18} className="text-green-600" />
+              Import Jarvis Responses
+            </h3>
+            <p className="text-sm text-gray-600">
+              Upload the JSON file with Jarvis&apos;s responses to add them to your board.
+            </p>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".json"
+              onChange={handleImport}
+              className="hidden"
+              id="jarvis-import"
+            />
+            <label
+              htmlFor="jarvis-import"
+              className={`w-full flex items-center justify-center gap-2 px-4 py-3 border-2 border-dashed border-green-300 text-green-700 rounded-lg hover:bg-green-50 hover:border-green-400 cursor-pointer transition-colors ${loading ? 'opacity-50 pointer-events-none' : ''}`}
+            >
+              <Upload size={18} />
+              {loading ? 'Importing...' : 'Choose JSON File'}
+            </label>
+          </div>
+
+          {/* Import Result */}
+          {importResult && (
+            <div className={`rounded-lg p-4 ${importResult.success ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'}`}>
+              {importResult.success ? (
+                <div className="space-y-2">
+                  <p className="font-medium text-green-800">✅ Import successful!</p>
+                  <div className="text-sm text-green-700">
+                    <p>• {importResult.comments_added || 0} comments added</p>
+                    <p>• {importResult.tasks_updated || 0} tasks updated</p>
+                  </div>
+                  {importResult.jarvis_summary && (
+                    <div className="mt-3 p-3 bg-white rounded border border-green-200">
+                      <p className="text-sm font-medium text-gray-700">Jarvis Summary:</p>
+                      <p className="text-sm text-gray-600 mt-1">{importResult.jarvis_summary}</p>
+                    </div>
+                  )}
+                  {importResult.jarvis_recommendations && importResult.jarvis_recommendations.length > 0 && (
+                    <div className="mt-2 p-3 bg-white rounded border border-green-200">
+                      <p className="text-sm font-medium text-gray-700">Recommendations:</p>
+                      <ul className="text-sm text-gray-600 mt-1 list-disc list-inside">
+                        {importResult.jarvis_recommendations.map((rec, i) => (
+                          <li key={i}>{rec}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  <p className="text-xs text-green-600 mt-2">Refreshing board in 3 seconds...</p>
+                </div>
+              ) : (
+                <div>
+                  <p className="font-medium text-red-800">❌ Import failed</p>
+                  {importResult.errors?.map((err, i) => (
+                    <p key={i} className="text-sm text-red-600 mt-1">{err}</p>
+                  ))}
+                </div>
+              )}
             </div>
           )}
         </div>
