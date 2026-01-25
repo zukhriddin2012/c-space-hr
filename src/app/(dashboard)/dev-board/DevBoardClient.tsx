@@ -18,6 +18,12 @@ import {
   X,
   GripVertical,
   Loader2,
+  Settings,
+  Play,
+  CheckCircle2,
+  Archive,
+  ArrowRight,
+  Trash2,
 } from 'lucide-react';
 
 // Types
@@ -122,6 +128,7 @@ export default function DevBoardClient({ userName }: DevBoardClientProps) {
   const [newTaskStatus, setNewTaskStatus] = useState<string>('backlog');
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [draggedTask, setDraggedTask] = useState<Task | null>(null);
+  const [showSprintPanel, setShowSprintPanel] = useState(false);
 
   // Fetch data
   useEffect(() => {
@@ -212,13 +219,22 @@ export default function DevBoardClient({ userName }: DevBoardClientProps) {
             <h1 className="text-2xl font-bold text-gray-900">🛠️ Dev Board</h1>
             <p className="text-gray-600">Track platform development together</p>
           </div>
-          <button
-            onClick={() => setShowNewTask(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
-          >
-            <Plus size={18} />
-            New Task
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setShowSprintPanel(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+            >
+              <Settings size={18} />
+              Sprints
+            </button>
+            <button
+              onClick={() => setShowNewTask(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+            >
+              <Plus size={18} />
+              New Task
+            </button>
+          </div>
         </div>
 
         {/* Stats Bar */}
@@ -398,6 +414,18 @@ export default function DevBoardClient({ userName }: DevBoardClientProps) {
           onClose={() => setSelectedTask(null)}
           onUpdated={() => {
             setSelectedTask(null);
+            fetchData();
+          }}
+        />
+      )}
+
+      {/* Sprint Management Panel */}
+      {showSprintPanel && (
+        <SprintManagementPanel
+          sprints={sprints}
+          onClose={() => setShowSprintPanel(false)}
+          onUpdated={() => {
+            setShowSprintPanel(false);
             fetchData();
           }}
         />
@@ -953,6 +981,464 @@ function TaskDetailModal({
               {saving ? 'Saving...' : 'Save Changes'}
             </button>
           </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Sprint Management Panel
+function SprintManagementPanel({
+  sprints,
+  onClose,
+  onUpdated,
+}: {
+  sprints: Sprint[];
+  onClose: () => void;
+  onUpdated: () => void;
+}) {
+  const [view, setView] = useState<'list' | 'new' | 'complete'>('list');
+  const [selectedSprintId, setSelectedSprintId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [sprintStats, setSprintStats] = useState<Record<string, { total: number; completed: number }>>({});
+
+  // New sprint form
+  const [newSprint, setNewSprint] = useState({
+    name: '',
+    goal: '',
+    start_date: new Date().toISOString().split('T')[0],
+    end_date: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+  });
+
+  // Complete sprint options
+  const [completeOptions, setCompleteOptions] = useState({
+    incompleteTaskAction: 'backlog' as 'backlog' | 'next_sprint' | 'keep',
+    nextSprintId: '',
+  });
+
+  // Fetch stats for each sprint
+  useEffect(() => {
+    sprints.forEach(async (sprint) => {
+      try {
+        const res = await fetch(`/api/dev-board/sprints/${sprint.id}`);
+        const data = await res.json();
+        if (data.taskStats) {
+          setSprintStats(prev => ({
+            ...prev,
+            [sprint.id]: {
+              total: data.taskStats.total,
+              completed: data.taskStats.completed,
+            }
+          }));
+        }
+      } catch (e) {
+        console.error('Failed to fetch sprint stats:', e);
+      }
+    });
+  }, [sprints]);
+
+  const handleCreateSprint = async () => {
+    if (!newSprint.name.trim()) return;
+    setLoading(true);
+    try {
+      const res = await fetch('/api/dev-board/sprints', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newSprint),
+      });
+      if (res.ok) {
+        onUpdated();
+      }
+    } catch (error) {
+      console.error('Failed to create sprint:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleStartSprint = async (sprintId: string) => {
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/dev-board/sprints/${sprintId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'active' }),
+      });
+      if (res.ok) {
+        onUpdated();
+      }
+    } catch (error) {
+      console.error('Failed to start sprint:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCompleteSprint = async () => {
+    if (!selectedSprintId) return;
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/dev-board/sprints/${selectedSprintId}/complete`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(completeOptions),
+      });
+      if (res.ok) {
+        onUpdated();
+      }
+    } catch (error) {
+      console.error('Failed to complete sprint:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteSprint = async (sprintId: string) => {
+    if (!confirm('Delete this sprint? Tasks will be moved to backlog.')) return;
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/dev-board/sprints/${sprintId}`, {
+        method: 'DELETE',
+      });
+      if (res.ok) {
+        onUpdated();
+      }
+    } catch (error) {
+      console.error('Failed to delete sprint:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const activeSprint = sprints.find(s => s.status === 'active');
+  const planningSprints = sprints.filter(s => s.status === 'planning');
+  const completedSprints = sprints.filter(s => s.status === 'completed');
+
+  const getNextSprintNumber = () => {
+    const numbers = sprints.map(s => {
+      const match = s.name.match(/Sprint (\d+)/);
+      return match ? parseInt(match[1]) : 0;
+    });
+    return Math.max(0, ...numbers) + 1;
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/50" onClick={onClose} />
+      <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+        {/* Header */}
+        <div className="flex items-center justify-between p-4 border-b bg-gradient-to-r from-purple-600 to-purple-700">
+          <div className="flex items-center gap-3">
+            <Settings className="text-white" size={24} />
+            <div>
+              <h2 className="text-lg font-semibold text-white">Sprint Management</h2>
+              <p className="text-purple-200 text-sm">Manage your development sprints</p>
+            </div>
+          </div>
+          <button onClick={onClose} className="p-1 hover:bg-white/20 rounded text-white">
+            <X size={20} />
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-4">
+          {view === 'list' && (
+            <div className="space-y-6">
+              {/* Active Sprint */}
+              {activeSprint && (
+                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <Play size={18} className="text-green-600" />
+                      <h3 className="font-semibold text-green-800">Active Sprint</h3>
+                    </div>
+                    <span className="text-xs bg-green-600 text-white px-2 py-1 rounded-full">ACTIVE</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-medium text-gray-900">{activeSprint.name}</p>
+                      {activeSprint.goal && <p className="text-sm text-gray-600 mt-1">{activeSprint.goal}</p>}
+                      <p className="text-xs text-gray-500 mt-1">
+                        {new Date(activeSprint.start_date).toLocaleDateString()} - {new Date(activeSprint.end_date).toLocaleDateString()}
+                      </p>
+                      {sprintStats[activeSprint.id] && (
+                        <div className="mt-2">
+                          <div className="flex items-center gap-2 text-sm">
+                            <span className="text-gray-600">
+                              {sprintStats[activeSprint.id].completed}/{sprintStats[activeSprint.id].total} tasks
+                            </span>
+                            <div className="flex-1 max-w-32 bg-gray-200 rounded-full h-2">
+                              <div
+                                className="bg-green-500 rounded-full h-2 transition-all"
+                                style={{ width: `${sprintStats[activeSprint.id].total > 0 ? (sprintStats[activeSprint.id].completed / sprintStats[activeSprint.id].total * 100) : 0}%` }}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    <button
+                      onClick={() => {
+                        setSelectedSprintId(activeSprint.id);
+                        setView('complete');
+                      }}
+                      className="flex items-center gap-2 px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm"
+                    >
+                      <CheckCircle2 size={16} />
+                      Complete Sprint
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Create New Sprint */}
+              <button
+                onClick={() => {
+                  setNewSprint(prev => ({
+                    ...prev,
+                    name: `Sprint ${getNextSprintNumber()}`,
+                  }));
+                  setView('new');
+                }}
+                className="w-full flex items-center justify-center gap-2 p-4 border-2 border-dashed border-purple-300 rounded-lg text-purple-600 hover:bg-purple-50 hover:border-purple-400 transition-colors"
+              >
+                <Plus size={20} />
+                <span className="font-medium">Create New Sprint</span>
+              </button>
+
+              {/* Planning Sprints */}
+              {planningSprints.length > 0 && (
+                <div>
+                  <h3 className="font-medium text-gray-700 mb-3 flex items-center gap-2">
+                    <Calendar size={16} />
+                    Upcoming Sprints ({planningSprints.length})
+                  </h3>
+                  <div className="space-y-2">
+                    {planningSprints.map(sprint => (
+                      <div key={sprint.id} className="bg-gray-50 border border-gray-200 rounded-lg p-3 flex items-center justify-between">
+                        <div>
+                          <p className="font-medium text-gray-900">{sprint.name}</p>
+                          {sprint.goal && <p className="text-sm text-gray-500">{sprint.goal}</p>}
+                          <p className="text-xs text-gray-400">
+                            {new Date(sprint.start_date).toLocaleDateString()} - {new Date(sprint.end_date).toLocaleDateString()}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {!activeSprint && (
+                            <button
+                              onClick={() => handleStartSprint(sprint.id)}
+                              disabled={loading}
+                              className="flex items-center gap-1 px-3 py-1.5 bg-purple-600 text-white rounded-lg hover:bg-purple-700 text-sm disabled:opacity-50"
+                            >
+                              <Play size={14} />
+                              Start
+                            </button>
+                          )}
+                          <button
+                            onClick={() => handleDeleteSprint(sprint.id)}
+                            disabled={loading}
+                            className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Completed Sprints */}
+              {completedSprints.length > 0 && (
+                <div>
+                  <h3 className="font-medium text-gray-700 mb-3 flex items-center gap-2">
+                    <Archive size={16} />
+                    Completed Sprints ({completedSprints.length})
+                  </h3>
+                  <div className="space-y-2">
+                    {completedSprints.slice(0, 5).map(sprint => (
+                      <div key={sprint.id} className="bg-gray-50 border border-gray-200 rounded-lg p-3 flex items-center justify-between opacity-75">
+                        <div>
+                          <p className="font-medium text-gray-700">{sprint.name}</p>
+                          <p className="text-xs text-gray-400">
+                            {new Date(sprint.start_date).toLocaleDateString()} - {new Date(sprint.end_date).toLocaleDateString()}
+                          </p>
+                        </div>
+                        <span className="text-xs bg-gray-200 text-gray-600 px-2 py-1 rounded-full">COMPLETED</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {view === 'new' && (
+            <div className="space-y-4">
+              <button
+                onClick={() => setView('list')}
+                className="flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900"
+              >
+                ← Back to sprints
+              </button>
+
+              <h3 className="text-lg font-semibold">Create New Sprint</h3>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Sprint Name *</label>
+                <input
+                  type="text"
+                  value={newSprint.name}
+                  onChange={(e) => setNewSprint({ ...newSprint, name: e.target.value })}
+                  placeholder="e.g., Sprint 2"
+                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
+                  autoFocus
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Sprint Goal</label>
+                <input
+                  type="text"
+                  value={newSprint.goal}
+                  onChange={(e) => setNewSprint({ ...newSprint, goal: e.target.value })}
+                  placeholder="e.g., Complete recruitment module"
+                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
+                  <input
+                    type="date"
+                    value={newSprint.start_date}
+                    onChange={(e) => setNewSprint({ ...newSprint, start_date: e.target.value })}
+                    className="w-full px-3 py-2 border rounded-lg"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">End Date</label>
+                  <input
+                    type="date"
+                    value={newSprint.end_date}
+                    onChange={(e) => setNewSprint({ ...newSprint, end_date: e.target.value })}
+                    className="w-full px-3 py-2 border rounded-lg"
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <button
+                  onClick={() => setView('list')}
+                  className="flex-1 px-4 py-2 border rounded-lg hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleCreateSprint}
+                  disabled={loading || !newSprint.name.trim()}
+                  className="flex-1 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50"
+                >
+                  {loading ? 'Creating...' : 'Create Sprint'}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {view === 'complete' && selectedSprintId && (
+            <div className="space-y-4">
+              <button
+                onClick={() => setView('list')}
+                className="flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900"
+              >
+                ← Back to sprints
+              </button>
+
+              <h3 className="text-lg font-semibold">Complete Sprint</h3>
+
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                <p className="text-sm text-yellow-800">
+                  <strong>What happens to incomplete tasks?</strong>
+                </p>
+                <p className="text-sm text-yellow-700 mt-1">
+                  Choose what to do with tasks that aren&apos;t marked as Done.
+                </p>
+              </div>
+
+              <div className="space-y-3">
+                <label className="flex items-start gap-3 p-3 border rounded-lg cursor-pointer hover:bg-gray-50">
+                  <input
+                    type="radio"
+                    name="taskAction"
+                    checked={completeOptions.incompleteTaskAction === 'backlog'}
+                    onChange={() => setCompleteOptions({ ...completeOptions, incompleteTaskAction: 'backlog', nextSprintId: '' })}
+                    className="mt-1"
+                  />
+                  <div>
+                    <p className="font-medium text-gray-900">Move to Backlog</p>
+                    <p className="text-sm text-gray-500">Incomplete tasks go back to the backlog for future planning</p>
+                  </div>
+                </label>
+
+                <label className="flex items-start gap-3 p-3 border rounded-lg cursor-pointer hover:bg-gray-50">
+                  <input
+                    type="radio"
+                    name="taskAction"
+                    checked={completeOptions.incompleteTaskAction === 'next_sprint'}
+                    onChange={() => setCompleteOptions({ ...completeOptions, incompleteTaskAction: 'next_sprint' })}
+                    className="mt-1"
+                  />
+                  <div className="flex-1">
+                    <p className="font-medium text-gray-900">Move to Next Sprint</p>
+                    <p className="text-sm text-gray-500">Roll over to an upcoming sprint</p>
+                    {completeOptions.incompleteTaskAction === 'next_sprint' && (
+                      <select
+                        value={completeOptions.nextSprintId}
+                        onChange={(e) => setCompleteOptions({ ...completeOptions, nextSprintId: e.target.value })}
+                        className="mt-2 w-full px-3 py-2 border rounded-lg text-sm"
+                      >
+                        <option value="">Select sprint...</option>
+                        {planningSprints.map(s => (
+                          <option key={s.id} value={s.id}>{s.name}</option>
+                        ))}
+                      </select>
+                    )}
+                  </div>
+                </label>
+
+                <label className="flex items-start gap-3 p-3 border rounded-lg cursor-pointer hover:bg-gray-50">
+                  <input
+                    type="radio"
+                    name="taskAction"
+                    checked={completeOptions.incompleteTaskAction === 'keep'}
+                    onChange={() => setCompleteOptions({ ...completeOptions, incompleteTaskAction: 'keep', nextSprintId: '' })}
+                    className="mt-1"
+                  />
+                  <div>
+                    <p className="font-medium text-gray-900">Keep in Completed Sprint</p>
+                    <p className="text-sm text-gray-500">Leave tasks as-is for historical record</p>
+                  </div>
+                </label>
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <button
+                  onClick={() => setView('list')}
+                  className="flex-1 px-4 py-2 border rounded-lg hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleCompleteSprint}
+                  disabled={loading || (completeOptions.incompleteTaskAction === 'next_sprint' && !completeOptions.nextSprintId)}
+                  className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  <CheckCircle2 size={18} />
+                  {loading ? 'Completing...' : 'Complete Sprint'}
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
