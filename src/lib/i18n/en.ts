@@ -76,6 +76,7 @@ export const en: Translations = {
     feedbackInbox: 'Feedback Inbox',
     tableView: 'Table View',
     boardView: 'Board View',
+    devBoard: 'Dev Board',
   },
 
   // Dashboard

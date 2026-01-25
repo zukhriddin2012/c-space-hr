@@ -14,6 +14,7 @@ import {
   Shield,
 } from 'lucide-react';
 import Link from 'next/link';
+import MyProfileClient from '@/components/MyProfileClient';
 
 function formatDate(dateString: string): string {
   return new Date(dateString).toLocaleDateString('en-US', {
@@ -84,14 +85,21 @@ export default async function MyProfilePage() {
   return (
     <div className="max-w-4xl mx-auto space-y-4 lg:space-y-6">
       {/* Header */}
-      <div className="flex items-center gap-3 lg:gap-4">
-        <Link href="/my-portal" className="p-2 hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0">
-          <ArrowLeft size={20} className="text-gray-600" />
-        </Link>
-        <div>
-          <h1 className="text-xl lg:text-2xl font-bold text-gray-900">My Profile</h1>
-          <p className="text-sm lg:text-base text-gray-600">View your employee information</p>
+      <div className="flex items-center justify-between gap-3 lg:gap-4">
+        <div className="flex items-center gap-3 lg:gap-4">
+          <Link href="/my-portal" className="p-2 hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0">
+            <ArrowLeft size={20} className="text-gray-600" />
+          </Link>
+          <div>
+            <h1 className="text-xl lg:text-2xl font-bold text-gray-900">My Profile</h1>
+            <p className="text-sm lg:text-base text-gray-600">View your employee information</p>
+          </div>
         </div>
+        <MyProfileClient
+          employeeId={employee.id}
+          phone={employee.phone}
+          email={employee.email}
+        />
       </div>
 
       {/* Profile Header Card */}

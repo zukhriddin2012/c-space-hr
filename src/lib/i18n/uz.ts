@@ -76,6 +76,7 @@ export const uz: Translations = {
     feedbackInbox: "Kiruvchi fikrlar",
     tableView: "Jadval ko'rinishi",
     boardView: "Doska ko'rinishi",
+    devBoard: "Dev Board",
   },
 
   // Dashboard

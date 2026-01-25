@@ -227,7 +227,7 @@ export default function MobileNav({ user }: MobileNavProps) {
             </div>
             <div>
               <p className="text-sm font-medium text-gray-900">{user.name}</p>
-              <p className="text-xs text-gray-500">{getRoleLabel(user.role)}</p>
+              <p className="text-xs text-gray-500">{user.position || getRoleLabel(user.role)}</p>
             </div>
           </div>
           <button

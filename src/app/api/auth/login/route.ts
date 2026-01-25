@@ -31,6 +31,7 @@ export async function POST(request: NextRequest) {
         email: employee.email || email,
         name: employee.full_name,
         role: (employee.system_role || 'employee') as UserRole,
+        position: employee.position,
         employeeId: employee.employee_id,
         department: employee.position,
         branchId: employee.branch_id || undefined,

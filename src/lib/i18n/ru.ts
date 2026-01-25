@@ -76,6 +76,7 @@ export const ru: Translations = {
     feedbackInbox: 'Входящие отзывы',
     tableView: 'Таблица',
     boardView: 'Доска',
+    devBoard: 'Dev Board',
   },
 
   // Dashboard

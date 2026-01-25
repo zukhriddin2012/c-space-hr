@@ -6,6 +6,7 @@ export interface User {
   email: string;
   name: string;
   role: UserRole;
+  position?: string; // Job title (e.g., "General Manager", "Receptionist")
   employeeId?: string;
   department?: string;
   branchId?: string;

@@ -10,6 +10,7 @@ import SidebarToggle from '@/components/SidebarToggle';
 import TestBannerWrapper from '@/components/TestBannerWrapper';
 import FloatingFeedbackButton from '@/components/FloatingFeedbackButton';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
+import QuickSwitch from '@/components/QuickSwitch';
 
 export default async function DashboardLayout({
   children,
@@ -66,6 +67,9 @@ export default async function DashboardLayout({
 
           {/* Floating Feedback Button */}
           <FloatingFeedbackButton userRole={user.role} />
+
+          {/* Quick Switch Panel (dev/test mode only) */}
+          <QuickSwitch />
         </div>
       </SidebarProvider>
     </AuthProvider>

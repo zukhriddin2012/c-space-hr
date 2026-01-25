@@ -26,6 +26,7 @@ import {
   FileText,
   ClipboardCheck,
   ListTodo,
+  Code2,
 } from 'lucide-react';
 import type { User, UserRole } from '@/types';
 import { getRoleLabel } from '@/lib/auth';
@@ -155,6 +156,12 @@ const navItems: NavItem[] = [
     nameKey: 'settings',
     href: '/settings',
     icon: Settings,
+    roles: ['general_manager'],
+  },
+  {
+    nameKey: 'devBoard',
+    href: '/dev-board',
+    icon: Code2,
     roles: ['general_manager'],
   },
 ];
@@ -365,7 +372,7 @@ export default function Sidebar({ user }: SidebarProps) {
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-gray-900 truncate group-hover:text-purple-700 transition-colors">{user.name}</p>
-              <p className="text-xs text-gray-500 truncate">{getRoleLabel(user.role)}</p>
+              <p className="text-xs text-gray-500 truncate">{user.position || getRoleLabel(user.role)}</p>
             </div>
           </Link>
         )}

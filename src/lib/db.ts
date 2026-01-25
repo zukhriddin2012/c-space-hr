@@ -777,7 +777,12 @@ export async function getEmployeeByEmail(email: string): Promise<Employee | null
     .single();
 
   if (error) {
-    console.error('Error fetching employee by email:', error);
+    // PGRST116 = no rows found (not really an error, just no match)
+    if (error.code === 'PGRST116') {
+      console.log('No employee found with email:', email);
+    } else {
+      console.error('Error fetching employee by email:', email, 'Error code:', error.code, 'Message:', error.message);
+    }
     return null;
   }
 

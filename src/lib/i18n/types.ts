@@ -76,6 +76,7 @@ export interface Translations {
     feedbackInbox: string;
     tableView: string;
     boardView: string;
+    devBoard: string;
   };
 
   // Dashboard
