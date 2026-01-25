@@ -65,12 +65,12 @@ export async function GET() {
     }
 
     // Group comments by task
-    const commentsByTask: Record<string, typeof comments> = {};
+    const commentsByTask: Record<string, NonNullable<typeof comments>> = {};
     comments?.forEach(comment => {
       if (!commentsByTask[comment.task_id]) {
         commentsByTask[comment.task_id] = [];
       }
-      commentsByTask[comment.task_id].push(comment);
+      commentsByTask[comment.task_id]!.push(comment);
     });
 
     // Build export structure
