@@ -14,5 +14,5 @@ export default async function DevBoardPage() {
     redirect('/dashboard');
   }
 
-  return <DevBoardClient />;
+  return <DevBoardClient userName={user.name} />;
 }

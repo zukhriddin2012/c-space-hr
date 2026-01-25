@@ -101,7 +101,11 @@ const projectIcons: Record<string, React.ReactNode> = {
   'message-circle': <MessageCircle size={14} />,
 };
 
-export default function DevBoardClient() {
+interface DevBoardClientProps {
+  userName: string;
+}
+
+export default function DevBoardClient({ userName }: DevBoardClientProps) {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [sprints, setSprints] = useState<Sprint[]>([]);
@@ -390,6 +394,7 @@ export default function DevBoardClient() {
           task={selectedTask}
           projects={projects}
           sprints={sprints}
+          userName={userName}
           onClose={() => setSelectedTask(null)}
           onUpdated={() => {
             setSelectedTask(null);
@@ -674,12 +679,14 @@ function TaskDetailModal({
   task,
   projects,
   sprints,
+  userName,
   onClose,
   onUpdated,
 }: {
   task: Task;
   projects: Project[];
   sprints: Sprint[];
+  userName: string;
   onClose: () => void;
   onUpdated: () => void;
 }) {
@@ -731,7 +738,7 @@ function TaskDetailModal({
       const res = await fetch(`/api/dev-board/tasks/${task.id}/comments`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content: newComment, author: 'user' }),
+        body: JSON.stringify({ content: newComment, author: userName }),
       });
       const data = await res.json();
       setComments([...comments, data.comment]);
@@ -885,11 +892,11 @@ function TaskDetailModal({
                   <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium ${
                     comment.author === 'claude' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'
                   }`}>
-                    {comment.author === 'claude' ? '🤖' : '👤'}
+                    {comment.author === 'claude' ? '🤖' : comment.author.charAt(0).toUpperCase()}
                   </div>
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium">{comment.author === 'claude' ? 'Claude' : 'You'}</span>
+                      <span className="text-sm font-medium">{comment.author === 'claude' ? 'Claude' : comment.author}</span>
                       <span className="text-xs text-gray-400">
                         {new Date(comment.created_at).toLocaleString()}
                       </span>
