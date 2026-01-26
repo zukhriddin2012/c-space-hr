@@ -86,26 +86,27 @@ function CheckoutReminderContent() {
 
   // Check presence on load - similar to checkin page pattern
   const checkPresence = useCallback(async () => {
-    const debug = `tid=${telegramId}, aid=${attendanceId}, origin=${typeof window !== 'undefined' ? window.location.origin : 'ssr'}`;
-    setDebugInfo(debug);
-
     if (!telegramId) {
       setStatus('error');
       setMessage('Telegram ID topilmadi');
+      setDebugInfo(`tid=null, aid=${attendanceId}`);
       return;
     }
 
-    try {
-      // Use absolute URL for Telegram WebApp compatibility
-      const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://c-space-hr.vercel.app';
-      const apiUrl = `${baseUrl}/api/tg-check`;
+    // Hardcode the URL to avoid any URL construction issues in WebView
+    const apiUrl = 'https://c-space-hr.vercel.app/api/tg-check';
+    setDebugInfo(`tid=${telegramId}, url=${apiUrl}`);
 
+    try {
       const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ telegramId, attendanceId }),
+        body: JSON.stringify({
+          telegramId: String(telegramId),
+          attendanceId: attendanceId ? String(attendanceId) : null
+        }),
       });
 
       const result = await response.json();
@@ -132,8 +133,7 @@ function CheckoutReminderContent() {
   // Handle action buttons
   const handleAction = async (action: 'im_at_work' | 'i_left' | '45min' | '2hours' | 'all_day') => {
     try {
-      const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://c-space-hr.vercel.app';
-      const apiUrl = `${baseUrl}/api/tg-action`;
+      const apiUrl = 'https://c-space-hr.vercel.app/api/tg-action';
 
       const response = await fetch(apiUrl, {
         method: 'POST',
@@ -141,9 +141,9 @@ function CheckoutReminderContent() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          telegramId,
-          attendanceId,
-          reminderId,
+          telegramId: String(telegramId),
+          attendanceId: attendanceId ? String(attendanceId) : null,
+          reminderId: reminderId ? String(reminderId) : null,
           responseType: action,
         }),
       });
