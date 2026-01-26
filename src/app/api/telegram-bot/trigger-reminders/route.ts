@@ -179,14 +179,38 @@ async function sendCheckoutReminder(emp: Employee): Promise<boolean> {
     };
 
     const msg = messages[lang] || messages.uz;
-    // Include tid (telegramId) in URL for more reliable identification
-    const webAppUrl = `${WEBAPP_URL}/telegram/checkout-reminder?tid=${emp.telegramId}&aid=${emp.attendanceId}&lang=${lang}`;
 
-    const response = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+    // Step 1: Send placeholder message to get message_id
+    const placeholderResponse = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         chat_id: emp.telegramId,
+        text: `${msg.title}\n\n${msg.message}`,
+        reply_markup: {
+          inline_keyboard: [[{ text: '⏳', callback_data: 'noop' }]],
+        },
+      }),
+    });
+
+    const placeholderResult = await placeholderResponse.json();
+    if (!placeholderResult.ok) {
+      console.error(`Failed to send placeholder to ${emp.employeeName}:`, placeholderResult.description);
+      return false;
+    }
+
+    const messageId = placeholderResult.result.message_id;
+
+    // Step 2: Create URL with messageId included
+    const webAppUrl = `${WEBAPP_URL}/telegram/checkout-reminder?tid=${emp.telegramId}&aid=${emp.attendanceId}&mid=${messageId}&lang=${lang}`;
+
+    // Step 3: Edit message to add the WebApp button with messageId
+    const editResponse = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/editMessageText`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chat_id: emp.telegramId,
+        message_id: messageId,
         text: `${msg.title}\n\n${msg.message}`,
         reply_markup: {
           inline_keyboard: [
@@ -196,11 +220,9 @@ async function sendCheckoutReminder(emp: Employee): Promise<boolean> {
       }),
     });
 
-    const result = await response.json();
-
-    if (!result.ok) {
-      console.error(`Failed to send reminder to ${emp.employeeName}:`, result.description);
-      return false;
+    const editResult = await editResponse.json();
+    if (!editResult.ok) {
+      console.error(`Failed to edit message for ${emp.employeeName}:`, editResult.description);
     }
 
     // Update reminder as sent
@@ -209,7 +231,7 @@ async function sendCheckoutReminder(emp: Employee): Promise<boolean> {
       .update({
         status: 'sent',
         reminder_sent_at: new Date().toISOString(),
-        telegram_message_id: result.result.message_id,
+        telegram_message_id: messageId,
       })
       .eq('id', reminder.id);
 
