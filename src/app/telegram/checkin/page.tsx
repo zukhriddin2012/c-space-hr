@@ -133,22 +133,22 @@ function TelegramCheckinContent() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
               </svg>
             </div>
-            <h1 className="text-xl font-bold text-emerald-600 mb-4">{t.success[data?.language || lang]}</h1>
+            <h1 className="text-xl font-bold text-emerald-600 mb-4">{t.success[(data?.language as Lang) || lang]}</h1>
             {data && (
               <div className="bg-gray-50 rounded-xl p-4 text-left space-y-3">
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-500 text-sm">{t.time[data?.language || lang]}</span>
+                  <span className="text-gray-500 text-sm">{t.time[(data?.language as Lang) || lang]}</span>
                   <span className="font-bold text-lg">{data.checkIn}</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-500 text-sm">{t.branch[data?.language || lang]}</span>
+                  <span className="text-gray-500 text-sm">{t.branch[(data?.language as Lang) || lang]}</span>
                   <span className="font-semibold text-emerald-600">{data.branchName}</span>
                 </div>
                 {data.isLate && (
                   <div className="flex justify-between items-center">
-                    <span className="text-gray-500 text-sm">{t.status[data?.language || lang]}</span>
+                    <span className="text-gray-500 text-sm">{t.status[(data?.language as Lang) || lang]}</span>
                     <span className="px-2 py-0.5 bg-amber-100 text-amber-700 text-xs font-medium rounded-full">
-                      {t.late[data?.language || lang]}
+                      {t.late[(data?.language as Lang) || lang]}
                     </span>
                   </div>
                 )}
