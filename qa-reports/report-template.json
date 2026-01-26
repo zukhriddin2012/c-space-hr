@@ -1,0 +1,143 @@
+{
+  "reportId": "QA-2026-01-26-001",
+  "project": "C-Space HR Platform",
+  "tester": "",
+  "dateStarted": "",
+  "dateCompleted": "",
+  "environment": {
+    "webAppUrl": "https://c-space-hr.vercel.app",
+    "botUsername": "@cspace_attendance_bot",
+    "testDevice": "",
+    "browser": "",
+    "telegramVersion": ""
+  },
+  "summary": {
+    "totalTests": 0,
+    "passed": 0,
+    "failed": 0,
+    "blocked": 0,
+    "skipped": 0,
+    "passRate": "0%"
+  },
+  "categories": {
+    "telegramBot": {
+      "language": {
+        "status": "not_started",
+        "tests": [
+          { "id": "LANG-001", "name": "Language selection UI shows checkmark", "status": "pending", "notes": "" },
+          { "id": "LANG-002", "name": "Change language edits same message", "status": "pending", "notes": "" },
+          { "id": "LANG-003", "name": "DB sync on language change", "status": "pending", "notes": "" },
+          { "id": "LANG-004", "name": "Russian translations complete", "status": "pending", "notes": "" },
+          { "id": "LANG-005", "name": "Uzbek translations complete", "status": "pending", "notes": "" },
+          { "id": "LANG-006", "name": "English translations complete", "status": "pending", "notes": "" }
+        ]
+      },
+      "checkIn": {
+        "status": "not_started",
+        "tests": [
+          { "id": "CHIN-001", "name": "IP-based check-in works", "status": "pending", "notes": "" },
+          { "id": "CHIN-002", "name": "GPS fallback when IP not matched", "status": "pending", "notes": "" },
+          { "id": "CHIN-003", "name": "Branch detection correct", "status": "pending", "notes": "" },
+          { "id": "CHIN-004", "name": "Duplicate check-in prevented", "status": "pending", "notes": "" },
+          { "id": "CHIN-005", "name": "Late check-in flagged", "status": "pending", "notes": "" }
+        ]
+      },
+      "checkOut": {
+        "status": "not_started",
+        "tests": [
+          { "id": "COUT-001", "name": "Manual checkout works", "status": "pending", "notes": "" },
+          { "id": "COUT-002", "name": "Checkout from status page", "status": "pending", "notes": "" },
+          { "id": "COUT-003", "name": "Early leave detected", "status": "pending", "notes": "" },
+          { "id": "COUT-004", "name": "Multiple sessions same day", "status": "pending", "notes": "" }
+        ]
+      },
+      "status": {
+        "status": "not_started",
+        "tests": [
+          { "id": "STAT-001", "name": "Status page loads correctly", "status": "pending", "notes": "" },
+          { "id": "STAT-002", "name": "Active session display", "status": "pending", "notes": "" },
+          { "id": "STAT-003", "name": "Multiple sessions summary", "status": "pending", "notes": "" },
+          { "id": "STAT-004", "name": "All sessions view expands", "status": "pending", "notes": "" },
+          { "id": "STAT-005", "name": "Status in user's language", "status": "pending", "notes": "" }
+        ]
+      },
+      "reminders": {
+        "status": "not_started",
+        "tests": [
+          { "id": "REM-001", "name": "Reminder message sent", "status": "pending", "notes": "" },
+          { "id": "REM-002", "name": "Mini app opens from button", "status": "pending", "notes": "" },
+          { "id": "REM-003", "name": "IP verified - shows snooze options", "status": "pending", "notes": "" },
+          { "id": "REM-004", "name": "IP not verified - shows work options", "status": "pending", "notes": "" },
+          { "id": "REM-005", "name": "45 min snooze works", "status": "pending", "notes": "" },
+          { "id": "REM-006", "name": "2 hours snooze works", "status": "pending", "notes": "" },
+          { "id": "REM-007", "name": "All day option works", "status": "pending", "notes": "" },
+          { "id": "REM-008", "name": "I left option records checkout", "status": "pending", "notes": "" },
+          { "id": "REM-009", "name": "Message edited not new message", "status": "pending", "notes": "" },
+          { "id": "REM-010", "name": "Confirmation auto-deletes in 10s", "status": "pending", "notes": "" },
+          { "id": "REM-011", "name": "Reminder in user's language", "status": "pending", "notes": "" }
+        ]
+      }
+    },
+    "webApp": {
+      "auth": {
+        "status": "not_started",
+        "tests": [
+          { "id": "AUTH-001", "name": "Login page displays", "status": "pending", "notes": "" },
+          { "id": "AUTH-002", "name": "Valid login works", "status": "pending", "notes": "" },
+          { "id": "AUTH-003", "name": "Invalid login shows error", "status": "pending", "notes": "" },
+          { "id": "AUTH-004", "name": "Session persists on refresh", "status": "pending", "notes": "" },
+          { "id": "AUTH-005", "name": "Logout works", "status": "pending", "notes": "" }
+        ]
+      },
+      "dashboard": {
+        "status": "not_started",
+        "tests": [
+          { "id": "DASH-001", "name": "Dashboard loads", "status": "pending", "notes": "" },
+          { "id": "DASH-002", "name": "Today's stats correct", "status": "pending", "notes": "" },
+          { "id": "DASH-003", "name": "Employee list displays", "status": "pending", "notes": "" }
+        ]
+      },
+      "attendance": {
+        "status": "not_started",
+        "tests": [
+          { "id": "ATT-001", "name": "Attendance records display", "status": "pending", "notes": "" },
+          { "id": "ATT-002", "name": "Date filter works", "status": "pending", "notes": "" },
+          { "id": "ATT-003", "name": "Employee filter works", "status": "pending", "notes": "" }
+        ]
+      },
+      "languageSync": {
+        "status": "not_started",
+        "tests": [
+          { "id": "LSYNC-001", "name": "Language loads from DB", "status": "pending", "notes": "" },
+          { "id": "LSYNC-002", "name": "Web app language change syncs to DB", "status": "pending", "notes": "" },
+          { "id": "LSYNC-003", "name": "Bot language change reflects in web", "status": "pending", "notes": "" }
+        ]
+      }
+    },
+    "integration": {
+      "sync": {
+        "status": "not_started",
+        "tests": [
+          { "id": "SYNC-001", "name": "Bot check-in shows in web app", "status": "pending", "notes": "" },
+          { "id": "SYNC-002", "name": "Language syncs between bot and web", "status": "pending", "notes": "" },
+          { "id": "SYNC-003", "name": "Real-time updates work", "status": "pending", "notes": "" }
+        ]
+      },
+      "miniApp": {
+        "status": "not_started",
+        "tests": [
+          { "id": "MINI-001", "name": "Mini app loads in Telegram", "status": "pending", "notes": "" },
+          { "id": "MINI-002", "name": "API communication works", "status": "pending", "notes": "" },
+          { "id": "MINI-003", "name": "Message editing works", "status": "pending", "notes": "" }
+        ]
+      }
+    }
+  },
+  "bugs": [],
+  "improvements": [],
+  "signOff": {
+    "tester": { "name": "", "date": "", "approved": false },
+    "developer": { "name": "", "date": "", "approved": false },
+    "productOwner": { "name": "", "date": "", "approved": false }
+  }
+}

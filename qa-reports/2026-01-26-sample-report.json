@@ -1,0 +1,99 @@
+{
+  "reportId": "QA-2026-01-26-SAMPLE",
+  "project": "C-Space HR Platform",
+  "tester": "QA Tester Name",
+  "dateStarted": "2026-01-26T09:00:00Z",
+  "dateCompleted": "2026-01-26T17:00:00Z",
+  "environment": {
+    "webAppUrl": "https://c-space-hr.vercel.app",
+    "botUsername": "@cspace_attendance_bot",
+    "testDevice": "iPhone 14 Pro / MacBook Pro M2",
+    "browser": "Chrome 120, Safari 17",
+    "telegramVersion": "10.5.1"
+  },
+  "summary": {
+    "totalTests": 12,
+    "passed": 10,
+    "failed": 1,
+    "blocked": 0,
+    "skipped": 1,
+    "passRate": "83%"
+  },
+  "categories": {
+    "telegramBot": {
+      "language": {
+        "status": "completed",
+        "tests": [
+          { "id": "LANG-001", "name": "Language selection UI shows checkmark", "status": "passed", "notes": "Works correctly, current language has ✓" },
+          { "id": "LANG-002", "name": "Change language edits same message", "status": "passed", "notes": "No new messages, same message updated" },
+          { "id": "LANG-003", "name": "DB sync on language change", "status": "passed", "notes": "Verified in Supabase, preferred_language updates" },
+          { "id": "LANG-004", "name": "Russian translations complete", "status": "passed", "notes": "All checked screens show Russian" },
+          { "id": "LANG-005", "name": "Uzbek translations complete", "status": "passed", "notes": "Default language works" },
+          { "id": "LANG-006", "name": "English translations complete", "status": "skipped", "notes": "Skipped - not priority for Uzbekistan users" }
+        ]
+      },
+      "reminders": {
+        "status": "completed",
+        "tests": [
+          { "id": "REM-001", "name": "Reminder message sent", "status": "passed", "notes": "Tested with 'Send to Me' button" },
+          { "id": "REM-005", "name": "45 min snooze works", "status": "passed", "notes": "Confirmation shown, deleted after 10s" },
+          { "id": "REM-009", "name": "Message edited not new message", "status": "passed", "notes": "Single message flow working" },
+          { "id": "REM-010", "name": "Confirmation auto-deletes in 10s", "status": "passed", "notes": "Timed at ~10 seconds" },
+          { "id": "REM-011", "name": "Reminder in user's language", "status": "failed", "notes": "See BUG-001" }
+        ]
+      }
+    }
+  },
+  "bugs": [
+    {
+      "id": "BUG-001",
+      "title": "Reminder confirmation shows wrong language",
+      "severity": "medium",
+      "priority": "P1",
+      "status": "fixed",
+      "relatedTest": "REM-011",
+      "stepsToReproduce": [
+        "1. Set language to Russian in bot",
+        "2. Receive checkout reminder",
+        "3. Click 'Проверить' button",
+        "4. Click '45 мин' button"
+      ],
+      "expectedResult": "Confirmation should show 'Хорошо! Проверю снова через 45 минут'",
+      "actualResult": "Shows 'Xop! 45 daqiqadan keyin yana tekshiraman' in Uzbek",
+      "environment": {
+        "device": "iPhone 14 Pro",
+        "telegramVersion": "10.5.1"
+      },
+      "screenshots": [],
+      "assignee": "",
+      "dateFound": "2026-01-26",
+      "dateFixed": "2026-01-26",
+      "fixCommit": "7488976"
+    }
+  ],
+  "improvements": [
+    {
+      "id": "IMP-001",
+      "title": "Add haptic feedback on button press",
+      "description": "Telegram supports haptic feedback in mini apps. Add subtle vibration on successful actions.",
+      "category": "UX",
+      "priority": "P3",
+      "effort": "small",
+      "status": "proposed"
+    },
+    {
+      "id": "IMP-002",
+      "title": "Show office name in reminder message",
+      "description": "When IP is verified, show which office was detected for user confirmation.",
+      "category": "Feature",
+      "priority": "P2",
+      "effort": "small",
+      "status": "proposed"
+    }
+  ],
+  "signOff": {
+    "tester": { "name": "QA Tester", "date": "2026-01-26", "approved": true },
+    "developer": { "name": "", "date": "", "approved": false },
+    "productOwner": { "name": "", "date": "", "approved": false }
+  }
+}
