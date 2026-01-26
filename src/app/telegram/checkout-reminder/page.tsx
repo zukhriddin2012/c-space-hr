@@ -16,6 +16,7 @@ function CheckoutReminderContent() {
   const [message, setMessage] = useState('');
   const [branchName, setBranchName] = useState('');
   const [reminderId, setReminderId] = useState<string | null>(null);
+  const [debugInfo, setDebugInfo] = useState('');
 
   // Translations
   const t = {
@@ -85,6 +86,9 @@ function CheckoutReminderContent() {
 
   // Check presence on load - similar to checkin page pattern
   const checkPresence = useCallback(async () => {
+    const debug = `tid=${telegramId}, aid=${attendanceId}, origin=${typeof window !== 'undefined' ? window.location.origin : 'ssr'}`;
+    setDebugInfo(debug);
+
     if (!telegramId) {
       setStatus('error');
       setMessage('Telegram ID topilmadi');
@@ -115,10 +119,10 @@ function CheckoutReminderContent() {
         setStatus('error');
         setMessage(result.error || 'Xatolik yuz berdi');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Presence check error:', error);
       setStatus('error');
-      setMessage('Tarmoq xatosi');
+      setMessage(`Tarmoq xatosi: ${error?.message || 'unknown'}`);
     }
   }, [telegramId, attendanceId]);
 
@@ -316,6 +320,7 @@ function CheckoutReminderContent() {
             </div>
             <h1 className="text-xl font-bold text-gray-900 mb-2">{texts.error}</h1>
             <p className="text-gray-500 text-sm">{message || texts.tryAgain}</p>
+            {debugInfo && <p className="text-xs text-gray-400 mt-2 break-all">{debugInfo}</p>}
           </div>
         )}
       </div>
