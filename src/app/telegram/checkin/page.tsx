@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback, Suspense } from 'react';
+import { useEffect, useState, useCallback, useRef, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 
 type Lang = 'uz' | 'ru' | 'en';
@@ -33,8 +33,14 @@ function TelegramCheckinContent() {
   const [message, setMessage] = useState('');
   const [data, setData] = useState<any>(null);
   const [lang, setLang] = useState<Lang>(langParam || 'uz');
+  const hasCheckedIn = useRef(false);
 
   const performCheckin = useCallback(async () => {
+    // Prevent duplicate check-in calls
+    if (hasCheckedIn.current) {
+      return;
+    }
+    hasCheckedIn.current = true;
     if (!telegramId) {
       setStatus('error');
       setMessage(t.noTelegramId[lang]);
