@@ -169,7 +169,19 @@ export async function POST(request: NextRequest) {
     let reminderId: string;
     if (existingReminder && existingReminder.length > 0) {
       reminderId = existingReminder[0].id;
-      // Update with IP info
+      // Update with IP info and set sent_at if not already set
+      await supabaseAdmin!
+        .from('checkout_reminders')
+        .update({
+          ip_address: clientIp,
+          ip_verified: ipCheck.matched,
+          status: 'sent',
+          reminder_sent_at: new Date().toISOString(),
+        })
+        .eq('id', reminderId)
+        .is('reminder_sent_at', null); // Only update sent_at if not already set
+
+      // Also update records where sent_at is already set (for IP info only)
       await supabaseAdmin!
         .from('checkout_reminders')
         .update({
