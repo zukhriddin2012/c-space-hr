@@ -21,7 +21,6 @@ interface AttendanceWithEmployee {
     id: string;
     full_name: string;
     telegram_id: string;
-    preferred_language: string | null;
   };
 }
 
@@ -57,8 +56,7 @@ async function getEmployeesForCheckoutReminder(shiftType: 'day' | 'night'): Prom
       employees(
         id,
         full_name,
-        telegram_id,
-        preferred_language
+        telegram_id
       )
     `)
     .eq('date', dateStr)
@@ -112,7 +110,7 @@ async function getEmployeesForCheckoutReminder(shiftType: 'day' | 'night'): Prom
       employeeName: att.employees.full_name,
       telegramId: att.employees.telegram_id,
       attendanceId: att.id,
-      preferredLanguage: att.employees.preferred_language || 'uz',
+      preferredLanguage: 'uz', // Default to Uzbek
     })),
     debug: {
       dateStr,
