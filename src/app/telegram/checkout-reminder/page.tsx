@@ -93,7 +93,11 @@ function CheckoutReminderContent() {
     }
 
     try {
-      const response = await fetch('/api/attendance/checkout-check', {
+      // Use absolute URL to avoid any redirect issues
+      const baseUrl = window.location.origin;
+      const apiUrl = `${baseUrl}/api/attendance/checkout-check`;
+
+      const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -102,6 +106,7 @@ function CheckoutReminderContent() {
           telegramId,
           attendanceId,
         }),
+        redirect: 'follow',
       });
 
       // Get text first to see what we receive
@@ -113,8 +118,8 @@ function CheckoutReminderContent() {
         result = JSON.parse(text);
       } catch {
         setStatus('error');
-        setMessage(`s=${response.status}`);
-        setDebugInfo(text.substring(0, 100));
+        setMessage(`s=${response.status} ${response.url?.slice(-30)}`);
+        setDebugInfo(text.substring(0, 80) || '(empty)');
         return;
       }
 

@@ -1,6 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
 
+// Handle GET requests (for debugging - should not happen)
+export async function GET(request: NextRequest) {
+  return NextResponse.json({
+    error: 'GET not allowed - use POST',
+    method: request.method,
+    url: request.url,
+  }, { status: 405 });
+}
+
 export async function POST(request: NextRequest) {
   try {
     // Get the client's IP address
