@@ -1,19 +1,22 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { supabaseAdmin, isSupabaseAdminConfigured } from '@/lib/supabase';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
-
-const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN!;
+const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const WEBAPP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://c-space-hr.vercel.app';
 
 export async function POST() {
   try {
+    if (!isSupabaseAdminConfigured()) {
+      return NextResponse.json({ error: 'Database not configured' }, { status: 500 });
+    }
+
+    if (!BOT_TOKEN) {
+      return NextResponse.json({ error: 'Telegram bot not configured' }, { status: 500 });
+    }
+
     // Get the admin user's telegram_id from employees table
     // For now, we'll try to find an admin or HR user
-    const { data: adminEmployee, error: adminError } = await supabase
+    const { data: adminEmployee, error: adminError } = await supabaseAdmin!
       .from('employees')
       .select('id, full_name, telegram_id')
       .not('telegram_id', 'is', null)
