@@ -93,13 +93,16 @@ function CheckoutReminderContent() {
       return;
     }
 
-    setDebugInfo(`tid=${telegramId}, checking...`);
+    // Get the full URL for the API
+    const apiUrl = `${window.location.origin}/api/attendance/checkout-check`;
+    setDebugInfo(`tid=${telegramId}, url=${apiUrl.substring(0, 50)}`);
 
     try {
-      const response = await fetch('/api/attendance/checkout-check', {
+      const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Accept': 'application/json',
         },
         body: JSON.stringify({
           telegramId: String(telegramId),
@@ -109,7 +112,17 @@ function CheckoutReminderContent() {
 
       // Get raw text first to debug what we actually receive
       const text = await response.text();
-      setDebugInfo(`tid=${telegramId}, status=${response.status}, len=${text.length}`);
+
+      // Check content-type
+      const contentType = response.headers.get('content-type') || 'unknown';
+      setDebugInfo(`tid=${telegramId}, s=${response.status}, ct=${contentType.substring(0, 20)}, len=${text.length}`);
+
+      if (!response.ok) {
+        setStatus('error');
+        setMessage(`HTTP ${response.status}`);
+        setDebugInfo(`tid=${telegramId}, s=${response.status}, body=${text.substring(0, 100)}`);
+        return;
+      }
 
       // Try to parse as JSON
       let result;
@@ -118,7 +131,7 @@ function CheckoutReminderContent() {
       } catch (parseError) {
         setStatus('error');
         setMessage(`JSON parse xato`);
-        setDebugInfo(`tid=${telegramId}, status=${response.status}, body=${text.substring(0, 150)}`);
+        setDebugInfo(`tid=${telegramId}, s=${response.status}, ct=${contentType}, body=${text.substring(0, 80)}`);
         return;
       }
 
@@ -137,8 +150,8 @@ function CheckoutReminderContent() {
     } catch (error: any) {
       console.error('Presence check error:', error);
       setStatus('error');
-      setMessage(`Tarmoq xatosi: ${error?.message || 'unknown'}`);
-      setDebugInfo(`tid=${telegramId}, err=${error?.name || 'unknown'}`);
+      setMessage(`Tarmoq: ${error?.message || 'unknown'}`);
+      setDebugInfo(`tid=${telegramId}, err=${error?.name}: ${error?.message?.substring(0, 50)}`);
     }
   }, [telegramId, attendanceId]);
 
