@@ -25,9 +25,20 @@ interface AttendanceWithEmployee {
   };
 }
 
+// Convert UTC time to Tashkent time (UTC+5) and get hour:minute
+function getTimeInTashkent(utcDateStr: string): string {
+  const date = new Date(utcDateStr);
+  // Add 5 hours for Tashkent timezone
+  const tashkentTime = new Date(date.getTime() + 5 * 60 * 60 * 1000);
+  const hours = tashkentTime.getUTCHours().toString().padStart(2, '0');
+  const minutes = tashkentTime.getUTCMinutes().toString().padStart(2, '0');
+  const seconds = tashkentTime.getUTCSeconds().toString().padStart(2, '0');
+  return `${hours}:${minutes}:${seconds}`;
+}
+
 // Get employees who need checkout reminder based on shift type
-async function getEmployeesForCheckoutReminder(shiftType: 'day' | 'night'): Promise<Employee[]> {
-  if (!isSupabaseAdminConfigured()) return [];
+async function getEmployeesForCheckoutReminder(shiftType: 'day' | 'night'): Promise<{ employees: Employee[], debug: object }> {
+  if (!isSupabaseAdminConfigured()) return { employees: [], debug: { error: 'Supabase not configured' } };
 
   const today = new Date();
   const dateStr = today.toISOString().split('T')[0];
@@ -55,43 +66,63 @@ async function getEmployeesForCheckoutReminder(shiftType: 'day' | 'night'): Prom
 
   if (error || !data) {
     console.error('Error fetching employees for reminder:', error);
-    return [];
+    return { employees: [], debug: { error: error?.message, dateStr } };
   }
 
   console.log(`📊 Found ${data.length} attendance records without checkout for ${dateStr}`);
 
   const typedData = data as unknown as AttendanceWithEmployee[];
+  const debugInfo: { name: string; checkIn: string; tashkentTime: string; hasTelegram: boolean; passesFilter: boolean }[] = [];
 
   // Filter by shift type based on check-in time and ensure telegram_id exists
   const filtered = typedData.filter(att => {
     // Skip if no employee or no telegram_id
     if (!att.employees || !att.employees.telegram_id) {
+      debugInfo.push({
+        name: att.employees?.full_name || 'Unknown',
+        checkIn: att.check_in,
+        tashkentTime: '-',
+        hasTelegram: false,
+        passesFilter: false
+      });
       return false;
     }
 
-    const checkInTime = new Date(att.check_in).toLocaleTimeString('en-US', {
-      hour12: false,
-      timeZone: 'Asia/Tashkent'
+    const checkInTime = getTimeInTashkent(att.check_in);
+    const passesFilter = shiftType === 'day' ? checkInTime <= cutoffTime : checkInTime > cutoffTime;
+
+    debugInfo.push({
+      name: att.employees.full_name,
+      checkIn: att.check_in,
+      tashkentTime: checkInTime,
+      hasTelegram: true,
+      passesFilter
     });
 
-    console.log(`  - ${att.employees.full_name}: check-in ${checkInTime}, cutoff ${cutoffTime}`);
+    console.log(`  - ${att.employees.full_name}: check-in ${checkInTime}, cutoff ${cutoffTime}, passes: ${passesFilter}`);
 
-    if (shiftType === 'day') {
-      return checkInTime <= cutoffTime;
-    } else {
-      return checkInTime > cutoffTime;
-    }
+    return passesFilter;
   });
 
   console.log(`📋 Filtered to ${filtered.length} ${shiftType} shift employees with telegram_id`);
 
-  return filtered.map(att => ({
-    employeeId: att.employees.id,
-    employeeName: att.employees.full_name,
-    telegramId: att.employees.telegram_id,
-    attendanceId: att.id,
-    preferredLanguage: att.employees.preferred_language || 'uz',
-  }));
+  return {
+    employees: filtered.map(att => ({
+      employeeId: att.employees.id,
+      employeeName: att.employees.full_name,
+      telegramId: att.employees.telegram_id,
+      attendanceId: att.id,
+      preferredLanguage: att.employees.preferred_language || 'uz',
+    })),
+    debug: {
+      dateStr,
+      cutoffTime,
+      shiftType,
+      totalRecords: data.length,
+      filteredCount: filtered.length,
+      records: debugInfo
+    }
+  };
 }
 
 // Send checkout reminder to an employee
@@ -202,7 +233,7 @@ export async function POST(request: NextRequest) {
     console.log(`📤 Manually triggering ${shiftType} shift checkout reminders...`);
 
     // Get employees who need reminders
-    const employees = await getEmployeesForCheckoutReminder(shiftType);
+    const { employees, debug } = await getEmployeesForCheckoutReminder(shiftType);
 
     if (employees.length === 0) {
       return NextResponse.json({
@@ -210,6 +241,7 @@ export async function POST(request: NextRequest) {
         message: `No ${shiftType} shift employees need checkout reminder`,
         sent: 0,
         total: 0,
+        debug, // Include debug info
       });
     }
 
@@ -232,6 +264,7 @@ export async function POST(request: NextRequest) {
       sent: sentCount,
       total: employees.length,
       results,
+      debug, // Include debug info
     });
   } catch (error) {
     console.error('Error triggering reminders:', error);
