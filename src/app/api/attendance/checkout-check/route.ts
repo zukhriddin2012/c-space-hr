@@ -1,6 +1,67 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
 
+const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
+const WEBAPP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://c-space-hr.vercel.app';
+
+// Send Telegram message based on IP verification result
+async function sendFollowUpMessage(
+  telegramId: string,
+  ipMatched: boolean,
+  branchName: string,
+  reminderId: string,
+  attendanceId: string,
+  employeeName: string
+) {
+  if (!BOT_TOKEN) return;
+
+  try {
+    let text: string;
+    let replyMarkup: object;
+
+    if (ipMatched) {
+      // IP matched - employee is at office
+      text = `✅ Ajoyib, ${employeeName}! Siz hali ${branchName}dasiz.\n\nQachon yana tekshiraylik?`;
+      replyMarkup = {
+        inline_keyboard: [
+          [
+            { text: '⏱️ 45 daq', callback_data: `reminder:45min:${reminderId}` },
+            { text: '🕐 2 soat', callback_data: `reminder:2hours:${reminderId}` },
+          ],
+          [
+            { text: '🌙 Bugun ketmayman', callback_data: `reminder:all_day:${reminderId}` },
+          ],
+        ],
+      };
+    } else {
+      // IP not matched - ask if still at work
+      text = `❓ ${employeeName}, sizni ofisda aniqlay olmadik.\n\nHali ishdamisiz?`;
+      replyMarkup = {
+        inline_keyboard: [
+          [
+            { text: '🏢 Men ishdaman', callback_data: `reminder:im_at_work:${reminderId}` },
+          ],
+          [
+            { text: '🚪 Men chiqdim', callback_data: `reminder:i_left:${reminderId}:${attendanceId}` },
+          ],
+        ],
+      };
+    }
+
+    await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chat_id: telegramId,
+        text,
+        reply_markup: replyMarkup,
+      }),
+    });
+  } catch (err) {
+    console.error('Failed to send follow-up message:', err);
+  }
+}
+
 // Handle GET requests (for debugging - should not happen)
 export async function GET(request: NextRequest) {
   return NextResponse.json({
@@ -143,10 +204,22 @@ export async function POST(request: NextRequest) {
       reminderId = newReminder.id;
     }
 
+    const branchName = ipMatched ? matchedBranch?.name : (attendance.check_in_branch?.name || '');
+
+    // Send follow-up message via bot
+    await sendFollowUpMessage(
+      telegramId,
+      ipMatched,
+      branchName,
+      reminderId,
+      attendance.id,
+      employee.full_name
+    );
+
     return NextResponse.json({
       success: true,
       ipMatched,
-      branchName: ipMatched ? matchedBranch?.name : (attendance.check_in_branch?.name || ''),
+      branchName,
       attendanceId: attendance.id,
       reminderId,
       clientIp,
