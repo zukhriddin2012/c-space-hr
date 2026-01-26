@@ -104,7 +104,19 @@ function CheckoutReminderContent() {
         }),
       });
 
-      const result = await response.json();
+      // Get text first to see what we receive
+      const text = await response.text();
+
+      // Try to parse JSON
+      let result;
+      try {
+        result = JSON.parse(text);
+      } catch {
+        setStatus('error');
+        setMessage(`s=${response.status}`);
+        setDebugInfo(text.substring(0, 100));
+        return;
+      }
 
       if (result.success) {
         setReminderId(result.reminderId);
@@ -117,7 +129,6 @@ function CheckoutReminderContent() {
       } else {
         setStatus('error');
         setMessage(result.error || 'Xatolik yuz berdi');
-        setDebugInfo(`e: ${result.error}`);
       }
     } catch (error: any) {
       setStatus('error');
