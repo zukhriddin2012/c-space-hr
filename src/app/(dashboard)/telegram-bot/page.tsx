@@ -6,21 +6,25 @@ import {
   BookOpen,
   MessageSquare,
   MousePointerClick,
-  Clock,
   Settings,
   Plus,
   Pencil,
   Trash2,
   Check,
   X,
-  ChevronDown,
-  ChevronRight,
   Lightbulb,
-  HelpCircle,
   Users,
   Star,
   Target,
   RefreshCw,
+  LayoutDashboard,
+  Bell,
+  Shield,
+  Clock,
+  ArrowDown,
+  Send,
+  Download,
+  RotateCcw,
 } from 'lucide-react';
 import { PageGuard } from '@/components/RoleGuard';
 import { PERMISSIONS } from '@/lib/permissions';
@@ -33,7 +37,7 @@ import type {
   SupportedLanguage,
 } from '@/lib/supabase';
 
-type TabId = 'learning' | 'messages' | 'buttons' | 'settings';
+type TabId = 'dashboard' | 'reminders' | 'learning' | 'messages' | 'buttons' | 'settings';
 
 const LANGUAGES: { code: SupportedLanguage; flag: string; name: string }[] = [
   { code: 'en', flag: '🇬🇧', name: 'English' },
@@ -56,14 +60,59 @@ const CATEGORIES = [
   { value: 'professional_growth', label: 'Professional Growth', icon: Lightbulb },
 ];
 
+interface ReminderStats {
+  totalReminders: number;
+  dayShiftReminders: number;
+  nightShiftReminders: number;
+  responseRate: number;
+  responseRateChange: number;
+  verificationRate: number;
+  verifiedCount: number;
+  completedCount: number;
+  pendingReminders: number;
+}
+
+interface ReminderItem {
+  id: string;
+  employeeId: string;
+  employeeName: string;
+  employeeCode: string;
+  telegramId: string;
+  shiftType: 'day' | 'night';
+  status: string;
+  responseType: string | null;
+  ipVerified: boolean;
+  ipAddress: string | null;
+  sentAt: string | null;
+  respondedAt: string | null;
+  scheduledFor: string | null;
+  createdAt: string;
+  attendance: {
+    id: string;
+    checkIn: string;
+    checkOut: string | null;
+    date: string;
+  } | null;
+}
+
 export default function TelegramBotPage() {
-  const [activeTab, setActiveTab] = useState<TabId>('learning');
+  const [activeTab, setActiveTab] = useState<TabId>('dashboard');
   const [learningContent, setLearningContent] = useState<BotLearningContent[]>([]);
   const [messageTemplates, setMessageTemplates] = useState<BotMessageTemplate[]>([]);
   const [buttonLabels, setButtonLabels] = useState<BotButtonLabel[]>([]);
   const [botSettings, setBotSettings] = useState<BotSettings[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Dashboard state
+  const [reminderStats, setReminderStats] = useState<ReminderStats | null>(null);
+  const [recentReminders, setRecentReminders] = useState<ReminderItem[]>([]);
+
+  // Reminders tab state
+  const [reminders, setReminders] = useState<ReminderItem[]>([]);
+  const [reminderDate, setReminderDate] = useState(new Date().toISOString().split('T')[0]);
+  const [reminderStatusFilter, setReminderStatusFilter] = useState('all');
+  const [reminderShiftFilter, setReminderShiftFilter] = useState('all');
 
   // Modal states
   const [showLearningModal, setShowLearningModal] = useState(false);
@@ -79,13 +128,34 @@ export default function TelegramBotPage() {
 
   useEffect(() => {
     fetchData();
-  }, [activeTab]);
+  }, [activeTab, reminderDate, reminderStatusFilter, reminderShiftFilter]);
 
   const fetchData = async () => {
     setIsLoading(true);
     setError(null);
     try {
-      if (activeTab === 'learning') {
+      if (activeTab === 'dashboard') {
+        // Fetch stats and recent reminders
+        const [statsRes, remindersRes] = await Promise.all([
+          fetch('/api/telegram-bot/reminder-stats'),
+          fetch('/api/telegram-bot/reminders?limit=5'),
+        ]);
+        const statsData = await statsRes.json();
+        const remindersData = await remindersRes.json();
+        if (statsRes.ok) setReminderStats(statsData.stats);
+        if (remindersRes.ok) setRecentReminders(remindersData.reminders || []);
+      } else if (activeTab === 'reminders') {
+        const params = new URLSearchParams({
+          date: reminderDate,
+          status: reminderStatusFilter,
+          shift: reminderShiftFilter,
+          limit: '50',
+        });
+        const res = await fetch(`/api/telegram-bot/reminders?${params}`);
+        const data = await res.json();
+        if (res.ok) setReminders(data.reminders || []);
+        else setError(data.error);
+      } else if (activeTab === 'learning') {
         const res = await fetch('/api/telegram-bot/learning-content');
         const data = await res.json();
         if (res.ok) setLearningContent(data.content || []);
@@ -159,9 +229,11 @@ export default function TelegramBotPage() {
   };
 
   const tabs = [
+    { id: 'dashboard' as TabId, label: 'Dashboard', icon: LayoutDashboard },
+    { id: 'reminders' as TabId, label: 'Reminders', icon: Bell },
     { id: 'learning' as TabId, label: 'Learning Content', icon: BookOpen },
-    { id: 'messages' as TabId, label: 'Message Templates', icon: MessageSquare },
-    { id: 'buttons' as TabId, label: 'Button Labels', icon: MousePointerClick },
+    { id: 'messages' as TabId, label: 'Messages', icon: MessageSquare },
+    { id: 'buttons' as TabId, label: 'Buttons', icon: MousePointerClick },
     { id: 'settings' as TabId, label: 'Settings', icon: Settings },
   ];
 
@@ -177,6 +249,41 @@ export default function TelegramBotPage() {
     return CATEGORIES.find(c => c.value === category) || CATEGORIES[0];
   };
 
+  const getStatusBadge = (status: string, responseType: string | null) => {
+    if (status === 'completed' || responseType === 'i_left') {
+      return <span className="px-2 py-1 bg-green-100 text-green-700 rounded text-xs">Completed</span>;
+    }
+    if (status === 'scheduled') {
+      return <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs">Scheduled</span>;
+    }
+    if (status === 'pending' || status === 'sent') {
+      return <span className="px-2 py-1 bg-yellow-100 text-yellow-700 rounded text-xs">Pending</span>;
+    }
+    return <span className="px-2 py-1 bg-gray-100 text-gray-600 rounded text-xs">{status}</span>;
+  };
+
+  const getResponseLabel = (responseType: string | null) => {
+    if (!responseType) return <span className="text-gray-400">—</span>;
+    const labels: Record<string, string> = {
+      'i_left': '🚪 I left',
+      'im_at_work': '🏢 At work',
+      '45min': '⏱️ 45 minutes',
+      '2hours': '🕐 2 hours',
+      'all_day': '🌙 All day',
+    };
+    return <span className="text-sm text-gray-900">{labels[responseType] || responseType}</span>;
+  };
+
+  const formatTime = (dateStr: string | null) => {
+    if (!dateStr) return '—';
+    const date = new Date(dateStr);
+    return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+  };
+
+  const getInitials = (name: string) => {
+    return name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+  };
+
   return (
     <PageGuard permission={PERMISSIONS.TELEGRAM_BOT_VIEW}>
       <div className="max-w-7xl mx-auto">
@@ -188,7 +295,7 @@ export default function TelegramBotPage() {
             </div>
             <div>
               <h1 className="text-2xl font-bold text-gray-900">Telegram Bot Admin</h1>
-              <p className="text-gray-500">Manage bot content, messages, and settings</p>
+              <p className="text-gray-500">Manage checkout reminders, content, and settings</p>
             </div>
           </div>
         </div>
@@ -229,10 +336,361 @@ export default function TelegramBotPage() {
           </div>
         ) : (
           <>
+            {/* Dashboard Tab */}
+            {activeTab === 'dashboard' && (
+              <div className="space-y-6">
+                {/* Stats Row */}
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  <div className="bg-white rounded-xl border border-gray-200 p-5">
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-sm text-gray-500">Today&apos;s Reminders</span>
+                      <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                        <Bell size={16} className="text-blue-600" />
+                      </div>
+                    </div>
+                    <p className="text-2xl font-bold text-gray-900">{reminderStats?.totalReminders || 0}</p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      {reminderStats?.dayShiftReminders || 0} day / {reminderStats?.nightShiftReminders || 0} night shift
+                    </p>
+                  </div>
+
+                  <div className="bg-white rounded-xl border border-gray-200 p-5">
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-sm text-gray-500">Response Rate</span>
+                      <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
+                        <Check size={16} className="text-green-600" />
+                      </div>
+                    </div>
+                    <p className="text-2xl font-bold text-gray-900">{reminderStats?.responseRate || 0}%</p>
+                    <p className={`text-xs mt-1 ${(reminderStats?.responseRateChange || 0) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                      {(reminderStats?.responseRateChange || 0) >= 0 ? '↑' : '↓'} {Math.abs(reminderStats?.responseRateChange || 0)}% from last week
+                    </p>
+                  </div>
+
+                  <div className="bg-white rounded-xl border border-gray-200 p-5">
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-sm text-gray-500">IP Verified</span>
+                      <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
+                        <Shield size={16} className="text-purple-600" />
+                      </div>
+                    </div>
+                    <p className="text-2xl font-bold text-gray-900">{reminderStats?.verificationRate || 0}%</p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      {reminderStats?.verifiedCount || 0} of {reminderStats?.completedCount || 0} checkouts
+                    </p>
+                  </div>
+
+                  <div className="bg-white rounded-xl border border-gray-200 p-5">
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-sm text-gray-500">Pending Now</span>
+                      <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
+                        <Clock size={16} className="text-orange-600" />
+                      </div>
+                    </div>
+                    <p className="text-2xl font-bold text-gray-900">{reminderStats?.pendingReminders || 0}</p>
+                    <p className="text-xs text-orange-600 mt-1">Awaiting response</p>
+                  </div>
+                </div>
+
+                {/* Flow Diagram + Quick Actions */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                  {/* Flow Diagram */}
+                  <div className="lg:col-span-2 bg-white rounded-xl border border-gray-200 p-6">
+                    <h3 className="font-semibold text-gray-900 mb-4">Checkout Reminder Flow</h3>
+                    <div className="flex flex-col items-center space-y-4">
+                      <div className="flex items-center gap-4 w-full max-w-lg">
+                        <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold shrink-0">1</div>
+                        <div className="flex-1 bg-blue-50 rounded-lg p-3 border border-blue-200">
+                          <p className="font-medium text-blue-900">⏰ Cron Trigger</p>
+                          <p className="text-xs text-blue-700">Day: 6:30 PM • Night: 10:00 AM</p>
+                        </div>
+                      </div>
+
+                      <ArrowDown size={24} className="text-gray-300" />
+
+                      <div className="flex items-center gap-4 w-full max-w-lg">
+                        <div className="w-12 h-12 bg-purple-500 rounded-full flex items-center justify-center text-white font-bold shrink-0">2</div>
+                        <div className="flex-1 bg-purple-50 rounded-lg p-3 border border-purple-200">
+                          <p className="font-medium text-purple-900">📱 Send WebApp Button</p>
+                          <p className="text-xs text-purple-700">User opens mini app in Telegram</p>
+                        </div>
+                      </div>
+
+                      <ArrowDown size={24} className="text-gray-300" />
+
+                      <div className="flex items-center gap-4 w-full max-w-lg">
+                        <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center text-white font-bold shrink-0">3</div>
+                        <div className="flex-1 bg-green-50 rounded-lg p-3 border border-green-200">
+                          <p className="font-medium text-green-900">🌐 Check IP Address</p>
+                          <p className="text-xs text-green-700">Compare with branch office IPs</p>
+                        </div>
+                      </div>
+
+                      <ArrowDown size={24} className="text-gray-300" />
+
+                      <div className="flex items-center gap-8 w-full max-w-2xl">
+                        <div className="flex-1 bg-green-100 rounded-lg p-3 border border-green-300">
+                          <p className="font-medium text-green-800 text-sm">✅ IP Matched</p>
+                          <p className="text-xs text-green-700 mt-1">Show time options:</p>
+                          <div className="flex gap-1 mt-2 flex-wrap">
+                            <span className="px-2 py-1 bg-white text-green-700 rounded text-xs">45 min</span>
+                            <span className="px-2 py-1 bg-white text-green-700 rounded text-xs">2 hrs</span>
+                            <span className="px-2 py-1 bg-white text-green-700 rounded text-xs">All day</span>
+                          </div>
+                        </div>
+                        <div className="flex-1 bg-orange-100 rounded-lg p-3 border border-orange-300">
+                          <p className="font-medium text-orange-800 text-sm">❓ IP Not Matched</p>
+                          <p className="text-xs text-orange-700 mt-1">Ask if still at work:</p>
+                          <div className="flex gap-1 mt-2 flex-wrap">
+                            <span className="px-2 py-1 bg-white text-orange-700 rounded text-xs">🏢 At work</span>
+                            <span className="px-2 py-1 bg-white text-orange-700 rounded text-xs">🚪 I left</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Quick Actions + Schedule */}
+                  <div className="space-y-4">
+                    <div className="bg-white rounded-xl border border-gray-200 p-5">
+                      <h3 className="font-semibold text-gray-900 mb-3">Reminder Schedule</h3>
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between py-2 border-b border-gray-100">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xl">☀️</span>
+                            <div>
+                              <p className="text-sm font-medium text-gray-900">Day Shift</p>
+                              <p className="text-xs text-gray-500">Check-in ≤ 3:30 PM</p>
+                            </div>
+                          </div>
+                          <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-lg text-sm font-medium">6:30 PM</span>
+                        </div>
+                        <div className="flex items-center justify-between py-2">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xl">🌙</span>
+                            <div>
+                              <p className="text-sm font-medium text-gray-900">Night Shift</p>
+                              <p className="text-xs text-gray-500">Check-in &gt; 3:30 PM</p>
+                            </div>
+                          </div>
+                          <span className="px-3 py-1 bg-purple-100 text-purple-700 rounded-lg text-sm font-medium">10:00 AM</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="bg-white rounded-xl border border-gray-200 p-5">
+                      <h3 className="font-semibold text-gray-900 mb-3">Quick Actions</h3>
+                      <div className="space-y-2">
+                        <button className="w-full flex items-center gap-3 px-4 py-3 bg-purple-50 hover:bg-purple-100 rounded-lg text-left transition-colors">
+                          <div className="w-8 h-8 bg-purple-500 rounded-lg flex items-center justify-center">
+                            <Send size={16} className="text-white" />
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium text-gray-900">Send Test Reminder</p>
+                            <p className="text-xs text-gray-500">To your Telegram</p>
+                          </div>
+                        </button>
+                        <button className="w-full flex items-center gap-3 px-4 py-3 bg-blue-50 hover:bg-blue-100 rounded-lg text-left transition-colors">
+                          <div className="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center">
+                            <RotateCcw size={16} className="text-white" />
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium text-gray-900">Retry Failed</p>
+                            <p className="text-xs text-gray-500">{reminderStats?.pendingReminders || 0} pending reminders</p>
+                          </div>
+                        </button>
+                        <button className="w-full flex items-center gap-3 px-4 py-3 bg-gray-50 hover:bg-gray-100 rounded-lg text-left transition-colors">
+                          <div className="w-8 h-8 bg-gray-500 rounded-lg flex items-center justify-center">
+                            <Download size={16} className="text-white" />
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium text-gray-900">Export Report</p>
+                            <p className="text-xs text-gray-500">Download as CSV</p>
+                          </div>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Recent Activity */}
+                <div className="bg-white rounded-xl border border-gray-200">
+                  <div className="p-5 border-b border-gray-200">
+                    <div className="flex items-center justify-between">
+                      <h3 className="font-semibold text-gray-900">Recent Reminder Activity</h3>
+                      <button
+                        onClick={() => setActiveTab('reminders')}
+                        className="text-sm text-purple-600 hover:underline"
+                      >
+                        View All →
+                      </button>
+                    </div>
+                  </div>
+                  <div className="divide-y divide-gray-100">
+                    {recentReminders.length === 0 ? (
+                      <div className="px-5 py-8 text-center text-gray-500">
+                        No recent reminder activity
+                      </div>
+                    ) : (
+                      recentReminders.map(reminder => (
+                        <div key={reminder.id} className="px-5 py-4 flex items-center gap-4 hover:bg-gray-50">
+                          <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                            reminder.status === 'completed' || reminder.responseType === 'i_left'
+                              ? 'bg-green-100'
+                              : reminder.responseType === '45min' || reminder.responseType === '2hours'
+                              ? 'bg-blue-100'
+                              : reminder.responseType === 'im_at_work'
+                              ? 'bg-orange-100'
+                              : reminder.responseType === 'all_day'
+                              ? 'bg-purple-100'
+                              : 'bg-gray-100'
+                          }`}>
+                            {reminder.status === 'completed' || reminder.responseType === 'i_left' ? (
+                              <Check size={20} className="text-green-600" />
+                            ) : reminder.responseType === '45min' || reminder.responseType === '2hours' ? (
+                              <Clock size={20} className="text-blue-600" />
+                            ) : (
+                              <Bell size={20} className="text-gray-600" />
+                            )}
+                          </div>
+                          <div className="flex-1">
+                            <p className="text-sm font-medium text-gray-900">{reminder.employeeName}</p>
+                            <p className="text-xs text-gray-500">
+                              {reminder.ipVerified ? 'IP verified' : 'IP not matched'} •{' '}
+                              {getResponseLabel(reminder.responseType)}
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-xs text-gray-500">{formatTime(reminder.sentAt || reminder.createdAt)}</p>
+                            {reminder.ipVerified ? (
+                              <span className="px-2 py-1 bg-green-100 text-green-700 rounded text-xs">Verified</span>
+                            ) : (
+                              <span className="px-2 py-1 bg-orange-100 text-orange-700 rounded text-xs">Unverified</span>
+                            )}
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Reminders Tab */}
+            {activeTab === 'reminders' && (
+              <div>
+                {/* Filters */}
+                <div className="flex items-center gap-4 mb-4 flex-wrap">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-gray-500">Filter:</span>
+                    {['all', 'pending', 'completed', 'scheduled'].map(status => (
+                      <button
+                        key={status}
+                        onClick={() => setReminderStatusFilter(status)}
+                        className={`px-3 py-1.5 rounded-lg text-sm font-medium ${
+                          reminderStatusFilter === status
+                            ? 'bg-purple-100 text-purple-700'
+                            : 'bg-white text-gray-600 hover:bg-gray-50 border border-gray-200'
+                        }`}
+                      >
+                        {status.charAt(0).toUpperCase() + status.slice(1)}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="flex-1" />
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-gray-500">Shift:</span>
+                    <button
+                      onClick={() => setReminderShiftFilter(reminderShiftFilter === 'day' ? 'all' : 'day')}
+                      className={`px-3 py-1.5 rounded-lg text-sm font-medium ${
+                        reminderShiftFilter === 'day'
+                          ? 'bg-blue-100 text-blue-700'
+                          : 'bg-white text-gray-600 hover:bg-gray-50 border border-gray-200'
+                      }`}
+                    >
+                      ☀️ Day
+                    </button>
+                    <button
+                      onClick={() => setReminderShiftFilter(reminderShiftFilter === 'night' ? 'all' : 'night')}
+                      className={`px-3 py-1.5 rounded-lg text-sm font-medium ${
+                        reminderShiftFilter === 'night'
+                          ? 'bg-purple-100 text-purple-700'
+                          : 'bg-white text-gray-600 hover:bg-gray-50 border border-gray-200'
+                      }`}
+                    >
+                      🌙 Night
+                    </button>
+                  </div>
+                  <input
+                    type="date"
+                    value={reminderDate}
+                    onChange={e => setReminderDate(e.target.value)}
+                    className="px-3 py-1.5 border border-gray-200 rounded-lg text-sm"
+                  />
+                </div>
+
+                {/* Table */}
+                <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+                  <table className="w-full">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Employee</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Shift</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Sent At</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Response</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">IP Status</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {reminders.length === 0 ? (
+                        <tr>
+                          <td colSpan={6} className="px-4 py-8 text-center text-gray-500">
+                            No reminders found for this date
+                          </td>
+                        </tr>
+                      ) : (
+                        reminders.map(reminder => (
+                          <tr key={reminder.id} className="hover:bg-gray-50">
+                            <td className="px-4 py-3">
+                              <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center text-purple-600 font-medium text-sm">
+                                  {getInitials(reminder.employeeName)}
+                                </div>
+                                <span className="text-sm font-medium text-gray-900">{reminder.employeeName}</span>
+                              </div>
+                            </td>
+                            <td className="px-4 py-3">
+                              <span className="text-sm">{reminder.shiftType === 'day' ? '☀️ Day' : '🌙 Night'}</span>
+                            </td>
+                            <td className="px-4 py-3">
+                              <span className="text-sm text-gray-500">{formatTime(reminder.sentAt)}</span>
+                            </td>
+                            <td className="px-4 py-3">{getResponseLabel(reminder.responseType)}</td>
+                            <td className="px-4 py-3">
+                              {reminder.responseType ? (
+                                reminder.ipVerified ? (
+                                  <span className="px-2 py-1 bg-green-100 text-green-700 rounded text-xs">Verified</span>
+                                ) : (
+                                  <span className="px-2 py-1 bg-orange-100 text-orange-700 rounded text-xs">Not Matched</span>
+                                )
+                              ) : (
+                                <span className="text-gray-400">—</span>
+                              )}
+                            </td>
+                            <td className="px-4 py-3">{getStatusBadge(reminder.status, reminder.responseType)}</td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
             {/* Learning Content Tab */}
             {activeTab === 'learning' && (
               <div>
-                {/* Header with Add Button */}
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex gap-2">
                     <button
@@ -267,11 +725,10 @@ export default function TelegramBotPage() {
                   </button>
                 </div>
 
-                {/* Content List */}
                 {filteredContent.length === 0 ? (
                   <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
                     <BookOpen size={48} className="mx-auto text-gray-300 mb-4" />
-                    <p className="text-gray-500">No learning content yet. Click "Add Content" to create one.</p>
+                    <p className="text-gray-500">No learning content yet. Click &quot;Add Content&quot; to create one.</p>
                   </div>
                 ) : (
                   <div className="space-y-4">
@@ -322,7 +779,6 @@ export default function TelegramBotPage() {
                               </div>
                             </div>
 
-                            {/* Language Preview */}
                             <div className="mt-4 border-t border-gray-100 pt-4">
                               <div className="flex gap-2 mb-3">
                                 {LANGUAGES.map(lang => (
@@ -413,7 +869,6 @@ export default function TelegramBotPage() {
                             </div>
                             <p className="text-sm text-gray-500 mb-3">{template.description}</p>
 
-                            {/* Language Tabs */}
                             <div className="flex gap-2 mb-3">
                               {LANGUAGES.map(lang => (
                                 <button
@@ -557,18 +1012,10 @@ export default function TelegramBotPage() {
                     onUpdate={fetchData}
                   />
                   <SettingItem
-                    label="Auto-Checkout Delay (minutes)"
-                    description="How long to wait after reminder before auto-checkout"
-                    defaultValue="45"
-                    settingKey="auto_checkout_delay_minutes"
-                    settings={botSettings}
-                    onUpdate={fetchData}
-                  />
-                  <SettingItem
-                    label="Day Shift Cutoff Hour"
-                    description="Check-ins before this hour are considered day shift"
-                    defaultValue="12"
-                    settingKey="day_shift_cutoff_hour"
+                    label="Day Shift Cutoff Time"
+                    description="Check-ins at or before this time are day shift, after are night shift"
+                    defaultValue="15:30"
+                    settingKey="day_shift_cutoff_time"
                     settings={botSettings}
                     onUpdate={fetchData}
                   />
@@ -769,13 +1216,12 @@ function LearningContentModal({
         </div>
 
         <div className="flex-1 overflow-y-auto p-6">
-          {/* Type & Category */}
           <div className="grid grid-cols-2 gap-4 mb-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
               <select
                 value={formData.type}
-                onChange={e => setFormData(prev => ({ ...prev, type: e.target.value as any }))}
+                onChange={e => setFormData(prev => ({ ...prev, type: e.target.value as 'tip' | 'scenario' | 'quiz' | 'reflection' }))}
                 className="w-full px-3 py-2 border border-gray-200 rounded-lg"
               >
                 {CONTENT_TYPES.map(t => (
@@ -787,7 +1233,7 @@ function LearningContentModal({
               <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
               <select
                 value={formData.category}
-                onChange={e => setFormData(prev => ({ ...prev, category: e.target.value as any }))}
+                onChange={e => setFormData(prev => ({ ...prev, category: e.target.value as 'service_excellence' | 'team_collaboration' | 'customer_handling' | 'company_values' | 'professional_growth' }))}
                 className="w-full px-3 py-2 border border-gray-200 rounded-lg"
               >
                 {CATEGORIES.map(c => (
@@ -797,7 +1243,6 @@ function LearningContentModal({
             </div>
           </div>
 
-          {/* Language Tabs */}
           <div className="flex gap-2 mb-4">
             {LANGUAGES.map(lang => (
               <button
@@ -812,7 +1257,6 @@ function LearningContentModal({
             ))}
           </div>
 
-          {/* Title */}
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700 mb-1">Title ({activeLang.toUpperCase()})</label>
             <input
@@ -824,7 +1268,6 @@ function LearningContentModal({
             />
           </div>
 
-          {/* Content */}
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700 mb-1">Content ({activeLang.toUpperCase()})</label>
             <textarea
@@ -836,7 +1279,6 @@ function LearningContentModal({
             />
           </div>
 
-          {/* Quiz Options (only for quiz type) */}
           {formData.type === 'quiz' && (
             <>
               <div className="mb-4">
@@ -895,7 +1337,6 @@ function LearningContentModal({
             </>
           )}
 
-          {/* Active & Order */}
           <div className="grid grid-cols-2 gap-4">
             <div className="flex items-center gap-2">
               <input
@@ -1011,7 +1452,6 @@ function MessageTemplateModal({
         </div>
 
         <div className="flex-1 overflow-y-auto p-6">
-          {/* Key & Description */}
           <div className="grid grid-cols-2 gap-4 mb-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Key</label>
@@ -1036,7 +1476,6 @@ function MessageTemplateModal({
             </div>
           </div>
 
-          {/* Language Tabs */}
           <div className="flex gap-2 mb-4">
             {LANGUAGES.map(lang => (
               <button
@@ -1051,7 +1490,6 @@ function MessageTemplateModal({
             ))}
           </div>
 
-          {/* Content */}
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700 mb-1">Message Content ({activeLang.toUpperCase()})</label>
             <textarea
@@ -1063,7 +1501,6 @@ function MessageTemplateModal({
             />
           </div>
 
-          {/* Placeholders */}
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700 mb-2">Available Placeholders</label>
             <div className="flex flex-wrap gap-2 mb-2">
@@ -1093,7 +1530,6 @@ function MessageTemplateModal({
             </div>
           </div>
 
-          {/* Active */}
           <div className="flex items-center gap-2">
             <input
               type="checkbox"
@@ -1180,7 +1616,6 @@ function ButtonLabelModal({
         </div>
 
         <div className="flex-1 overflow-y-auto p-6">
-          {/* Key */}
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700 mb-1">Key</label>
             <input
@@ -1193,7 +1628,6 @@ function ButtonLabelModal({
             />
           </div>
 
-          {/* Description */}
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
             <input
@@ -1205,7 +1639,6 @@ function ButtonLabelModal({
             />
           </div>
 
-          {/* Emoji */}
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700 mb-1">Emoji (optional)</label>
             <input
@@ -1217,7 +1650,6 @@ function ButtonLabelModal({
             />
           </div>
 
-          {/* Language Tabs */}
           <div className="flex gap-2 mb-4">
             {LANGUAGES.map(lang => (
               <button
@@ -1232,7 +1664,6 @@ function ButtonLabelModal({
             ))}
           </div>
 
-          {/* Label */}
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700 mb-1">Button Label ({activeLang.toUpperCase()})</label>
             <input
@@ -1244,7 +1675,6 @@ function ButtonLabelModal({
             />
           </div>
 
-          {/* Preview */}
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700 mb-2">Preview</label>
             <div className="bg-gray-100 rounded-lg p-4 flex justify-center">
@@ -1255,7 +1685,6 @@ function ButtonLabelModal({
             </div>
           </div>
 
-          {/* Active */}
           <div className="flex items-center gap-2">
             <input
               type="checkbox"
