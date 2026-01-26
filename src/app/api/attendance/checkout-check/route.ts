@@ -26,9 +26,10 @@ const messages = {
   },
 };
 
-// Send Telegram message based on IP verification result
-async function sendFollowUpMessage(
+// Edit the original reminder message with IP verification result
+async function editReminderMessage(
   telegramId: string,
+  messageId: string | null,
   ipMatched: boolean,
   branchName: string,
   reminderId: string,
@@ -69,17 +70,32 @@ async function sendFollowUpMessage(
       };
     }
 
-    await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        chat_id: telegramId,
-        text,
-        reply_markup: replyMarkup,
-      }),
-    });
+    // If we have messageId, edit the existing message; otherwise send new
+    if (messageId) {
+      await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/editMessageText`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chat_id: telegramId,
+          message_id: parseInt(messageId),
+          text,
+          reply_markup: replyMarkup,
+        }),
+      });
+    } else {
+      // Fallback to sending new message if no messageId
+      await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chat_id: telegramId,
+          text,
+          reply_markup: replyMarkup,
+        }),
+      });
+    }
   } catch (err) {
-    console.error('Failed to send follow-up message:', err);
+    console.error('Failed to edit/send message:', err);
   }
 }
 
@@ -100,7 +116,7 @@ export async function POST(request: NextRequest) {
     const clientIp = forwardedFor?.split(',')[0]?.trim() || realIp || 'unknown';
 
     const body = await request.json();
-    const { telegramId, attendanceId } = body;
+    const { telegramId, attendanceId, messageId } = body;
 
     if (!telegramId) {
       return NextResponse.json({ success: false, error: 'Missing telegramId' }, { status: 400 });
@@ -229,9 +245,10 @@ export async function POST(request: NextRequest) {
 
     const branchName = ipMatched ? matchedBranch?.name : (attendance.check_in_branch?.name || '');
 
-    // Send follow-up message via bot in employee's preferred language
-    await sendFollowUpMessage(
+    // Edit the original reminder message (or send new if no messageId)
+    await editReminderMessage(
       telegramId,
+      messageId || null,
       ipMatched,
       branchName,
       reminderId,

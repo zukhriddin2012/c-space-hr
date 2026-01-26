@@ -9,6 +9,7 @@ function CheckoutReminderContent() {
   const searchParams = useSearchParams();
   const telegramId = searchParams.get('tid');
   const attendanceId = searchParams.get('aid') || searchParams.get('attendanceId');
+  const messageId = searchParams.get('mid'); // Message ID for editing
 
   const [status, setStatus] = useState<Status>('checking');
   const [errorMsg, setErrorMsg] = useState('');
@@ -26,7 +27,7 @@ function CheckoutReminderContent() {
       const response = await fetch(`${baseUrl}/api/attendance/checkout-check`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ telegramId, attendanceId }),
+        body: JSON.stringify({ telegramId, attendanceId, messageId }),
       });
 
       const text = await response.text();
@@ -55,7 +56,7 @@ function CheckoutReminderContent() {
       setStatus('error');
       setErrorMsg(error?.message || 'Tarmoq xatosi');
     }
-  }, [telegramId, attendanceId]);
+  }, [telegramId, attendanceId, messageId]);
 
   useEffect(() => {
     if (window.Telegram?.WebApp) {
