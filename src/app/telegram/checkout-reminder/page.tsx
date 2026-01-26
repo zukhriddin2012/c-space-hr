@@ -84,6 +84,14 @@ function CheckoutReminderContent() {
 
   const texts = t[lang as keyof typeof t] || t.uz;
 
+  // Get base URL dynamically
+  const getBaseUrl = () => {
+    if (typeof window !== 'undefined') {
+      return window.location.origin;
+    }
+    return '';
+  };
+
   // Check presence on load - using fetch like the check-in page
   const checkPresence = useCallback(async () => {
     if (!telegramId) {
@@ -93,10 +101,11 @@ function CheckoutReminderContent() {
       return;
     }
 
-    setDebugInfo(`tid=${telegramId}`);
+    const baseUrl = getBaseUrl();
+    setDebugInfo(`tid=${telegramId}, url=${baseUrl}`);
 
     try {
-      const response = await fetch('/api/tg-check', {
+      const response = await fetch(`${baseUrl}/api/tg-check`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -148,8 +157,9 @@ function CheckoutReminderContent() {
 
   // Handle action buttons - using fetch like the check-in page
   const handleAction = async (action: 'im_at_work' | 'i_left' | '45min' | '2hours' | 'all_day') => {
+    const baseUrl = getBaseUrl();
     try {
-      const response = await fetch('/api/tg-action', {
+      const response = await fetch(`${baseUrl}/api/tg-action`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
