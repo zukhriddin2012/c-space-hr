@@ -107,6 +107,24 @@ function CheckoutReminderContent() {
         }),
       });
 
+      // Check if response is OK
+      if (!response.ok) {
+        setStatus('error');
+        setMessage(`HTTP xato: ${response.status}`);
+        setDebugInfo(`tid=${telegramId}, status=${response.status}`);
+        return;
+      }
+
+      // Check content type
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        const text = await response.text();
+        setStatus('error');
+        setMessage('Server JSON qaytarmadi');
+        setDebugInfo(`tid=${telegramId}, ct=${contentType}, body=${text.substring(0, 100)}`);
+        return;
+      }
+
       const result = await response.json();
 
       if (result.success) {
