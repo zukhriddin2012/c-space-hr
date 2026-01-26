@@ -84,8 +84,8 @@ function CheckoutReminderContent() {
 
   const texts = t[lang as keyof typeof t] || t.uz;
 
-  // Check presence on load - similar to checkin page pattern
-  const checkPresence = useCallback(async () => {
+  // Check presence on load - using XMLHttpRequest for better WebView compatibility
+  const checkPresence = useCallback(() => {
     if (!telegramId) {
       setStatus('error');
       setMessage('Telegram ID topilmadi');
@@ -93,98 +93,130 @@ function CheckoutReminderContent() {
       return;
     }
 
-    // Hardcode the URL to avoid any URL construction issues in WebView
     const apiUrl = 'https://c-space-hr.vercel.app/api/tg-check';
-    setDebugInfo(`tid=${telegramId}, url=${apiUrl}`);
+    setDebugInfo(`tid=${telegramId}, xhr`);
 
     try {
-      const response = await fetch(apiUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          telegramId: String(telegramId),
-          attendanceId: attendanceId ? String(attendanceId) : null
-        }),
-      });
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', apiUrl, true);
+      xhr.setRequestHeader('Content-Type', 'application/json');
 
-      const result = await response.json();
-
-      if (result.success) {
-        setReminderId(result.reminderId);
-        if (result.ipMatched) {
-          setStatus('ip_matched');
-          setBranchName(result.branchName || '');
-        } else {
-          setStatus('ip_not_matched');
+      xhr.onreadystatechange = function() {
+        if (xhr.readyState === 4) {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            try {
+              const result = JSON.parse(xhr.responseText);
+              if (result.success) {
+                setReminderId(result.reminderId);
+                if (result.ipMatched) {
+                  setStatus('ip_matched');
+                  setBranchName(result.branchName || '');
+                } else {
+                  setStatus('ip_not_matched');
+                }
+              } else {
+                setStatus('error');
+                setMessage(result.error || 'Xatolik yuz berdi');
+              }
+            } catch (e) {
+              setStatus('error');
+              setMessage('JSON parse xatosi');
+            }
+          } else {
+            setStatus('error');
+            setMessage(`HTTP xato: ${xhr.status}`);
+          }
         }
-      } else {
+      };
+
+      xhr.onerror = function() {
         setStatus('error');
-        setMessage(result.error || 'Xatolik yuz berdi');
-      }
+        setMessage('XHR tarmoq xatosi');
+      };
+
+      xhr.send(JSON.stringify({
+        telegramId: String(telegramId),
+        attendanceId: attendanceId ? String(attendanceId) : null
+      }));
     } catch (error: any) {
       console.error('Presence check error:', error);
       setStatus('error');
-      setMessage(`Tarmoq xatosi: ${error?.message || 'unknown'}`);
+      setMessage(`Xato: ${error?.message || 'unknown'}`);
     }
   }, [telegramId, attendanceId]);
 
-  // Handle action buttons
-  const handleAction = async (action: 'im_at_work' | 'i_left' | '45min' | '2hours' | 'all_day') => {
+  // Handle action buttons - using XMLHttpRequest for WebView compatibility
+  const handleAction = (action: 'im_at_work' | 'i_left' | '45min' | '2hours' | 'all_day') => {
+    const apiUrl = 'https://c-space-hr.vercel.app/api/tg-action';
+
     try {
-      const apiUrl = 'https://c-space-hr.vercel.app/api/tg-action';
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', apiUrl, true);
+      xhr.setRequestHeader('Content-Type', 'application/json');
 
-      const response = await fetch(apiUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          telegramId: String(telegramId),
-          attendanceId: attendanceId ? String(attendanceId) : null,
-          reminderId: reminderId ? String(reminderId) : null,
-          responseType: action,
-        }),
-      });
+      xhr.onreadystatechange = function() {
+        if (xhr.readyState === 4) {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            try {
+              const result = JSON.parse(xhr.responseText);
 
-      const result = await response.json();
-
-      if (result.success) {
-        if (action === 'i_left') {
-          setStatus('checkout_done');
-          setTimeout(() => {
-            if (window.Telegram?.WebApp) {
-              window.Telegram.WebApp.close();
+              if (result.success) {
+                if (action === 'i_left') {
+                  setStatus('checkout_done');
+                  setTimeout(() => {
+                    if (window.Telegram?.WebApp) {
+                      window.Telegram.WebApp.close();
+                    }
+                  }, 2000);
+                } else if (action === 'im_at_work') {
+                  setStatus('at_work_confirmed');
+                } else if (action === 'all_day') {
+                  setStatus('reminder_set');
+                  setMessage('all_day');
+                  setTimeout(() => {
+                    if (window.Telegram?.WebApp) {
+                      window.Telegram.WebApp.close();
+                    }
+                  }, 2000);
+                } else {
+                  setStatus('reminder_set');
+                  setMessage(action);
+                  setTimeout(() => {
+                    if (window.Telegram?.WebApp) {
+                      window.Telegram.WebApp.close();
+                    }
+                  }, 2000);
+                }
+              } else {
+                setStatus('error');
+                setMessage(result.error || 'Xatolik yuz berdi');
+              }
+            } catch (e) {
+              setStatus('error');
+              setMessage('JSON parse xatosi');
             }
-          }, 2000);
-        } else if (action === 'im_at_work') {
-          setStatus('at_work_confirmed');
-        } else if (action === 'all_day') {
-          setStatus('reminder_set');
-          setMessage('all_day');
-          setTimeout(() => {
-            if (window.Telegram?.WebApp) {
-              window.Telegram.WebApp.close();
-            }
-          }, 2000);
-        } else {
-          setStatus('reminder_set');
-          setMessage(action);
-          setTimeout(() => {
-            if (window.Telegram?.WebApp) {
-              window.Telegram.WebApp.close();
-            }
-          }, 2000);
+          } else {
+            setStatus('error');
+            setMessage(`HTTP xato: ${xhr.status}`);
+          }
         }
-      } else {
+      };
+
+      xhr.onerror = function() {
         setStatus('error');
-        setMessage(result.error || 'Xatolik yuz berdi');
-      }
-    } catch (error) {
+        setMessage('XHR tarmoq xatosi');
+      };
+
+      xhr.send(JSON.stringify({
+        telegramId: String(telegramId),
+        reminderId,
+        attendanceId: attendanceId ? String(attendanceId) : null,
+        responseType: action
+      }));
+    } catch (error: any) {
       console.error('Action error:', error);
       setStatus('error');
-      setMessage('Tarmoq xatosi');
+      setMessage(`Xato: ${error?.message || 'unknown'}`);
     }
   };
 
