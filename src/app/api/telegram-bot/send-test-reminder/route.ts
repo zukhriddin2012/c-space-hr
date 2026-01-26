@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin, isSupabaseAdminConfigured } from '@/lib/supabase';
-import { createServerClient } from '@supabase/ssr';
-import { cookies } from 'next/headers';
 
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const WEBAPP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://c-space-hr.vercel.app';
@@ -16,30 +14,23 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Telegram bot not configured' }, { status: 500 });
     }
 
-    // Get current user from session
-    const cookieStore = await cookies();
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          getAll() {
-            return cookieStore.getAll();
-          },
-        },
-      }
-    );
-
-    const { data: { user } } = await supabase.auth.getUser();
+    // Try to get email from request body (optional)
+    let email: string | null = null;
+    try {
+      const body = await request.json();
+      email = body.email || null;
+    } catch {
+      // No body provided, will use fallback
+    }
 
     let targetEmployee;
 
-    if (user?.email) {
+    if (email) {
       // Try to find employee by email
       const { data: employee } = await supabaseAdmin!
         .from('employees')
         .select('id, full_name, telegram_id')
-        .eq('email', user.email)
+        .eq('email', email)
         .single();
 
       if (employee?.telegram_id) {
@@ -47,9 +38,25 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Fallback: find first employee with telegram_id
+    // Fallback: find first employee with telegram_id who has admin/hr role
     if (!targetEmployee) {
       const { data: fallbackEmployee, error: adminError } = await supabaseAdmin!
+        .from('employees')
+        .select('id, full_name, telegram_id')
+        .not('telegram_id', 'is', null)
+        .in('system_role', ['general_manager', 'hr_manager', 'branch_manager'])
+        .order('created_at', { ascending: true })
+        .limit(1)
+        .single();
+
+      if (!adminError && fallbackEmployee?.telegram_id) {
+        targetEmployee = fallbackEmployee;
+      }
+    }
+
+    // Final fallback: any employee with telegram_id
+    if (!targetEmployee) {
+      const { data: anyEmployee, error: anyError } = await supabaseAdmin!
         .from('employees')
         .select('id, full_name, telegram_id')
         .not('telegram_id', 'is', null)
@@ -57,13 +64,13 @@ export async function POST(request: NextRequest) {
         .limit(1)
         .single();
 
-      if (adminError || !fallbackEmployee?.telegram_id) {
+      if (anyError || !anyEmployee?.telegram_id) {
         return NextResponse.json(
           { error: 'No employee with Telegram ID found. Please link your Telegram account first.' },
           { status: 400 }
         );
       }
-      targetEmployee = fallbackEmployee;
+      targetEmployee = anyEmployee;
     }
 
     // Send test message with checkout reminder button
