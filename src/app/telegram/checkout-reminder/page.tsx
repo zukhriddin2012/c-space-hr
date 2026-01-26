@@ -84,56 +84,27 @@ function CheckoutReminderContent() {
 
   const texts = t[lang as keyof typeof t] || t.uz;
 
-  // Check presence on load - using same pattern as working check-in page
+  // Check presence - EXACT same pattern as working check-in page
   const checkPresence = useCallback(async () => {
     if (!telegramId) {
       setStatus('error');
       setMessage('Telegram ID topilmadi');
-      setDebugInfo(`tid=null`);
       return;
     }
 
-    // Get the full URL for the API
-    const apiUrl = `${window.location.origin}/api/attendance/checkout-check`;
-    setDebugInfo(`tid=${telegramId}, url=${apiUrl.substring(0, 50)}`);
-
     try {
-      const response = await fetch(apiUrl, {
+      const response = await fetch('/api/attendance/checkout-check', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Accept': 'application/json',
         },
         body: JSON.stringify({
-          telegramId: String(telegramId),
-          attendanceId: attendanceId ? String(attendanceId) : null
+          telegramId,
+          attendanceId,
         }),
       });
 
-      // Get raw text first to debug what we actually receive
-      const text = await response.text();
-
-      // Check content-type
-      const contentType = response.headers.get('content-type') || 'unknown';
-      setDebugInfo(`tid=${telegramId}, s=${response.status}, ct=${contentType.substring(0, 20)}, len=${text.length}`);
-
-      if (!response.ok) {
-        setStatus('error');
-        setMessage(`HTTP ${response.status}`);
-        setDebugInfo(`tid=${telegramId}, s=${response.status}, body=${text.substring(0, 100)}`);
-        return;
-      }
-
-      // Try to parse as JSON
-      let result;
-      try {
-        result = JSON.parse(text);
-      } catch (parseError) {
-        setStatus('error');
-        setMessage(`JSON parse xato`);
-        setDebugInfo(`tid=${telegramId}, s=${response.status}, ct=${contentType}, body=${text.substring(0, 80)}`);
-        return;
-      }
+      const result = await response.json();
 
       if (result.success) {
         setReminderId(result.reminderId);
@@ -146,12 +117,12 @@ function CheckoutReminderContent() {
       } else {
         setStatus('error');
         setMessage(result.error || 'Xatolik yuz berdi');
+        setDebugInfo(`e: ${result.error}`);
       }
     } catch (error: any) {
-      console.error('Presence check error:', error);
       setStatus('error');
-      setMessage(`Tarmoq: ${error?.message || 'unknown'}`);
-      setDebugInfo(`tid=${telegramId}, err=${error?.name}: ${error?.message?.substring(0, 50)}`);
+      setMessage('Tarmoq xatosi');
+      setDebugInfo(`${error?.name}: ${error?.message}`);
     }
   }, [telegramId, attendanceId]);
 
