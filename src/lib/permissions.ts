@@ -80,6 +80,10 @@ export const PERMISSIONS = {
   ACCOUNTING_REQUESTS_APPROVE_STANDARD: 'accounting_requests:approve_standard', // 2M-10M UZS
   ACCOUNTING_REQUESTS_APPROVE_HIGH: 'accounting_requests:approve_high', // 10M+ UZS
   ACCOUNTING_REQUESTS_REPORTS: 'accounting_requests:reports',
+
+  // Telegram Bot Management
+  TELEGRAM_BOT_VIEW: 'telegram_bot:view',
+  TELEGRAM_BOT_EDIT: 'telegram_bot:edit',
 } as const;
 
 export type Permission = typeof PERMISSIONS[keyof typeof PERMISSIONS];
@@ -153,6 +157,9 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     PERMISSIONS.ACCOUNTING_REQUESTS_CANCEL_OWN,
     PERMISSIONS.ACCOUNTING_REQUESTS_APPROVE_HIGH,
     PERMISSIONS.ACCOUNTING_REQUESTS_REPORTS,
+    // Telegram Bot - Full access
+    PERMISSIONS.TELEGRAM_BOT_VIEW,
+    PERMISSIONS.TELEGRAM_BOT_EDIT,
   ],
 
   ceo: [

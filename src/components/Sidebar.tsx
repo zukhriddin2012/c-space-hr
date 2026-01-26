@@ -27,6 +27,7 @@ import {
   ClipboardCheck,
   ListTodo,
   Code2,
+  Bot,
 } from 'lucide-react';
 import type { User, UserRole } from '@/types';
 import { getRoleLabel } from '@/lib/auth';
@@ -164,6 +165,12 @@ const navItems: NavItem[] = [
     icon: Code2,
     roles: ['general_manager'],
   },
+  {
+    nameKey: 'telegramBot',
+    href: '/telegram-bot',
+    icon: Bot,
+    roles: ['general_manager'],
+  },
 ];
 
 export default function Sidebar({ user }: SidebarProps) {
@@ -202,6 +209,8 @@ export default function Sidebar({ user }: SidebarProps) {
       feedback: t.nav.feedback,
       feedbackInbox: t.nav.feedbackInbox,
       settings: t.nav.settings,
+      devBoard: 'Dev Board',
+      telegramBot: 'Telegram Bot',
     };
     return labels[key] || key;
   };

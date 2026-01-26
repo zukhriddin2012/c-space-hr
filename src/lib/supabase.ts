@@ -98,3 +98,85 @@ export interface LeaveRequest {
   review_note: string | null;
   employees?: Employee;
 }
+
+// ============================================
+// TELEGRAM BOT CONTENT TYPES
+// ============================================
+
+export type SupportedLanguage = 'en' | 'ru' | 'uz';
+
+export interface LocalizedContent {
+  en: string;
+  ru: string;
+  uz: string;
+}
+
+// Learning content for checkout reminders
+export interface BotLearningContent {
+  id: string;
+  type: 'tip' | 'scenario' | 'quiz' | 'reflection';
+  category: 'service_excellence' | 'team_collaboration' | 'customer_handling' | 'company_values' | 'professional_growth';
+  title: LocalizedContent;
+  content: LocalizedContent;
+  // For quiz type
+  quiz_options?: LocalizedContent[];
+  quiz_correct_index?: number;
+  quiz_explanation?: LocalizedContent;
+  // Metadata
+  is_active: boolean;
+  display_order: number;
+  created_at: string;
+  updated_at: string;
+}
+
+// Message templates for bot communications
+export interface BotMessageTemplate {
+  id: string;
+  key: string; // e.g., 'checkout_reminder', 'auto_checkout_notice', 'ip_mismatch_question'
+  description: string;
+  content: LocalizedContent;
+  // Placeholders that can be used in the message (e.g., {employee_name}, {time})
+  available_placeholders: string[];
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+// Button labels for bot interactions
+export interface BotButtonLabel {
+  id: string;
+  key: string; // e.g., 'confirm_checkout', 'im_in_office', 'i_left'
+  description: string;
+  label: LocalizedContent;
+  emoji?: string; // Optional emoji to prepend
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+// Bot settings/schedules
+export interface BotSettings {
+  id: string;
+  key: string;
+  value: string;
+  description: string;
+  updated_at: string;
+}
+
+// Checkout reminder record
+export interface CheckoutReminder {
+  id: string;
+  employee_id: string;
+  attendance_id: string;
+  shift_type: 'day' | 'night';
+  reminder_sent_at: string | null;
+  reminder_message_id: string | null;
+  learning_content_id: string | null;
+  response_received_at: string | null;
+  response_type: 'confirmed' | 'in_office' | 'left' | 'auto' | null;
+  ip_verified: boolean;
+  ip_address: string | null;
+  auto_checkout_at: string | null;
+  status: 'pending' | 'sent' | 'responded' | 'auto_completed';
+  created_at: string;
+}
