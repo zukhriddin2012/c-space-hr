@@ -46,16 +46,22 @@ async function editReminderMessage(
     let text: string;
     let replyMarkup: object;
 
+    // Use shorter callback data format: r:{action}:{shortId}
+    // Telegram has 64-byte limit for callback_data
+    // UUID is 36 chars, so we use first 8 chars as short ID
+    const shortReminderId = reminderId.substring(0, 8);
+    const shortAttendanceId = attendanceId.substring(0, 8);
+
     if (ipMatched) {
       text = messages.ipMatched[lang](employeeName, branchName);
       replyMarkup = {
         inline_keyboard: [
           [
-            { text: messages.buttons.in45min[lang], callback_data: `reminder:45min:${reminderId}` },
-            { text: messages.buttons.in2hours[lang], callback_data: `reminder:2hours:${reminderId}` },
+            { text: messages.buttons.in45min[lang], callback_data: `r:45:${shortReminderId}` },
+            { text: messages.buttons.in2hours[lang], callback_data: `r:2h:${shortReminderId}` },
           ],
           [
-            { text: messages.buttons.allDay[lang], callback_data: `reminder:all_day:${reminderId}` },
+            { text: messages.buttons.allDay[lang], callback_data: `r:ad:${shortReminderId}` },
           ],
         ],
       };
@@ -64,10 +70,10 @@ async function editReminderMessage(
       replyMarkup = {
         inline_keyboard: [
           [
-            { text: messages.buttons.imAtWork[lang], callback_data: `reminder:im_at_work:${reminderId}` },
+            { text: messages.buttons.imAtWork[lang], callback_data: `r:aw:${shortReminderId}` },
           ],
           [
-            { text: messages.buttons.iLeft[lang], callback_data: `reminder:i_left:${reminderId}:${attendanceId}` },
+            { text: messages.buttons.iLeft[lang], callback_data: `r:il:${shortReminderId}:${shortAttendanceId}` },
           ],
         ],
       };
