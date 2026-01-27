@@ -197,6 +197,61 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: true, count: ids.length });
     }
 
+    if (action === 'delete') {
+      // Delete specific reminders
+      const ids = reminderIds || (reminderId ? [reminderId] : []);
+      if (ids.length === 0) {
+        return NextResponse.json({ error: 'No reminder IDs provided' }, { status: 400 });
+      }
+
+      const { error } = await supabaseAdmin!
+        .from('checkout_reminders')
+        .delete()
+        .in('id', ids);
+
+      if (error) {
+        console.error('Error deleting reminders:', error);
+        return NextResponse.json({ error: 'Failed to delete reminders' }, { status: 500 });
+      }
+
+      return NextResponse.json({ success: true, deletedCount: ids.length });
+    }
+
+    if (action === 'delete-all-pending') {
+      // Delete all pending/sent reminders for a specific date
+      const date = body.date || new Date().toISOString().split('T')[0];
+
+      const { data: pendingReminders, error: fetchError } = await supabaseAdmin!
+        .from('checkout_reminders')
+        .select('id')
+        .in('status', ['pending', 'sent'])
+        .gte('created_at', `${date}T00:00:00`)
+        .lte('created_at', `${date}T23:59:59`);
+
+      if (fetchError) {
+        console.error('Error fetching pending reminders:', fetchError);
+        return NextResponse.json({ error: 'Failed to fetch pending reminders' }, { status: 500 });
+      }
+
+      if (!pendingReminders || pendingReminders.length === 0) {
+        return NextResponse.json({ success: true, deletedCount: 0, message: 'No pending reminders to delete' });
+      }
+
+      const ids = pendingReminders.map(r => r.id);
+
+      const { error: deleteError } = await supabaseAdmin!
+        .from('checkout_reminders')
+        .delete()
+        .in('id', ids);
+
+      if (deleteError) {
+        console.error('Error deleting reminders:', deleteError);
+        return NextResponse.json({ error: 'Failed to delete reminders' }, { status: 500 });
+      }
+
+      return NextResponse.json({ success: true, deletedCount: ids.length });
+    }
+
     return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
   } catch (error) {
     console.error('Reminder action error:', error);

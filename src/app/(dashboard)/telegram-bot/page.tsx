@@ -236,6 +236,7 @@ export default function TelegramBotPage() {
   const [isTriggeringNight, setIsTriggeringNight] = useState(false);
   const [isSendingToMe, setIsSendingToMe] = useState(false);
   const [myTelegramId, setMyTelegramId] = useState<string | null>(null);
+  const [isDeletingPending, setIsDeletingPending] = useState(false);
 
   // Fetch current user's telegram ID
   useEffect(() => {
@@ -371,6 +372,50 @@ export default function TelegramBotPage() {
       alert('Failed to export report');
     } finally {
       setIsExporting(false);
+    }
+  };
+
+  const handleDeletePending = async () => {
+    if (!confirm('Are you sure you want to delete all pending reminders for ' + reminderDate + '? This cannot be undone.')) {
+      return;
+    }
+    setIsDeletingPending(true);
+    try {
+      const res = await fetch('/api/telegram-bot/reminders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'delete-all-pending', date: reminderDate }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        alert(`✅ Deleted ${data.deletedCount || 0} pending reminders`);
+        fetchData();
+      } else {
+        alert(data.error || 'Failed to delete reminders');
+      }
+    } catch {
+      alert('Failed to delete reminders');
+    } finally {
+      setIsDeletingPending(false);
+    }
+  };
+
+  const handleDeleteReminder = async (reminderId: string) => {
+    if (!confirm('Delete this reminder record?')) return;
+    try {
+      const res = await fetch('/api/telegram-bot/reminders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'delete', reminderId }),
+      });
+      if (res.ok) {
+        setReminders(prev => prev.filter(r => r.id !== reminderId));
+      } else {
+        const data = await res.json();
+        alert(data.error || 'Failed to delete reminder');
+      }
+    } catch {
+      alert('Failed to delete reminder');
     }
   };
 
@@ -834,6 +879,14 @@ export default function TelegramBotPage() {
                     onChange={e => setReminderDate(e.target.value)}
                     className="px-3 py-1.5 border border-gray-200 rounded-lg text-sm"
                   />
+                  <button
+                    onClick={handleDeletePending}
+                    disabled={isDeletingPending}
+                    className="px-3 py-1.5 bg-red-50 text-red-600 hover:bg-red-100 rounded-lg text-sm font-medium flex items-center gap-1 disabled:opacity-50"
+                  >
+                    {isDeletingPending ? <RefreshCw size={14} className="animate-spin" /> : <Trash2 size={14} />}
+                    Clean Up Pending
+                  </button>
                 </div>
 
                 {/* Table */}
@@ -847,12 +900,13 @@ export default function TelegramBotPage() {
                         <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Response</th>
                         <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">IP Status</th>
                         <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase w-10"></th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">
                       {reminders.length === 0 ? (
                         <tr>
-                          <td colSpan={6} className="px-4 py-8 text-center text-gray-500">
+                          <td colSpan={7} className="px-4 py-8 text-center text-gray-500">
                             No reminders found for this date
                           </td>
                         </tr>
@@ -886,6 +940,15 @@ export default function TelegramBotPage() {
                               )}
                             </td>
                             <td className="px-4 py-3">{getStatusBadge(reminder.status, reminder.responseType)}</td>
+                            <td className="px-4 py-3">
+                              <button
+                                onClick={() => handleDeleteReminder(reminder.id)}
+                                className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded"
+                                title="Delete"
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            </td>
                           </tr>
                         ))
                       )}
