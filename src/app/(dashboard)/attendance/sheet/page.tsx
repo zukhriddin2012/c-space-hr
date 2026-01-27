@@ -140,7 +140,7 @@ async function getAttendanceForDate(
 
       reminderInfo = {
         status: latestReminder.status as ReminderInfo['status'],
-        sentAt: latestReminder.sent_at,
+        sentAt: latestReminder.reminder_sent_at,  // Use correct column name
         responseType: latestReminder.response_type,
         responseAt: latestReminder.response_received_at,
         nextReminder: scheduledReminder?.scheduled_for || null,

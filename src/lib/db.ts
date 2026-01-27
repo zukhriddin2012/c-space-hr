@@ -4883,7 +4883,7 @@ export interface CheckoutReminder {
   attendance_id: string;
   shift_type: 'day' | 'night';
   status: 'pending' | 'sent' | 'scheduled' | 'responded' | 'completed' | 'auto_completed';
-  sent_at: string | null;
+  reminder_sent_at: string | null;  // When reminder was sent
   response_received_at: string | null;
   response_type: string | null;
   ip_address: string | null;
