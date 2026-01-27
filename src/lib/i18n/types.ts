@@ -206,6 +206,12 @@ export interface Translations {
     active: string;
     inactive: string;
     onLeave: string;
+    // Employment types
+    employmentType: string;
+    fullTime: string;
+    partTime: string;
+    contract: string;
+    internship: string;
   };
 
   // Attendance
@@ -229,6 +235,11 @@ export interface Translations {
     ip: string;
     gps: string;
     manual: string;
+    // Button labels
+    remind: string;
+    sending: string;
+    manualCheckout: string;
+    confirmCheckout: string;
   };
 
   // Branches
@@ -239,6 +250,39 @@ export interface Translations {
     address: string;
     manager: string;
     employeeCount: string;
+    // Status labels
+    operational: string;
+    underConstruction: string;
+    rented: string;
+    facilityManagement: string;
+    // UI labels
+    nightShift: string;
+    smartLock: string;
+    staff: string;
+    present: string;
+    budget: string;
+    todaysPresence: string;
+    noGeofence: string;
+    geofenceConfigured: string;
+    editSettings: string;
+    viewDetails: string;
+    attendance: string;
+    geofenced: string;
+    noFence: string;
+    rate: string;
+    // Summary stats
+    totalBranches: string;
+    withStaff: string;
+    totalStaff: string;
+    presentNow: string;
+    monthlyBudget: string;
+    allBranches: string;
+    // Empty state
+    noBranchesYet: string;
+    getStarted: string;
+    subtitle: string;
+    noAddress: string;
+    communityManager: string;
   };
 
   // Payroll
@@ -252,6 +296,26 @@ export interface Translations {
     payPeriod: string;
     process: string;
     approve: string;
+    // Extended payroll
+    payrollManagement: string;
+    monthlyPayroll: string;
+    totalEmployees: string;
+    totalAmount: string;
+    processed: string;
+    pending: string;
+    approved: string;
+    rejected: string;
+    generatePayroll: string;
+    exportReport: string;
+    viewDetails: string;
+    employee: string;
+    position: string;
+    department: string;
+    grossSalary: string;
+    status: string;
+    actions: string;
+    noPayrollData: string;
+    selectMonth: string;
   };
 
   // Accounting
@@ -351,6 +415,102 @@ export interface Translations {
     slaOverdue: string;
     slaDaysRemaining: string;
     slaHoursRemaining: string;
+  };
+
+  // Recruitment
+  recruitment: {
+    title: string;
+    candidates: string;
+    addCandidate: string;
+    pipeline: string;
+    // Stages
+    screening: string;
+    interview1: string;
+    interview2: string;
+    underReview: string;
+    probation: string;
+    hired: string;
+    rejected: string;
+    // Candidate details
+    name: string;
+    email: string;
+    phone: string;
+    position: string;
+    appliedDate: string;
+    stage: string;
+    notes: string;
+    resume: string;
+    // Actions
+    moveToStage: string;
+    scheduleInterview: string;
+    sendOffer: string;
+    reject: string;
+    hire: string;
+    // Stats
+    totalCandidates: string;
+    activeApplications: string;
+    hiredThisMonth: string;
+    openPositions: string;
+    // Table
+    noCandidates: string;
+    searchCandidates: string;
+  };
+
+  // Reports
+  reports: {
+    title: string;
+    generateReport: string;
+    exportPdf: string;
+    exportExcel: string;
+    dateRange: string;
+    // Report types
+    attendanceReport: string;
+    attendanceDesc: string;
+    payrollReport: string;
+    payrollDesc: string;
+    headcountReport: string;
+    headcountDesc: string;
+    turnoverReport: string;
+    turnoverDesc: string;
+    performanceReport: string;
+    performanceDesc: string;
+    leaveReport: string;
+    leaveDesc: string;
+    // Status
+    generating: string;
+    ready: string;
+    download: string;
+    noReports: string;
+  };
+
+  // Profile
+  profile: {
+    title: string;
+    personalInfo: string;
+    contactInfo: string;
+    employmentInfo: string;
+    // Fields
+    fullName: string;
+    email: string;
+    phone: string;
+    address: string;
+    dateOfBirth: string;
+    gender: string;
+    male: string;
+    female: string;
+    // Employment
+    employeeId: string;
+    department: string;
+    position: string;
+    branch: string;
+    hireDate: string;
+    employmentType: string;
+    manager: string;
+    // Actions
+    editProfile: string;
+    changePassword: string;
+    uploadPhoto: string;
+    saveChanges: string;
   };
 
   // Auth

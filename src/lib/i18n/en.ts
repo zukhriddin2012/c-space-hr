@@ -206,6 +206,12 @@ export const en: Translations = {
     active: 'Active',
     inactive: 'Inactive',
     onLeave: 'On Leave',
+    // Employment types
+    employmentType: 'Employment Type',
+    fullTime: 'Full-time',
+    partTime: 'Part-time',
+    contract: 'Contract',
+    internship: 'Internship',
   },
 
   // Attendance
@@ -229,6 +235,11 @@ export const en: Translations = {
     ip: 'IP',
     gps: 'GPS',
     manual: 'Manual',
+    // Button labels
+    remind: 'Remind',
+    sending: 'Sending...',
+    manualCheckout: 'Manual Check-Out',
+    confirmCheckout: 'Confirm Check-Out',
   },
 
   // Branches
@@ -239,6 +250,39 @@ export const en: Translations = {
     address: 'Address',
     manager: 'Manager',
     employeeCount: 'Employee Count',
+    // Status labels
+    operational: 'Operational',
+    underConstruction: 'Under Construction',
+    rented: 'Rented',
+    facilityManagement: 'Facility Mgmt',
+    // UI labels
+    nightShift: 'Night Shift',
+    smartLock: 'Smart Lock',
+    staff: 'Staff',
+    present: 'Present',
+    budget: 'Budget',
+    todaysPresence: "Today's Presence",
+    noGeofence: 'No geofence configured',
+    geofenceConfigured: 'Geofence',
+    editSettings: 'Edit Settings',
+    viewDetails: 'View Details',
+    attendance: 'Attendance',
+    geofenced: 'Geofenced',
+    noFence: 'No fence',
+    rate: 'Rate',
+    // Summary stats
+    totalBranches: 'Total Branches',
+    withStaff: 'With Staff',
+    totalStaff: 'Total Staff',
+    presentNow: 'Present Now',
+    monthlyBudget: 'Monthly Budget',
+    allBranches: 'All Branches',
+    // Empty state
+    noBranchesYet: 'No branches yet',
+    getStarted: 'Get started by adding your first branch location.',
+    subtitle: 'Manage C-Space coworking locations and geofencing settings',
+    noAddress: 'No address',
+    communityManager: 'CM',
   },
 
   // Payroll
@@ -252,6 +296,26 @@ export const en: Translations = {
     payPeriod: 'Pay Period',
     process: 'Process',
     approve: 'Approve',
+    // Extended payroll
+    payrollManagement: 'Payroll Management',
+    monthlyPayroll: 'Monthly Payroll',
+    totalEmployees: 'Total Employees',
+    totalAmount: 'Total Amount',
+    processed: 'Processed',
+    pending: 'Pending',
+    approved: 'Approved',
+    rejected: 'Rejected',
+    generatePayroll: 'Generate Payroll',
+    exportReport: 'Export Report',
+    viewDetails: 'View Details',
+    employee: 'Employee',
+    position: 'Position',
+    department: 'Department',
+    grossSalary: 'Gross Salary',
+    status: 'Status',
+    actions: 'Actions',
+    noPayrollData: 'No payroll data available',
+    selectMonth: 'Select Month',
   },
 
   // Accounting
@@ -351,6 +415,102 @@ export const en: Translations = {
     slaOverdue: 'Overdue',
     slaDaysRemaining: 'days remaining',
     slaHoursRemaining: 'hours remaining',
+  },
+
+  // Recruitment
+  recruitment: {
+    title: 'Recruitment',
+    candidates: 'Candidates',
+    addCandidate: 'Add Candidate',
+    pipeline: 'Pipeline',
+    // Stages
+    screening: 'Screening',
+    interview1: 'Interview 1',
+    interview2: 'Interview 2',
+    underReview: 'Under Review',
+    probation: 'Probation',
+    hired: 'Hired',
+    rejected: 'Rejected',
+    // Candidate details
+    name: 'Name',
+    email: 'Email',
+    phone: 'Phone',
+    position: 'Position',
+    appliedDate: 'Applied Date',
+    stage: 'Stage',
+    notes: 'Notes',
+    resume: 'Resume',
+    // Actions
+    moveToStage: 'Move to Stage',
+    scheduleInterview: 'Schedule Interview',
+    sendOffer: 'Send Offer',
+    reject: 'Reject',
+    hire: 'Hire',
+    // Stats
+    totalCandidates: 'Total Candidates',
+    activeApplications: 'Active Applications',
+    hiredThisMonth: 'Hired This Month',
+    openPositions: 'Open Positions',
+    // Table
+    noCandidates: 'No candidates found',
+    searchCandidates: 'Search candidates...',
+  },
+
+  // Reports
+  reports: {
+    title: 'Reports',
+    generateReport: 'Generate Report',
+    exportPdf: 'Export PDF',
+    exportExcel: 'Export Excel',
+    dateRange: 'Date Range',
+    // Report types
+    attendanceReport: 'Attendance Report',
+    attendanceDesc: 'View attendance records and patterns',
+    payrollReport: 'Payroll Report',
+    payrollDesc: 'Review salary payments and deductions',
+    headcountReport: 'Headcount Report',
+    headcountDesc: 'Track employee numbers by department',
+    turnoverReport: 'Turnover Report',
+    turnoverDesc: 'Analyze employee retention metrics',
+    performanceReport: 'Performance Report',
+    performanceDesc: 'Review employee performance data',
+    leaveReport: 'Leave Report',
+    leaveDesc: 'Track leave requests and balances',
+    // Status
+    generating: 'Generating...',
+    ready: 'Ready',
+    download: 'Download',
+    noReports: 'No reports available',
+  },
+
+  // Profile
+  profile: {
+    title: 'My Profile',
+    personalInfo: 'Personal Information',
+    contactInfo: 'Contact Information',
+    employmentInfo: 'Employment Information',
+    // Fields
+    fullName: 'Full Name',
+    email: 'Email',
+    phone: 'Phone',
+    address: 'Address',
+    dateOfBirth: 'Date of Birth',
+    gender: 'Gender',
+    male: 'Male',
+    female: 'Female',
+    // Employment
+    employeeId: 'Employee ID',
+    department: 'Department',
+    position: 'Position',
+    branch: 'Branch',
+    hireDate: 'Hire Date',
+    employmentType: 'Employment Type',
+    manager: 'Manager',
+    // Actions
+    editProfile: 'Edit Profile',
+    changePassword: 'Change Password',
+    uploadPhoto: 'Upload Photo',
+    saveChanges: 'Save Changes',
   },
 
   // Auth

@@ -206,6 +206,12 @@ export const ru: Translations = {
     active: 'Активный',
     inactive: 'Неактивный',
     onLeave: 'В отпуске',
+    // Employment types
+    employmentType: 'Тип занятости',
+    fullTime: 'Полная занятость',
+    partTime: 'Частичная занятость',
+    contract: 'Контракт',
+    internship: 'Стажировка',
   },
 
   // Attendance
@@ -229,6 +235,11 @@ export const ru: Translations = {
     ip: 'IP',
     gps: 'GPS',
     manual: 'Вручную',
+    // Button labels
+    remind: 'Напомнить',
+    sending: 'Отправка...',
+    manualCheckout: 'Ручной уход',
+    confirmCheckout: 'Подтвердить уход',
   },
 
   // Branches
@@ -239,6 +250,39 @@ export const ru: Translations = {
     address: 'Адрес',
     manager: 'Руководитель',
     employeeCount: 'Кол-во сотрудников',
+    // Status labels
+    operational: 'Работает',
+    underConstruction: 'Строится',
+    rented: 'Аренда',
+    facilityManagement: 'Управление',
+    // UI labels
+    nightShift: 'Ночная смена',
+    smartLock: 'Smart Lock',
+    staff: 'Сотрудники',
+    present: 'Присутствуют',
+    budget: 'Бюджет',
+    todaysPresence: 'Присутствие сегодня',
+    noGeofence: 'Геозона не настроена',
+    geofenceConfigured: 'Геозона',
+    editSettings: 'Настройки',
+    viewDetails: 'Подробнее',
+    attendance: 'Посещаемость',
+    geofenced: 'С геозоной',
+    noFence: 'Без геозоны',
+    rate: 'Процент',
+    // Summary stats
+    totalBranches: 'Всего филиалов',
+    withStaff: 'С персоналом',
+    totalStaff: 'Всего сотрудников',
+    presentNow: 'Сейчас на месте',
+    monthlyBudget: 'Месячный бюджет',
+    allBranches: 'Все филиалы',
+    // Empty state
+    noBranchesYet: 'Филиалов пока нет',
+    getStarted: 'Начните с добавления первого филиала.',
+    subtitle: 'Управление локациями C-Space и настройки геозон',
+    noAddress: 'Нет адреса',
+    communityManager: 'КМ',
   },
 
   // Payroll
