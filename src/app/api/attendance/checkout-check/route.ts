@@ -36,8 +36,11 @@ async function editReminderMessage(
   attendanceId: string,
   employeeName: string,
   lang: Lang = 'uz'
-) {
-  if (!BOT_TOKEN) return;
+): Promise<{ success: boolean; error?: string }> {
+  if (!BOT_TOKEN) {
+    console.error('BOT_TOKEN not configured');
+    return { success: false, error: 'BOT_TOKEN not configured' };
+  }
 
   try {
     let text: string;
@@ -70,9 +73,18 @@ async function editReminderMessage(
       };
     }
 
+    console.log('[Checkout Reminder] Updating message:', {
+      telegramId,
+      messageId,
+      ipMatched,
+      branchName,
+      reminderId,
+      lang,
+    });
+
     // If we have messageId, edit the existing message; otherwise send new
     if (messageId) {
-      await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/editMessageText`, {
+      const response = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/editMessageText`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -82,9 +94,32 @@ async function editReminderMessage(
           reply_markup: replyMarkup,
         }),
       });
+
+      const result = await response.json();
+      console.log('[Checkout Reminder] Edit message result:', result);
+
+      if (!result.ok) {
+        console.error('[Checkout Reminder] Failed to edit message:', result.description);
+        // If edit fails, try sending new message
+        const sendResponse = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            chat_id: telegramId,
+            text,
+            reply_markup: replyMarkup,
+          }),
+        });
+        const sendResult = await sendResponse.json();
+        console.log('[Checkout Reminder] Fallback send message result:', sendResult);
+        return { success: sendResult.ok, error: sendResult.ok ? undefined : sendResult.description };
+      }
+
+      return { success: true };
     } else {
       // Fallback to sending new message if no messageId
-      await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+      console.log('[Checkout Reminder] No messageId, sending new message');
+      const response = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -93,9 +128,14 @@ async function editReminderMessage(
           reply_markup: replyMarkup,
         }),
       });
+
+      const result = await response.json();
+      console.log('[Checkout Reminder] Send message result:', result);
+      return { success: result.ok, error: result.ok ? undefined : result.description };
     }
   } catch (err) {
-    console.error('Failed to edit/send message:', err);
+    console.error('[Checkout Reminder] Failed to edit/send message:', err);
+    return { success: false, error: String(err) };
   }
 }
 
@@ -245,8 +285,18 @@ export async function POST(request: NextRequest) {
 
     const branchName = ipMatched ? matchedBranch?.name : (attendance.check_in_branch?.name || '');
 
+    console.log('[Checkout Check] Processing:', {
+      telegramId,
+      messageId,
+      clientIp,
+      ipMatched,
+      branchName,
+      attendanceId: attendance.id,
+      reminderId,
+    });
+
     // Edit the original reminder message (or send new if no messageId)
-    await editReminderMessage(
+    const messageResult = await editReminderMessage(
       telegramId,
       messageId || null,
       ipMatched,
@@ -264,6 +314,8 @@ export async function POST(request: NextRequest) {
       attendanceId: attendance.id,
       reminderId,
       clientIp,
+      messageUpdated: messageResult.success,
+      messageError: messageResult.error,
     });
   } catch (error) {
     console.error('Checkout check error:', error);
