@@ -16,6 +16,13 @@ function CheckoutReminderContent() {
 
   // Check IP and close - bot will send appropriate message
   const checkAndClose = useCallback(async () => {
+    console.log('[Checkout Reminder WebApp] Starting check with params:', {
+      telegramId,
+      attendanceId,
+      messageId,
+      allParams: Object.fromEntries(searchParams.entries()),
+    });
+
     if (!telegramId) {
       setStatus('error');
       setErrorMsg('Telegram ID topilmadi');
@@ -24,6 +31,8 @@ function CheckoutReminderContent() {
 
     try {
       const baseUrl = window.location.origin;
+      console.log('[Checkout Reminder WebApp] Calling API:', `${baseUrl}/api/attendance/checkout-check`);
+
       const response = await fetch(`${baseUrl}/api/attendance/checkout-check`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -40,14 +49,16 @@ function CheckoutReminderContent() {
         return;
       }
 
+      console.log('[Checkout Reminder WebApp] API Response:', result);
+
       if (result.success) {
         setStatus('done');
-        // Close immediately - bot will send the follow-up message
+        // Close after a short delay to show success
         setTimeout(() => {
           if (window.Telegram?.WebApp) {
             window.Telegram.WebApp.close();
           }
-        }, 500);
+        }, 800);
       } else {
         setStatus('error');
         setErrorMsg(result.error || 'Xatolik');
