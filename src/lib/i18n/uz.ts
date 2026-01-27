@@ -206,6 +206,12 @@ export const uz: Translations = {
     active: 'Faol',
     inactive: 'Nofaol',
     onLeave: "Ta'tilda",
+    // Employment types
+    employmentType: 'Bandlik turi',
+    fullTime: "To'liq vaqt",
+    partTime: 'Yarim vaqt',
+    contract: 'Shartnoma',
+    internship: 'Amaliyot',
   },
 
   // Attendance
@@ -229,6 +235,11 @@ export const uz: Translations = {
     ip: 'IP',
     gps: 'GPS',
     manual: "Qo'lda",
+    // Button labels
+    remind: 'Eslatish',
+    sending: 'Yuborilmoqda...',
+    manualCheckout: "Qo'lda chiqish",
+    confirmCheckout: 'Chiqishni tasdiqlash',
   },
 
   // Branches
@@ -239,6 +250,39 @@ export const uz: Translations = {
     address: 'Manzil',
     manager: 'Rahbar',
     employeeCount: 'Xodimlar soni',
+    // Status labels
+    operational: 'Faol',
+    underConstruction: 'Qurilishda',
+    rented: 'Ijaraga berilgan',
+    facilityManagement: 'Boshqaruv',
+    // UI labels
+    nightShift: 'Tungi smena',
+    smartLock: 'Smart Lock',
+    staff: 'Xodimlar',
+    present: 'Kelganlar',
+    budget: 'Byudjet',
+    todaysPresence: 'Bugungi kelganlar',
+    noGeofence: 'Geofence sozlanmagan',
+    geofenceConfigured: 'Geofence',
+    editSettings: 'Sozlamalar',
+    viewDetails: 'Batafsil',
+    attendance: 'Davomat',
+    geofenced: 'Geofence bilan',
+    noFence: 'Geofence yo\'q',
+    rate: 'Foiz',
+    // Summary stats
+    totalBranches: 'Jami filiallar',
+    withStaff: 'Xodimli',
+    totalStaff: 'Jami xodimlar',
+    presentNow: 'Hozir ishda',
+    monthlyBudget: 'Oylik byudjet',
+    allBranches: 'Barcha filiallar',
+    // Empty state
+    noBranchesYet: 'Filiallar hali yo\'q',
+    getStarted: 'Birinchi filialni qo\'shishdan boshlang.',
+    subtitle: 'C-Space lokatsiyalari va geofence sozlamalari',
+    noAddress: 'Manzil yo\'q',
+    communityManager: 'KM',
   },
 
   // Payroll
@@ -252,6 +296,122 @@ export const uz: Translations = {
     payPeriod: 'Davr',
     process: "Hisoblash",
     approve: 'Tasdiqlash',
+    // Extended payroll
+    payrollManagement: 'Ish haqi boshqaruvi',
+    monthlyPayroll: 'Oylik ish haqi',
+    totalEmployees: 'Jami xodimlar',
+    totalAmount: 'Jami summa',
+    processed: 'Hisoblangan',
+    pending: 'Kutilmoqda',
+    approved: 'Tasdiqlangan',
+    rejected: 'Rad etilgan',
+    generatePayroll: 'Ish haqini hisoblash',
+    exportReport: 'Hisobotni eksport qilish',
+    viewDetails: 'Batafsil',
+    employee: 'Xodim',
+    position: 'Lavozim',
+    department: 'Bo\'lim',
+    grossSalary: 'Yalpi maosh',
+    status: 'Holat',
+    actions: 'Amallar',
+    noPayrollData: 'Ish haqi ma\'lumotlari yo\'q',
+    selectMonth: 'Oyni tanlang',
+  },
+
+  // Recruitment
+  recruitment: {
+    title: 'Ishga qabul',
+    candidates: 'Nomzodlar',
+    addCandidate: 'Nomzod qo\'shish',
+    pipeline: 'Jarayon',
+    // Stages
+    screening: 'Tanlov',
+    interview1: '1-suhbat',
+    interview2: '2-suhbat',
+    underReview: 'Ko\'rib chiqilmoqda',
+    probation: 'Sinov muddati',
+    hired: 'Ishga olingan',
+    rejected: 'Rad etilgan',
+    // Candidate details
+    name: 'Ism',
+    email: 'Email',
+    phone: 'Telefon',
+    position: 'Lavozim',
+    appliedDate: 'Ariza sanasi',
+    stage: 'Bosqich',
+    notes: 'Izohlar',
+    resume: 'Rezyume',
+    // Actions
+    moveToStage: 'Bosqichga o\'tkazish',
+    scheduleInterview: 'Suhbat belgilash',
+    sendOffer: 'Taklif yuborish',
+    reject: 'Rad etish',
+    hire: 'Ishga olish',
+    // Stats
+    totalCandidates: 'Jami nomzodlar',
+    activeApplications: 'Faol arizalar',
+    hiredThisMonth: 'Bu oyda ishga olingan',
+    openPositions: 'Ochiq lavozimlar',
+    // Table
+    noCandidates: 'Nomzodlar topilmadi',
+    searchCandidates: 'Nomzodlarni qidirish...',
+  },
+
+  // Reports
+  reports: {
+    title: 'Hisobotlar',
+    generateReport: 'Hisobot yaratish',
+    exportPdf: 'PDF eksport',
+    exportExcel: 'Excel eksport',
+    dateRange: 'Davr',
+    // Report types
+    attendanceReport: 'Davomat hisoboti',
+    attendanceDesc: 'Davomat yozuvlarini ko\'rish',
+    payrollReport: 'Ish haqi hisoboti',
+    payrollDesc: 'To\'lovlar va ushlanmalar sharhi',
+    headcountReport: 'Xodimlar soni hisoboti',
+    headcountDesc: 'Bo\'limlar bo\'yicha xodimlar soni',
+    turnoverReport: 'Kadrlar almashinuvi hisoboti',
+    turnoverDesc: 'Kadrlar almashinuvi tahlili',
+    performanceReport: 'Samaradorlik hisoboti',
+    performanceDesc: 'Xodimlar samaradorligi ma\'lumotlari',
+    leaveReport: 'Ta\'til hisoboti',
+    leaveDesc: 'Ta\'til arizalari va qoldiqlar',
+    // Status
+    generating: 'Yaratilmoqda...',
+    ready: 'Tayyor',
+    download: 'Yuklab olish',
+    noReports: 'Hisobotlar mavjud emas',
+  },
+
+  // Profile
+  profile: {
+    title: 'Mening profilim',
+    personalInfo: 'Shaxsiy ma\'lumotlar',
+    contactInfo: 'Aloqa ma\'lumotlari',
+    employmentInfo: 'Ish ma\'lumotlari',
+    // Fields
+    fullName: 'F.I.O.',
+    email: 'Email',
+    phone: 'Telefon',
+    address: 'Manzil',
+    dateOfBirth: 'Tug\'ilgan sana',
+    gender: 'Jinsi',
+    male: 'Erkak',
+    female: 'Ayol',
+    // Employment
+    employeeId: 'Xodim ID',
+    department: 'Bo\'lim',
+    position: 'Lavozim',
+    branch: 'Filial',
+    hireDate: 'Ishga qabul sanasi',
+    employmentType: 'Bandlik turi',
+    manager: 'Rahbar',
+    // Actions
+    editProfile: 'Profilni tahrirlash',
+    changePassword: 'Parolni o\'zgartirish',
+    uploadPhoto: 'Rasm yuklash',
+    saveChanges: 'O\'zgarishlarni saqlash',
   },
 
   // Accounting
