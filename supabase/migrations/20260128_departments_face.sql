@@ -46,9 +46,9 @@ INSERT INTO departments (name, description, color, category, accountable_person,
   ('Legal Management', 'Legal affairs, contracts, compliance', 'bg-indigo-500', 'support', 'Nigina', 2),
 
   -- Operations Functions
-  ('Experience Management', 'Customer experience, service quality, member satisfaction', 'bg-pink-500', 'operations', 'Zukhriddin', 1),
+  ('Experience Management', 'Branch Managers (BM), Night Shift (NS), Community Managers (CM) - Member experience and service quality', 'bg-pink-500', 'operations', 'Zukhriddin', 1),
   ('Internal Facility Management', 'Internal C-Space facilities, maintenance, operations', 'bg-cyan-500', 'operations', 'Mahmud', 2),
-  ('External Facility Management', 'Client facility services, outsourced management', 'bg-teal-500', 'operations', 'Rahmatulloh', 3),
+  ('External Facility Management', 'AXOs for Yandex and external client facility services', 'bg-teal-500', 'operations', 'Rahmatulloh', 3),
 
   -- Specialized Functions
   ('Technology Management', 'IT infrastructure, software, digital solutions', 'bg-violet-500', 'specialized', 'Ubaydulloh', 1),
