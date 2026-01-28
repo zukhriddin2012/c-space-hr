@@ -64,6 +64,7 @@ export const ru: Translations = {
     departments: 'Отделы',
     recruitment: 'Рекрутинг',
     reports: 'Отчеты',
+    orgChart: 'Оргструктура',
     settings: 'Настройки',
     accounting: 'Бухгалтерия',
     myRequests: 'Мои заявки',

@@ -28,6 +28,7 @@ import {
   ListTodo,
   Code2,
   Bot,
+  GitBranch,
 } from 'lucide-react';
 import type { User, UserRole } from '@/types';
 import { getRoleLabel } from '@/lib/auth';
@@ -141,6 +142,12 @@ const navItems: NavItem[] = [
     roles: ['general_manager', 'hr'],
   },
   {
+    nameKey: 'orgChart',
+    href: '/org-chart',
+    icon: GitBranch,
+    roles: ['general_manager', 'ceo', 'hr', 'branch_manager'],
+  },
+  {
     nameKey: 'reports',
     href: '/reports',
     icon: BarChart3,
@@ -207,6 +214,7 @@ export default function Sidebar({ user }: SidebarProps) {
       tableView: t.nav.tableView,
       boardView: t.nav.boardView,
       reports: t.nav.reports,
+      orgChart: t.nav.orgChart || 'Org Chart',
       accounting: t.nav.accounting,
       myRequests: t.nav.myRequests,
       allRequests: t.nav.allRequests,

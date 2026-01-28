@@ -78,6 +78,7 @@ export interface Translations {
     boardView: string;
     devBoard: string;
     peopleManagement: string;
+    orgChart: string;
   };
 
   // Dashboard

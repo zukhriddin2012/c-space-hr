@@ -64,6 +64,7 @@ export const uz: Translations = {
     departments: "Bo'limlar",
     recruitment: 'Ishga qabul',
     reports: 'Hisobotlar',
+    orgChart: 'Tashkilot tuzilmasi',
     settings: 'Sozlamalar',
     accounting: 'Buxgalteriya',
     myRequests: 'Mening arizalarim',

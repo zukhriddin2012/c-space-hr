@@ -64,6 +64,7 @@ export const en: Translations = {
     departments: 'Departments',
     recruitment: 'Recruitment',
     reports: 'Reports',
+    orgChart: 'Org Chart',
     settings: 'Settings',
     accounting: 'Accounting',
     myRequests: 'My Requests',
