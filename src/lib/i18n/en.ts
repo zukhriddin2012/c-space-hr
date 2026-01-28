@@ -208,12 +208,24 @@ export const en: Translations = {
     active: 'Active',
     inactive: 'Inactive',
     onLeave: 'On Leave',
+    probation: 'Probation',
+    terminated: 'Terminated',
     // Employment types
     employmentType: 'Employment Type',
     fullTime: 'Full-time',
     partTime: 'Part-time',
     contract: 'Contract',
     internship: 'Internship',
+    // Position levels
+    level: 'Level',
+    allLevels: 'All Levels',
+    junior: 'Junior',
+    middle: 'Middle',
+    senior: 'Senior',
+    executive: 'Executive',
+    specialist: 'Specialist',
+    manager: 'Manager',
+    support: 'Support',
   },
 
   // Attendance

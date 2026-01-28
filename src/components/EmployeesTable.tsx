@@ -42,12 +42,25 @@ interface EmployeesTableProps {
   canAssignRoles?: boolean;
 }
 
-function LevelBadge({ level }: { level: string }) {
+function LevelBadge({ level, t }: { level: string; t: ReturnType<typeof useTranslation>['t'] }) {
   const levelStyles: Record<string, string> = {
     junior: 'bg-blue-50 text-blue-700',
     middle: 'bg-purple-50 text-purple-700',
     senior: 'bg-indigo-50 text-indigo-700',
     executive: 'bg-pink-50 text-pink-700',
+    specialist: 'bg-green-50 text-green-700',
+    manager: 'bg-amber-50 text-amber-700',
+    support: 'bg-gray-50 text-gray-700',
+  };
+
+  const levelLabels: Record<string, string> = {
+    junior: t.employees.junior,
+    middle: t.employees.middle,
+    senior: t.employees.senior,
+    executive: t.employees.executive,
+    specialist: t.employees.specialist,
+    manager: t.employees.manager,
+    support: t.employees.support,
   };
 
   return (
@@ -56,24 +69,29 @@ function LevelBadge({ level }: { level: string }) {
         levelStyles[level] || levelStyles.junior
       }`}
     >
-      {level.charAt(0).toUpperCase() + level.slice(1)}
+      {levelLabels[level] || level.charAt(0).toUpperCase() + level.slice(1)}
     </span>
   );
 }
 
-function EmploymentTypeBadge({ type }: { type: string }) {
+function EmploymentTypeBadge({ type, t }: { type: string; t: ReturnType<typeof useTranslation>['t'] }) {
   const typeStyles: Record<string, string> = {
     'full-time': 'bg-emerald-50 text-emerald-700',
     'part-time': 'bg-orange-50 text-orange-700',
     'internship': 'bg-cyan-50 text-cyan-700',
     'probation': 'bg-amber-50 text-amber-700',
+    'contract': 'bg-blue-50 text-blue-700',
   };
 
-  const typeLabels: Record<string, string> = {
-    'full-time': 'Full-time',
-    'part-time': 'Part-time',
-    'internship': 'Internship',
-    'probation': 'Probation',
+  const getTypeLabel = (employmentType: string): string => {
+    switch (employmentType) {
+      case 'full-time': return t.employees.fullTime;
+      case 'part-time': return t.employees.partTime;
+      case 'internship': return t.employees.internship;
+      case 'probation': return t.employees.probation;
+      case 'contract': return t.employees.contract;
+      default: return employmentType;
+    }
   };
 
   return (
@@ -82,7 +100,7 @@ function EmploymentTypeBadge({ type }: { type: string }) {
         typeStyles[type] || typeStyles['full-time']
       }`}
     >
-      {typeLabels[type] || type}
+      {getTypeLabel(type)}
     </span>
   );
 }
@@ -229,7 +247,7 @@ export default function EmployeesTable({
                     <td className="px-4 lg:px-6 py-4">
                       <div className="font-medium text-gray-900">{employee.position}</div>
                       <div className="mt-1">
-                        <LevelBadge level={employee.level || 'junior'} />
+                        <LevelBadge level={employee.level || 'junior'} t={t} />
                       </div>
                     </td>
                     <td className="px-4 lg:px-6 py-4 text-gray-700">
@@ -244,7 +262,7 @@ export default function EmployeesTable({
                       </td>
                     )}
                     <td className="px-4 lg:px-6 py-4">
-                      <EmploymentTypeBadge type={employee.employment_type || 'full-time'} />
+                      <EmploymentTypeBadge type={employee.employment_type || 'full-time'} t={t} />
                     </td>
                     <td className="px-4 lg:px-6 py-4 text-center">
                       {employee.telegram_id ? (
@@ -372,7 +390,7 @@ export default function EmployeesTable({
                 <div className="space-y-1.5 mb-3">
                   <div className="flex items-center gap-2 text-sm">
                     <span className="font-medium text-gray-900">{employee.position}</span>
-                    <LevelBadge level={employee.level || 'junior'} />
+                    <LevelBadge level={employee.level || 'junior'} t={t} />
                   </div>
                   <p className="text-sm text-gray-500">
                     {employee.branches?.name || branchMap.get(employee.branch_id || '') || '-'}
@@ -382,7 +400,7 @@ export default function EmployeesTable({
                 {/* Stats Row */}
                 <div className={`flex items-center justify-between text-sm bg-gray-50 rounded-lg px-3 py-2`}>
                   <div>
-                    <EmploymentTypeBadge type={employee.employment_type || 'full-time'} />
+                    <EmploymentTypeBadge type={employee.employment_type || 'full-time'} t={t} />
                   </div>
                   <div className="text-gray-600">
                     {formatDate(employee.hire_date)}

@@ -208,12 +208,24 @@ export interface Translations {
     active: string;
     inactive: string;
     onLeave: string;
+    probation: string;
+    terminated: string;
     // Employment types
     employmentType: string;
     fullTime: string;
     partTime: string;
     contract: string;
     internship: string;
+    // Position levels
+    level: string;
+    allLevels: string;
+    junior: string;
+    middle: string;
+    senior: string;
+    executive: string;
+    specialist: string;
+    manager: string;
+    support: string;
   };
 
   // Attendance

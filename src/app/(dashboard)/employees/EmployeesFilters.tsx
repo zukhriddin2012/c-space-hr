@@ -64,17 +64,17 @@ export default function EmployeesFilters({
           </div>
 
           <div className="col-span-1">
-            <label className="block text-xs font-medium text-gray-500 mb-1">Level</label>
+            <label className="block text-xs font-medium text-gray-500 mb-1">{t.employees.level}</label>
             <select
               name="level"
               defaultValue={selectedLevel}
               className="w-full sm:w-auto px-3 lg:px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none text-sm"
             >
-              <option value="">All Levels</option>
-              <option value="junior">Junior</option>
-              <option value="middle">Middle</option>
-              <option value="senior">Senior</option>
-              <option value="executive">Executive</option>
+              <option value="">{t.employees.allLevels}</option>
+              <option value="junior">{t.employees.junior}</option>
+              <option value="middle">{t.employees.middle}</option>
+              <option value="senior">{t.employees.senior}</option>
+              <option value="executive">{t.employees.executive}</option>
             </select>
           </div>
 
@@ -87,9 +87,9 @@ export default function EmployeesFilters({
             >
               <option value="">{t.common.allStatus}</option>
               <option value="active">{t.employees.active}</option>
-              <option value="probation">Probation</option>
+              <option value="probation">{t.employees.probation}</option>
               <option value="inactive">{t.employees.inactive}</option>
-              <option value="terminated">Terminated</option>
+              <option value="terminated">{t.employees.terminated}</option>
             </select>
           </div>
 

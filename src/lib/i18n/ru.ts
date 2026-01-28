@@ -208,12 +208,24 @@ export const ru: Translations = {
     active: 'Активный',
     inactive: 'Неактивный',
     onLeave: 'В отпуске',
+    probation: 'Испытательный',
+    terminated: 'Уволен',
     // Employment types
     employmentType: 'Тип занятости',
     fullTime: 'Полная занятость',
     partTime: 'Частичная занятость',
     contract: 'Контракт',
     internship: 'Стажировка',
+    // Position levels
+    level: 'Уровень',
+    allLevels: 'Все уровни',
+    junior: 'Младший',
+    middle: 'Средний',
+    senior: 'Старший',
+    executive: 'Руководитель',
+    specialist: 'Специалист',
+    manager: 'Менеджер',
+    support: 'Поддержка',
   },
 
   // Attendance

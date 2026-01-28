@@ -208,12 +208,24 @@ export const uz: Translations = {
     active: 'Faol',
     inactive: 'Nofaol',
     onLeave: "Ta'tilda",
+    probation: 'Sinov muddati',
+    terminated: "Bo'shatilgan",
     // Employment types
     employmentType: 'Bandlik turi',
     fullTime: "To'liq vaqt",
     partTime: 'Yarim vaqt',
     contract: 'Shartnoma',
     internship: 'Amaliyot',
+    // Position levels
+    level: 'Daraja',
+    allLevels: 'Barcha darajalar',
+    junior: 'Kichik',
+    middle: "O'rta",
+    senior: 'Katta',
+    executive: 'Rahbar',
+    specialist: 'Mutaxassis',
+    manager: 'Menejer',
+    support: "Qo'llab-quvvatlash",
   },
 
   // Attendance
