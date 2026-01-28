@@ -51,6 +51,12 @@ interface Branch {
   name: string;
 }
 
+interface Department {
+  id: string;
+  name: string;
+  color: string;
+}
+
 interface LegalEntity {
   id: string;
   name: string;
@@ -87,6 +93,7 @@ interface Employee {
   position: string;
   level: string;
   branch_id: string | null;
+  department_id: string | null;
   salary: number | null;
   phone: string | null;
   email: string | null;
@@ -98,6 +105,7 @@ interface Employee {
   notes?: string | null;
   telegram_id?: string | null;
   branches?: { name: string };
+  departments?: { name: string };
   system_role?: UserRole;
   is_growth_team?: boolean;
 }
@@ -105,6 +113,7 @@ interface Employee {
 interface PageData {
   employee: Employee;
   branches: Branch[];
+  departments: Department[];
   canEditSalary: boolean;
   canAssignRoles: boolean;
 }
@@ -190,6 +199,7 @@ export default function EditEmployeePage({ params }: { params: Promise<{ id: str
     position: '',
     level: 'junior',
     branch_id: '',
+    department_id: '',
     phone: '',
     email: '',
     status: 'active',
@@ -293,6 +303,7 @@ export default function EditEmployeePage({ params }: { params: Promise<{ id: str
           position: data.employee.position,
           level: data.employee.level || 'junior',
           branch_id: data.employee.branch_id || '',
+          department_id: data.employee.department_id || '',
           phone: data.employee.phone || '',
           email: data.employee.email || '',
           status: data.employee.status,
@@ -688,6 +699,7 @@ export default function EditEmployeePage({ params }: { params: Promise<{ id: str
         body: JSON.stringify({
           ...formData,
           branch_id: formData.branch_id || null,
+          department_id: formData.department_id || null,
           salary: totalSalary,
           system_role: pageData.canAssignRoles ? formData.system_role : undefined,
           hire_date: formData.hire_date || null,
@@ -850,7 +862,7 @@ export default function EditEmployeePage({ params }: { params: Promise<{ id: str
     );
   }
 
-  const { employee, branches, canEditSalary, canAssignRoles } = pageData;
+  const { employee, branches, departments, canEditSalary, canAssignRoles } = pageData;
 
   return (
     <div className="max-w-4xl mx-auto">
@@ -936,7 +948,7 @@ export default function EditEmployeePage({ params }: { params: Promise<{ id: str
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Branch
@@ -955,6 +967,26 @@ export default function EditEmployeePage({ params }: { params: Promise<{ id: str
                 </select>
               </div>
 
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Department
+                </label>
+                <select
+                  value={formData.department_id}
+                  onChange={(e) => setFormData({ ...formData, department_id: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none"
+                >
+                  <option value="">No Department</option>
+                  {departments?.map((dept) => (
+                    <option key={dept.id} value={dept.id}>
+                      {dept.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Status
