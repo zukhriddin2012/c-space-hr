@@ -771,6 +771,7 @@ export async function getEmployeeByEmail(email: string): Promise<Employee | null
       position: emp.position,
       level: emp.level,
       branch_id: emp.branchId,
+      department_id: null,
       salary: emp.salary,
       phone: emp.phone || null,
       email: emp.email || null,
