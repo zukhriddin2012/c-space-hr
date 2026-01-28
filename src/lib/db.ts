@@ -5092,6 +5092,8 @@ export async function createDepartment(department: {
   name: string;
   description?: string;
   color?: string;
+  category?: string;
+  accountable_person?: string;
   manager_id?: string | null;
 }): Promise<Department | null> {
   if (!isSupabaseAdminConfigured()) {
@@ -5105,6 +5107,8 @@ export async function createDepartment(department: {
       name: department.name,
       description: department.description || null,
       color: department.color || 'bg-gray-500',
+      category: department.category || 'operations',
+      accountable_person: department.accountable_person || null,
       manager_id: department.manager_id || null,
     })
     .select()

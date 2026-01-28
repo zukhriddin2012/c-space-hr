@@ -102,11 +102,16 @@ export interface LeaveRequest {
   employees?: Employee;
 }
 
+export type FaceCategory = 'executive' | 'growth' | 'support' | 'operations' | 'specialized';
+
 export interface Department {
   id: string;
   name: string;
   description: string | null;
   color: string;
+  category: FaceCategory;
+  accountable_person: string | null;
+  display_order: number;
   manager_id: string | null;
   created_at: string;
   updated_at: string;

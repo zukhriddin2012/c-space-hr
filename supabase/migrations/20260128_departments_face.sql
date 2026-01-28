@@ -1,49 +1,31 @@
--- Departments Table
--- Organizational structure for employees
+-- Add FACe fields to existing departments table
+-- This migration adds category, accountable_person, and display_order columns
 
--- FACe Category enum for grouping functions
-CREATE TYPE face_category AS ENUM (
-  'executive',
-  'growth',
-  'support',
-  'operations',
-  'specialized'
-);
-
-CREATE TABLE IF NOT EXISTS departments (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  name VARCHAR(100) NOT NULL UNIQUE,
-  description TEXT,
-  color VARCHAR(20) DEFAULT 'bg-gray-500', -- Tailwind color class for UI
-  category face_category DEFAULT 'operations', -- FACe category for grouping
-  accountable_person VARCHAR(100), -- Person accountable for this function (from FACe)
-  display_order INT DEFAULT 0, -- Order within category for display
-  manager_id UUID REFERENCES employees(id) ON DELETE SET NULL,
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
-);
-
--- Add department_id to employees table
-ALTER TABLE employees ADD COLUMN IF NOT EXISTS department_id UUID REFERENCES departments(id) ON DELETE SET NULL;
-
--- Create index for faster lookups
-CREATE INDEX IF NOT EXISTS idx_employees_department_id ON employees(department_id);
-CREATE INDEX IF NOT EXISTS idx_departments_manager_id ON departments(manager_id);
-
--- Trigger to update updated_at
-CREATE OR REPLACE FUNCTION update_departments_updated_at()
-RETURNS TRIGGER AS $$
+-- Create the face_category enum type if it doesn't exist
+DO $$
 BEGIN
-  NEW.updated_at = NOW();
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'face_category') THEN
+        CREATE TYPE face_category AS ENUM (
+          'executive',
+          'growth',
+          'support',
+          'operations',
+          'specialized'
+        );
+    END IF;
+END $$;
 
-DROP TRIGGER IF EXISTS departments_updated_at ON departments;
-CREATE TRIGGER departments_updated_at
-  BEFORE UPDATE ON departments
-  FOR EACH ROW
-  EXECUTE FUNCTION update_departments_updated_at();
+-- Add new columns to departments table
+ALTER TABLE departments
+ADD COLUMN IF NOT EXISTS category face_category DEFAULT 'operations',
+ADD COLUMN IF NOT EXISTS accountable_person VARCHAR(100),
+ADD COLUMN IF NOT EXISTS display_order INT DEFAULT 0;
+
+-- Delete existing generic departments to replace with FACe structure
+DELETE FROM departments WHERE name IN (
+  'Operations', 'Human Resources', 'Finance', 'Marketing',
+  'IT & Development', 'Administration', 'Legal', 'Sales'
+);
 
 -- Insert C-Space FACe (Function Accountability Chart) - 14 Functions
 -- Based on C-Space Strategy Reference Document V2.4
@@ -72,4 +54,9 @@ INSERT INTO departments (name, description, color, category, accountable_person,
   ('Technology Management', 'IT infrastructure, software, digital solutions', 'bg-violet-500', 'specialized', 'Ubaydulloh', 1),
   ('Construction & Launch Management', 'New location construction, facility launches', 'bg-amber-600', 'specialized', 'Zukhriddin', 2),
   ('VC', 'Venture Capital - Investment strategy and portfolio management', 'bg-emerald-600', 'specialized', 'Farrukh', 3)
-ON CONFLICT (name) DO NOTHING;
+ON CONFLICT (name) DO UPDATE SET
+  description = EXCLUDED.description,
+  color = EXCLUDED.color,
+  category = EXCLUDED.category,
+  accountable_person = EXCLUDED.accountable_person,
+  display_order = EXCLUDED.display_order;

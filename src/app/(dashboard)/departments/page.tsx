@@ -11,12 +11,21 @@ import {
   Trash2,
   ChevronRight,
   DollarSign,
-  TrendingUp,
   X,
   Loader2,
-  AlertCircle
+  AlertCircle,
+  Crown,
+  TrendingUp,
+  HeartHandshake,
+  Settings,
+  Sparkles,
+  UserCircle,
+  LayoutGrid,
+  List,
+  Layers
 } from 'lucide-react';
 import { useTranslation } from '@/contexts/LanguageContext';
+import Link from 'next/link';
 
 interface Employee {
   id: string;
@@ -24,11 +33,16 @@ interface Employee {
   position: string;
 }
 
+type FaceCategory = 'executive' | 'growth' | 'support' | 'operations' | 'specialized';
+
 interface Department {
   id: string;
   name: string;
   description: string | null;
   color: string;
+  category: FaceCategory;
+  accountable_person: string | null;
+  display_order: number;
   manager_id: string | null;
   manager?: Employee;
   employee_count: number;
@@ -36,16 +50,41 @@ interface Department {
 }
 
 const COLORS = [
-  { name: 'Blue', value: 'bg-blue-500' },
-  { name: 'Purple', value: 'bg-purple-500' },
-  { name: 'Green', value: 'bg-green-500' },
-  { name: 'Orange', value: 'bg-orange-500' },
-  { name: 'Cyan', value: 'bg-cyan-500' },
-  { name: 'Pink', value: 'bg-pink-500' },
-  { name: 'Indigo', value: 'bg-indigo-500' },
+  // Executive
+  { name: 'Slate Dark', value: 'bg-slate-800' },
+  { name: 'Slate', value: 'bg-slate-700' },
+  // Growth
+  { name: 'Blue', value: 'bg-blue-600' },
   { name: 'Yellow', value: 'bg-yellow-500' },
-  { name: 'Red', value: 'bg-red-500' },
+  { name: 'Orange', value: 'bg-orange-500' },
+  // Finance/Support
+  { name: 'Green', value: 'bg-green-600' },
+  { name: 'Purple', value: 'bg-purple-500' },
+  { name: 'Indigo', value: 'bg-indigo-500' },
+  // Operations
+  { name: 'Pink', value: 'bg-pink-500' },
+  { name: 'Cyan', value: 'bg-cyan-500' },
   { name: 'Teal', value: 'bg-teal-500' },
+  // Specialized
+  { name: 'Violet', value: 'bg-violet-500' },
+  { name: 'Amber', value: 'bg-amber-600' },
+  { name: 'Emerald', value: 'bg-emerald-600' },
+];
+
+const CATEGORIES: { key: FaceCategory; label: string; icon: React.ElementType; color: string; bgColor: string }[] = [
+  { key: 'executive', label: 'Executive Leadership', icon: Crown, color: 'text-slate-700', bgColor: 'bg-slate-100' },
+  { key: 'growth', label: 'Business Growth', icon: TrendingUp, color: 'text-blue-600', bgColor: 'bg-blue-50' },
+  { key: 'support', label: 'Support Functions', icon: HeartHandshake, color: 'text-purple-600', bgColor: 'bg-purple-50' },
+  { key: 'operations', label: 'Operations', icon: Settings, color: 'text-cyan-600', bgColor: 'bg-cyan-50' },
+  { key: 'specialized', label: 'Specialized', icon: Sparkles, color: 'text-amber-600', bgColor: 'bg-amber-50' },
+];
+
+const CATEGORY_OPTIONS: { value: FaceCategory; label: string }[] = [
+  { value: 'executive', label: 'Executive Leadership' },
+  { value: 'growth', label: 'Business Growth' },
+  { value: 'support', label: 'Support Functions' },
+  { value: 'operations', label: 'Operations' },
+  { value: 'specialized', label: 'Specialized' },
 ];
 
 function formatBudget(amount: number): string {
@@ -63,7 +102,7 @@ export default function DepartmentsPage() {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [viewMode, setViewMode] = useState<'grid' | 'list' | 'grouped'>('grouped');
 
   // Modal states
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -77,7 +116,9 @@ export default function DepartmentsPage() {
   const [formData, setFormData] = useState({
     name: '',
     description: '',
-    color: 'bg-blue-500',
+    color: 'bg-blue-600',
+    category: 'operations' as FaceCategory,
+    accountable_person: '',
     manager_id: '',
   });
 
@@ -129,7 +170,9 @@ export default function DepartmentsPage() {
     setFormData({
       name: '',
       description: '',
-      color: 'bg-blue-500',
+      color: 'bg-blue-600',
+      category: 'operations',
+      accountable_person: '',
       manager_id: '',
     });
     setError(null);
@@ -142,6 +185,8 @@ export default function DepartmentsPage() {
       name: dept.name,
       description: dept.description || '',
       color: dept.color,
+      category: dept.category || 'operations',
+      accountable_person: dept.accountable_person || '',
       manager_id: dept.manager_id || '',
     });
     setError(null);
@@ -157,7 +202,7 @@ export default function DepartmentsPage() {
 
   const handleSave = async () => {
     if (!formData.name.trim()) {
-      setError('Department name is required');
+      setError('Function name is required');
       return;
     }
 
@@ -177,19 +222,21 @@ export default function DepartmentsPage() {
           name: formData.name.trim(),
           description: formData.description.trim() || null,
           color: formData.color,
+          category: formData.category,
+          accountable_person: formData.accountable_person.trim() || null,
           manager_id: formData.manager_id || null,
         }),
       });
 
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error || 'Failed to save department');
+        throw new Error(data.error || 'Failed to save function');
       }
 
       await fetchDepartments();
       setIsModalOpen(false);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to save department');
+      setError(err instanceof Error ? err.message : 'Failed to save function');
     } finally {
       setIsSaving(false);
     }
@@ -205,14 +252,14 @@ export default function DepartmentsPage() {
       });
 
       if (!res.ok) {
-        throw new Error('Failed to delete department');
+        throw new Error('Failed to delete function');
       }
 
       await fetchDepartments();
       setIsDeleteModalOpen(false);
       setDeletingDepartment(null);
     } catch (err) {
-      console.error('Error deleting department:', err);
+      console.error('Error deleting function:', err);
     } finally {
       setIsSaving(false);
     }
@@ -223,8 +270,17 @@ export default function DepartmentsPage() {
 
   const filteredDepartments = departments.filter(d =>
     d.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (d.manager?.full_name || '').toLowerCase().includes(searchQuery.toLowerCase())
+    (d.manager?.full_name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (d.accountable_person || '').toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  // Group departments by category
+  const groupedDepartments = CATEGORIES.map(cat => ({
+    ...cat,
+    departments: filteredDepartments
+      .filter(d => d.category === cat.key)
+      .sort((a, b) => a.display_order - b.display_order)
+  })).filter(group => group.departments.length > 0);
 
   if (loading) {
     return (
@@ -234,25 +290,110 @@ export default function DepartmentsPage() {
     );
   }
 
+  const renderDepartmentCard = (dept: Department) => (
+    <div
+      key={dept.id}
+      className="border border-gray-200 rounded-xl p-5 hover:border-purple-200 hover:shadow-md transition-all cursor-pointer group"
+    >
+      <div className="flex items-start justify-between mb-3">
+        <div className={`w-10 h-10 ${dept.color} rounded-xl flex items-center justify-center`}>
+          <Building2 size={20} className="text-white" />
+        </div>
+        <div className="relative">
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setOpenDropdown(openDropdown === dept.id ? null : dept.id);
+            }}
+            className="p-1 text-gray-400 hover:text-gray-600 opacity-0 group-hover:opacity-100 transition-opacity"
+          >
+            <MoreVertical size={18} />
+          </button>
+          {openDropdown === dept.id && (
+            <div className="absolute right-0 top-8 bg-white border border-gray-200 rounded-lg shadow-lg py-1 z-10 w-32">
+              <button
+                onClick={() => openEditModal(dept)}
+                className="w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+              >
+                <Edit size={14} />
+                Edit
+              </button>
+              <button
+                onClick={() => openDeleteModal(dept)}
+                className="w-full px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+              >
+                <Trash2 size={14} />
+                Delete
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <h3 className="font-semibold text-gray-900 mb-1">{dept.name}</h3>
+
+      {/* Accountable Person Badge */}
+      {dept.accountable_person && (
+        <div className="flex items-center gap-1.5 mb-2">
+          <UserCircle size={14} className="text-purple-500" />
+          <span className="text-xs font-medium text-purple-600">{dept.accountable_person}</span>
+        </div>
+      )}
+
+      <p className="text-sm text-gray-500 mb-3 line-clamp-2">{dept.description || 'No description'}</p>
+
+      <div className="flex items-center gap-3 text-sm text-gray-600 mb-3">
+        <span className="flex items-center gap-1">
+          <Users size={14} className="text-gray-400" />
+          {dept.employee_count}
+        </span>
+        <span className="flex items-center gap-1">
+          <DollarSign size={14} className="text-gray-400" />
+          {formatBudget(dept.total_budget)}
+        </span>
+      </div>
+
+      <div className="pt-3 border-t border-gray-100 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          {dept.manager ? (
+            <>
+              <div className="w-6 h-6 bg-gray-100 rounded-full flex items-center justify-center">
+                <span className="text-xs font-medium text-gray-600">
+                  {dept.manager.full_name.charAt(0)}
+                </span>
+              </div>
+              <span className="text-sm text-gray-600">{dept.manager.full_name}</span>
+            </>
+          ) : (
+            <span className="text-xs text-gray-400 italic">No manager</span>
+          )}
+        </div>
+        <Link href={`/departments/${dept.id}`}>
+          <ChevronRight size={16} className="text-gray-400" />
+        </Link>
+      </div>
+    </div>
+  );
+
   return (
     <div className="p-6">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">{t.nav.departments}</h1>
-          <p className="text-gray-600 mt-1">Manage organizational structure and departments</p>
+          <p className="text-gray-600 mt-1">FACe - Function Accountability Chart (14 Functions)</p>
         </div>
         <button
           onClick={openCreateModal}
           className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
         >
           <Plus size={18} />
-          Add Department
+          Add Function
         </button>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-6">
         <div className="bg-white rounded-xl border border-gray-200 p-5">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-purple-50 rounded-lg">
@@ -260,29 +401,40 @@ export default function DepartmentsPage() {
             </div>
             <div>
               <p className="text-2xl font-bold text-gray-900">{departments.length}</p>
-              <p className="text-sm text-gray-500">Total Departments</p>
+              <p className="text-sm text-gray-500">Functions</p>
             </div>
           </div>
         </div>
         <div className="bg-white rounded-xl border border-gray-200 p-5">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-blue-50 rounded-lg">
-              <Users size={20} className="text-blue-600" />
+              <Layers size={20} className="text-blue-600" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-gray-900">{totalEmployees}</p>
-              <p className="text-sm text-gray-500">Total Employees</p>
+              <p className="text-2xl font-bold text-gray-900">{CATEGORIES.length}</p>
+              <p className="text-sm text-gray-500">Categories</p>
             </div>
           </div>
         </div>
         <div className="bg-white rounded-xl border border-gray-200 p-5">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-green-50 rounded-lg">
-              <DollarSign size={20} className="text-green-600" />
+              <Users size={20} className="text-green-600" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-gray-900">{totalEmployees}</p>
+              <p className="text-sm text-gray-500">Employees</p>
+            </div>
+          </div>
+        </div>
+        <div className="bg-white rounded-xl border border-gray-200 p-5">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-amber-50 rounded-lg">
+              <DollarSign size={20} className="text-amber-600" />
             </div>
             <div>
               <p className="text-2xl font-bold text-gray-900">{formatBudget(totalBudget)}</p>
-              <p className="text-sm text-gray-500">Total Monthly Budget</p>
+              <p className="text-sm text-gray-500">Monthly Budget</p>
             </div>
           </div>
         </div>
@@ -296,7 +448,7 @@ export default function DepartmentsPage() {
               <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
               <input
                 type="text"
-                placeholder="Search departments or managers..."
+                placeholder="Search functions, managers, or accountable persons..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent"
@@ -304,31 +456,36 @@ export default function DepartmentsPage() {
             </div>
             <div className="flex items-center border border-gray-300 rounded-lg p-1">
               <button
+                onClick={() => setViewMode('grouped')}
+                className={`p-2 rounded-md ${viewMode === 'grouped' ? 'bg-purple-50 text-purple-600' : 'text-gray-400'}`}
+                title="Grouped by Category"
+              >
+                <Layers size={16} />
+              </button>
+              <button
                 onClick={() => setViewMode('grid')}
                 className={`p-2 rounded-md ${viewMode === 'grid' ? 'bg-purple-50 text-purple-600' : 'text-gray-400'}`}
+                title="Grid View"
               >
-                <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                  <path d="M1 2.5A1.5 1.5 0 0 1 2.5 1h3A1.5 1.5 0 0 1 7 2.5v3A1.5 1.5 0 0 1 5.5 7h-3A1.5 1.5 0 0 1 1 5.5v-3zM2.5 2a.5.5 0 0 0-.5.5v3a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5v-3a.5.5 0 0 0-.5-.5h-3zm6.5.5A1.5 1.5 0 0 1 10.5 1h3A1.5 1.5 0 0 1 15 2.5v3A1.5 1.5 0 0 1 13.5 7h-3A1.5 1.5 0 0 1 9 5.5v-3zm1.5-.5a.5.5 0 0 0-.5.5v3a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5v-3a.5.5 0 0 0-.5-.5h-3zM1 10.5A1.5 1.5 0 0 1 2.5 9h3A1.5 1.5 0 0 1 7 10.5v3A1.5 1.5 0 0 1 5.5 15h-3A1.5 1.5 0 0 1 1 13.5v-3zm1.5-.5a.5.5 0 0 0-.5.5v3a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5v-3a.5.5 0 0 0-.5-.5h-3zm6.5.5A1.5 1.5 0 0 1 10.5 9h3a1.5 1.5 0 0 1 1.5 1.5v3a1.5 1.5 0 0 1-1.5 1.5h-3A1.5 1.5 0 0 1 9 13.5v-3zm1.5-.5a.5.5 0 0 0-.5.5v3a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5v-3a.5.5 0 0 0-.5-.5h-3z"/>
-                </svg>
+                <LayoutGrid size={16} />
               </button>
               <button
                 onClick={() => setViewMode('list')}
                 className={`p-2 rounded-md ${viewMode === 'list' ? 'bg-purple-50 text-purple-600' : 'text-gray-400'}`}
+                title="List View"
               >
-                <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                  <path fillRule="evenodd" d="M2.5 12a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5z"/>
-                </svg>
+                <List size={16} />
               </button>
             </div>
           </div>
         </div>
 
-        {/* Departments Grid/List */}
+        {/* Departments Content */}
         <div className="p-4">
           {filteredDepartments.length === 0 ? (
             <div className="text-center py-12">
               <Building2 size={48} className="mx-auto text-gray-300 mb-4" />
-              <p className="text-gray-500">No departments found</p>
+              <p className="text-gray-500">No functions found</p>
               {searchQuery && (
                 <button
                   onClick={() => setSearchQuery('')}
@@ -338,83 +495,36 @@ export default function DepartmentsPage() {
                 </button>
               )}
             </div>
+          ) : viewMode === 'grouped' ? (
+            // Grouped View by Category
+            <div className="space-y-8">
+              {groupedDepartments.map((group) => {
+                const Icon = group.icon;
+                return (
+                  <div key={group.key}>
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className={`p-2 ${group.bgColor} rounded-lg`}>
+                        <Icon size={20} className={group.color} />
+                      </div>
+                      <div>
+                        <h2 className="font-semibold text-gray-900">{group.label}</h2>
+                        <p className="text-sm text-gray-500">{group.departments.length} function{group.departments.length !== 1 ? 's' : ''}</p>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {group.departments.map(renderDepartmentCard)}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           ) : viewMode === 'grid' ? (
+            // Grid View
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {filteredDepartments.map((dept) => (
-                <div
-                  key={dept.id}
-                  className="border border-gray-200 rounded-xl p-5 hover:border-purple-200 hover:shadow-md transition-all cursor-pointer group"
-                >
-                  <div className="flex items-start justify-between mb-4">
-                    <div className={`w-12 h-12 ${dept.color} rounded-xl flex items-center justify-center`}>
-                      <Building2 size={24} className="text-white" />
-                    </div>
-                    <div className="relative">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setOpenDropdown(openDropdown === dept.id ? null : dept.id);
-                        }}
-                        className="p-1 text-gray-400 hover:text-gray-600 opacity-0 group-hover:opacity-100 transition-opacity"
-                      >
-                        <MoreVertical size={18} />
-                      </button>
-                      {openDropdown === dept.id && (
-                        <div className="absolute right-0 top-8 bg-white border border-gray-200 rounded-lg shadow-lg py-1 z-10 w-32">
-                          <button
-                            onClick={() => openEditModal(dept)}
-                            className="w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-                          >
-                            <Edit size={14} />
-                            Edit
-                          </button>
-                          <button
-                            onClick={() => openDeleteModal(dept)}
-                            className="w-full px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
-                          >
-                            <Trash2 size={14} />
-                            Delete
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  <h3 className="font-semibold text-gray-900 mb-1">{dept.name}</h3>
-                  <p className="text-sm text-gray-500 mb-4 line-clamp-2">{dept.description || 'No description'}</p>
-
-                  <div className="flex items-center gap-4 text-sm text-gray-600 mb-4">
-                    <span className="flex items-center gap-1">
-                      <Users size={14} className="text-gray-400" />
-                      {dept.employee_count} employees
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <DollarSign size={14} className="text-gray-400" />
-                      {formatBudget(dept.total_budget)}
-                    </span>
-                  </div>
-
-                  <div className="pt-4 border-t border-gray-100 flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      {dept.manager ? (
-                        <>
-                          <div className="w-7 h-7 bg-gray-100 rounded-full flex items-center justify-center">
-                            <span className="text-xs font-medium text-gray-600">
-                              {dept.manager.full_name.charAt(0)}
-                            </span>
-                          </div>
-                          <span className="text-sm text-gray-600">{dept.manager.full_name}</span>
-                        </>
-                      ) : (
-                        <span className="text-sm text-gray-400 italic">No manager assigned</span>
-                      )}
-                    </div>
-                    <ChevronRight size={16} className="text-gray-400" />
-                  </div>
-                </div>
-              ))}
+              {filteredDepartments.map(renderDepartmentCard)}
             </div>
           ) : (
+            // List View
             <div className="space-y-3">
               {filteredDepartments.map((dept) => (
                 <div
@@ -427,9 +537,16 @@ export default function DepartmentsPage() {
                     </div>
                     <div>
                       <h3 className="font-medium text-gray-900">{dept.name}</h3>
-                      <p className="text-sm text-gray-500">
-                        {dept.manager ? `Managed by ${dept.manager.full_name}` : 'No manager assigned'}
-                      </p>
+                      <div className="flex items-center gap-2 text-sm text-gray-500">
+                        {dept.accountable_person && (
+                          <span className="flex items-center gap-1 text-purple-600">
+                            <UserCircle size={12} />
+                            {dept.accountable_person}
+                          </span>
+                        )}
+                        {dept.accountable_person && dept.manager && <span className="text-gray-300">•</span>}
+                        {dept.manager && <span>Manager: {dept.manager.full_name}</span>}
+                      </div>
                     </div>
                   </div>
                   <div className="flex items-center gap-8">
@@ -439,7 +556,7 @@ export default function DepartmentsPage() {
                     </div>
                     <div className="text-right">
                       <p className="font-medium text-gray-900">{formatBudget(dept.total_budget)}</p>
-                      <p className="text-xs text-gray-500">Monthly Budget</p>
+                      <p className="text-xs text-gray-500">Budget</p>
                     </div>
                     <div className="flex items-center gap-2">
                       <button
@@ -466,10 +583,10 @@ export default function DepartmentsPage() {
       {/* Create/Edit Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-md mx-4">
-            <div className="flex items-center justify-between p-4 border-b border-gray-200">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between p-4 border-b border-gray-200 sticky top-0 bg-white">
               <h2 className="text-lg font-semibold text-gray-900">
-                {editingDepartment ? 'Edit Department' : 'Add Department'}
+                {editingDepartment ? 'Edit Function' : 'Add Function'}
               </h2>
               <button
                 onClick={() => setIsModalOpen(false)}
@@ -489,15 +606,44 @@ export default function DepartmentsPage() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Name <span className="text-red-500">*</span>
+                  Function Name <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                  placeholder="e.g., Human Resources"
+                  placeholder="e.g., HR, Sales Management"
                 />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Category
+                </label>
+                <select
+                  value={formData.category}
+                  onChange={(e) => setFormData({ ...formData, category: e.target.value as FaceCategory })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                >
+                  {CATEGORY_OPTIONS.map(opt => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Accountable Person
+                </label>
+                <input
+                  type="text"
+                  value={formData.accountable_person}
+                  onChange={(e) => setFormData({ ...formData, accountable_person: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  placeholder="e.g., Dilmurod, Zukhriddin"
+                />
+                <p className="text-xs text-gray-500 mt-1">Person accountable for this function per FACe</p>
               </div>
 
               <div>
@@ -509,7 +655,7 @@ export default function DepartmentsPage() {
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   rows={3}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                  placeholder="Brief description of the department..."
+                  placeholder="Brief description of the function..."
                 />
               </div>
 
@@ -535,7 +681,7 @@ export default function DepartmentsPage() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Department Manager
+                  Function Manager
                 </label>
                 <select
                   value={formData.manager_id}
@@ -552,7 +698,7 @@ export default function DepartmentsPage() {
               </div>
             </div>
 
-            <div className="flex items-center justify-end gap-3 p-4 border-t border-gray-200">
+            <div className="flex items-center justify-end gap-3 p-4 border-t border-gray-200 sticky bottom-0 bg-white">
               <button
                 onClick={() => setIsModalOpen(false)}
                 className="px-4 py-2 text-gray-600 hover:text-gray-800"
@@ -565,7 +711,7 @@ export default function DepartmentsPage() {
                 className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50"
               >
                 {isSaving && <Loader2 size={16} className="animate-spin" />}
-                {editingDepartment ? 'Save Changes' : 'Create Department'}
+                {editingDepartment ? 'Save Changes' : 'Create Function'}
               </button>
             </div>
           </div>
@@ -581,15 +727,15 @@ export default function DepartmentsPage() {
                 <div className="p-2 bg-red-100 rounded-full">
                   <Trash2 size={20} className="text-red-600" />
                 </div>
-                <h2 className="text-lg font-semibold text-gray-900">Delete Department</h2>
+                <h2 className="text-lg font-semibold text-gray-900">Delete Function</h2>
               </div>
 
               <p className="text-gray-600 mb-4">
                 Are you sure you want to delete <strong>{deletingDepartment.name}</strong>?
                 {deletingDepartment.employee_count > 0 && (
                   <span className="block mt-2 text-amber-600">
-                    This department has {deletingDepartment.employee_count} employee(s) assigned.
-                    They will be unassigned from this department.
+                    This function has {deletingDepartment.employee_count} employee(s) assigned.
+                    They will be unassigned from this function.
                   </span>
                 )}
               </p>
