@@ -169,42 +169,47 @@ function OrgNodeCard({
 
       {/* Children */}
       {hasChildren && isExpanded && (
-        <>
-          {/* Vertical dotted line */}
-          <div className={`h-8 border-l-2 border-dashed ${colors.line}`}></div>
+        <div className="flex flex-col items-center">
+          {/* Vertical line from parent */}
+          <div className={`w-0.5 h-8 border-l-2 border-dashed ${colors.line}`}></div>
 
-          {/* Horizontal connector with dots */}
-          {node.children!.length > 1 && (
-            <div className="relative flex items-center">
-              <div className={`h-0.5 border-t-2 border-dashed ${colors.line}`} style={{ width: `${Math.min(node.children!.length * 220, 880)}px` }}></div>
-              {node.children!.map((_, idx) => (
-                <div
-                  key={idx}
-                  className={`absolute w-2 h-2 ${colors.dot} rounded-full -translate-y-1/2`}
-                  style={{ left: `${(idx / (node.children!.length - 1)) * 100}%`, transform: 'translate(-50%, -50%)' }}
-                ></div>
-              ))}
+          {/* Children container with horizontal connector */}
+          <div className="relative">
+            {/* Horizontal line spanning all children */}
+            {node.children!.length > 1 && (
+              <div
+                className={`absolute top-0 left-1/2 -translate-x-1/2 h-0.5 border-t-2 border-dashed ${colors.line}`}
+                style={{
+                  width: `calc(100% - 216px)`,
+                }}
+              ></div>
+            )}
+
+            {/* Children cards */}
+            <div className="flex gap-5">
+              {node.children!.map((child) => {
+                const childColors = getLevelColor(depth + 1, false);
+                return (
+                  <div key={child.id} className="flex flex-col items-center">
+                    {/* Vertical line to child with dot */}
+                    <div className="relative">
+                      <div className={`w-2 h-2 ${childColors.dot} rounded-full absolute -top-1 left-1/2 -translate-x-1/2`}></div>
+                      <div className={`w-0.5 h-6 border-l-2 border-dashed ${childColors.line} mt-1`}></div>
+                    </div>
+                    <OrgNodeCard
+                      node={child}
+                      depth={depth + 1}
+                      searchQuery={searchQuery}
+                      expandedNodes={expandedNodes}
+                      toggleNode={toggleNode}
+                      allEmployees={allEmployees}
+                    />
+                  </div>
+                );
+              })}
             </div>
-          )}
-
-          {/* Children cards */}
-          <div className="flex gap-4 mt-0">
-            {node.children!.map((child, idx) => (
-              <div key={child.id} className="flex flex-col items-center">
-                {/* Vertical line to child */}
-                <div className={`h-6 border-l-2 border-dashed ${getLevelColor(depth + 1, false).line}`}></div>
-                <OrgNodeCard
-                  node={child}
-                  depth={depth + 1}
-                  searchQuery={searchQuery}
-                  expandedNodes={expandedNodes}
-                  toggleNode={toggleNode}
-                  allEmployees={allEmployees}
-                />
-              </div>
-            ))}
           </div>
-        </>
+        </div>
       )}
     </div>
   );
