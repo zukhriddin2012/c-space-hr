@@ -28,233 +28,226 @@ interface OrgStats {
   roots: number;
 }
 
-function OrgCard({ node, isRoot = false, searchQuery = '' }: { node: OrgNode; isRoot?: boolean; searchQuery?: string }) {
-  const [expanded, setExpanded] = useState(true);
-  const [showContact, setShowContact] = useState(false);
-  const hasChildren = node.children && node.children.length > 0;
+// Department color mapping
+const getDepartmentColor = (index: number) => {
+  const colors = [
+    { bg: 'bg-blue-50', border: 'border-blue-100', header: 'bg-blue-500', badge: 'bg-blue-100 text-blue-700', avatar: 'bg-blue-500' },
+    { bg: 'bg-amber-50', border: 'border-amber-100', header: 'bg-amber-500', badge: 'bg-amber-100 text-amber-700', avatar: 'bg-amber-500' },
+    { bg: 'bg-green-50', border: 'border-green-100', header: 'bg-green-500', badge: 'bg-green-100 text-green-700', avatar: 'bg-green-500' },
+    { bg: 'bg-purple-50', border: 'border-purple-100', header: 'bg-purple-500', badge: 'bg-purple-100 text-purple-700', avatar: 'bg-purple-500' },
+    { bg: 'bg-rose-50', border: 'border-rose-100', header: 'bg-rose-500', badge: 'bg-rose-100 text-rose-700', avatar: 'bg-rose-500' },
+    { bg: 'bg-cyan-50', border: 'border-cyan-100', header: 'bg-cyan-500', badge: 'bg-cyan-100 text-cyan-700', avatar: 'bg-cyan-500' },
+    { bg: 'bg-indigo-50', border: 'border-indigo-100', header: 'bg-indigo-500', badge: 'bg-indigo-100 text-indigo-700', avatar: 'bg-indigo-500' },
+    { bg: 'bg-orange-50', border: 'border-orange-100', header: 'bg-orange-500', badge: 'bg-orange-100 text-orange-700', avatar: 'bg-orange-500' },
+  ];
+  return colors[index % colors.length];
+};
 
-  const initials = node.name
+// Employee Card Component
+function EmployeeCard({
+  employee,
+  colorScheme,
+  searchQuery,
+  allEmployees
+}: {
+  employee: OrgNode;
+  colorScheme: ReturnType<typeof getDepartmentColor>;
+  searchQuery: string;
+  allEmployees: OrgNode[];
+}) {
+  const [showContact, setShowContact] = useState(false);
+
+  const initials = employee.name
     .split(' ')
     .map(n => n[0])
     .join('')
     .toUpperCase()
     .slice(0, 2);
 
-  // Color based on level
-  const getBgColor = () => {
-    if (node.level === 'executive' || isRoot) return 'bg-gradient-to-br from-purple-600 to-purple-700';
-    if (node.level === 'senior' || node.position.toLowerCase().includes('manager') || node.position.toLowerCase().includes('chief') || node.position.toLowerCase().includes('lead')) {
-      return 'bg-gradient-to-br from-blue-500 to-blue-600';
-    }
-    if (node.level === 'middle') return 'bg-gradient-to-br from-teal-500 to-teal-600';
-    return 'bg-gradient-to-br from-gray-400 to-gray-500';
-  };
-
-  // Highlight if matches search
-  const isHighlighted = searchQuery && node.name.toLowerCase().includes(searchQuery.toLowerCase());
+  const isHighlighted = searchQuery && employee.name.toLowerCase().includes(searchQuery.toLowerCase());
+  const directReports = allEmployees.filter(e => e.managerId === employee.id).length;
 
   return (
-    <div className="flex flex-col items-center">
-      {/* Card */}
-      <div
-        className={`relative bg-white rounded-xl shadow-md border p-4 min-w-[200px] max-w-[240px] hover:shadow-lg transition-all duration-200 ${
-          isRoot ? 'ring-2 ring-purple-200 border-purple-200' : 'border-gray-100'
-        } ${isHighlighted ? 'ring-2 ring-yellow-400 border-yellow-400' : ''}`}
-        onMouseEnter={() => setShowContact(true)}
-        onMouseLeave={() => setShowContact(false)}
-      >
-        {/* Avatar */}
-        <div className="flex items-center gap-3 mb-2">
-          <div className={`w-12 h-12 rounded-full ${getBgColor()} flex items-center justify-center text-white font-semibold text-sm shadow-sm overflow-hidden`}>
-            {node.photo ? (
-              <img src={node.photo} alt={node.name} className="w-full h-full object-cover" />
-            ) : (
-              initials
-            )}
-          </div>
-          <div className="flex-1 min-w-0">
-            <h3 className="font-semibold text-gray-900 text-sm truncate">{node.name}</h3>
-            <p className="text-xs text-purple-600 font-medium truncate">{node.position}</p>
-          </div>
+    <div
+      className={`flex items-center gap-3 p-2.5 hover:bg-gray-50 rounded-lg transition-colors cursor-pointer ${
+        isHighlighted ? 'bg-yellow-50 ring-2 ring-yellow-300' : ''
+      }`}
+      onMouseEnter={() => setShowContact(true)}
+      onMouseLeave={() => setShowContact(false)}
+    >
+      <div className={`w-10 h-10 ${colorScheme.avatar} rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0`}>
+        {employee.photo ? (
+          <img src={employee.photo} alt={employee.name} className="w-full h-full rounded-full object-cover" />
+        ) : initials}
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-medium text-gray-900 truncate">{employee.name}</span>
+          {directReports > 0 && (
+            <span className="text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">{directReports}</span>
+          )}
         </div>
-
-        {/* Department badge */}
-        <div className="flex items-center gap-1.5 text-xs text-gray-500 mb-2">
-          <Building2 size={12} />
-          <span className="truncate">{node.departmentName || node.branchName || 'No department'}</span>
-        </div>
-
-        {/* Contact buttons (show on hover) */}
-        {showContact && (node.phone || node.email || node.telegramId) && (
-          <div className="flex items-center gap-2 pt-2 border-t border-gray-100">
-            {node.phone && (
-              <a
-                href={`tel:${node.phone}`}
-                className="flex-1 flex items-center justify-center gap-1 py-1.5 text-xs text-gray-600 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
-              >
-                <Phone size={12} />
-                <span>Call</span>
-              </a>
-            )}
-            {node.email && (
-              <a
-                href={`mailto:${node.email}`}
-                className="flex-1 flex items-center justify-center gap-1 py-1.5 text-xs text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-              >
-                <Mail size={12} />
-                <span>Email</span>
-              </a>
-            )}
-            {node.telegramId && (
-              <a
-                href={`https://t.me/${node.telegramId}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex-1 flex items-center justify-center gap-1 py-1.5 text-xs text-gray-600 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
-              >
-                <MessageCircle size={12} />
-                <span>TG</span>
-              </a>
-            )}
-          </div>
-        )}
-
-        {/* Expand/collapse button */}
-        {hasChildren && (
-          <button
-            onClick={() => setExpanded(!expanded)}
-            className="absolute -bottom-3 left-1/2 -translate-x-1/2 w-6 h-6 bg-white border border-gray-200 rounded-full flex items-center justify-center text-gray-400 hover:text-purple-600 hover:border-purple-300 transition-colors shadow-sm"
-          >
-            {expanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-          </button>
-        )}
-
-        {/* Team count badge */}
-        {hasChildren && (
-          <div className="absolute -top-2 -right-2 w-6 h-6 bg-purple-100 text-purple-700 rounded-full flex items-center justify-center text-xs font-semibold">
-            {node.children!.length}
-          </div>
-        )}
+        <div className="text-xs text-gray-500 truncate">{employee.position}</div>
       </div>
 
-      {/* Connector line */}
-      {hasChildren && expanded && (
-        <>
-          <div className="w-px h-6 bg-gray-200" />
-
-          {/* Horizontal line */}
-          {node.children!.length > 1 && (
-            <div className="relative w-full flex justify-center">
-              <div
-                className="absolute top-0 h-px bg-gray-200"
-                style={{
-                  width: `calc(${(node.children!.length - 1) * 260}px)`,
-                  maxWidth: '100%'
-                }}
-              />
-            </div>
+      {/* Contact buttons on hover */}
+      {showContact && (employee.phone || employee.email || employee.telegramId) && (
+        <div className="flex items-center gap-1">
+          {employee.phone && (
+            <a href={`tel:${employee.phone}`} className="p-1.5 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded transition-colors">
+              <Phone size={14} />
+            </a>
           )}
-
-          {/* Children */}
-          <div className="flex gap-4 pt-6">
-            {node.children!.map((child) => (
-              <div key={child.id} className="flex flex-col items-center">
-                {node.children!.length > 1 && <div className="w-px h-6 bg-gray-200 -mt-6" />}
-                <OrgCard node={child} searchQuery={searchQuery} />
-              </div>
-            ))}
-          </div>
-        </>
+          {employee.email && (
+            <a href={`mailto:${employee.email}`} className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors">
+              <Mail size={14} />
+            </a>
+          )}
+          {employee.telegramId && (
+            <a href={`https://t.me/${employee.telegramId}`} target="_blank" rel="noopener noreferrer" className="p-1.5 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded transition-colors">
+              <MessageCircle size={14} />
+            </a>
+          )}
+        </div>
       )}
     </div>
   );
 }
 
-// Flat list view for when tree is complex
-function FlatListView({ employees, searchQuery }: { employees: OrgNode[]; searchQuery: string }) {
-  const filtered = searchQuery
-    ? employees.filter(e =>
-        e.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        e.position.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        e.departmentName?.toLowerCase().includes(searchQuery.toLowerCase())
-      )
-    : employees;
+// Department Card Component
+function DepartmentCard({
+  departmentName,
+  employees,
+  colorScheme,
+  searchQuery,
+  allEmployees,
+  isExpanded,
+  onToggle
+}: {
+  departmentName: string;
+  employees: OrgNode[];
+  colorScheme: ReturnType<typeof getDepartmentColor>;
+  searchQuery: string;
+  allEmployees: OrgNode[];
+  isExpanded: boolean;
+  onToggle: () => void;
+}) {
+  // Sort employees: managers first, then by name
+  const sortedEmployees = [...employees].sort((a, b) => {
+    const aIsManager = allEmployees.some(e => e.managerId === a.id);
+    const bIsManager = allEmployees.some(e => e.managerId === b.id);
+    if (aIsManager && !bIsManager) return -1;
+    if (!aIsManager && bIsManager) return 1;
+    return a.name.localeCompare(b.name);
+  });
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-      {filtered.map((emp) => {
-        const initials = emp.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
-        const manager = employees.find(e => e.id === emp.managerId);
+    <div className={`bg-white rounded-xl border ${colorScheme.border} overflow-hidden shadow-sm hover:shadow-md transition-shadow`}>
+      <button
+        onClick={onToggle}
+        className={`w-full ${colorScheme.bg} px-4 py-3 border-b ${colorScheme.border} flex items-center justify-between hover:brightness-95 transition-all`}
+      >
+        <div className="flex items-center gap-2">
+          {isExpanded ? <ChevronDown size={16} className="text-gray-500" /> : <ChevronRight size={16} className="text-gray-500" />}
+          <Building2 size={16} className="text-gray-500" />
+          <span className="font-medium text-gray-900">{departmentName}</span>
+        </div>
+        <span className={`text-xs ${colorScheme.badge} px-2 py-0.5 rounded-full font-medium`}>
+          {employees.length}
+        </span>
+      </button>
 
-        return (
-          <div key={emp.id} className="bg-white rounded-xl border border-gray-100 p-4 hover:shadow-md transition-all">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center text-white font-semibold text-sm">
-                {emp.photo ? (
-                  <img src={emp.photo} alt={emp.name} className="w-full h-full rounded-full object-cover" />
+      {isExpanded && (
+        <div className="p-2 max-h-[400px] overflow-y-auto">
+          {sortedEmployees.map(emp => (
+            <EmployeeCard
+              key={emp.id}
+              employee={emp}
+              colorScheme={colorScheme}
+              searchQuery={searchQuery}
+              allEmployees={allEmployees}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Leadership Card Component
+function LeadershipCard({
+  leaders,
+  searchQuery,
+  allEmployees
+}: {
+  leaders: OrgNode[];
+  searchQuery: string;
+  allEmployees: OrgNode[];
+}) {
+  return (
+    <div className="mb-6">
+      <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3 flex items-center gap-2">
+        <Users size={14} />
+        Leadership
+      </h3>
+      <div className="flex flex-wrap gap-3">
+        {leaders.map(leader => {
+          const initials = leader.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+          const directReports = allEmployees.filter(e => e.managerId === leader.id).length;
+          const isHighlighted = searchQuery && leader.name.toLowerCase().includes(searchQuery.toLowerCase());
+
+          return (
+            <div
+              key={leader.id}
+              className={`bg-gradient-to-br from-purple-600 to-purple-700 text-white rounded-xl px-4 py-3 flex items-center gap-3 shadow-lg hover:shadow-xl transition-shadow ${
+                isHighlighted ? 'ring-2 ring-yellow-400' : ''
+              }`}
+            >
+              <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center font-bold">
+                {leader.photo ? (
+                  <img src={leader.photo} alt={leader.name} className="w-full h-full rounded-full object-cover" />
                 ) : initials}
               </div>
-              <div className="flex-1 min-w-0">
-                <h3 className="font-semibold text-gray-900 truncate">{emp.name}</h3>
-                <p className="text-sm text-purple-600 truncate">{emp.position}</p>
+              <div>
+                <div className="font-semibold">{leader.name}</div>
+                <div className="text-purple-200 text-sm">{leader.position}</div>
               </div>
-            </div>
-
-            <div className="space-y-1.5 text-sm text-gray-500">
-              {emp.departmentName && (
-                <div className="flex items-center gap-2">
-                  <Building2 size={14} className="text-gray-400" />
-                  <span className="truncate">{emp.departmentName}</span>
-                </div>
-              )}
-              {manager && (
-                <div className="flex items-center gap-2">
-                  <User size={14} className="text-gray-400" />
-                  <span className="truncate">Reports to: {manager.name}</span>
+              {directReports > 0 && (
+                <div className="ml-2 bg-white/20 px-2.5 py-1 rounded-lg text-center">
+                  <div className="text-lg font-bold">{directReports}</div>
+                  <div className="text-xs text-purple-200">reports</div>
                 </div>
               )}
             </div>
-
-            {/* Contact buttons */}
-            <div className="flex items-center gap-2 mt-3 pt-3 border-t border-gray-100">
-              {emp.phone && (
-                <a href={`tel:${emp.phone}`} className="flex-1 flex items-center justify-center gap-1 py-1.5 text-xs text-gray-600 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors">
-                  <Phone size={12} />
-                </a>
-              )}
-              {emp.email && (
-                <a href={`mailto:${emp.email}`} className="flex-1 flex items-center justify-center gap-1 py-1.5 text-xs text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
-                  <Mail size={12} />
-                </a>
-              )}
-              {emp.telegramId && (
-                <a href={`https://t.me/${emp.telegramId}`} target="_blank" rel="noopener noreferrer" className="flex-1 flex items-center justify-center gap-1 py-1.5 text-xs text-gray-600 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors">
-                  <MessageCircle size={12} />
-                </a>
-              )}
-            </div>
-          </div>
-        );
-      })}
+          );
+        })}
+      </div>
     </div>
   );
 }
 
 export default function OrgChartPage() {
-  const [viewMode, setViewMode] = useState<'tree' | 'list'>('tree');
   const [searchQuery, setSearchQuery] = useState('');
   const [departmentFilter, setDepartmentFilter] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [orgTree, setOrgTree] = useState<OrgNode[]>([]);
   const [flatList, setFlatList] = useState<OrgNode[]>([]);
   const [stats, setStats] = useState<OrgStats>({ totalEmployees: 0, departments: 0, managers: 0, roots: 0 });
   const [departments, setDepartments] = useState<{ id: string; name: string }[]>([]);
+  const [expandedDepts, setExpandedDepts] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     fetchOrgData();
     fetchDepartments();
   }, []);
+
+  // Auto-expand all departments on load
+  useEffect(() => {
+    if (flatList.length > 0) {
+      const allDeptNames = new Set(flatList.map(e => e.departmentName || 'No Department'));
+      setExpandedDepts(allDeptNames);
+    }
+  }, [flatList]);
 
   const fetchOrgData = async () => {
     try {
@@ -262,7 +255,6 @@ export default function OrgChartPage() {
       const res = await fetch('/api/org-chart');
       if (!res.ok) throw new Error('Failed to fetch org data');
       const data = await res.json();
-      setOrgTree(data.tree || []);
       setFlatList(data.flat || []);
       setStats(data.stats || { totalEmployees: 0, departments: 0, managers: 0, roots: 0 });
     } catch (err) {
@@ -285,27 +277,52 @@ export default function OrgChartPage() {
     }
   };
 
-  // Filter tree by department
-  const filterTreeByDepartment = (nodes: OrgNode[], deptId: string): OrgNode[] => {
-    if (!deptId) return nodes;
-
-    return nodes
-      .map(node => ({
-        ...node,
-        children: node.children ? filterTreeByDepartment(node.children, deptId) : [],
-      }))
-      .filter(node => node.departmentId === deptId || (node.children && node.children.length > 0));
+  const toggleDepartment = (deptName: string) => {
+    setExpandedDepts(prev => {
+      const next = new Set(prev);
+      if (next.has(deptName)) {
+        next.delete(deptName);
+      } else {
+        next.add(deptName);
+      }
+      return next;
+    });
   };
 
-  const filteredTree = departmentFilter ? filterTreeByDepartment(orgTree, departmentFilter) : orgTree;
-  const filteredFlat = departmentFilter ? flatList.filter(e => e.departmentId === departmentFilter) : flatList;
+  // Filter employees by search and department
+  const filteredEmployees = flatList.filter(emp => {
+    const matchesSearch = !searchQuery ||
+      emp.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      emp.position.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesDept = !departmentFilter || emp.departmentId === departmentFilter;
+    return matchesSearch && matchesDept;
+  });
 
-  // Calculate max depth for legend
-  const getMaxDepth = (nodes: OrgNode[], depth = 0): number => {
-    if (!nodes.length) return depth;
-    return Math.max(...nodes.map(n => n.children ? getMaxDepth(n.children, depth + 1) : depth + 1));
-  };
-  const maxDepth = getMaxDepth(orgTree);
+  // Group by department
+  const groupedByDepartment = filteredEmployees.reduce((acc, emp) => {
+    const deptName = emp.departmentName || 'No Department';
+    if (!acc[deptName]) acc[deptName] = [];
+    acc[deptName].push(emp);
+    return acc;
+  }, {} as Record<string, OrgNode[]>);
+
+  // Identify leadership (people with no manager or top-level executives)
+  const leaders = flatList.filter(emp =>
+    !emp.managerId ||
+    emp.level?.toLowerCase() === 'executive' ||
+    emp.position?.toLowerCase().includes('ceo') ||
+    emp.position?.toLowerCase().includes('coo') ||
+    emp.position?.toLowerCase().includes('cfo')
+  );
+
+  // Non-leadership employees grouped by department
+  const nonLeadersByDept = Object.entries(groupedByDepartment)
+    .map(([name, employees]) => ({
+      name,
+      employees: employees.filter(e => !leaders.some(l => l.id === e.id))
+    }))
+    .filter(d => d.employees.length > 0)
+    .sort((a, b) => b.employees.length - a.employees.length);
 
   if (loading) {
     return (
@@ -340,7 +357,7 @@ export default function OrgChartPage() {
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900 mb-1">Organization Chart</h1>
-        <p className="text-gray-500">View company structure and reporting hierarchy</p>
+        <p className="text-gray-500">View company structure by department</p>
       </div>
 
       {/* Controls */}
@@ -371,25 +388,19 @@ export default function OrgChartPage() {
           </select>
         </div>
 
-        {/* View toggle */}
-        <div className="flex items-center gap-2 bg-gray-100 rounded-lg p-1">
+        {/* Quick actions */}
+        <div className="flex items-center gap-2">
           <button
-            onClick={() => setViewMode('tree')}
-            className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-              viewMode === 'tree' ? 'bg-white text-purple-700 shadow-sm' : 'text-gray-600 hover:text-gray-900'
-            }`}
+            onClick={() => setExpandedDepts(new Set(Object.keys(groupedByDepartment)))}
+            className="px-3 py-1.5 text-sm text-gray-600 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
           >
-            <Users size={16} className="inline mr-1.5" />
-            Tree View
+            Expand All
           </button>
           <button
-            onClick={() => setViewMode('list')}
-            className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-              viewMode === 'list' ? 'bg-white text-purple-700 shadow-sm' : 'text-gray-600 hover:text-gray-900'
-            }`}
+            onClick={() => setExpandedDepts(new Set())}
+            className="px-3 py-1.5 text-sm text-gray-600 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
           >
-            <Building2 size={16} className="inline mr-1.5" />
-            List View
+            Collapse All
           </button>
         </div>
       </div>
@@ -401,7 +412,7 @@ export default function OrgChartPage() {
           <div className="text-sm text-gray-500">Total Employees</div>
         </div>
         <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-          <div className="text-2xl font-bold text-purple-600">{stats.departments}</div>
+          <div className="text-2xl font-bold text-purple-600">{Object.keys(groupedByDepartment).length}</div>
           <div className="text-sm text-gray-500">Departments</div>
         </div>
         <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
@@ -409,62 +420,52 @@ export default function OrgChartPage() {
           <div className="text-sm text-gray-500">Managers</div>
         </div>
         <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-          <div className="text-2xl font-bold text-green-600">{maxDepth}</div>
-          <div className="text-sm text-gray-500">Levels Deep</div>
+          <div className="text-2xl font-bold text-green-600">{leaders.length}</div>
+          <div className="text-sm text-gray-500">Leadership</div>
         </div>
       </div>
 
-      {/* Content */}
-      {viewMode === 'tree' ? (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8 overflow-x-auto">
-          {filteredTree.length === 0 ? (
-            <div className="text-center py-12">
-              <Users className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-              <p className="text-gray-500">No employees found</p>
-              <p className="text-sm text-gray-400 mt-1">Set manager relationships to build the org chart</p>
-            </div>
-          ) : (
-            <div className="flex justify-center min-w-max gap-8">
-              {filteredTree.map((root) => (
-                <OrgCard key={root.id} node={root} isRoot searchQuery={searchQuery} />
-              ))}
-            </div>
+      {/* Leadership Section */}
+      {leaders.length > 0 && !departmentFilter && (
+        <LeadershipCard
+          leaders={leaders}
+          searchQuery={searchQuery}
+          allEmployees={flatList}
+        />
+      )}
+
+      {/* Departments Grid */}
+      {nonLeadersByDept.length === 0 ? (
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-12 text-center">
+          <Users className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+          <p className="text-gray-500">No employees found</p>
+          {searchQuery && (
+            <p className="text-sm text-gray-400 mt-1">Try adjusting your search</p>
           )}
         </div>
       ) : (
-        <FlatListView employees={filteredFlat} searchQuery={searchQuery} />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {nonLeadersByDept.map(({ name, employees }, index) => (
+            <DepartmentCard
+              key={name}
+              departmentName={name}
+              employees={employees}
+              colorScheme={getDepartmentColor(index)}
+              searchQuery={searchQuery}
+              allEmployees={flatList}
+              isExpanded={expandedDepts.has(name)}
+              onToggle={() => toggleDepartment(name)}
+            />
+          ))}
+        </div>
       )}
 
-      {/* Legend */}
-      <div className="mt-4 flex flex-wrap items-center justify-center gap-6 text-sm text-gray-500">
-        <div className="flex items-center gap-2">
-          <div className="w-4 h-4 rounded-full bg-gradient-to-br from-purple-600 to-purple-700" />
-          <span>Executive</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-4 h-4 rounded-full bg-gradient-to-br from-blue-500 to-blue-600" />
-          <span>Manager/Senior</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-4 h-4 rounded-full bg-gradient-to-br from-teal-500 to-teal-600" />
-          <span>Middle</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-4 h-4 rounded-full bg-gradient-to-br from-gray-400 to-gray-500" />
-          <span>Junior</span>
-        </div>
-        <div className="flex items-center gap-2 ml-4 pl-4 border-l border-gray-200">
-          <div className="w-5 h-5 bg-purple-100 text-purple-700 rounded-full flex items-center justify-center text-xs font-semibold">3</div>
-          <span>Direct reports</span>
-        </div>
-      </div>
-
       {/* Setup hint */}
-      {stats.managers === 0 && stats.totalEmployees > 0 && (
+      {stats.totalEmployees > 0 && Object.keys(groupedByDepartment).length <= 1 && (
         <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-xl">
           <p className="text-sm text-blue-800">
-            <strong>💡 Tip:</strong> To build the org chart hierarchy, edit each employee and set their manager.
-            Go to <a href="/employees" className="underline font-medium">Employees</a> → Edit → Select Manager.
+            <strong>💡 Tip:</strong> Assign employees to departments to see them grouped here.
+            Go to <a href="/employees" className="underline font-medium">Employees</a> → Edit → Select Department.
           </p>
         </div>
       )}
