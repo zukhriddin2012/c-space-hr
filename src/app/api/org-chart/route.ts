@@ -10,7 +10,7 @@ export async function GET() {
     // Fetch all active employees
     const { data: employees, error } = await supabaseAdmin!
       .from('employees')
-      .select('id, employee_id, full_name, position, email, phone, telegram_id, level, status, manager_id, department_id, branch_id')
+      .select('id, employee_id, full_name, position, position_id, email, phone, telegram_id, level, status, manager_id, department_id, branch_id')
       .in('status', ['active', 'probation'])
       .order('full_name');
 
@@ -19,32 +19,41 @@ export async function GET() {
       return NextResponse.json({ error: 'Failed to fetch employees' }, { status: 500 });
     }
 
-    // Fetch departments and branches for mapping
-    const [deptResult, branchResult] = await Promise.all([
+    // Fetch departments, branches, and positions for mapping
+    const [deptResult, branchResult, positionResult] = await Promise.all([
       supabaseAdmin!.from('departments').select('id, name'),
-      supabaseAdmin!.from('branches').select('id, name')
+      supabaseAdmin!.from('branches').select('id, name'),
+      supabaseAdmin!.from('positions').select('id, name, level')
     ]);
 
     const deptMap = new Map((deptResult.data || []).map(d => [d.id, d.name]));
     const branchMap = new Map((branchResult.data || []).map(b => [b.id, b.name]));
+    const positionMap = new Map((positionResult.data || []).map(p => [p.id, { name: p.name, level: p.level }]));
 
     // Transform data for org chart
-    const orgData = (employees || []).map(emp => ({
-      id: emp.id,
-      employeeId: emp.employee_id,
-      name: emp.full_name,
-      position: emp.position || 'Employee',
-      email: emp.email,
-      phone: emp.phone,
-      telegramId: emp.telegram_id,
-      photo: null,
-      level: emp.level,
-      managerId: emp.manager_id,
-      departmentId: emp.department_id,
-      departmentName: emp.department_id ? deptMap.get(emp.department_id) || null : null,
-      branchId: emp.branch_id,
-      branchName: emp.branch_id ? branchMap.get(emp.branch_id) || null : null,
-    }));
+    const orgData = (employees || []).map(emp => {
+      // Get position from positions table if position_id exists, otherwise fall back to position text field
+      const positionData = emp.position_id ? positionMap.get(emp.position_id) : null;
+      const positionName = positionData?.name || emp.position || 'Employee';
+      const positionLevel = positionData?.level || emp.level;
+
+      return {
+        id: emp.id,
+        employeeId: emp.employee_id,
+        name: emp.full_name,
+        position: positionName,
+        email: emp.email,
+        phone: emp.phone,
+        telegramId: emp.telegram_id,
+        photo: null,
+        level: positionLevel,
+        managerId: emp.manager_id,
+        departmentId: emp.department_id,
+        departmentName: emp.department_id ? deptMap.get(emp.department_id) || null : null,
+        branchId: emp.branch_id,
+        branchName: emp.branch_id ? branchMap.get(emp.branch_id) || null : null,
+      };
+    });
 
     // Build hierarchy tree
     const buildTree = (employees: typeof orgData, parentId: string | null = null): typeof orgData => {
