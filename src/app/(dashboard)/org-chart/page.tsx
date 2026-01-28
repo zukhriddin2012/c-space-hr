@@ -146,31 +146,28 @@ function OrgNodeCard({
           {/* Vertical line from parent */}
           <div className={`w-0.5 h-8 border-l-2 border-dashed ${colors.line}`}></div>
 
-          {/* Children cards with connectors */}
-          <div className="flex gap-5">
+          {/* Children row */}
+          <div className="flex">
             {node.children!.map((child, idx) => {
               const childColors = getLevelColor(depth + 1, false);
               const isFirst = idx === 0;
               const isLast = idx === node.children!.length - 1;
-              const isOnly = node.children!.length === 1;
+              const hasMultiple = node.children!.length > 1;
 
               return (
-                <div key={child.id} className="flex flex-col items-center">
-                  {/* Horizontal line segment + vertical connector */}
-                  <div className="relative h-6 flex items-start justify-center">
-                    {/* Horizontal line - extends left for non-first, right for non-last */}
-                    {!isOnly && (
-                      <div
-                        className={`absolute top-0 h-0.5 border-t-2 border-dashed ${colors.line}`}
-                        style={{
-                          left: isFirst ? '50%' : 0,
-                          right: isLast ? '50%' : 0,
-                        }}
-                      ></div>
+                <div key={child.id} className="flex flex-col items-center px-2.5">
+                  {/* Connector area */}
+                  <div className="relative h-6 w-full flex justify-center">
+                    {/* Horizontal line segments */}
+                    {hasMultiple && !isFirst && (
+                      <div className={`absolute top-0 left-0 right-1/2 border-t-2 border-dashed ${colors.line}`}></div>
+                    )}
+                    {hasMultiple && !isLast && (
+                      <div className={`absolute top-0 left-1/2 right-0 border-t-2 border-dashed ${colors.line}`}></div>
                     )}
                     {/* Dot at connection point */}
-                    <div className={`w-2 h-2 ${childColors.dot} rounded-full absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2`}></div>
-                    {/* Vertical line down to child */}
+                    <div className={`w-2.5 h-2.5 ${childColors.dot} rounded-full absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10`}></div>
+                    {/* Vertical line down */}
                     <div className={`w-0.5 h-full border-l-2 border-dashed ${childColors.line}`}></div>
                   </div>
                   <OrgNodeCard
