@@ -374,7 +374,7 @@ export default async function EmployeeDetailPage({ params, searchParams }: PageP
                       {record.check_in_branch?.name || (record.check_in_branch_id ? branchMap.get(record.check_in_branch_id) : null) || '-'}
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-900 text-right font-medium">
-                      {record.total_hours ? `${Math.round(record.total_hours * 10) / 10}h` : '-'}
+                      {record.total_hours ? `${Math.min(Math.round(record.total_hours * 10) / 10, 24)}h` : '-'}
                     </td>
                     <td className="px-4 py-3">
                       <StatusBadge status={record.status} />
