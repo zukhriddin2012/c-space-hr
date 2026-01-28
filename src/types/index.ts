@@ -44,6 +44,7 @@ export interface Employee {
   notes?: string; // Any notes like "Will be fired from Nov."
   status: 'active' | 'inactive' | 'terminated' | 'probation';
   isGrowthTeam?: boolean; // Part of the Growth Team with access to strategic projects
+  managerId?: string; // Direct manager for org chart hierarchy
   createdAt: Date;
   updatedAt: Date;
 }

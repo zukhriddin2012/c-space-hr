@@ -104,6 +104,7 @@ interface Employee {
   level: string;
   branch_id: string | null;
   department_id: string | null;
+  manager_id: string | null; // Direct manager for org chart
   salary: number | null;
   phone: string | null;
   email: string | null;
@@ -121,11 +122,18 @@ interface Employee {
   is_growth_team?: boolean;
 }
 
+interface ManagerOption {
+  id: string;
+  full_name: string;
+  position: string;
+}
+
 interface PageData {
   employee: Employee;
   branches: Branch[];
   departments: Department[];
   positions: Position[];
+  managers: ManagerOption[]; // Potential managers for org chart
   canEditSalary: boolean;
   canAssignRoles: boolean;
 }
@@ -213,6 +221,7 @@ export default function EditEmployeePage({ params }: { params: Promise<{ id: str
     level: 'junior',
     branch_id: '',
     department_id: '',
+    manager_id: '', // Direct manager for org chart
     phone: '',
     email: '',
     status: 'active',
@@ -318,6 +327,7 @@ export default function EditEmployeePage({ params }: { params: Promise<{ id: str
           level: data.employee.level || 'junior',
           branch_id: data.employee.branch_id || '',
           department_id: data.employee.department_id || '',
+          manager_id: data.employee.manager_id || '', // Direct manager for org chart
           phone: data.employee.phone || '',
           email: data.employee.email || '',
           status: data.employee.status,
@@ -1018,6 +1028,27 @@ export default function EditEmployeePage({ params }: { params: Promise<{ id: str
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Manager (Reports To)
+                </label>
+                <select
+                  value={formData.manager_id}
+                  onChange={(e) => setFormData({ ...formData, manager_id: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none"
+                >
+                  <option value="">No Manager (Top Level)</option>
+                  {pageData?.managers
+                    ?.filter(m => m.id !== employeeId) // Can't report to self
+                    .map((manager) => (
+                      <option key={manager.id} value={manager.id}>
+                        {manager.full_name} - {manager.position}
+                      </option>
+                    ))}
+                </select>
+                <p className="mt-1 text-xs text-gray-500">Used for organization chart hierarchy</p>
+              </div>
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Status

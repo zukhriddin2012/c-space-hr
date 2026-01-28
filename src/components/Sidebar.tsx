@@ -91,6 +91,12 @@ const navItems: NavItem[] = [
         icon: Building2,
         roles: ['general_manager', 'hr'],
       },
+      {
+        nameKey: 'orgChart',
+        href: '/org-chart',
+        icon: GitBranch,
+        roles: ['general_manager', 'ceo', 'hr', 'branch_manager'],
+      },
     ],
   },
   // Recruitment group
@@ -140,12 +146,6 @@ const navItems: NavItem[] = [
     href: '/branches',
     icon: MapPin,
     roles: ['general_manager', 'hr'],
-  },
-  {
-    nameKey: 'orgChart',
-    href: '/org-chart',
-    icon: GitBranch,
-    roles: ['general_manager', 'ceo', 'hr', 'branch_manager'],
   },
   {
     nameKey: 'reports',

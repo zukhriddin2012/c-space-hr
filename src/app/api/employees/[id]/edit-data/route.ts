@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth } from '@/lib/api-auth';
 import { PERMISSIONS, hasPermission } from '@/lib/permissions';
-import { getEmployeeById, getBranches, getDepartments, getActivePositions } from '@/lib/db';
+import { getEmployeeById, getBranches, getDepartments, getActivePositions, getPotentialManagers } from '@/lib/db';
 import type { User } from '@/types';
 
 // GET /api/employees/[id]/edit-data - Get employee data for editing
@@ -14,12 +14,13 @@ export const GET = withAuth(async (request: NextRequest, context: { user: User; 
       return NextResponse.json({ error: 'Employee ID is required' }, { status: 400 });
     }
 
-    // Fetch employee, branches, departments, and positions
-    const [employee, branches, departments, positions] = await Promise.all([
+    // Fetch employee, branches, departments, positions, and potential managers
+    const [employee, branches, departments, positions, managers] = await Promise.all([
       getEmployeeById(id),
       getBranches(),
       getDepartments(),
       getActivePositions(),
+      getPotentialManagers(),
     ]);
 
     if (!employee) {
@@ -35,6 +36,7 @@ export const GET = withAuth(async (request: NextRequest, context: { user: User; 
       branches,
       departments,
       positions,
+      managers,
       canEditSalary,
       canAssignRoles,
     });

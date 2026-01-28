@@ -68,6 +68,27 @@ export async function getEmployeeById(id: string): Promise<Employee | null> {
   return data;
 }
 
+// Get all potential managers (active employees with their position)
+export async function getPotentialManagers(): Promise<{ id: string; full_name: string; position: string }[]> {
+  if (!isSupabaseAdminConfigured()) {
+    console.error('Supabase not configured');
+    return [];
+  }
+
+  const { data, error } = await supabaseAdmin!
+    .from('employees')
+    .select('id, full_name, position')
+    .in('status', ['active', 'probation'])
+    .order('full_name');
+
+  if (error) {
+    console.error('Error fetching potential managers:', error);
+    return [];
+  }
+
+  return data || [];
+}
+
 export async function getEmployeesByBranch(branchId: string): Promise<Employee[]> {
   if (!isSupabaseAdminConfigured()) {
     console.error('Supabase not configured');
