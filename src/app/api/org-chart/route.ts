@@ -7,32 +7,10 @@ export async function GET() {
       return NextResponse.json({ error: 'Database not configured' }, { status: 500 });
     }
 
-    // Fetch all active employees with their manager info
+    // Fetch all active employees
     const { data: employees, error } = await supabaseAdmin!
       .from('employees')
-      .select(`
-        id,
-        employee_id,
-        full_name,
-        position,
-        email,
-        phone,
-        telegram_id,
-        photo,
-        level,
-        status,
-        manager_id,
-        department_id,
-        branch_id,
-        departments:department_id (
-          id,
-          name
-        ),
-        branches:branch_id (
-          id,
-          name
-        )
-      `)
+      .select('id, employee_id, full_name, position, email, phone, telegram_id, level, status, manager_id, department_id, branch_id')
       .in('status', ['active', 'probation'])
       .order('full_name');
 
@@ -41,8 +19,17 @@ export async function GET() {
       return NextResponse.json({ error: 'Failed to fetch employees' }, { status: 500 });
     }
 
+    // Fetch departments and branches for mapping
+    const [deptResult, branchResult] = await Promise.all([
+      supabaseAdmin!.from('departments').select('id, name'),
+      supabaseAdmin!.from('branches').select('id, name')
+    ]);
+
+    const deptMap = new Map((deptResult.data || []).map(d => [d.id, d.name]));
+    const branchMap = new Map((branchResult.data || []).map(b => [b.id, b.name]));
+
     // Transform data for org chart
-    const orgData = employees?.map(emp => ({
+    const orgData = (employees || []).map(emp => ({
       id: emp.id,
       employeeId: emp.employee_id,
       name: emp.full_name,
@@ -50,14 +37,14 @@ export async function GET() {
       email: emp.email,
       phone: emp.phone,
       telegramId: emp.telegram_id,
-      photo: emp.photo,
+      photo: null,
       level: emp.level,
       managerId: emp.manager_id,
       departmentId: emp.department_id,
-      departmentName: (emp.departments as unknown as { name: string } | null)?.name || null,
+      departmentName: emp.department_id ? deptMap.get(emp.department_id) || null : null,
       branchId: emp.branch_id,
-      branchName: (emp.branches as unknown as { name: string } | null)?.name || null,
-    })) || [];
+      branchName: emp.branch_id ? branchMap.get(emp.branch_id) || null : null,
+    }));
 
     // Build hierarchy tree
     const buildTree = (employees: typeof orgData, parentId: string | null = null): typeof orgData => {
