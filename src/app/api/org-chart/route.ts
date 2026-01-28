@@ -1,12 +1,14 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { supabaseAdmin, isSupabaseAdminConfigured } from '@/lib/supabase';
 
 export async function GET() {
   try {
-    const supabase = await createClient();
+    if (!isSupabaseAdminConfigured()) {
+      return NextResponse.json({ error: 'Database not configured' }, { status: 500 });
+    }
 
     // Fetch all active employees with their manager info
-    const { data: employees, error } = await supabase
+    const { data: employees, error } = await supabaseAdmin!
       .from('employees')
       .select(`
         id,
