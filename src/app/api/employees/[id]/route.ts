@@ -43,7 +43,7 @@ export const PUT = withAuth(async (
       full_name, position, position_id, level, branch_id, department_id, manager_id, salary, phone, email,
       status, employment_type, system_role,
       hire_date, birth_date, gender,
-      is_growth_team
+      is_growth_team, remote_work_enabled
     } = body;
 
     const updates: {
@@ -64,6 +64,7 @@ export const PUT = withAuth(async (
       birth_date?: string | null;
       gender?: string | null;
       is_growth_team?: boolean;
+      remote_work_enabled?: boolean;
     } = {};
 
     if (full_name !== undefined) updates.full_name = full_name;
@@ -83,6 +84,7 @@ export const PUT = withAuth(async (
     if (birth_date !== undefined) updates.birth_date = birth_date || null;
     if (gender !== undefined) updates.gender = gender || null;
     if (is_growth_team !== undefined) updates.is_growth_team = is_growth_team;
+    if (remote_work_enabled !== undefined) updates.remote_work_enabled = remote_work_enabled;
 
     const result = await updateEmployee(id, updates);
 
