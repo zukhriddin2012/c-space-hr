@@ -14,10 +14,17 @@ interface SalaryRecord {
   salary_bank: number;
   salary_naqd: number;
   total: number;
+  legal_entity_id?: string;
   branch?: string;
   notes?: string;
   matched?: boolean;
 }
+
+const LEGAL_ENTITIES = [
+  { id: 'cspace_main', name: 'C-Space LLC' },
+  { id: 'cspace_labzak', name: 'C-Space Labzak LLC' },
+  { id: 'cspace_orient', name: 'C-Space Orient LLC' },
+];
 
 const MONTHS = [
   { value: 1, label: 'January', labelUz: 'Yanvar' },
@@ -138,6 +145,7 @@ export default function SalaryImportPage() {
       salary_bank: 0,
       salary_naqd: 0,
       total: 0,
+      legal_entity_id: 'cspace_main',
       matched: false,
     };
     setRecords([...records, newRecord]);
@@ -201,6 +209,8 @@ export default function SalaryImportPage() {
 
       if (isStandardFormat) {
         // Parse CSV format
+        const hasLegalEntity = headerLine.includes('legal_entity');
+
         for (let i = 1; i < lines.length; i++) {
           const line = lines[i].trim();
           if (!line) continue;
@@ -214,15 +224,21 @@ export default function SalaryImportPage() {
           const month = parseInt(cols[2]) || selectedMonth;
 
           let advance_bank = 0, advance_naqd = 0, salary_bank = 0, salary_naqd = 0;
+          let legal_entity_id = 'cspace_main';
           let notes = '';
 
           if (hasBankNaqdColumns) {
-            // New format: employee_name,year,month,advance_bank,advance_naqd,salary_bank,salary_naqd,notes
+            // New format: employee_name,year,month,advance_bank,advance_naqd,salary_bank,salary_naqd,legal_entity_id,notes
             advance_bank = parseAmount(cols[3] || '0');
             advance_naqd = parseAmount(cols[4] || '0');
             salary_bank = parseAmount(cols[5] || '0');
             salary_naqd = parseAmount(cols[6] || '0');
-            notes = cols[7]?.trim() || '';
+            if (hasLegalEntity) {
+              legal_entity_id = cols[7]?.trim() || 'cspace_main';
+              notes = cols[8]?.trim() || '';
+            } else {
+              notes = cols[7]?.trim() || '';
+            }
           } else {
             // Old format: employee_code,employee_name,year,month,advance,salary,notes
             // Treat advance and salary as bank values
@@ -247,6 +263,7 @@ export default function SalaryImportPage() {
             salary_bank,
             salary_naqd,
             total,
+            legal_entity_id,
             branch: notes,
             notes,
             matched: !!match,
@@ -295,6 +312,7 @@ export default function SalaryImportPage() {
             salary_bank: 0,
             salary_naqd: 0,
             total: 0,
+            legal_entity_id: 'cspace_main',
             branch: currentBranch,
             matched: !!match,
           };
@@ -349,11 +367,11 @@ export default function SalaryImportPage() {
 
   // Download template
   const downloadTemplate = () => {
-    const headers = ['employee_name', 'year', 'month', 'advance_bank', 'advance_naqd', 'salary_bank', 'salary_naqd', 'notes'];
+    const headers = ['employee_name', 'year', 'month', 'advance_bank', 'advance_naqd', 'salary_bank', 'salary_naqd', 'legal_entity_id', 'notes'];
     const sampleData = [
-      ['Zuxriddin Abduraxmonov', '2025', '1', '1500000', '0', '3500000', '0', 'HQ - GM'],
-      ['Ruxshona Nabijonova', '2025', '1', '1000000', '0', '2500000', '0', 'HQ - Supervisor'],
-      ['Nodir Mahmudov', '2025', '1', '1000000', '500000', '3500000', '500000', 'Yunusabad - BM'],
+      ['Zuxriddin Abduraxmonov', '2025', '1', '1500000', '0', '3500000', '0', 'cspace_main', 'HQ - GM'],
+      ['Ruxshona Nabijonova', '2025', '1', '1000000', '0', '2500000', '0', 'cspace_main', 'HQ - Supervisor'],
+      ['Nodir Mahmudov', '2025', '1', '1000000', '500000', '3500000', '500000', 'cspace_labzak', 'Yunusabad - BM'],
     ];
 
     const csv = [headers.join(','), ...sampleData.map(row => row.join(','))].join('\n');
@@ -498,6 +516,7 @@ export default function SalaryImportPage() {
                 <tr className="bg-gray-50 border-b border-gray-200">
                   <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase">Employee</th>
                   <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase">Period</th>
+                  <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase">Entity</th>
                   <th className="text-right px-4 py-3 text-xs font-medium text-gray-500 uppercase">Avans Bank</th>
                   <th className="text-right px-4 py-3 text-xs font-medium text-gray-500 uppercase">Avans Naqd</th>
                   <th className="text-right px-4 py-3 text-xs font-medium text-gray-500 uppercase">Oylik Bank</th>
@@ -527,6 +546,17 @@ export default function SalaryImportPage() {
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-900 whitespace-nowrap">
                       {MONTHS[record.month - 1]?.label} {record.year}
+                    </td>
+                    <td className="px-4 py-3">
+                      <select
+                        value={record.legal_entity_id || 'cspace_main'}
+                        onChange={(e) => updateRecord(record.id, 'legal_entity_id', e.target.value)}
+                        className="px-2 py-1 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none"
+                      >
+                        {LEGAL_ENTITIES.map(entity => (
+                          <option key={entity.id} value={entity.id}>{entity.name}</option>
+                        ))}
+                      </select>
                     </td>
                     <td className="px-4 py-3">
                       <input

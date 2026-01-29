@@ -8,6 +8,7 @@
 CREATE TABLE IF NOT EXISTS payslips (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   employee_id UUID NOT NULL REFERENCES employees(id) ON DELETE CASCADE,
+  legal_entity_id TEXT REFERENCES legal_entities(id),
   year INTEGER NOT NULL,
   month INTEGER NOT NULL,
   gross_salary DECIMAL(15, 2) DEFAULT 0,
@@ -56,6 +57,11 @@ BEGIN
                  WHERE table_name = 'payslips' AND column_name = 'notes') THEN
     ALTER TABLE payslips ADD COLUMN notes TEXT;
   END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns
+                 WHERE table_name = 'payslips' AND column_name = 'legal_entity_id') THEN
+    ALTER TABLE payslips ADD COLUMN legal_entity_id TEXT REFERENCES legal_entities(id);
+  END IF;
 END $$;
 
 -- Create indexes for faster lookups
@@ -69,6 +75,10 @@ COMMENT ON COLUMN payslips.advance_naqd IS 'Advance payment in cash (Avans Naqd)
 COMMENT ON COLUMN payslips.salary_bank IS 'Salary payment via bank (Oylik Bank) - primary';
 COMMENT ON COLUMN payslips.salary_naqd IS 'Salary payment in cash (Oylik Naqd) - additional';
 COMMENT ON COLUMN payslips.notes IS 'Additional notes or import source info';
+COMMENT ON COLUMN payslips.legal_entity_id IS 'Legal entity that paid the salary';
+
+-- Create index for legal entity lookups
+CREATE INDEX IF NOT EXISTS idx_payslips_legal_entity ON payslips(legal_entity_id);
 
 -- Create updated_at trigger if it doesn't exist
 CREATE OR REPLACE FUNCTION update_updated_at_column()

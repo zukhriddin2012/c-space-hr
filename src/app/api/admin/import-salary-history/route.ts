@@ -13,6 +13,7 @@ interface SalaryRecord {
   salary_bank: number;
   salary_naqd: number;
   total: number;
+  legal_entity_id?: string;
   branch?: string;
   notes?: string;
 }
@@ -55,6 +56,7 @@ export const POST = withAuth(async (request: NextRequest) => {
         const employeeUuid = employeeMap.get(record.employee_id!);
         return {
           employee_id: employeeUuid,
+          legal_entity_id: record.legal_entity_id || 'cspace_main',
           year: record.year,
           month: record.month,
           gross_salary: record.total,
