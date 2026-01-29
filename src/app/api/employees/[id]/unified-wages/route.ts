@@ -180,26 +180,43 @@ export const GET = withAuth(async (
     const additionalTotal = additionalSources.reduce((sum, w) => sum + w.wage_amount, 0);
     const grandTotal = primaryTotal + additionalTotal;
 
+    // Historical payslips only contain Primary/Bank wages
+    // Additional/Cash wages are paid separately and not tracked in payslips
+    // For accurate total compensation view, we add current additional wages to each month
+    // This assumes additional wages were consistent (which may not be 100% accurate for past months)
+    const payslipsWithAdditional = payslips.map(p => ({
+      ...p,
+      // Add additional wages to get total compensation
+      total: p.total + additionalTotal,
+      // Store original primary-only total for reference
+      primary_total: p.total,
+      additional_total: additionalTotal,
+    }));
+
     // Check if current month has payslip data, if not add projected entry from configured wages
-    const hasCurrentMonth = payslips.some(p => p.year === currentYear && p.month === currentMonth);
+    const hasCurrentMonth = payslipsWithAdditional.some(p => p.year === currentYear && p.month === currentMonth);
+    let finalPayslips = payslipsWithAdditional;
+
     if (!hasCurrentMonth && grandTotal > 0) {
       // Add current month as projected based on configured wages
-      payslips = [...payslips, {
+      finalPayslips = [...payslipsWithAdditional, {
         year: currentYear,
         month: currentMonth,
         total: grandTotal,
+        primary_total: primaryTotal,
+        additional_total: additionalTotal,
         advance_bank: 0,
         advance_naqd: 0,
-        salary_bank: grandTotal, // Show as salary_bank for simplicity
-        salary_naqd: 0,
+        salary_bank: primaryTotal,
+        salary_naqd: additionalTotal,
         legal_entity_id: primarySources[0]?.source_id || null,
         legal_entity_name: primarySources[0]?.source_name,
-        is_projected: true, // Mark as projected
+        is_projected: true,
       }];
     }
 
-    // Calculate historical stats
-    const totals = payslips.map(p => p.total);
+    // Calculate historical stats using finalPayslips (which includes additional wages)
+    const totals = finalPayslips.map(p => p.total);
     const current = totals.length > 0 ? totals[totals.length - 1] : 0;
     const highest = totals.length > 0 ? Math.max(...totals) : 0;
     const average = totals.length > 0 ? Math.round(totals.reduce((a, b) => a + b, 0) / totals.length) : 0;
@@ -217,7 +234,7 @@ export const GET = withAuth(async (
 
     let reconciliationStatus: 'synced' | 'underpaid' | 'overpaid' | 'no_history' = 'no_history';
 
-    if (payslips.length > 0) {
+    if (finalPayslips.length > 0) {
       const tolerance = 100000; // 100K UZS tolerance for rounding differences
       if (Math.abs(difference) <= tolerance) {
         reconciliationStatus = 'synced';
@@ -231,19 +248,24 @@ export const GET = withAuth(async (
     }
 
     // Check for wage entries without corresponding payslips
-    if (primarySources.length > 0 && payslips.length === 0) {
+    if (primarySources.length > 0 && finalPayslips.length === 0) {
       warnings.push('Employee has configured wages but no payment history');
     }
 
     // Check for legal entities in payslips that aren't in employee_wages
     const configuredEntities = new Set(primarySources.map(w => w.source_id));
-    const payslipEntities = new Set(payslips.map(p => p.legal_entity_id).filter(Boolean));
+    const payslipEntities = new Set(finalPayslips.map(p => p.legal_entity_id).filter(Boolean));
 
     payslipEntities.forEach(entityId => {
       if (!configuredEntities.has(entityId as string)) {
         warnings.push(`Payslip from entity "${entityId}" not found in current wage configuration`);
       }
     });
+
+    // Note if additional wages were added to historical data
+    if (additionalTotal > 0 && payslips.length > 0) {
+      warnings.push(`Historical data includes current additional wages (${formatCurrency(additionalTotal)}/month)`);
+    }
 
     const response: UnifiedWageResponse = {
       currentWages: {
@@ -254,7 +276,7 @@ export const GET = withAuth(async (
         grandTotal,
       },
       history: {
-        months: payslips,
+        months: finalPayslips,
         stats: {
           current,
           highest,
