@@ -155,7 +155,7 @@ export default function SalaryImportPage() {
     setRecords(records.filter(r => r.id !== id));
   };
 
-  // Parse CSV file
+  // Parse CSV file - supports standard format: employee_code,employee_name,year,month,advance,salary,notes
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -171,52 +171,95 @@ export default function SalaryImportPage() {
       const lines = text.split('\n');
       const newRecords: SalaryRecord[] = [];
 
-      let currentBranch = '';
+      // Check if this is the standard format (has header row with employee_name)
+      const headerLine = lines[0]?.toLowerCase() || '';
+      const isStandardFormat = headerLine.includes('employee_name') || headerLine.includes('year');
 
-      for (let i = 0; i < lines.length; i++) {
-        const line = lines[i];
-        const cols = line.split(',');
+      if (isStandardFormat) {
+        // Parse standard CSV format: employee_code,employee_name,year,month,advance,salary,notes
+        for (let i = 1; i < lines.length; i++) {
+          const line = lines[i].trim();
+          if (!line) continue;
 
-        // Skip empty lines
-        if (!cols[1] || cols[1].trim() === '' || cols[1].trim() === 'Ism') continue;
+          // Parse CSV properly (handle commas in quoted fields)
+          const cols = line.split(',');
 
-        // Check if this is a branch header
-        if (cols[0] && cols[0].trim() !== '') {
-          currentBranch = cols[0].trim();
-          continue;
+          const employeeName = cols[1]?.trim();
+          if (!employeeName) continue;
+
+          const year = parseInt(cols[2]) || selectedYear;
+          const month = parseInt(cols[3]) || selectedMonth;
+          const advance = parseAmount(cols[4] || '0');
+          const salary = parseAmount(cols[5] || '0');
+          const notes = cols[6]?.trim() || '';
+
+          // Match employee
+          const match = matchEmployee(employeeName);
+
+          const record: SalaryRecord = {
+            id: generateId(),
+            employee_name: employeeName,
+            employee_id: match?.employee_id,
+            year,
+            month,
+            advance,
+            salary,
+            total: advance + salary,
+            branch: notes,
+            notes,
+            matched: !!match,
+          };
+
+          newRecords.push(record);
         }
 
-        const employeeName = cols[1]?.trim();
-        if (!employeeName) continue;
+        setRecords(newRecords);
+        setSuccess(`Parsed ${newRecords.length} salary records from CSV.`);
+      } else {
+        // Legacy format - original spreadsheet format with branch headers
+        let currentBranch = '';
 
-        // Skip header rows and special entries
-        if (employeeName === 'Ism' || employeeName.includes("bo'lim")) continue;
+        for (let i = 0; i < lines.length; i++) {
+          const line = lines[i];
+          const cols = line.split(',');
 
-        // Match employee
-        const match = matchEmployee(employeeName);
+          // Skip empty lines
+          if (!cols[1] || cols[1].trim() === '' || cols[1].trim() === 'Ism') continue;
 
-        // Create record for the selected month/year
-        // The CSV has columns: Avans, Oylik pairs for each month
-        // We'll let user select which month to import
+          // Check if this is a branch header
+          if (cols[0] && cols[0].trim() !== '') {
+            currentBranch = cols[0].trim();
+            continue;
+          }
 
-        const record: SalaryRecord = {
-          id: generateId(),
-          employee_name: employeeName,
-          employee_id: match?.employee_id,
-          year: selectedYear,
-          month: selectedMonth,
-          advance: 0,
-          salary: 0,
-          total: 0,
-          branch: currentBranch,
-          matched: !!match,
-        };
+          const employeeName = cols[1]?.trim();
+          if (!employeeName) continue;
 
-        newRecords.push(record);
+          // Skip header rows and special entries
+          if (employeeName === 'Ism' || employeeName.includes("bo'lim")) continue;
+
+          // Match employee
+          const match = matchEmployee(employeeName);
+
+          const record: SalaryRecord = {
+            id: generateId(),
+            employee_name: employeeName,
+            employee_id: match?.employee_id,
+            year: selectedYear,
+            month: selectedMonth,
+            advance: 0,
+            salary: 0,
+            total: 0,
+            branch: currentBranch,
+            matched: !!match,
+          };
+
+          newRecords.push(record);
+        }
+
+        setRecords(newRecords);
+        setSuccess(`Parsed ${newRecords.length} employee records. Please enter salary data for ${MONTHS[selectedMonth - 1].label} ${selectedYear}.`);
       }
-
-      setRecords(newRecords);
-      setSuccess(`Parsed ${newRecords.length} employee records. Please enter salary data for ${MONTHS[selectedMonth - 1].label} ${selectedYear}.`);
     } catch (err) {
       setError('Failed to parse CSV file. Please check the format.');
       console.error(err);
@@ -261,10 +304,11 @@ export default function SalaryImportPage() {
 
   // Download template
   const downloadTemplate = () => {
-    const headers = ['Employee Name', 'Employee ID', 'Year', 'Month', 'Advance (UZS)', 'Salary (UZS)', 'Branch', 'Notes'];
+    const headers = ['employee_code', 'employee_name', 'year', 'month', 'advance', 'salary', 'notes'];
     const sampleData = [
-      ['Zuxriddin Abduraxmonov', 'CS-001', '2025', '1', '1500000', '3500000', 'Labzak', ''],
-      ['Ruxshona Nabijonova', 'CS-002', '2025', '1', '1000000', '2500000', 'HQ', ''],
+      ['', 'Zuxriddin Abduraxmonov', '2025', '1', '1500000', '3500000', 'HQ - GM'],
+      ['', 'Ruxshona Nabijonova', '2025', '1', '1000000', '2500000', 'HQ - Supervisor'],
+      ['', 'Nodir Mahmudov', '2025', '1', '1000000', '4000000', 'Yunusabad - BM'],
     ];
 
     const csv = [headers.join(','), ...sampleData.map(row => row.join(','))].join('\n');
