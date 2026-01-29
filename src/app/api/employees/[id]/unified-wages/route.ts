@@ -234,6 +234,7 @@ async function getPayslipsLast12Months(employeeId: string): Promise<MonthlyPaysl
     startYear -= 1;
   }
 
+  // Build a simpler query - fetch all from startYear onwards, then filter in code
   const { data: payslips, error } = await supabaseAdmin!
     .from('payslips')
     .select(`
@@ -241,8 +242,7 @@ async function getPayslipsLast12Months(employeeId: string): Promise<MonthlyPaysl
       legal_entities(id, name, short_name)
     `)
     .eq('employee_id', employeeId)
-    .or(`year.gt.${startYear},and(year.eq.${startYear},month.gte.${startMonth})`)
-    .lte('year', currentYear)
+    .gte('year', startYear)
     .order('year', { ascending: true })
     .order('month', { ascending: true });
 
@@ -251,10 +251,20 @@ async function getPayslipsLast12Months(employeeId: string): Promise<MonthlyPaysl
     return [];
   }
 
+  // Filter records to be within the 12-month window
+  const filteredPayslips = (payslips || []).filter((record: any) => {
+    // Check if record is within the 12-month window
+    if (record.year > currentYear) return false;
+    if (record.year === currentYear && record.month > currentMonth) return false;
+    if (record.year < startYear) return false;
+    if (record.year === startYear && record.month < startMonth) return false;
+    return true;
+  });
+
   // Aggregate by month (in case of multiple legal entities)
   const monthlyTotals = new Map<string, MonthlyPayslip>();
 
-  (payslips || []).forEach((record: any) => {
+  filteredPayslips.forEach((record: any) => {
     const key = `${record.year}-${record.month}`;
     const existing = monthlyTotals.get(key);
 
