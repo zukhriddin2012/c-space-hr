@@ -169,6 +169,7 @@ Reusable UI components with consistent styling:
 - status: text ('active', 'probation', 'inactive', 'terminated')
 - telegram_id: text (for bot integration)
 - preferred_language: text ('en', 'ru', 'uz')
+- remote_work_enabled: boolean (allows remote check-in without GPS)
 - hire_date: date
 - email, phone, date_of_birth, gender, notes
 ```
@@ -373,6 +374,17 @@ const { data, error } = await supabaseAdmin
 ---
 
 ## Recent Changes Log
+
+### 2026-01-29 (Remote Work Feature)
+- **Remote Work Check-in**: Employees with `remote_work_enabled` can check in remotely
+  - When IP doesn't match office, remote-enabled employees see choice buttons
+  - Options: "I'm in the office" (GPS flow) or "Working remotely" (no GPS needed)
+  - `verification_type: 'remote'` stored in attendance table
+  - Remote badge displayed in attendance UI with blue styling
+- **API Changes**: Added `remoteCheckin` flag to `/api/attendance/ip-checkin`
+- **Employee API**: Updated `/api/employees/[id]` to save `remote_work_enabled` field
+- **UI Updates**: VerificationBadge components updated to display "Remote" badge
+- **Translations**: Added 'remote' translations to all 3 languages
 
 ### 2026-01-30
 - **Testing Infrastructure**: Set up Vitest with React Testing Library and MSW

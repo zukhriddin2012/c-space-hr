@@ -106,7 +106,7 @@
     "tables": {
       "employees": {
         "key": "id",
-        "important_columns": ["employee_id", "full_name", "position", "level", "branch_id", "manager_id", "status", "telegram_id"]
+        "important_columns": ["employee_id", "full_name", "position", "level", "branch_id", "manager_id", "status", "telegram_id", "remote_work_enabled"]
       },
       "attendance": {
         "key": "id",
@@ -162,6 +162,8 @@
   },
   "currentWork": {
     "recentChanges": [
+      "2026-01-29: Remote work check-in feature (remote_work_enabled per employee)",
+      "2026-01-29: Remote verification type badge in attendance UI",
       "2026-01-30: Set up Vitest testing infrastructure (28 tests)",
       "2026-01-30: Split db.ts into 20 domain modules in db/ folder",
       "2026-01-30: Flattened deep API routes into PATCH handlers",
@@ -171,6 +173,7 @@
       "2026-01-28: Org chart with expandable tree"
     ],
     "pendingTasks": [
+      "Language switching fixes (8 sections need translation)",
       "Employee profile editing improvements",
       "Recruitment pipeline filters",
       "Shift notes feature"

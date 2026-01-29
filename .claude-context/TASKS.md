@@ -27,6 +27,7 @@
 | T011 | Split db.ts into domain modules (20 files) | 2026-01-30 | Main |
 | T012 | Standardize API route naming (tg-* → telegram-*) | 2026-01-30 | Main |
 | T013 | Set up Vitest testing infrastructure | 2026-01-30 | Main |
+| T014 | Remote work check-in feature | 2026-01-29 | Main |
 
 ### 🟡 In Progress
 
@@ -38,6 +39,7 @@
 
 | Task ID | Title | Priority | Notes |
 |---------|-------|----------|-------|
+| T015 | Language switching fixes | High | 8 of 12 sections have hardcoded text |
 | T005 | Employee profile editing | High | Improve edit form UX |
 | T006 | Recruitment pipeline filters | Medium | Filter by position, date, source |
 | T007 | Shift notes feature | Medium | Allow managers to add notes to shifts |
