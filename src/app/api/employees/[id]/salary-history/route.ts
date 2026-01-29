@@ -12,6 +12,7 @@ interface SalaryHistoryRecord {
   salary_bank: number;
   salary_naqd: number;
   legal_entity_id: string | null;
+  is_projected?: boolean;
 }
 
 // GET /api/employees/[id]/salary-history - Get salary history for last 12 months
@@ -91,12 +92,48 @@ export const GET = withAuth(async (
     });
 
     // Convert to array and sort by date
-    const history = Array.from(monthlyTotals.values())
+    let history = Array.from(monthlyTotals.values())
       .sort((a, b) => {
         if (a.year !== b.year) return a.year - b.year;
         return a.month - b.month;
       })
       .slice(-12); // Keep only last 12 months
+
+    // Check if current month has data, if not add projected entry from employee_wages
+    const hasCurrentMonth = history.some(h => h.year === currentYear && h.month === currentMonth);
+
+    if (!hasCurrentMonth) {
+      // Get configured wages to show projected amount
+      const { data: wages } = await supabaseAdmin!
+        .from('employee_wages')
+        .select('wage_amount')
+        .eq('employee_id', employeeId)
+        .eq('is_active', true);
+
+      const { data: branchWages } = await supabaseAdmin!
+        .from('employee_branch_wages')
+        .select('wage_amount')
+        .eq('employee_id', employeeId)
+        .eq('is_active', true);
+
+      const primaryTotal = (wages || []).reduce((sum, w) => sum + (Number(w.wage_amount) || 0), 0);
+      const additionalTotal = (branchWages || []).reduce((sum, w) => sum + (Number(w.wage_amount) || 0), 0);
+      const grandTotal = primaryTotal + additionalTotal;
+
+      if (grandTotal > 0) {
+        history = [...history, {
+          year: currentYear,
+          month: currentMonth,
+          total: grandTotal,
+          advance_bank: 0,
+          advance_naqd: 0,
+          salary_bank: primaryTotal,
+          salary_naqd: additionalTotal,
+          legal_entity_id: null,
+          is_projected: true,
+        }];
+      }
+    }
 
     // Calculate stats
     const totals = history.map(h => h.total);
