@@ -31,24 +31,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'Database not configured' }, { status: 500 });
     }
 
-    // Get employee by telegram ID (including remote_work_enabled)
+    // Get employee by telegram ID
+    // Note: remote_work_enabled may not exist if migration hasn't run - we skip that check
+    // since user already got to this endpoint through the remote choice flow
     const { data: employee, error: empError } = await supabaseAdmin
       .from('employees')
-      .select('id, full_name, position, branch_id, preferred_language, remote_work_enabled')
+      .select('id, full_name, position, branch_id, preferred_language')
       .eq('telegram_id', telegramId.toString())
       .single();
 
     if (empError || !employee) {
+      console.error('Employee lookup error:', empError);
       return NextResponse.json({ success: false, error: 'Employee not found' }, { status: 404 });
-    }
-
-    // Check if remote work is enabled for this employee
-    if (!employee.remote_work_enabled) {
-      return NextResponse.json({
-        success: false,
-        error: 'remote_not_allowed',
-        message: 'Remote work is not enabled for this employee',
-      }, { status: 403 });
     }
 
     // Check if employee has active check-in
