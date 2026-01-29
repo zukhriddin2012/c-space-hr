@@ -44,6 +44,15 @@ interface UnifiedWageResponse {
       growth: number;
     };
   };
+  // Current month payment status
+  currentMonth: {
+    year: number;
+    month: number;
+    advancePaid: number;
+    wagePaid: number;
+    totalPaid: number;
+    remaining: number;
+  };
   // Reconciliation - compare current config vs actual payments
   reconciliation: {
     configuredMonthly: number;
@@ -69,8 +78,13 @@ export const GET = withAuth(async (
       return NextResponse.json({ error: 'Database not configured' }, { status: 500 });
     }
 
+    // Get current month info for advance payments
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth() + 1;
+
     // Fetch all data in parallel
-    const [primaryWagesResult, branchWagesResult, payslipsResult] = await Promise.all([
+    const [primaryWagesResult, branchWagesResult, payslipsResult, advancePaymentsResult] = await Promise.all([
       // Primary wages from employee_wages
       supabaseAdmin!
         .from('employee_wages')
@@ -101,6 +115,18 @@ export const GET = withAuth(async (
 
       // Historical payslips (last 12 months)
       getPayslipsLast12Months(employeeId),
+
+      // Current month advance payments (paid)
+      supabaseAdmin!
+        .from('payment_request_items')
+        .select(`
+          amount,
+          payment_requests!inner(year, month, status, request_type)
+        `)
+        .eq('employee_id', employeeId)
+        .eq('payment_requests.year', currentYear)
+        .eq('payment_requests.month', currentMonth)
+        .eq('payment_requests.status', 'paid'),
     ]);
 
     if (primaryWagesResult.error) {
@@ -116,11 +142,19 @@ export const GET = withAuth(async (
     const primaryWages = primaryWagesResult.data || [];
     const branchWages = branchWagesResult.data || [];
     let payslips = payslipsResult;
+    const advancePayments = advancePaymentsResult.data || [];
 
-    // Get current date info
-    const now = new Date();
-    const currentYear = now.getFullYear();
-    const currentMonth = now.getMonth() + 1;
+    // Calculate current month advance payments
+    let currentMonthAdvancePaid = 0;
+    let currentMonthWagePaid = 0;
+    advancePayments.forEach((item: any) => {
+      const amount = Number(item.amount) || 0;
+      if (item.payment_requests?.request_type === 'advance') {
+        currentMonthAdvancePaid += amount;
+      } else if (item.payment_requests?.request_type === 'wage') {
+        currentMonthWagePaid += amount;
+      }
+    });
 
     // Process primary wages
     const primarySources: WageSource[] = primaryWages.map((w: any) => ({
@@ -227,6 +261,14 @@ export const GET = withAuth(async (
           average,
           growth,
         },
+      },
+      currentMonth: {
+        year: currentYear,
+        month: currentMonth,
+        advancePaid: currentMonthAdvancePaid,
+        wagePaid: currentMonthWagePaid,
+        totalPaid: currentMonthAdvancePaid + currentMonthWagePaid,
+        remaining: Math.max(0, grandTotal - currentMonthAdvancePaid - currentMonthWagePaid),
       },
       reconciliation: {
         configuredMonthly,

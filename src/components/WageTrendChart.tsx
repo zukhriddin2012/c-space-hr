@@ -32,6 +32,15 @@ interface ReconciliationData {
   warnings: string[];
 }
 
+interface CurrentMonthData {
+  year: number;
+  month: number;
+  advancePaid: number;
+  wagePaid: number;
+  totalPaid: number;
+  remaining: number;
+}
+
 interface UnifiedWageData {
   currentWages: {
     primary: WageSource[];
@@ -44,6 +53,7 @@ interface UnifiedWageData {
     months: SalaryHistoryRecord[];
     stats: SalaryStats;
   };
+  currentMonth?: CurrentMonthData;
   reconciliation: ReconciliationData;
 }
 
@@ -146,7 +156,7 @@ export default function WageTrendChart({ employeeId }: WageTrendChartProps) {
     );
   }
 
-  const { history: { months: history, stats }, currentWages, reconciliation } = data;
+  const { history: { months: history, stats }, currentWages, currentMonth, reconciliation } = data;
 
   // Chart dimensions
   const width = 600;
@@ -278,6 +288,35 @@ export default function WageTrendChart({ employeeId }: WageTrendChartProps) {
                     {w.source_name}: {formatCompact(w.wage_amount)}
                   </span>
                 ))}
+              </div>
+            </div>
+          )}
+
+          {/* Current Month Payments */}
+          {currentMonth && currentMonth.totalPaid > 0 && (
+            <div className="mt-3 border-t border-gray-200 pt-3">
+              <p className="text-xs text-gray-500 mb-2">
+                {MONTH_NAMES[currentMonth.month - 1]} {currentMonth.year} Payments:
+              </p>
+              <div className="flex flex-wrap gap-3">
+                {currentMonth.advancePaid > 0 && (
+                  <div className="flex items-center gap-1">
+                    <span className="w-2 h-2 rounded-full bg-orange-400"></span>
+                    <span className="text-xs text-gray-600">Advance: <span className="font-semibold text-orange-600">{formatCompact(currentMonth.advancePaid)}</span></span>
+                  </div>
+                )}
+                {currentMonth.wagePaid > 0 && (
+                  <div className="flex items-center gap-1">
+                    <span className="w-2 h-2 rounded-full bg-green-400"></span>
+                    <span className="text-xs text-gray-600">Wage: <span className="font-semibold text-green-600">{formatCompact(currentMonth.wagePaid)}</span></span>
+                  </div>
+                )}
+                {currentMonth.remaining > 0 && (
+                  <div className="flex items-center gap-1">
+                    <span className="w-2 h-2 rounded-full bg-gray-300"></span>
+                    <span className="text-xs text-gray-600">Remaining: <span className="font-semibold text-gray-700">{formatCompact(currentMonth.remaining)}</span></span>
+                  </div>
+                )}
               </div>
             </div>
           )}
