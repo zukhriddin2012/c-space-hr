@@ -23,6 +23,10 @@
 | T002 | Translation fixes (Employees page) | 2026-01-29 | Main |
 | T003 | Remote badge fix in attendance | 2026-01-29 | Main |
 | T004 | Component refactoring (feature folders + UI primitives) | 2026-01-29 | Main |
+| T010 | Flatten deep API routes (PATCH consolidation) | 2026-01-30 | Main |
+| T011 | Split db.ts into domain modules (20 files) | 2026-01-30 | Main |
+| T012 | Standardize API route naming (tg-* → telegram-*) | 2026-01-30 | Main |
+| T013 | Set up Vitest testing infrastructure | 2026-01-30 | Main |
 
 ### 🟡 In Progress
 
@@ -140,6 +144,9 @@ import { Sidebar } from '@/components/layout';
 ### Testing Commands
 
 ```bash
+# Run tests
+npm run test:run
+
 # Type check
 npx tsc --noEmit
 

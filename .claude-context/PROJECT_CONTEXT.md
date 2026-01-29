@@ -1,7 +1,7 @@
 # C-Space HR System - Project Context
 
-> **Last Updated:** 2026-01-29
-> **Updated By:** Claude (Component refactoring, UI primitives)
+> **Last Updated:** 2026-01-30
+> **Updated By:** Claude (Testing infrastructure, db.ts modularization, API route cleanup)
 
 ## Quick Start for New Sessions
 
@@ -43,11 +43,12 @@ npx tsc --noEmit
 
 | Layer | Technology |
 |-------|------------|
-| Framework | Next.js 14 (App Router) |
+| Framework | Next.js 16 (App Router) |
 | Language | TypeScript |
-| Styling | Tailwind CSS |
+| Styling | Tailwind CSS 4 |
 | Database | Supabase (PostgreSQL) |
 | Auth | Custom session-based (Supabase) |
+| Testing | Vitest + React Testing Library + MSW |
 | Hosting | Vercel |
 | Bot | Telegram Bot (separate repo) |
 
@@ -81,8 +82,19 @@ c-space-hr/
 │   │   ├── auth/               # Auth guards & components
 │   │   └── index.ts            # Main barrel export
 │   ├── contexts/               # React contexts (Language, etc.)
+│   ├── test/                   # Test infrastructure
+│   │   ├── setup.ts            # Vitest setup
+│   │   ├── mocks/              # MSW handlers
+│   │   └── utils/              # Test utilities
 │   └── lib/                    # Utilities
-│       ├── db.ts               # Database queries
+│       ├── db.ts               # Database re-exports (backwards compat)
+│       ├── db/                 # Modular database functions
+│       │   ├── index.ts        # Barrel export
+│       │   ├── connection.ts   # Supabase client & shared utils
+│       │   ├── employees.ts    # Employee functions
+│       │   ├── attendance.ts   # Attendance functions
+│       │   ├── payroll.ts      # Payroll functions
+│       │   └── ...             # 20 domain modules
 │       ├── supabase.ts         # Supabase client
 │       ├── auth-server.ts      # Server-side auth
 │       ├── permissions.ts      # Role permissions
@@ -362,6 +374,18 @@ const { data, error } = await supabaseAdmin
 
 ## Recent Changes Log
 
+### 2026-01-30
+- **Testing Infrastructure**: Set up Vitest with React Testing Library and MSW
+  - Created test setup, utilities, and mock handlers
+  - Added 28 example tests (Button, employees db, employees API)
+  - Scripts: `npm run test`, `npm run test:coverage`
+- **db.ts Modularization**: Split 5400-line db.ts into 20 domain modules
+  - Created `src/lib/db/` with connection.ts, employees.ts, attendance.ts, etc.
+  - Backwards compatible via re-exports
+- **API Route Flattening**: Consolidated action routes into PATCH handlers
+  - payment-requests, leaves, accounting/requests, candidates/documents, dev-board/sprints
+- **API Route Naming**: Renamed `tg-action` → `telegram-action`, `tg-check` → `telegram-check`
+
 ### 2026-01-29
 - **Component Refactoring**: Reorganized 24 components into 8 feature-based folders
   - Created barrel exports (index.ts) for each folder
@@ -392,14 +416,53 @@ See `docs/specs/CURRENT_SPRINT.md` and `docs/specs/BACKLOG.md` for detailed task
 
 ---
 
-## Testing Checklist
+## Testing
 
-Before deploying:
-1. Run `npx tsc --noEmit` - No TypeScript errors
-2. Test all three languages (EN/RU/UZ)
-3. Test on mobile viewport
-4. Verify Supabase queries work
-5. Check role-based permissions
+### Running Tests
+
+```bash
+npm run test          # Watch mode
+npm run test:run      # Single run
+npm run test:coverage # With coverage
+npm run test:ui       # Interactive UI
+```
+
+### Test Structure
+
+```
+src/
+├── test/
+│   ├── setup.ts              # Global setup, Next.js mocks
+│   ├── mocks/handlers.ts     # MSW API mocks
+│   └── utils/test-utils.tsx  # Custom render with providers
+├── components/ui/Button.test.tsx
+├── lib/db/employees.test.ts
+└── app/api/employees/route.test.ts
+```
+
+### Writing Tests
+
+```tsx
+// Component test
+import { render, screen } from '@/test/utils/test-utils';
+import Button from './Button';
+
+it('renders button', () => {
+  render(<Button>Click</Button>);
+  expect(screen.getByRole('button')).toBeInTheDocument();
+});
+```
+
+---
+
+## Pre-Deploy Checklist
+
+1. `npm run test:run` - All tests pass
+2. `npx tsc --noEmit` - No TypeScript errors
+3. Test all three languages (EN/RU/UZ)
+4. Test on mobile viewport
+5. Verify Supabase queries work
+6. Check role-based permissions
 
 ---
 
@@ -411,6 +474,9 @@ npm run dev
 
 # Type check
 npx tsc --noEmit
+
+# Run tests
+npm run test:run
 
 # Build for production
 npm run build

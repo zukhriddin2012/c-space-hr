@@ -4,15 +4,16 @@
     "description": "HR management system for C-Space coworking spaces",
     "productionUrl": "https://hr.cspace.uz",
     "repository": "https://github.com/zukhriddin2012/c-space-hr",
-    "lastUpdated": "2026-01-29"
+    "lastUpdated": "2026-01-30"
   },
   "techStack": {
-    "framework": "Next.js 14 (App Router)",
+    "framework": "Next.js 16 (App Router)",
     "language": "TypeScript",
-    "styling": "Tailwind CSS",
+    "styling": "Tailwind CSS 4",
     "database": "Supabase (PostgreSQL)",
     "hosting": "Vercel",
-    "auth": "Custom session-based"
+    "auth": "Custom session-based",
+    "testing": "Vitest + React Testing Library + MSW"
   },
   "keyPaths": {
     "pages": "src/app/(dashboard)/",
@@ -28,12 +29,35 @@
       "profile": "src/components/profile/",
       "auth": "src/components/auth/"
     },
-    "database": "src/lib/db.ts",
+    "database": "src/lib/db/",
+    "databaseModules": [
+      "connection.ts",
+      "employees.ts",
+      "branches.ts",
+      "attendance.ts",
+      "leaves.ts",
+      "payroll.ts",
+      "wages.ts",
+      "payments.ts",
+      "documents.ts",
+      "termination.ts",
+      "legal-entities.ts",
+      "recruitment.ts",
+      "feedback.ts",
+      "wage-changes.ts",
+      "dashboards.ts",
+      "growth.ts",
+      "telegram.ts",
+      "reminders.ts",
+      "departments.ts",
+      "positions.ts"
+    ],
     "supabase": "src/lib/supabase.ts",
     "auth": "src/lib/auth-server.ts",
     "permissions": "src/lib/permissions.ts",
     "translations": "src/lib/i18n/",
-    "migrations": "supabase/migrations/"
+    "migrations": "supabase/migrations/",
+    "tests": "src/test/"
   },
   "modules": {
     "employees": {
@@ -114,19 +138,37 @@
     "components": "PascalCase, .tsx extension, organized in feature folders",
     "componentImports": "Import from feature folders: @/components/employee, @/components/ui, etc.",
     "uiPrimitives": "Use Button, Input, Card, Modal, Select, Badge from @/components/ui",
-    "apiRoutes": "route.ts in folder structure",
+    "apiRoutes": "route.ts in folder structure, use PATCH for action consolidation",
+    "apiNaming": "kebab-case, no abbreviations (telegram-action not tg-action)",
     "translations": "Add to types.ts first, then all 3 language files",
-    "database": "Use supabaseAdmin from @/lib/supabase",
-    "auth": "Use getSession() for server, withAuth() for API"
+    "database": "Import from @/lib/db (re-exports from modular db/ folder)",
+    "auth": "Use getSession() for server, withAuth() for API",
+    "testing": "Tests in *.test.ts(x) files, use test-utils for component tests"
+  },
+  "testing": {
+    "framework": "Vitest",
+    "libraries": ["@testing-library/react", "@testing-library/jest-dom", "msw"],
+    "scripts": {
+      "test": "vitest (watch mode)",
+      "test:run": "vitest run (single run)",
+      "test:coverage": "vitest --coverage",
+      "test:ui": "vitest --ui"
+    },
+    "structure": {
+      "setup": "src/test/setup.ts",
+      "mocks": "src/test/mocks/handlers.ts",
+      "utils": "src/test/utils/test-utils.tsx"
+    }
   },
   "currentWork": {
     "recentChanges": [
-      "2026-01-29: Component refactoring - 24 components into 8 feature folders + barrel exports",
+      "2026-01-30: Set up Vitest testing infrastructure (28 tests)",
+      "2026-01-30: Split db.ts into 20 domain modules in db/ folder",
+      "2026-01-30: Flattened deep API routes into PATCH handlers",
+      "2026-01-30: Renamed tg-action/tg-check to telegram-action/telegram-check",
+      "2026-01-29: Component refactoring - 24 components into 8 feature folders",
       "2026-01-29: Created 6 UI primitives (Button, Input, Card, Modal, Select, Badge)",
-      "2026-01-29: Translation fixes for Employees page",
-      "2026-01-29: Remote badge fix in attendance",
-      "2026-01-28: Org chart with expandable tree",
-      "2026-01-28: New positions added"
+      "2026-01-28: Org chart with expandable tree"
     ],
     "pendingTasks": [
       "Employee profile editing improvements",
