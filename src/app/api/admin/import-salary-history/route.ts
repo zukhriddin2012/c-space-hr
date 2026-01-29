@@ -78,46 +78,32 @@ export const POST = withAuth(async (request: NextRequest) => {
       return NextResponse.json({ error: 'No valid records to import' }, { status: 400 });
     }
 
-    // Get existing payslips
-    const { data: existingPayslips } = await supabase
-      .from('payslips')
-      .select('employee_id, year, month')
-      .in('employee_id', payslipRecords.map(r => r.employee_id))
-      .in('year', [...new Set(payslipRecords.map(r => r.year))])
-      .in('month', [...new Set(payslipRecords.map(r => r.month))]);
-
-    const existingSet = new Set(
-      (existingPayslips || []).map(p => `${p.employee_id}-${p.year}-${p.month}`)
-    );
-
-    // Filter out duplicates
-    const newRecords = payslipRecords.filter(
-      r => !existingSet.has(`${r.employee_id}-${r.year}-${r.month}`)
-    );
-
-    if (newRecords.length === 0) {
-      return NextResponse.json({
-        message: 'All records already exist',
-        imported: 0,
-        skipped: payslipRecords.length,
-      });
+    // Deduplicate records within the import (keep last occurrence for each employee+year+month)
+    const deduplicatedMap = new Map<string, typeof payslipRecords[0]>();
+    for (const record of payslipRecords) {
+      const key = `${record.employee_id}-${record.year}-${record.month}`;
+      deduplicatedMap.set(key, record);
     }
+    const uniqueRecords = Array.from(deduplicatedMap.values());
 
-    // Insert new records
-    const { data: inserted, error: insertError } = await supabase
+    // Use upsert to handle duplicates (update on conflict)
+    const { data: upserted, error: upsertError } = await supabase
       .from('payslips')
-      .insert(newRecords)
+      .upsert(uniqueRecords, {
+        onConflict: 'employee_id,year,month',
+        ignoreDuplicates: false, // Update existing records
+      })
       .select();
 
-    if (insertError) {
-      console.error('Error inserting payslips:', insertError);
-      return NextResponse.json({ error: 'Failed to insert payslips: ' + insertError.message }, { status: 500 });
+    if (upsertError) {
+      console.error('Error upserting payslips:', upsertError);
+      return NextResponse.json({ error: 'Failed to import payslips: ' + upsertError.message }, { status: 500 });
     }
 
     return NextResponse.json({
       message: 'Salary history imported successfully',
-      imported: inserted?.length || 0,
-      skipped: payslipRecords.length - (inserted?.length || 0),
+      imported: upserted?.length || 0,
+      duplicatesInFile: payslipRecords.length - uniqueRecords.length,
     });
   } catch (error) {
     console.error('Error importing salary history:', error);
