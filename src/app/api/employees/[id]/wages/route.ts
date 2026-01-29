@@ -1,9 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth } from '@/lib/api-auth';
 import { PERMISSIONS } from '@/lib/permissions';
-import { getEmployeeWages, addEmployeeWage, updateEmployeeWage, removeEmployeeWage, getEmployeeTotalWages } from '@/lib/db';
+import { getEmployeeWages, getEmployeeBranchWages, addEmployeeWage, updateEmployeeWage, removeEmployeeWage, getEmployeeTotalWages } from '@/lib/db';
 
-// GET /api/employees/[id]/wages - Get employee wages from all entities
+// Combined wage entry type for display
+interface CombinedWage {
+  id: string;
+  employee_id: string;
+  source_type: 'primary' | 'additional';
+  source_id: string; // legal_entity_id or branch_id
+  source_name: string;
+  source_inn?: string | null;
+  wage_amount: number;
+  wage_type: string;
+  notes: string | null;
+  is_active: boolean;
+}
+
+// GET /api/employees/[id]/wages - Get employee wages from all sources (Primary + Additional)
 export const GET = withAuth(async (
   request: NextRequest,
   { params }
@@ -14,14 +28,58 @@ export const GET = withAuth(async (
       return NextResponse.json({ error: 'Employee ID required' }, { status: 400 });
     }
 
-    const [wages, totals] = await Promise.all([
+    // Fetch both primary and additional wages in parallel
+    const [primaryWages, additionalWages, totals] = await Promise.all([
       getEmployeeWages(employeeId),
+      getEmployeeBranchWages(employeeId),
       getEmployeeTotalWages(employeeId),
     ]);
 
+    // Combine and normalize the wages
+    const combinedWages: CombinedWage[] = [
+      // Primary wages (from legal entities - bank payments)
+      ...primaryWages.map(w => ({
+        id: w.id,
+        employee_id: w.employee_id,
+        source_type: 'primary' as const,
+        source_id: w.legal_entity_id,
+        source_name: w.legal_entities?.short_name || w.legal_entities?.name || w.legal_entity_id,
+        source_inn: w.legal_entities?.inn,
+        wage_amount: w.wage_amount,
+        wage_type: 'primary', // Changed from 'official' to be clearer
+        notes: w.notes,
+        is_active: w.is_active,
+        // Keep original for compatibility
+        legal_entities: w.legal_entities,
+        legal_entity_id: w.legal_entity_id,
+      })),
+      // Additional wages (from branches - cash payments)
+      ...additionalWages.map(w => ({
+        id: w.id,
+        employee_id: w.employee_id,
+        source_type: 'additional' as const,
+        source_id: w.branch_id,
+        source_name: w.branches?.name || w.branch_id,
+        source_inn: null,
+        wage_amount: w.wage_amount,
+        wage_type: 'additional',
+        notes: w.notes,
+        is_active: w.is_active,
+        // Keep original for compatibility
+        branches: w.branches,
+        branch_id: w.branch_id,
+      })),
+    ];
+
+    // Calculate totals
+    const primaryTotal = primaryWages.reduce((sum, w) => sum + (w.wage_amount || 0), 0);
+    const additionalTotal = additionalWages.reduce((sum, w) => sum + (w.wage_amount || 0), 0);
+
     return NextResponse.json({
-      wages,
-      total: totals.total,
+      wages: combinedWages,
+      total: primaryTotal + additionalTotal,
+      primaryTotal,
+      additionalTotal,
       summary: totals.entities
     });
   } catch (error) {

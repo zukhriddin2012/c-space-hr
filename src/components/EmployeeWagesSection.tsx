@@ -1,25 +1,19 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Building2 } from 'lucide-react';
+import { Building2, Banknote, Wallet } from 'lucide-react';
 
-interface LegalEntity {
-  id: string;
-  name: string;
-  short_name: string | null;
-  inn: string | null;
-  branch_id: string | null;
-}
-
-interface EmployeeWage {
+interface CombinedWage {
   id: string;
   employee_id: string;
-  legal_entity_id: string;
+  source_type: 'primary' | 'additional';
+  source_id: string;
+  source_name: string;
+  source_inn?: string | null;
   wage_amount: number;
-  wage_type: 'official' | 'bonus' | 'additional';
+  wage_type: string;
   notes: string | null;
   is_active: boolean;
-  legal_entities?: LegalEntity;
 }
 
 interface EmployeeWagesSectionProps {
@@ -33,8 +27,10 @@ function formatSalary(amount: number): string {
 }
 
 export default function EmployeeWagesSection({ employeeId }: EmployeeWagesSectionProps) {
-  const [wages, setWages] = useState<EmployeeWage[]>([]);
+  const [wages, setWages] = useState<CombinedWage[]>([]);
   const [total, setTotal] = useState(0);
+  const [primaryTotal, setPrimaryTotal] = useState(0);
+  const [additionalTotal, setAdditionalTotal] = useState(0);
   const [loading, setLoading] = useState(true);
 
   // Fetch wages
@@ -46,6 +42,8 @@ export default function EmployeeWagesSection({ employeeId }: EmployeeWagesSectio
           const data = await response.json();
           setWages(data.wages || []);
           setTotal(data.total || 0);
+          setPrimaryTotal(data.primaryTotal || 0);
+          setAdditionalTotal(data.additionalTotal || 0);
         }
       } catch (err) {
         console.error('Error fetching wages:', err);
@@ -67,11 +65,36 @@ export default function EmployeeWagesSection({ employeeId }: EmployeeWagesSectio
     );
   }
 
+  // Separate wages by type
+  const primaryWages = wages.filter(w => w.source_type === 'primary');
+  const additionalWages = wages.filter(w => w.source_type === 'additional');
+
   return (
     <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
-      <div className="flex items-center gap-2 mb-4">
-        <Building2 size={20} className="text-purple-600" />
-        <h3 className="text-lg font-semibold text-gray-900">Wage Distribution</h3>
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <Building2 size={20} className="text-purple-600" />
+          <h3 className="text-lg font-semibold text-gray-900">Wage Distribution</h3>
+        </div>
+        {/* Summary badges */}
+        {wages.length > 0 && (
+          <div className="flex items-center gap-3">
+            {primaryTotal > 0 && (
+              <div className="flex items-center gap-1 text-xs">
+                <Banknote size={14} className="text-blue-500" />
+                <span className="text-gray-500">Primary:</span>
+                <span className="font-semibold text-blue-600">{formatSalary(primaryTotal)}</span>
+              </div>
+            )}
+            {additionalTotal > 0 && (
+              <div className="flex items-center gap-1 text-xs">
+                <Wallet size={14} className="text-green-500" />
+                <span className="text-gray-500">Additional:</span>
+                <span className="font-semibold text-green-600">{formatSalary(additionalTotal)}</span>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Wages Table */}
@@ -85,29 +108,52 @@ export default function EmployeeWagesSection({ employeeId }: EmployeeWagesSectio
           <table className="w-full">
             <thead>
               <tr className="bg-gray-50 border-b border-gray-200">
-                <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase">Legal Entity</th>
+                <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase">Source</th>
                 <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase">Type</th>
                 <th className="text-right px-4 py-3 text-xs font-medium text-gray-500 uppercase">Amount</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {wages.map((wage) => (
+              {/* Primary wages first */}
+              {primaryWages.map((wage) => (
                 <tr key={wage.id} className="hover:bg-gray-50">
                   <td className="px-4 py-3">
-                    <p className="font-medium text-gray-900">
-                      {wage.legal_entities?.short_name || wage.legal_entities?.name || wage.legal_entity_id}
-                    </p>
-                    {wage.legal_entities?.inn && (
-                      <p className="text-xs text-gray-500">INN: {wage.legal_entities.inn}</p>
-                    )}
+                    <div className="flex items-center gap-2">
+                      <Banknote size={16} className="text-blue-500" />
+                      <div>
+                        <p className="font-medium text-gray-900">{wage.source_name}</p>
+                        {wage.source_inn && (
+                          <p className="text-xs text-gray-500">INN: {wage.source_inn}</p>
+                        )}
+                      </div>
+                    </div>
                   </td>
                   <td className="px-4 py-3">
-                    <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
-                      wage.wage_type === 'official'
-                        ? 'bg-blue-50 text-blue-700'
-                        : 'bg-green-50 text-green-700'
-                    }`}>
-                      {wage.wage_type === 'official' ? 'Official' : 'Additional'}
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-blue-50 text-blue-700">
+                      <Banknote size={12} />
+                      Primary (Bank)
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 text-right font-semibold text-gray-900">
+                    {formatSalary(wage.wage_amount)}
+                  </td>
+                </tr>
+              ))}
+              {/* Additional wages */}
+              {additionalWages.map((wage) => (
+                <tr key={wage.id} className="hover:bg-gray-50">
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-2">
+                      <Wallet size={16} className="text-green-500" />
+                      <div>
+                        <p className="font-medium text-gray-900">{wage.source_name}</p>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-4 py-3">
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-green-50 text-green-700">
+                      <Wallet size={12} />
+                      Additional (Cash)
                     </span>
                   </td>
                   <td className="px-4 py-3 text-right font-semibold text-gray-900">
