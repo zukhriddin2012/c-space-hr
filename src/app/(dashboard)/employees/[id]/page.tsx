@@ -4,9 +4,7 @@ import { redirect, notFound } from 'next/navigation';
 import { ArrowLeft, User, Briefcase, MapPin, Clock, Phone, Mail, Calendar, CheckCircle, AlertCircle, XCircle, Pencil, Wifi } from 'lucide-react';
 import Link from 'next/link';
 import { getEmployeeById, getBranches, getAttendanceByEmployeeAndMonth } from '@/lib/db';
-import EmployeeWagesSection from '@/components/EmployeeWagesSection';
-import WageTrendChart from '@/components/WageTrendChart';
-import EmployeePayslipsSection from '@/components/EmployeePayslipsSection';
+import { EmployeeWagesSection, WageTrendChart, EmployeePayslipsSection } from '@/components/employee';
 
 interface PageProps {
   params: Promise<{ id: string }>;

@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
-import TestBanner from '@/components/TestBanner';
+import { TestBanner } from '@/components/ui';
 
 export default function LoginPage() {
   const router = useRouter();

@@ -39,7 +39,7 @@ import {
   ChevronRight,
 } from 'lucide-react';
 import type { Candidate, CandidateStage, ChecklistItem } from '@/lib/db';
-import CandidateDetailModal from '@/components/CandidateDetailModal';
+import { CandidateDetailModal } from '@/components/recruitment';
 
 const STAGES: { id: CandidateStage; label: string; shortLabel: string; color: string; bgColor: string }[] = [
   { id: 'screening', label: 'Screening', shortLabel: 'Screen', color: 'text-blue-700', bgColor: 'bg-blue-50 border-blue-200' },

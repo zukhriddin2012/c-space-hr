@@ -12,7 +12,7 @@ import {
   X,
   Globe,
 } from 'lucide-react';
-import { RoleGuard, PageGuard } from '@/components/RoleGuard';
+import { RoleGuard, PageGuard } from '@/components/auth';
 import { PERMISSIONS } from '@/lib/permissions';
 import type { UserRole } from '@/types';
 import {

@@ -9,7 +9,7 @@ import {
   Users,
   MapPin,
 } from 'lucide-react';
-import AttendanceMap from '@/components/AttendanceMap';
+import { AttendanceMap } from '@/components/attendance';
 import WeeklyChart from './WeeklyChart';
 
 interface PersonInOffice {

@@ -26,7 +26,7 @@ import {
   Download,
   RotateCcw,
 } from 'lucide-react';
-import { PageGuard } from '@/components/RoleGuard';
+import { PageGuard } from '@/components/auth';
 import { PERMISSIONS } from '@/lib/permissions';
 import type {
   BotLearningContent,

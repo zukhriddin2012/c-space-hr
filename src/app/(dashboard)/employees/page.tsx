@@ -2,7 +2,7 @@ import { getSession } from '@/lib/auth-server';
 import { hasPermission, PERMISSIONS } from '@/lib/permissions';
 import { redirect } from 'next/navigation';
 import { getEmployees, getBranches } from '@/lib/db';
-import EmployeesTable from '@/components/EmployeesTable';
+import { EmployeesTable } from '@/components/employee';
 import EmployeesHeader from './EmployeesHeader';
 import EmployeesFilters from './EmployeesFilters';
 

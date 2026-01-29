@@ -11,7 +11,7 @@ const statusConfig: Record<string, { icon: React.ElementType; label: string; bg:
   'facility_management': { icon: Wrench, label: 'Facility Mgmt', bg: 'bg-slate-100', text: 'text-slate-700', border: 'border-slate-200' },
 };
 import Link from 'next/link';
-import BranchMap from '@/components/BranchMap';
+import { BranchMap } from '@/components/branch';
 import type { BranchWithStats } from './page';
 
 // Branch class badge colors

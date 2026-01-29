@@ -18,7 +18,7 @@ import {
   Shield,
 } from 'lucide-react';
 import Link from 'next/link';
-import MyProfileClient from '@/components/MyProfileClient';
+import { MyProfileClient } from '@/components/profile';
 
 function formatDate(dateString: string): string {
   return new Date(dateString).toLocaleDateString('en-US', {

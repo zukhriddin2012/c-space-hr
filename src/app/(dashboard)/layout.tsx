@@ -1,16 +1,10 @@
 import { redirect } from 'next/navigation';
 import { getSession } from '@/lib/auth-server';
-import Sidebar from '@/components/Sidebar';
-import MobileNav from '@/components/MobileNav';
+import { Sidebar, MobileNav, NotificationBell, SidebarToggle, QuickSwitch } from '@/components/layout';
+import { TestBannerWrapper, FloatingFeedbackButton, LanguageSwitcher } from '@/components/ui';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { SidebarProvider } from '@/contexts/SidebarContext';
 import { LanguageProvider } from '@/contexts/LanguageContext';
-import NotificationBell from '@/components/NotificationBell';
-import SidebarToggle from '@/components/SidebarToggle';
-import TestBannerWrapper from '@/components/TestBannerWrapper';
-import FloatingFeedbackButton from '@/components/FloatingFeedbackButton';
-import LanguageSwitcher from '@/components/LanguageSwitcher';
-import QuickSwitch from '@/components/QuickSwitch';
 
 export default async function DashboardLayout({
   children,

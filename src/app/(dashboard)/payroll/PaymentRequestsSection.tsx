@@ -20,7 +20,7 @@ import {
   Building2,
   MapPin,
 } from 'lucide-react';
-import ConfirmationDialog, { InputDialog } from '@/components/ConfirmationDialog';
+import { ConfirmationDialog, InputDialog } from '@/components/ui';
 
 interface PayrollRecord {
   id: string;

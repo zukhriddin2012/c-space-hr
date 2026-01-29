@@ -37,7 +37,7 @@ import {
   ChevronUp,
 } from 'lucide-react';
 import type { Candidate, CandidateStage, ChecklistItem, CandidateComment, CandidateEvent, AIAnalysis } from '@/lib/db';
-import AddEmployeeModal from './AddEmployeeModal';
+import { AddEmployeeModal } from '@/components/employee';
 import TermSheetFormModal, { TermSheetData } from './TermSheetFormModal';
 import ProbationTermSheetFormModal, { ProbationTermSheetData } from './ProbationTermSheetFormModal';
 
