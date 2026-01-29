@@ -199,6 +199,7 @@ export interface Translations {
     addEmployee: string;
     editEmployee: string;
     employeeDetails: string;
+    viewEmployeeInfo: string;
     fullName: string;
     email: string;
     phone: string;
@@ -207,12 +208,14 @@ export interface Translations {
     branch: string;
     hireDate: string;
     salary: string;
+    perMonth: string;
     status: string;
     active: string;
     inactive: string;
     onLeave: string;
     probation: string;
     terminated: string;
+    remote: string;
     // Employment types
     employmentType: string;
     fullTime: string;
@@ -229,6 +232,31 @@ export interface Translations {
     specialist: string;
     manager: string;
     support: string;
+    // Monthly work hours section
+    monthlyWorkHours: string;
+    totalHours: string;
+    daysPresent: string;
+    daysLate: string;
+    earlyLeaves: string;
+    noAttendanceRecords: string;
+    // Table headers
+    date: string;
+    checkIn: string;
+    checkOut: string;
+    hours: string;
+    // Month names
+    january: string;
+    february: string;
+    march: string;
+    april: string;
+    may: string;
+    june: string;
+    july: string;
+    august: string;
+    september: string;
+    october: string;
+    november: string;
+    december: string;
   };
 
   // Attendance
