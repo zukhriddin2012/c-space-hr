@@ -87,10 +87,10 @@ export interface Attendance {
   is_overnight?: boolean;
   overnight_from_date?: string;
   is_checkout_day?: boolean; // True when viewing the date this record was checked out (not checked in)
-  // IP verification fields
-  verification_type?: 'ip' | 'gps';
+  // Verification fields
+  verification_type?: 'ip' | 'gps' | 'remote';
   ip_address?: string | null;
-  source?: 'telegram' | 'web' | 'manual' | null;
+  source?: 'telegram' | 'web' | 'manual' | 'remote' | null;
 }
 
 export interface LeaveRequest {

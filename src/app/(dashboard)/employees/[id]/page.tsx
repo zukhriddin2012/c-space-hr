@@ -32,16 +32,29 @@ function formatTime(timeString: string | null): string {
   return timeString.substring(0, 5);
 }
 
-function VerificationBadge({ source }: { source: string | null | undefined }) {
-  if (!source) return null;
+function VerificationBadge({ source, verificationType }: { source: string | null | undefined; verificationType?: string | null }) {
+  // Determine what to show based on verification_type first, then source
+  let badgeType = source;
+
+  // If verification_type is 'remote', show Remote badge regardless of source
+  if (verificationType === 'remote') {
+    badgeType = 'remote';
+  } else if (verificationType === 'ip') {
+    badgeType = 'web';
+  } else if (verificationType === 'gps') {
+    badgeType = 'telegram';
+  }
+
+  if (!badgeType) return null;
 
   const config: Record<string, { label: string; className: string }> = {
     web: { label: 'IP', className: 'bg-emerald-100 text-emerald-700 border-emerald-200' },
     telegram: { label: 'GPS', className: 'bg-amber-100 text-amber-700 border-amber-200' },
     manual: { label: 'Manual', className: 'bg-gray-100 text-gray-600 border-gray-200' },
+    remote: { label: 'Remote', className: 'bg-blue-100 text-blue-700 border-blue-200' },
   };
 
-  const badge = config[source];
+  const badge = config[badgeType];
   if (!badge) return null;
 
   return (
@@ -387,7 +400,7 @@ export default async function EmployeeDetailPage({ params, searchParams }: PageP
                         <span className={record.status === 'late' ? 'text-orange-600 font-medium' : ''}>
                           {formatTime(record.check_in)}
                         </span>
-                        <VerificationBadge source={record.source} />
+                        <VerificationBadge source={record.source} verificationType={record.verification_type} />
                       </div>
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-900">{formatTime(record.check_out)}</td>
