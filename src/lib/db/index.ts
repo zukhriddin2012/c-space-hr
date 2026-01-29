@@ -24,3 +24,4 @@ export * from './telegram';
 export * from './reminders';
 export * from './departments';
 export * from './positions';
+export * from './finances';

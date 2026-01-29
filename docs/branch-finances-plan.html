@@ -1,0 +1,1436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>C-Space HR - Branch Finances Module Plan</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .option-card { transition: all 0.2s; }
+        .option-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+        .option-card.selected { border-color: #3b82f6; background: #eff6ff; }
+        .account-row:hover { background: #f8fafc; }
+        .mockup-frame { background: #1e293b; border-radius: 8px; padding: 8px; }
+        .mockup-content { background: white; border-radius: 4px; overflow: hidden; }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <!-- Header -->
+    <header class="bg-white border-b sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-6 py-4">
+            <h1 class="text-2xl font-bold text-gray-900">Branch Finances Module - Planning Document</h1>
+            <p class="text-gray-600 mt-1">C-Space HR • Double-Entry Accounting with Simplified UI</p>
+        </div>
+        <nav class="max-w-7xl mx-auto px-6 border-t">
+            <div class="flex gap-1">
+                <button onclick="showTab('overview')" class="tab-btn px-4 py-3 text-sm font-medium border-b-2 border-blue-500 text-blue-600">Overview</button>
+                <button onclick="showTab('coa')" class="tab-btn px-4 py-3 text-sm font-medium border-b-2 border-transparent text-gray-600 hover:text-gray-900">Chart of Accounts</button>
+                <button onclick="showTab('ui-options')" class="tab-btn px-4 py-3 text-sm font-medium border-b-2 border-transparent text-gray-600 hover:text-gray-900">UI Options</button>
+                <button onclick="showTab('database')" class="tab-btn px-4 py-3 text-sm font-medium border-b-2 border-transparent text-gray-600 hover:text-gray-900">Database Schema</button>
+                <button onclick="showTab('workflows')" class="tab-btn px-4 py-3 text-sm font-medium border-b-2 border-transparent text-gray-600 hover:text-gray-900">Workflows</button>
+                <button onclick="showTab('reports')" class="tab-btn px-4 py-3 text-sm font-medium border-b-2 border-transparent text-gray-600 hover:text-gray-900">Reports</button>
+            </div>
+        </nav>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-6 py-8">
+        <!-- Overview Tab -->
+        <div id="overview" class="tab-content active space-y-8">
+            <section class="bg-white rounded-lg p-6 shadow-sm">
+                <h2 class="text-xl font-semibold mb-4">System Architecture</h2>
+                <div class="bg-gray-50 rounded-lg p-6 font-mono text-sm">
+                    <pre class="text-gray-700">
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                              C-SPACE HR                                          │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                  │
+│   ┌──────────┐    ┌──────────┐    ┌──────────┐    ┌──────────┐    ┌──────────┐ │
+│   │Dashboard │    │Employees │    │Attendance│    │ Branches │    │Accounting│ │
+│   └──────────┘    └──────────┘    └──────────┘    └────┬─────┘    └──────────┘ │
+│                                                        │                        │
+│                                          ┌─────────────┴─────────────┐          │
+│                                          │      Branch Detail        │          │
+│                                          ├───────────────────────────┤          │
+│                                          │  [Overview] [Employees]   │          │
+│                                          │  [Finances] [Settings]    │          │
+│                                          └─────────────┬─────────────┘          │
+│                                                        │                        │
+│                          ┌─────────────────────────────┴─────────────────────┐  │
+│                          │              FINANCES MODULE (NEW)                 │  │
+│                          ├────────────────────────────────────────────────────┤  │
+│                          │                                                    │  │
+│                          │  ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐  │  │
+│                          │  │Dashboard│ │Transact.│ │ Revenue │ │  Costs  │  │  │
+│                          │  └─────────┘ └─────────┘ └─────────┘ └─────────┘  │  │
+│                          │                                                    │  │
+│                          │  ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐  │  │
+│                          │  │Receivab.│ │ Reports │ │ Budget  │ │ Import  │  │  │
+│                          │  └─────────┘ └─────────┘ └─────────┘ └─────────┘  │  │
+│                          │                                                    │  │
+│                          └────────────────────────────────────────────────────┘  │
+│                                                                                  │
+└─────────────────────────────────────────────────────────────────────────────────┘
+                    </pre>
+                </div>
+            </section>
+
+            <section class="bg-white rounded-lg p-6 shadow-sm">
+                <h2 class="text-xl font-semibold mb-4">Double-Entry Simplified</h2>
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div>
+                        <h3 class="font-medium text-gray-900 mb-3">What User Sees</h3>
+                        <div class="bg-gray-50 rounded-lg p-4 border">
+                            <div class="space-y-3">
+                                <div>
+                                    <label class="text-sm text-gray-600">Service</label>
+                                    <div class="mt-1 px-3 py-2 bg-white border rounded">Meeting Room</div>
+                                </div>
+                                <div>
+                                    <label class="text-sm text-gray-600">Amount</label>
+                                    <div class="mt-1 px-3 py-2 bg-white border rounded">150,000 UZS</div>
+                                </div>
+                                <div>
+                                    <label class="text-sm text-gray-600">Payment Method</label>
+                                    <div class="mt-1 px-3 py-2 bg-white border rounded">Cash</div>
+                                </div>
+                                <button class="w-full bg-blue-500 text-white py-2 rounded font-medium">Record Sale</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="font-medium text-gray-900 mb-3">What System Creates (Hidden)</h3>
+                        <div class="bg-slate-800 rounded-lg p-4 text-green-400 font-mono text-sm">
+                            <div class="mb-2 text-slate-400">// Auto-generated journal entry</div>
+                            <div class="mb-3">
+                                <span class="text-blue-400">Transaction #4521</span>
+                                <span class="text-slate-500"> | 2025-01-30</span>
+                            </div>
+                            <table class="w-full">
+                                <tr>
+                                    <td class="py-1">DR</td>
+                                    <td>1101 Cash - Petty</td>
+                                    <td class="text-right">150,000</td>
+                                </tr>
+                                <tr>
+                                    <td class="py-1">CR</td>
+                                    <td>4400 Meeting Revenue</td>
+                                    <td class="text-right">150,000</td>
+                                </tr>
+                            </table>
+                        </div>
+                        <p class="text-sm text-gray-500 mt-2">Users never see debits/credits. System handles all accounting logic.</p>
+                    </div>
+                </div>
+            </section>
+
+            <section class="bg-white rounded-lg p-6 shadow-sm">
+                <h2 class="text-xl font-semibold mb-4">Role-Based Access</h2>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead>
+                            <tr class="border-b">
+                                <th class="text-left py-3 px-4">Feature</th>
+                                <th class="text-center py-3 px-4">Receptionist</th>
+                                <th class="text-center py-3 px-4">Branch Manager</th>
+                                <th class="text-center py-3 px-4">Accountant</th>
+                                <th class="text-center py-3 px-4">CEO/GM</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="border-b">
+                                <td class="py-3 px-4">Record sales</td>
+                                <td class="text-center text-green-600">✓</td>
+                                <td class="text-center text-green-600">✓</td>
+                                <td class="text-center text-green-600">✓</td>
+                                <td class="text-center text-green-600">✓</td>
+                            </tr>
+                            <tr class="border-b">
+                                <td class="py-3 px-4">Record expenses (≤500K)</td>
+                                <td class="text-center text-gray-400">—</td>
+                                <td class="text-center text-green-600">✓</td>
+                                <td class="text-center text-green-600">✓</td>
+                                <td class="text-center text-green-600">✓</td>
+                            </tr>
+                            <tr class="border-b">
+                                <td class="py-3 px-4">Approve expenses (&gt;500K)</td>
+                                <td class="text-center text-gray-400">—</td>
+                                <td class="text-center text-gray-400">—</td>
+                                <td class="text-center text-gray-400">—</td>
+                                <td class="text-center text-green-600">✓</td>
+                            </tr>
+                            <tr class="border-b">
+                                <td class="py-3 px-4">View branch finances</td>
+                                <td class="text-center text-gray-400">—</td>
+                                <td class="text-center text-green-600">Own branch</td>
+                                <td class="text-center text-green-600">All</td>
+                                <td class="text-center text-green-600">All</td>
+                            </tr>
+                            <tr class="border-b">
+                                <td class="py-3 px-4">Import Excel data</td>
+                                <td class="text-center text-gray-400">—</td>
+                                <td class="text-center text-gray-400">—</td>
+                                <td class="text-center text-green-600">✓</td>
+                                <td class="text-center text-green-600">✓</td>
+                            </tr>
+                            <tr class="border-b">
+                                <td class="py-3 px-4">Generate reports</td>
+                                <td class="text-center text-gray-400">—</td>
+                                <td class="text-center text-green-600">Own branch</td>
+                                <td class="text-center text-green-600">All</td>
+                                <td class="text-center text-green-600">All</td>
+                            </tr>
+                            <tr class="border-b">
+                                <td class="py-3 px-4">Manage budgets</td>
+                                <td class="text-center text-gray-400">—</td>
+                                <td class="text-center text-gray-400">—</td>
+                                <td class="text-center text-green-600">✓</td>
+                                <td class="text-center text-green-600">✓</td>
+                            </tr>
+                            <tr>
+                                <td class="py-3 px-4">Send debt reminders</td>
+                                <td class="text-center text-gray-400">—</td>
+                                <td class="text-center text-green-600">✓</td>
+                                <td class="text-center text-green-600">✓</td>
+                                <td class="text-center text-green-600">✓</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+
+        <!-- Chart of Accounts Tab -->
+        <div id="coa" class="tab-content space-y-8">
+            <section class="bg-white rounded-lg p-6 shadow-sm">
+                <h2 class="text-xl font-semibold mb-2">Chart of Accounts</h2>
+                <p class="text-gray-600 mb-6">Based on your Excel data categories. Each branch has its own sub-accounts.</p>
+
+                <div class="grid lg:grid-cols-2 gap-6">
+                    <!-- Assets -->
+                    <div class="border rounded-lg overflow-hidden">
+                        <div class="bg-blue-50 px-4 py-3 border-b">
+                            <h3 class="font-semibold text-blue-900">1000 - ASSETS</h3>
+                        </div>
+                        <div class="divide-y">
+                            <div class="account-row px-4 py-2">
+                                <div class="flex justify-between">
+                                    <span class="font-mono text-sm">1100</span>
+                                    <span class="font-medium">Cash & Bank</span>
+                                </div>
+                            </div>
+                            <div class="account-row px-4 py-2 pl-8 bg-gray-50">
+                                <div class="flex justify-between text-sm">
+                                    <span class="font-mono">1101</span>
+                                    <span>Petty Cash - Labzak</span>
+                                </div>
+                            </div>
+                            <div class="account-row px-4 py-2 pl-8 bg-gray-50">
+                                <div class="flex justify-between text-sm">
+                                    <span class="font-mono">1102</span>
+                                    <span>Petty Cash - Chilanzar</span>
+                                </div>
+                            </div>
+                            <div class="account-row px-4 py-2 pl-8 bg-gray-50">
+                                <div class="flex justify-between text-sm">
+                                    <span class="font-mono">1110</span>
+                                    <span>Bank Account - Main</span>
+                                </div>
+                            </div>
+                            <div class="account-row px-4 py-2 pl-8 bg-gray-50">
+                                <div class="flex justify-between text-sm">
+                                    <span class="font-mono">1120</span>
+                                    <span>Payment Processors (Payme, Click, Uzum)</span>
+                                </div>
+                            </div>
+                            <div class="account-row px-4 py-2">
+                                <div class="flex justify-between">
+                                    <span class="font-mono text-sm">1200</span>
+                                    <span class="font-medium">Accounts Receivable</span>
+                                </div>
+                            </div>
+                            <div class="account-row px-4 py-2 pl-8 bg-gray-50">
+                                <div class="flex justify-between text-sm">
+                                    <span class="font-mono">1201</span>
+                                    <span>Tenant Receivables</span>
+                                </div>
+                            </div>
+                            <div class="account-row px-4 py-2 pl-8 bg-gray-50">
+                                <div class="flex justify-between text-sm">
+                                    <span class="font-mono">1202</span>
+                                    <span>Other Receivables</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Liabilities & Equity -->
+                    <div class="border rounded-lg overflow-hidden">
+                        <div class="bg-red-50 px-4 py-3 border-b">
+                            <h3 class="font-semibold text-red-900">2000 - LIABILITIES</h3>
+                        </div>
+                        <div class="divide-y">
+                            <div class="account-row px-4 py-2">
+                                <div class="flex justify-between">
+                                    <span class="font-mono text-sm">2100</span>
+                                    <span class="font-medium">Accounts Payable</span>
+                                </div>
+                            </div>
+                            <div class="account-row px-4 py-2">
+                                <div class="flex justify-between">
+                                    <span class="font-mono text-sm">2200</span>
+                                    <span class="font-medium">Accrued Expenses</span>
+                                </div>
+                            </div>
+                            <div class="account-row px-4 py-2">
+                                <div class="flex justify-between">
+                                    <span class="font-mono text-sm">2300</span>
+                                    <span class="font-medium">Deferred Revenue (Prepaid rent)</span>
+                                </div>
+                            </div>
+                            <div class="account-row px-4 py-2">
+                                <div class="flex justify-between">
+                                    <span class="font-mono text-sm">2400</span>
+                                    <span class="font-medium">Taxes Payable</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-purple-50 px-4 py-3 border-t border-b">
+                            <h3 class="font-semibold text-purple-900">3000 - EQUITY</h3>
+                        </div>
+                        <div class="divide-y">
+                            <div class="account-row px-4 py-2">
+                                <div class="flex justify-between">
+                                    <span class="font-mono text-sm">3100</span>
+                                    <span class="font-medium">Retained Earnings</span>
+                                </div>
+                            </div>
+                            <div class="account-row px-4 py-2">
+                                <div class="flex justify-between">
+                                    <span class="font-mono text-sm">3200</span>
+                                    <span class="font-medium">Current Period Earnings</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Revenue -->
+                    <div class="border rounded-lg overflow-hidden">
+                        <div class="bg-green-50 px-4 py-3 border-b">
+                            <h3 class="font-semibold text-green-900">4000 - REVENUE</h3>
+                        </div>
+                        <div class="divide-y">
+                            <div class="account-row px-4 py-2">
+                                <div class="flex justify-between">
+                                    <span class="font-mono text-sm">4100</span>
+                                    <span class="font-medium">Office Rental Income</span>
+                                </div>
+                                <div class="text-xs text-gray-500 mt-1">Monthly office subscriptions</div>
+                            </div>
+                            <div class="account-row px-4 py-2">
+                                <div class="flex justify-between">
+                                    <span class="font-mono text-sm">4200</span>
+                                    <span class="font-medium">Dedicated Desk Income</span>
+                                </div>
+                                <div class="text-xs text-gray-500 mt-1">Open space dedicated desks</div>
+                            </div>
+                            <div class="account-row px-4 py-2">
+                                <div class="flex justify-between">
+                                    <span class="font-mono text-sm">4300</span>
+                                    <span class="font-medium">Flex Membership Income</span>
+                                </div>
+                                <div class="text-xs text-gray-500 mt-1">Flex, 100 Hour, Day Pass, Weekpass, 15 Days</div>
+                            </div>
+                            <div class="account-row px-4 py-2">
+                                <div class="flex justify-between">
+                                    <span class="font-mono text-sm">4400</span>
+                                    <span class="font-medium">Meeting Room Income</span>
+                                </div>
+                                <div class="text-xs text-gray-500 mt-1">Hourly meeting room bookings</div>
+                            </div>
+                            <div class="account-row px-4 py-2">
+                                <div class="flex justify-between">
+                                    <span class="font-mono text-sm">4500</span>
+                                    <span class="font-medium">Conference Room Income</span>
+                                </div>
+                                <div class="text-xs text-gray-500 mt-1">Large event/conference bookings</div>
+                            </div>
+                            <div class="account-row px-4 py-2">
+                                <div class="flex justify-between">
+                                    <span class="font-mono text-sm">4600</span>
+                                    <span class="font-medium">Virtual Office Income</span>
+                                </div>
+                                <div class="text-xs text-gray-500 mt-1">Address & mail services</div>
+                            </div>
+                            <div class="account-row px-4 py-2">
+                                <div class="flex justify-between">
+                                    <span class="font-mono text-sm">4700</span>
+                                    <span class="font-medium">Service Income</span>
+                                </div>
+                                <div class="text-xs text-gray-500 mt-1">Printing, other services</div>
+                            </div>
+                            <div class="account-row px-4 py-2">
+                                <div class="flex justify-between">
+                                    <span class="font-mono text-sm">4900</span>
+                                    <span class="font-medium">Other Income</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Expenses -->
+                    <div class="border rounded-lg overflow-hidden">
+                        <div class="bg-orange-50 px-4 py-3 border-b">
+                            <h3 class="font-semibold text-orange-900">5000 - EXPENSES</h3>
+                        </div>
+                        <div class="divide-y">
+                            <div class="account-row px-4 py-2">
+                                <div class="flex justify-between">
+                                    <span class="font-mono text-sm">5100</span>
+                                    <span class="font-medium">Goods & Supplies</span>
+                                </div>
+                                <div class="text-xs text-gray-500 mt-1">Tea, coffee, snacks, cleaning supplies</div>
+                            </div>
+                            <div class="account-row px-4 py-2">
+                                <div class="flex justify-between">
+                                    <span class="font-mono text-sm">5200</span>
+                                    <span class="font-medium">Utilities</span>
+                                </div>
+                                <div class="text-xs text-gray-500 mt-1">Uzbektelecom, electricity, gas, water</div>
+                            </div>
+                            <div class="account-row px-4 py-2">
+                                <div class="flex justify-between">
+                                    <span class="font-mono text-sm">5300</span>
+                                    <span class="font-medium">Staff Expenses</span>
+                                </div>
+                                <div class="text-xs text-gray-500 mt-1">Salaries, benefits (linked to Payroll)</div>
+                            </div>
+                            <div class="account-row px-4 py-2">
+                                <div class="flex justify-between">
+                                    <span class="font-mono text-sm">5400</span>
+                                    <span class="font-medium">Maintenance & Repairs</span>
+                                </div>
+                                <div class="text-xs text-gray-500 mt-1">AC repair, electrical, plumbing</div>
+                            </div>
+                            <div class="account-row px-4 py-2">
+                                <div class="flex justify-between">
+                                    <span class="font-mono text-sm">5500</span>
+                                    <span class="font-medium">Marketing & Advertising</span>
+                                </div>
+                            </div>
+                            <div class="account-row px-4 py-2">
+                                <div class="flex justify-between">
+                                    <span class="font-mono text-sm">5600</span>
+                                    <span class="font-medium">Taxes & Fees</span>
+                                </div>
+                                <div class="text-xs text-gray-500 mt-1">Property tax, licenses, bank fees</div>
+                            </div>
+                            <div class="account-row px-4 py-2">
+                                <div class="flex justify-between">
+                                    <span class="font-mono text-sm">5700</span>
+                                    <span class="font-medium">Capital Expenditures</span>
+                                </div>
+                                <div class="text-xs text-gray-500 mt-1">Furniture, equipment (CapEx)</div>
+                            </div>
+                            <div class="account-row px-4 py-2">
+                                <div class="flex justify-between">
+                                    <span class="font-mono text-sm">5800</span>
+                                    <span class="font-medium">Other Operating Expenses</span>
+                                </div>
+                                <div class="text-xs text-gray-500 mt-1">Taxi, miscellaneous, charity</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- UI Options Tab -->
+        <div id="ui-options" class="tab-content space-y-8">
+            <!-- Dashboard Options -->
+            <section class="bg-white rounded-lg p-6 shadow-sm">
+                <h2 class="text-xl font-semibold mb-2">Dashboard Layout Options</h2>
+                <p class="text-gray-600 mb-6">Choose your preferred dashboard style. Click to select.</p>
+
+                <div class="grid lg:grid-cols-2 gap-6">
+                    <!-- Option A: KPI Cards Top -->
+                    <div class="option-card border-2 rounded-lg p-4 cursor-pointer" onclick="selectOption(this, 'dashboard')">
+                        <div class="flex items-center gap-2 mb-3">
+                            <span class="bg-blue-100 text-blue-700 text-xs font-bold px-2 py-1 rounded">OPTION A</span>
+                            <span class="font-medium">KPI Cards + Charts</span>
+                        </div>
+                        <div class="mockup-frame">
+                            <div class="mockup-content p-3">
+                                <div class="flex gap-2 mb-3">
+                                    <div class="flex-1 bg-green-50 rounded p-2 text-center">
+                                        <div class="text-xs text-gray-500">Revenue</div>
+                                        <div class="font-bold text-green-700">245M</div>
+                                    </div>
+                                    <div class="flex-1 bg-red-50 rounded p-2 text-center">
+                                        <div class="text-xs text-gray-500">Costs</div>
+                                        <div class="font-bold text-red-700">82M</div>
+                                    </div>
+                                    <div class="flex-1 bg-blue-50 rounded p-2 text-center">
+                                        <div class="text-xs text-gray-500">Profit</div>
+                                        <div class="font-bold text-blue-700">163M</div>
+                                    </div>
+                                    <div class="flex-1 bg-yellow-50 rounded p-2 text-center">
+                                        <div class="text-xs text-gray-500">Debt</div>
+                                        <div class="font-bold text-yellow-700">12M</div>
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-2 gap-2">
+                                    <div class="bg-gray-100 rounded h-20 flex items-center justify-center text-xs text-gray-400">Revenue Chart</div>
+                                    <div class="bg-gray-100 rounded h-20 flex items-center justify-center text-xs text-gray-400">Expense Breakdown</div>
+                                </div>
+                            </div>
+                        </div>
+                        <p class="text-sm text-gray-600 mt-3">Clean, scannable. Best for quick overview.</p>
+                    </div>
+
+                    <!-- Option B: Split View -->
+                    <div class="option-card border-2 rounded-lg p-4 cursor-pointer" onclick="selectOption(this, 'dashboard')">
+                        <div class="flex items-center gap-2 mb-3">
+                            <span class="bg-purple-100 text-purple-700 text-xs font-bold px-2 py-1 rounded">OPTION B</span>
+                            <span class="font-medium">Split: Summary + Activity</span>
+                        </div>
+                        <div class="mockup-frame">
+                            <div class="mockup-content p-3">
+                                <div class="flex gap-2">
+                                    <div class="w-1/2">
+                                        <div class="text-xs font-medium mb-2">This Month</div>
+                                        <div class="space-y-1">
+                                            <div class="flex justify-between text-xs">
+                                                <span>Revenue</span>
+                                                <span class="text-green-600">+245M</span>
+                                            </div>
+                                            <div class="flex justify-between text-xs">
+                                                <span>Expenses</span>
+                                                <span class="text-red-600">-82M</span>
+                                            </div>
+                                            <div class="border-t pt-1 flex justify-between text-xs font-bold">
+                                                <span>Net</span>
+                                                <span>163M</span>
+                                            </div>
+                                        </div>
+                                        <div class="bg-gray-100 rounded h-12 mt-2 flex items-center justify-center text-xs text-gray-400">Trend</div>
+                                    </div>
+                                    <div class="w-1/2 border-l pl-2">
+                                        <div class="text-xs font-medium mb-2">Recent Activity</div>
+                                        <div class="space-y-1 text-xs">
+                                            <div class="flex justify-between">
+                                                <span class="text-gray-600">Meeting - Cash</span>
+                                                <span>+150K</span>
+                                            </div>
+                                            <div class="flex justify-between">
+                                                <span class="text-gray-600">Supplies</span>
+                                                <span class="text-red-600">-45K</span>
+                                            </div>
+                                            <div class="flex justify-between">
+                                                <span class="text-gray-600">Flex - Payme</span>
+                                                <span>+800K</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <p class="text-sm text-gray-600 mt-3">Compact. Shows P&L + recent activity side by side.</p>
+                    </div>
+
+                    <!-- Option C: Action-Focused -->
+                    <div class="option-card border-2 rounded-lg p-4 cursor-pointer" onclick="selectOption(this, 'dashboard')">
+                        <div class="flex items-center gap-2 mb-3">
+                            <span class="bg-green-100 text-green-700 text-xs font-bold px-2 py-1 rounded">OPTION C</span>
+                            <span class="font-medium">Action-Focused</span>
+                        </div>
+                        <div class="mockup-frame">
+                            <div class="mockup-content p-3">
+                                <div class="flex gap-2 mb-3">
+                                    <button class="flex-1 bg-blue-500 text-white text-xs py-2 rounded">+ Sale</button>
+                                    <button class="flex-1 bg-gray-200 text-xs py-2 rounded">+ Expense</button>
+                                    <button class="flex-1 bg-gray-200 text-xs py-2 rounded">Import</button>
+                                </div>
+                                <div class="bg-yellow-50 border border-yellow-200 rounded p-2 mb-2">
+                                    <div class="text-xs font-medium text-yellow-800">⚠ 3 overdue payments</div>
+                                    <div class="text-xs text-yellow-700">Total: 8.5M UZS</div>
+                                </div>
+                                <div class="text-xs font-medium mb-1">Today's Summary</div>
+                                <div class="flex justify-between text-xs">
+                                    <span>Sales: 2.4M</span>
+                                    <span>Expenses: 180K</span>
+                                </div>
+                            </div>
+                        </div>
+                        <p class="text-sm text-gray-600 mt-3">Best for reception/branch managers. Quick actions + alerts.</p>
+                    </div>
+
+                    <!-- Option D: Full Analytics -->
+                    <div class="option-card border-2 rounded-lg p-4 cursor-pointer" onclick="selectOption(this, 'dashboard')">
+                        <div class="flex items-center gap-2 mb-3">
+                            <span class="bg-orange-100 text-orange-700 text-xs font-bold px-2 py-1 rounded">OPTION D</span>
+                            <span class="font-medium">Full Analytics</span>
+                        </div>
+                        <div class="mockup-frame">
+                            <div class="mockup-content p-3">
+                                <div class="flex gap-1 mb-2">
+                                    <span class="text-xs bg-gray-200 px-2 py-0.5 rounded">Day</span>
+                                    <span class="text-xs bg-blue-500 text-white px-2 py-0.5 rounded">Month</span>
+                                    <span class="text-xs bg-gray-200 px-2 py-0.5 rounded">Quarter</span>
+                                    <span class="text-xs bg-gray-200 px-2 py-0.5 rounded">Year</span>
+                                </div>
+                                <div class="bg-gray-100 rounded h-16 mb-2 flex items-center justify-center text-xs text-gray-400">Revenue vs Expenses Chart</div>
+                                <div class="grid grid-cols-3 gap-1">
+                                    <div class="bg-gray-50 rounded p-1 text-center">
+                                        <div class="text-xs text-gray-500">Offices</div>
+                                        <div class="text-xs font-bold">65%</div>
+                                    </div>
+                                    <div class="bg-gray-50 rounded p-1 text-center">
+                                        <div class="text-xs text-gray-500">Flex</div>
+                                        <div class="text-xs font-bold">22%</div>
+                                    </div>
+                                    <div class="bg-gray-50 rounded p-1 text-center">
+                                        <div class="text-xs text-gray-500">Meeting</div>
+                                        <div class="text-xs font-bold">13%</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <p class="text-sm text-gray-600 mt-3">Data-rich. Best for CEO/accountant deep dives.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Transaction Entry Options -->
+            <section class="bg-white rounded-lg p-6 shadow-sm">
+                <h2 class="text-xl font-semibold mb-2">Transaction Entry Options</h2>
+                <p class="text-gray-600 mb-6">How receptionists record sales.</p>
+
+                <div class="grid lg:grid-cols-3 gap-6">
+                    <!-- Option A: Simple Form -->
+                    <div class="option-card border-2 rounded-lg p-4 cursor-pointer" onclick="selectOption(this, 'entry')">
+                        <div class="flex items-center gap-2 mb-3">
+                            <span class="bg-blue-100 text-blue-700 text-xs font-bold px-2 py-1 rounded">A</span>
+                            <span class="font-medium">Simple Form</span>
+                        </div>
+                        <div class="mockup-frame">
+                            <div class="mockup-content p-3 space-y-2">
+                                <div>
+                                    <div class="text-xs text-gray-500 mb-1">Service</div>
+                                    <div class="border rounded px-2 py-1 text-sm">Meeting Room ▼</div>
+                                </div>
+                                <div>
+                                    <div class="text-xs text-gray-500 mb-1">Amount</div>
+                                    <div class="border rounded px-2 py-1 text-sm">150,000</div>
+                                </div>
+                                <div>
+                                    <div class="text-xs text-gray-500 mb-1">Customer</div>
+                                    <div class="border rounded px-2 py-1 text-sm">Oybek Dadashev</div>
+                                </div>
+                                <div>
+                                    <div class="text-xs text-gray-500 mb-1">Payment</div>
+                                    <div class="flex gap-1">
+                                        <span class="bg-green-500 text-white text-xs px-2 py-1 rounded">Cash</span>
+                                        <span class="bg-gray-200 text-xs px-2 py-1 rounded">Card</span>
+                                        <span class="bg-gray-200 text-xs px-2 py-1 rounded">Payme</span>
+                                    </div>
+                                </div>
+                                <button class="w-full bg-blue-500 text-white text-sm py-2 rounded mt-2">Record</button>
+                            </div>
+                        </div>
+                        <p class="text-sm text-gray-600 mt-3">Standard form. Clear labels.</p>
+                    </div>
+
+                    <!-- Option B: Quick Buttons -->
+                    <div class="option-card border-2 rounded-lg p-4 cursor-pointer" onclick="selectOption(this, 'entry')">
+                        <div class="flex items-center gap-2 mb-3">
+                            <span class="bg-purple-100 text-purple-700 text-xs font-bold px-2 py-1 rounded">B</span>
+                            <span class="font-medium">Quick Buttons</span>
+                        </div>
+                        <div class="mockup-frame">
+                            <div class="mockup-content p-3">
+                                <div class="text-xs text-gray-500 mb-2">Quick Add</div>
+                                <div class="grid grid-cols-2 gap-1 mb-3">
+                                    <button class="bg-gray-100 text-xs py-2 rounded hover:bg-gray-200">🏢 Office</button>
+                                    <button class="bg-gray-100 text-xs py-2 rounded hover:bg-gray-200">💺 Dedicated</button>
+                                    <button class="bg-blue-100 text-xs py-2 rounded border-2 border-blue-500">🚀 Flex</button>
+                                    <button class="bg-gray-100 text-xs py-2 rounded hover:bg-gray-200">🤝 Meeting</button>
+                                    <button class="bg-gray-100 text-xs py-2 rounded hover:bg-gray-200">🎤 Conference</button>
+                                    <button class="bg-gray-100 text-xs py-2 rounded hover:bg-gray-200">⏰ Hour</button>
+                                </div>
+                                <div class="border-t pt-2">
+                                    <div class="flex gap-1 mb-2">
+                                        <input class="flex-1 border rounded px-2 py-1 text-sm" placeholder="Amount">
+                                        <input class="flex-1 border rounded px-2 py-1 text-sm" placeholder="Customer">
+                                    </div>
+                                    <div class="flex gap-1">
+                                        <span class="flex-1 bg-green-100 text-center text-xs py-1 rounded">Cash</span>
+                                        <span class="flex-1 bg-gray-100 text-center text-xs py-1 rounded">Card</span>
+                                        <span class="flex-1 bg-gray-100 text-center text-xs py-1 rounded">Payme</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <p class="text-sm text-gray-600 mt-3">Faster for high-volume. Visual service selection.</p>
+                    </div>
+
+                    <!-- Option C: POS Style -->
+                    <div class="option-card border-2 rounded-lg p-4 cursor-pointer" onclick="selectOption(this, 'entry')">
+                        <div class="flex items-center gap-2 mb-3">
+                            <span class="bg-green-100 text-green-700 text-xs font-bold px-2 py-1 rounded">C</span>
+                            <span class="font-medium">POS Style</span>
+                        </div>
+                        <div class="mockup-frame">
+                            <div class="mockup-content p-3">
+                                <div class="flex gap-2">
+                                    <div class="flex-1">
+                                        <div class="text-xs text-gray-500 mb-1">Services</div>
+                                        <div class="space-y-1 text-xs">
+                                            <div class="flex justify-between p-1 bg-gray-50 rounded">
+                                                <span>Meeting</span>
+                                                <span>150K/hr</span>
+                                            </div>
+                                            <div class="flex justify-between p-1 bg-blue-50 rounded border border-blue-300">
+                                                <span>Flex</span>
+                                                <span>800K</span>
+                                            </div>
+                                            <div class="flex justify-between p-1 bg-gray-50 rounded">
+                                                <span>Day Pass</span>
+                                                <span>120K</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="w-24 border-l pl-2">
+                                        <div class="text-xs text-gray-500 mb-1">Cart</div>
+                                        <div class="text-xs mb-1">Flex x1</div>
+                                        <div class="text-xs font-bold border-t pt-1">800,000</div>
+                                        <button class="w-full bg-green-500 text-white text-xs py-1 rounded mt-2">Pay</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <p class="text-sm text-gray-600 mt-3">Multi-item transactions. Like retail POS.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Navigation Options -->
+            <section class="bg-white rounded-lg p-6 shadow-sm">
+                <h2 class="text-xl font-semibold mb-2">Navigation Structure Options</h2>
+                <p class="text-gray-600 mb-6">Where does Finances live in the app?</p>
+
+                <div class="grid lg:grid-cols-2 gap-6">
+                    <!-- Option A: Inside Branch -->
+                    <div class="option-card border-2 rounded-lg p-4 cursor-pointer selected" onclick="selectOption(this, 'nav')">
+                        <div class="flex items-center gap-2 mb-3">
+                            <span class="bg-blue-100 text-blue-700 text-xs font-bold px-2 py-1 rounded">RECOMMENDED</span>
+                            <span class="font-medium">Inside Branch Detail</span>
+                        </div>
+                        <div class="mockup-frame">
+                            <div class="mockup-content">
+                                <div class="bg-gray-800 text-white text-xs px-3 py-2 flex gap-4">
+                                    <span>Dashboard</span>
+                                    <span>Employees</span>
+                                    <span class="text-blue-400">Branches</span>
+                                    <span>Attendance</span>
+                                </div>
+                                <div class="p-3">
+                                    <div class="text-sm font-medium mb-2">Labzak Branch</div>
+                                    <div class="flex gap-1 mb-3">
+                                        <span class="text-xs bg-gray-200 px-2 py-1 rounded">Overview</span>
+                                        <span class="text-xs bg-gray-200 px-2 py-1 rounded">Employees</span>
+                                        <span class="text-xs bg-blue-500 text-white px-2 py-1 rounded">Finances</span>
+                                        <span class="text-xs bg-gray-200 px-2 py-1 rounded">Settings</span>
+                                    </div>
+                                    <div class="bg-gray-100 rounded p-2 text-xs text-gray-500">Finance dashboard here...</div>
+                                </div>
+                            </div>
+                        </div>
+                        <p class="text-sm text-gray-600 mt-3">✓ Natural hierarchy<br>✓ Branch context always visible<br>✓ Clean top nav</p>
+                    </div>
+
+                    <!-- Option B: Top-level Module -->
+                    <div class="option-card border-2 rounded-lg p-4 cursor-pointer" onclick="selectOption(this, 'nav')">
+                        <div class="flex items-center gap-2 mb-3">
+                            <span class="bg-gray-100 text-gray-700 text-xs font-bold px-2 py-1 rounded">ALTERNATIVE</span>
+                            <span class="font-medium">Top-Level Finance Module</span>
+                        </div>
+                        <div class="mockup-frame">
+                            <div class="mockup-content">
+                                <div class="bg-gray-800 text-white text-xs px-3 py-2 flex gap-4">
+                                    <span>Dashboard</span>
+                                    <span>Employees</span>
+                                    <span>Branches</span>
+                                    <span class="text-blue-400">Finances</span>
+                                    <span>Attendance</span>
+                                </div>
+                                <div class="p-3">
+                                    <div class="flex gap-1 mb-2">
+                                        <span class="text-xs bg-blue-500 text-white px-2 py-1 rounded">All Branches</span>
+                                        <span class="text-xs bg-gray-200 px-2 py-1 rounded">Labzak</span>
+                                        <span class="text-xs bg-gray-200 px-2 py-1 rounded">Chilanzar</span>
+                                    </div>
+                                    <div class="bg-gray-100 rounded p-2 text-xs text-gray-500">Consolidated or branch-specific view...</div>
+                                </div>
+                            </div>
+                        </div>
+                        <p class="text-sm text-gray-600 mt-3">✓ Direct access from nav<br>✓ Easier consolidated view<br>✗ More cluttered nav</p>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- Database Schema Tab -->
+        <div id="database" class="tab-content space-y-8">
+            <section class="bg-white rounded-lg p-6 shadow-sm">
+                <h2 class="text-xl font-semibold mb-4">Database Schema</h2>
+
+                <div class="bg-slate-800 rounded-lg p-6 font-mono text-sm text-green-400 overflow-x-auto">
+                    <pre>
+-- Core accounting tables
+
+<span class="text-blue-400">-- Chart of Accounts</span>
+CREATE TABLE accounts (
+  id            UUID PRIMARY KEY,
+  code          VARCHAR(10) NOT NULL UNIQUE,  -- "4100", "5200"
+  name          VARCHAR(100) NOT NULL,        -- "Office Rental Income"
+  name_uz       VARCHAR(100),
+  name_ru       VARCHAR(100),
+  type          VARCHAR(20) NOT NULL,         -- asset, liability, equity, revenue, expense
+  parent_id     UUID REFERENCES accounts(id), -- for hierarchy
+  is_active     BOOLEAN DEFAULT true,
+  created_at    TIMESTAMP DEFAULT NOW()
+);
+
+<span class="text-blue-400">-- Customers/Tenants (for receivables)</span>
+CREATE TABLE finance_customers (
+  id            UUID PRIMARY KEY,
+  branch_id     UUID NOT NULL REFERENCES branches(id),
+  name          VARCHAR(200) NOT NULL,
+  customer_type VARCHAR(20),                  -- company, individual
+  telegram_id   VARCHAR(50),                  -- for reminders
+  phone         VARCHAR(20),
+  email         VARCHAR(100),
+  notes         TEXT,
+  created_at    TIMESTAMP DEFAULT NOW()
+);
+
+<span class="text-blue-400">-- Journal Entries (double-entry core)</span>
+CREATE TABLE journal_entries (
+  id            UUID PRIMARY KEY,
+  branch_id     UUID NOT NULL REFERENCES branches(id),
+  entry_date    DATE NOT NULL,
+  reference     VARCHAR(50),                  -- invoice #, receipt #
+  description   TEXT,
+  status        VARCHAR(20) DEFAULT 'posted', -- draft, posted, void
+  created_by    UUID REFERENCES employees(id),
+  created_at    TIMESTAMP DEFAULT NOW()
+);
+
+<span class="text-blue-400">-- Journal Entry Lines (debit/credit pairs)</span>
+CREATE TABLE journal_entry_lines (
+  id            UUID PRIMARY KEY,
+  journal_entry_id UUID NOT NULL REFERENCES journal_entries(id),
+  account_id    UUID NOT NULL REFERENCES accounts(id),
+  debit         DECIMAL(18,2) DEFAULT 0,
+  credit        DECIMAL(18,2) DEFAULT 0,
+  memo          VARCHAR(200)
+);
+
+<span class="text-blue-400">-- Simplified Transaction View (what users see)</span>
+CREATE TABLE transactions (
+  id              UUID PRIMARY KEY,
+  branch_id       UUID NOT NULL REFERENCES branches(id),
+  journal_entry_id UUID REFERENCES journal_entries(id),
+
+  -- User-friendly fields
+  transaction_type VARCHAR(20) NOT NULL,      -- revenue, expense, transfer
+  transaction_date DATE NOT NULL,
+  amount          DECIMAL(18,2) NOT NULL,
+
+  -- Revenue specific
+  service_type    VARCHAR(50),                -- office, flex, meeting, etc.
+  customer_id     UUID REFERENCES finance_customers(id),
+  customer_name   VARCHAR(200),               -- denormalized for display
+
+  -- Expense specific
+  expense_category VARCHAR(50),               -- goods, utility, maintenance
+  vendor_name     VARCHAR(200),
+
+  -- Payment info
+  payment_method  VARCHAR(20),                -- cash, bank, payme, click, uzum, terminal
+  payment_reference VARCHAR(100),             -- check #, transaction ID
+
+  -- Tracking
+  processed_by    UUID REFERENCES employees(id),
+  approved_by     UUID REFERENCES employees(id), -- for expenses >500K
+  approval_status VARCHAR(20) DEFAULT 'approved', -- pending, approved, rejected
+
+  -- Import tracking
+  imported_from   VARCHAR(50),                -- 'excel', 'manual'
+  import_batch_id UUID,
+
+  notes           TEXT,
+  created_at      TIMESTAMP DEFAULT NOW()
+);
+
+<span class="text-blue-400">-- Receivables (debt tracking)</span>
+CREATE TABLE receivables (
+  id            UUID PRIMARY KEY,
+  branch_id     UUID NOT NULL REFERENCES branches(id),
+  customer_id   UUID NOT NULL REFERENCES finance_customers(id),
+  invoice_number VARCHAR(50),
+  invoice_date  DATE NOT NULL,
+  due_date      DATE NOT NULL,
+  amount        DECIMAL(18,2) NOT NULL,
+  paid_amount   DECIMAL(18,2) DEFAULT 0,
+  status        VARCHAR(20) DEFAULT 'open',   -- open, partial, paid, overdue, written_off
+  last_reminder_at TIMESTAMP,
+  reminder_count INTEGER DEFAULT 0,
+  notes         TEXT,
+  created_at    TIMESTAMP DEFAULT NOW()
+);
+
+<span class="text-blue-400">-- Branch Cash Balances (for reconciliation)</span>
+CREATE TABLE branch_balances (
+  id            UUID PRIMARY KEY,
+  branch_id     UUID NOT NULL REFERENCES branches(id),
+  balance_date  DATE NOT NULL,
+  petty_cash    DECIMAL(18,2) DEFAULT 0,
+  bank_balance  DECIMAL(18,2) DEFAULT 0,
+  payme_balance DECIMAL(18,2) DEFAULT 0,
+  click_balance DECIMAL(18,2) DEFAULT 0,
+  uzum_balance  DECIMAL(18,2) DEFAULT 0,
+  verified_by   UUID REFERENCES employees(id),
+  notes         TEXT,
+  UNIQUE(branch_id, balance_date)
+);
+
+<span class="text-blue-400">-- Budgets</span>
+CREATE TABLE budgets (
+  id            UUID PRIMARY KEY,
+  branch_id     UUID NOT NULL REFERENCES branches(id),
+  account_id    UUID NOT NULL REFERENCES accounts(id),
+  year          INTEGER NOT NULL,
+  month         INTEGER NOT NULL,             -- 1-12, or NULL for annual
+  amount        DECIMAL(18,2) NOT NULL,
+  notes         TEXT,
+  UNIQUE(branch_id, account_id, year, month)
+);
+
+<span class="text-blue-400">-- Import History</span>
+CREATE TABLE import_batches (
+  id            UUID PRIMARY KEY,
+  branch_id     UUID REFERENCES branches(id),
+  file_name     VARCHAR(200),
+  file_type     VARCHAR(20),                  -- revenue, cost, sales
+  row_count     INTEGER,
+  success_count INTEGER,
+  error_count   INTEGER,
+  errors        JSONB,                        -- detailed error log
+  imported_by   UUID REFERENCES employees(id),
+  created_at    TIMESTAMP DEFAULT NOW()
+);
+
+<span class="text-blue-400">-- Indexes for performance</span>
+CREATE INDEX idx_transactions_branch_date ON transactions(branch_id, transaction_date);
+CREATE INDEX idx_transactions_type ON transactions(transaction_type);
+CREATE INDEX idx_journal_entries_branch_date ON journal_entries(branch_id, entry_date);
+CREATE INDEX idx_receivables_customer ON receivables(customer_id);
+CREATE INDEX idx_receivables_status ON receivables(status);
+                    </pre>
+                </div>
+            </section>
+
+            <section class="bg-white rounded-lg p-6 shadow-sm">
+                <h2 class="text-xl font-semibold mb-4">Entity Relationship Diagram</h2>
+                <div class="bg-gray-50 rounded-lg p-6 font-mono text-sm overflow-x-auto">
+                    <pre>
+┌─────────────┐       ┌─────────────────┐       ┌─────────────┐
+│  branches   │───────│  transactions   │───────│  employees  │
+└─────────────┘       └────────┬────────┘       └─────────────┘
+      │                        │                       │
+      │                        │                       │
+      │               ┌────────┴────────┐              │
+      │               │ journal_entries │──────────────┘
+      │               └────────┬────────┘
+      │                        │
+      │               ┌────────┴────────┐
+      │               │journal_entry_   │
+      │               │    lines        │
+      │               └────────┬────────┘
+      │                        │
+      │               ┌────────┴────────┐
+      │               │    accounts     │
+      │               │ (chart of accts)│
+      │               └─────────────────┘
+      │
+      ├───────────────┬───────────────────┐
+      │               │                   │
+┌─────┴─────┐  ┌──────┴──────┐  ┌────────┴────────┐
+│receivables│  │branch_      │  │    budgets      │
+│           │  │balances     │  │                 │
+└─────┬─────┘  └─────────────┘  └─────────────────┘
+      │
+┌─────┴─────────┐
+│finance_       │
+│customers      │
+└───────────────┘
+                    </pre>
+                </div>
+            </section>
+        </div>
+
+        <!-- Workflows Tab -->
+        <div id="workflows" class="tab-content space-y-8">
+            <section class="bg-white rounded-lg p-6 shadow-sm">
+                <h2 class="text-xl font-semibold mb-4">Workflow 1: Recording a Sale (Reception)</h2>
+                <div class="bg-gray-50 rounded-lg p-6 font-mono text-sm overflow-x-auto">
+                    <pre>
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                         RECEPTION SALE WORKFLOW                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+Customer arrives                     Receptionist                         System
+     │                                    │                                  │
+     │  "I need a meeting room"           │                                  │
+     │───────────────────────────────────▶│                                  │
+     │                                    │                                  │
+     │                                    │  Opens Sale Entry Form           │
+     │                                    │─────────────────────────────────▶│
+     │                                    │                                  │
+     │                                    │  ◀─────────────────────────────────
+     │                                    │    Show: Service, Amount, Payment│
+     │                                    │                                  │
+     │                                    │  Selects: Meeting, 150K, Cash    │
+     │                                    │  Enters: Customer name           │
+     │                                    │─────────────────────────────────▶│
+     │                                    │                                  │
+     │                                    │         Validates input          │
+     │                                    │         Creates transaction      │
+     │                                    │         Auto-generates journal:  │
+     │                                    │           DR 1101 Cash   150,000 │
+     │                                    │           CR 4400 Meeting 150,000│
+     │                                    │                                  │
+     │                                    │  ◀─────────────────────────────────
+     │                                    │    Confirmation + Print Receipt  │
+     │                                    │                                  │
+     │  ◀─────────────────────────────────│  Gives receipt                   │
+     │        Receipt                     │                                  │
+     │                                    │                                  │
+                    </pre>
+                </div>
+            </section>
+
+            <section class="bg-white rounded-lg p-6 shadow-sm">
+                <h2 class="text-xl font-semibold mb-4">Workflow 2: Expense Approval</h2>
+                <div class="bg-gray-50 rounded-lg p-6 font-mono text-sm overflow-x-auto">
+                    <pre>
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                         EXPENSE APPROVAL WORKFLOW                            │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+Branch Manager                          System                           GM/CEO
+     │                                    │                                  │
+     │  Records expense: 850K UZS         │                                  │
+     │  (AC repair)                       │                                  │
+     │───────────────────────────────────▶│                                  │
+     │                                    │                                  │
+     │                                    │  Checks threshold                │
+     │                                    │  850K > 500K → needs approval    │
+     │                                    │                                  │
+     │                                    │  Creates pending transaction     │
+     │                                    │  Notifies GM via Telegram        │
+     │                                    │─────────────────────────────────▶│
+     │                                    │                                  │
+     │                                    │    "Approval needed: AC repair   │
+     │                                    │     850,000 UZS - Labzak"        │
+     │                                    │                                  │
+     │                                    │  ◀─────────────────────────────────
+     │                                    │         GM clicks "Approve"      │
+     │                                    │                                  │
+     │                                    │  Updates status → approved       │
+     │                                    │  Creates journal entry:          │
+     │                                    │    DR 5400 Maintenance  850,000  │
+     │                                    │    CR 1101 Cash         850,000  │
+     │                                    │                                  │
+     │  ◀───────────────────────────────── │                                  │
+     │  Notification: "Expense approved"  │                                  │
+     │                                    │                                  │
+
+
+THRESHOLD RULES:
+  ≤ 500,000 UZS  →  Branch Manager can approve directly
+  > 500,000 UZS  →  Requires GM approval
+  > 5,000,000 UZS → Requires CEO approval (optional escalation)
+                    </pre>
+                </div>
+            </section>
+
+            <section class="bg-white rounded-lg p-6 shadow-sm">
+                <h2 class="text-xl font-semibold mb-4">Workflow 3: Excel Import</h2>
+                <div class="bg-gray-50 rounded-lg p-6 font-mono text-sm overflow-x-auto">
+                    <pre>
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                            EXCEL IMPORT WORKFLOW                             │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+Accountant                              System                           Database
+     │                                    │                                  │
+     │  Uploads "Sales 2025 (Labzak).xlsx"│                                  │
+     │───────────────────────────────────▶│                                  │
+     │                                    │                                  │
+     │                                    │  Parses Excel                    │
+     │                                    │  Detects columns:                │
+     │                                    │    Date, Name, Service,          │
+     │                                    │    Amount, Payment Method        │
+     │                                    │                                  │
+     │  ◀─────────────────────────────────│                                  │
+     │  Shows column mapping preview      │                                  │
+     │                                    │                                  │
+     │  ┌─────────────────────────────┐   │                                  │
+     │  │ Excel Column → System Field │   │                                  │
+     │  │ ─────────────────────────── │   │                                  │
+     │  │ Date        → transaction_date│  │                                  │
+     │  │ Name        → customer_name  │   │                                  │
+     │  │ Servis turi → service_type   │   │                                  │
+     │  │ To'lov      → amount         │   │                                  │
+     │  │ Payment method → payment_method│  │                                  │
+     │  │ Agent       → processed_by   │   │                                  │
+     │  └─────────────────────────────┘   │                                  │
+     │                                    │                                  │
+     │  Confirms mapping                  │                                  │
+     │───────────────────────────────────▶│                                  │
+     │                                    │                                  │
+     │                                    │  Validates each row              │
+     │                                    │  Maps service → account:         │
+     │                                    │    "Meeting" → 4400              │
+     │                                    │    "Flex" → 4300                 │
+     │                                    │  Checks for duplicates           │
+     │                                    │─────────────────────────────────▶│
+     │                                    │                                  │
+     │                                    │     Inserts transactions         │
+     │                                    │     Creates journal entries      │
+     │                                    │                                  │
+     │  ◀─────────────────────────────────│                                  │
+     │  Import complete:                  │                                  │
+     │    ✓ 3,950 rows imported           │                                  │
+     │    ⚠ 16 rows skipped (duplicates)  │                                  │
+     │    ✗ 0 errors                      │                                  │
+     │                                    │                                  │
+
+
+SERVICE TYPE → ACCOUNT MAPPING:
+  Office      → 4100 Office Rental Income
+  Dedicated   → 4200 Dedicated Desk Income
+  Flex        → 4300 Flex Membership Income
+  Hour        → 4300 Flex Membership Income
+  Day Pass    → 4300 Flex Membership Income
+  Meeting     → 4400 Meeting Room Income
+  Conference  → 4500 Conference Room Income
+  Virtual     → 4600 Virtual Office Income
+                    </pre>
+                </div>
+            </section>
+
+            <section class="bg-white rounded-lg p-6 shadow-sm">
+                <h2 class="text-xl font-semibold mb-4">Workflow 4: Debt Reminder</h2>
+                <div class="bg-gray-50 rounded-lg p-6 font-mono text-sm overflow-x-auto">
+                    <pre>
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                          DEBT REMINDER WORKFLOW                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+System (Daily Cron)                     Telegram Bot                      Tenant
+     │                                    │                                  │
+     │  Checks receivables                │                                  │
+     │  WHERE due_date < NOW()            │                                  │
+     │  AND status = 'open'               │                                  │
+     │                                    │                                  │
+     │  Found: Applied Labs               │                                  │
+     │         12.5M overdue 45 days      │                                  │
+     │                                    │                                  │
+     │  Generates reminder message        │                                  │
+     │───────────────────────────────────▶│                                  │
+     │                                    │                                  │
+     │                                    │─────────────────────────────────▶│
+     │                                    │   "Hello! This is a reminder    │
+     │                                    │    from C-Space Labzak.         │
+     │                                    │    Outstanding balance:          │
+     │                                    │    12,500,000 UZS                │
+     │                                    │    Due: 45 days overdue          │
+     │                                    │    Please contact us to          │
+     │                                    │    arrange payment."             │
+     │                                    │                                  │
+     │  Updates receivable:               │                                  │
+     │    last_reminder_at = NOW()        │                                  │
+     │    reminder_count += 1             │                                  │
+     │                                    │                                  │
+     │  Notifies Branch Manager           │                                  │
+     │                                    │                                  │
+
+
+REMINDER SCHEDULE:
+  Day 1-7:    No automatic reminder (grace period)
+  Day 7:      First reminder
+  Day 14:     Second reminder
+  Day 30:     Third reminder + escalate to manager
+  Day 60:     Fourth reminder + escalate to accountant
+  Day 90+:    Consider for write-off
+                    </pre>
+                </div>
+            </section>
+        </div>
+
+        <!-- Reports Tab -->
+        <div id="reports" class="tab-content space-y-8">
+            <section class="bg-white rounded-lg p-6 shadow-sm">
+                <h2 class="text-xl font-semibold mb-4">Income Statement (P&L)</h2>
+                <div class="border rounded-lg overflow-hidden">
+                    <div class="bg-gray-100 px-4 py-3 border-b flex justify-between items-center">
+                        <span class="font-medium">Labzak Branch - January 2025</span>
+                        <div class="flex gap-2">
+                            <button class="text-sm bg-white border px-3 py-1 rounded">PDF</button>
+                            <button class="text-sm bg-white border px-3 py-1 rounded">Excel</button>
+                        </div>
+                    </div>
+                    <div class="p-4">
+                        <table class="w-full text-sm">
+                            <thead>
+                                <tr class="border-b">
+                                    <th class="text-left py-2">Account</th>
+                                    <th class="text-right py-2">This Month</th>
+                                    <th class="text-right py-2">Last Month</th>
+                                    <th class="text-right py-2">YTD</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="bg-green-50 font-medium">
+                                    <td class="py-2" colspan="4">REVENUE</td>
+                                </tr>
+                                <tr class="border-b">
+                                    <td class="py-2 pl-4">4100 Office Rental</td>
+                                    <td class="text-right">185,000,000</td>
+                                    <td class="text-right">180,000,000</td>
+                                    <td class="text-right">185,000,000</td>
+                                </tr>
+                                <tr class="border-b">
+                                    <td class="py-2 pl-4">4200 Dedicated Desk</td>
+                                    <td class="text-right">32,000,000</td>
+                                    <td class="text-right">28,000,000</td>
+                                    <td class="text-right">32,000,000</td>
+                                </tr>
+                                <tr class="border-b">
+                                    <td class="py-2 pl-4">4300 Flex/Day Pass</td>
+                                    <td class="text-right">18,500,000</td>
+                                    <td class="text-right">15,200,000</td>
+                                    <td class="text-right">18,500,000</td>
+                                </tr>
+                                <tr class="border-b">
+                                    <td class="py-2 pl-4">4400 Meeting Rooms</td>
+                                    <td class="text-right">8,200,000</td>
+                                    <td class="text-right">7,800,000</td>
+                                    <td class="text-right">8,200,000</td>
+                                </tr>
+                                <tr class="border-b">
+                                    <td class="py-2 pl-4">4500 Conference</td>
+                                    <td class="text-right">12,800,000</td>
+                                    <td class="text-right">9,500,000</td>
+                                    <td class="text-right">12,800,000</td>
+                                </tr>
+                                <tr class="bg-green-100 font-bold border-b">
+                                    <td class="py-2">Total Revenue</td>
+                                    <td class="text-right">256,500,000</td>
+                                    <td class="text-right">240,500,000</td>
+                                    <td class="text-right">256,500,000</td>
+                                </tr>
+                                <tr class="bg-red-50 font-medium">
+                                    <td class="py-2" colspan="4">EXPENSES</td>
+                                </tr>
+                                <tr class="border-b">
+                                    <td class="py-2 pl-4">5100 Goods & Supplies</td>
+                                    <td class="text-right">(8,500,000)</td>
+                                    <td class="text-right">(7,200,000)</td>
+                                    <td class="text-right">(8,500,000)</td>
+                                </tr>
+                                <tr class="border-b">
+                                    <td class="py-2 pl-4">5200 Utilities</td>
+                                    <td class="text-right">(15,000,000)</td>
+                                    <td class="text-right">(14,500,000)</td>
+                                    <td class="text-right">(15,000,000)</td>
+                                </tr>
+                                <tr class="border-b">
+                                    <td class="py-2 pl-4">5400 Maintenance</td>
+                                    <td class="text-right">(3,200,000)</td>
+                                    <td class="text-right">(2,100,000)</td>
+                                    <td class="text-right">(3,200,000)</td>
+                                </tr>
+                                <tr class="border-b">
+                                    <td class="py-2 pl-4">5800 Other Operating</td>
+                                    <td class="text-right">(2,800,000)</td>
+                                    <td class="text-right">(3,500,000)</td>
+                                    <td class="text-right">(2,800,000)</td>
+                                </tr>
+                                <tr class="bg-red-100 font-bold border-b">
+                                    <td class="py-2">Total Expenses</td>
+                                    <td class="text-right">(29,500,000)</td>
+                                    <td class="text-right">(27,300,000)</td>
+                                    <td class="text-right">(29,500,000)</td>
+                                </tr>
+                                <tr class="bg-blue-100 font-bold text-lg">
+                                    <td class="py-3">NET INCOME</td>
+                                    <td class="text-right">227,000,000</td>
+                                    <td class="text-right">213,200,000</td>
+                                    <td class="text-right">227,000,000</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <section class="bg-white rounded-lg p-6 shadow-sm">
+                <h2 class="text-xl font-semibold mb-4">Cash Flow Statement</h2>
+                <div class="border rounded-lg overflow-hidden">
+                    <div class="bg-gray-100 px-4 py-3 border-b">
+                        <span class="font-medium">Labzak Branch - January 2025</span>
+                    </div>
+                    <div class="p-4">
+                        <table class="w-full text-sm">
+                            <tbody>
+                                <tr class="bg-gray-50 font-medium">
+                                    <td class="py-2" colspan="2">OPERATING ACTIVITIES</td>
+                                </tr>
+                                <tr class="border-b">
+                                    <td class="py-2 pl-4">Net Income</td>
+                                    <td class="text-right">227,000,000</td>
+                                </tr>
+                                <tr class="border-b">
+                                    <td class="py-2 pl-4">Change in Receivables</td>
+                                    <td class="text-right text-red-600">(15,000,000)</td>
+                                </tr>
+                                <tr class="border-b">
+                                    <td class="py-2 pl-4">Change in Payables</td>
+                                    <td class="text-right">5,000,000</td>
+                                </tr>
+                                <tr class="bg-gray-100 font-bold border-b">
+                                    <td class="py-2">Cash from Operations</td>
+                                    <td class="text-right">217,000,000</td>
+                                </tr>
+                                <tr class="bg-gray-50 font-medium">
+                                    <td class="py-2" colspan="2">FINANCING ACTIVITIES</td>
+                                </tr>
+                                <tr class="border-b">
+                                    <td class="py-2 pl-4">Dividends Paid</td>
+                                    <td class="text-right text-red-600">(50,000,000)</td>
+                                </tr>
+                                <tr class="bg-blue-100 font-bold text-lg">
+                                    <td class="py-3">NET CHANGE IN CASH</td>
+                                    <td class="text-right">167,000,000</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <section class="bg-white rounded-lg p-6 shadow-sm">
+                <h2 class="text-xl font-semibold mb-4">Receivables Aging Report</h2>
+                <div class="border rounded-lg overflow-hidden">
+                    <div class="bg-gray-100 px-4 py-3 border-b flex justify-between items-center">
+                        <span class="font-medium">As of January 30, 2025</span>
+                        <button class="text-sm bg-blue-500 text-white px-3 py-1 rounded">Send All Reminders</button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm">
+                            <thead>
+                                <tr class="border-b bg-gray-50">
+                                    <th class="text-left py-3 px-4">Customer</th>
+                                    <th class="text-right py-3 px-4">Total</th>
+                                    <th class="text-right py-3 px-4">Current</th>
+                                    <th class="text-right py-3 px-4">1-30 Days</th>
+                                    <th class="text-right py-3 px-4">31-60 Days</th>
+                                    <th class="text-right py-3 px-4">61-90 Days</th>
+                                    <th class="text-right py-3 px-4">90+ Days</th>
+                                    <th class="text-center py-3 px-4">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="border-b">
+                                    <td class="py-3 px-4 font-medium">Applied Labs</td>
+                                    <td class="text-right px-4">12,500,000</td>
+                                    <td class="text-right px-4">—</td>
+                                    <td class="text-right px-4">—</td>
+                                    <td class="text-right px-4 text-yellow-600">5,000,000</td>
+                                    <td class="text-right px-4 text-orange-600">4,500,000</td>
+                                    <td class="text-right px-4 text-red-600">3,000,000</td>
+                                    <td class="text-center px-4"><button class="text-blue-500 text-xs">📱 Remind</button></td>
+                                </tr>
+                                <tr class="border-b">
+                                    <td class="py-3 px-4 font-medium">Nextmark</td>
+                                    <td class="text-right px-4">3,200,000</td>
+                                    <td class="text-right px-4">3,200,000</td>
+                                    <td class="text-right px-4">—</td>
+                                    <td class="text-right px-4">—</td>
+                                    <td class="text-right px-4">—</td>
+                                    <td class="text-right px-4">—</td>
+                                    <td class="text-center px-4"><span class="text-gray-400 text-xs">Not due</span></td>
+                                </tr>
+                                <tr class="border-b bg-red-50">
+                                    <td class="py-3 px-4 font-medium">IMAN</td>
+                                    <td class="text-right px-4">2,000,000</td>
+                                    <td class="text-right px-4">—</td>
+                                    <td class="text-right px-4">—</td>
+                                    <td class="text-right px-4">—</td>
+                                    <td class="text-right px-4">—</td>
+                                    <td class="text-right px-4 text-red-600 font-bold">2,000,000</td>
+                                    <td class="text-center px-4"><button class="text-red-500 text-xs">⚠️ Escalate</button></td>
+                                </tr>
+                                <tr class="bg-gray-100 font-bold">
+                                    <td class="py-3 px-4">TOTAL</td>
+                                    <td class="text-right px-4">17,700,000</td>
+                                    <td class="text-right px-4">3,200,000</td>
+                                    <td class="text-right px-4">—</td>
+                                    <td class="text-right px-4">5,000,000</td>
+                                    <td class="text-right px-4">4,500,000</td>
+                                    <td class="text-right px-4">5,000,000</td>
+                                    <td class="text-center px-4"></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <script>
+        function showTab(tabId) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            // Show selected tab
+            document.getElementById(tabId).classList.add('active');
+
+            // Update tab buttons
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('border-blue-500', 'text-blue-600');
+                btn.classList.add('border-transparent', 'text-gray-600');
+            });
+            event.target.classList.remove('border-transparent', 'text-gray-600');
+            event.target.classList.add('border-blue-500', 'text-blue-600');
+        }
+
+        function selectOption(element, group) {
+            // Remove selected from all in group
+            element.parentElement.querySelectorAll('.option-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            // Add selected to clicked
+            element.classList.add('selected');
+        }
+    </script>
+</body>
+</html>

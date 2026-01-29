@@ -1,0 +1,1458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>C-Space HR - Branch Finances Module</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { font-family: 'Inter', sans-serif; }
+
+        /* Slide system */
+        .slide { display: none; min-height: 100vh; }
+        .slide.active { display: block; }
+
+        /* Animations */
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes slideIn { from { opacity: 0; transform: translateX(-30px); } to { opacity: 1; transform: translateX(0); } }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+        .animate-in { animation: fadeIn 0.5s ease-out forwards; }
+        .animate-slide { animation: slideIn 0.4s ease-out forwards; }
+        .animate-pulse { animation: pulse 2s infinite; }
+
+        .stagger-1 { animation-delay: 0.1s; opacity: 0; }
+        .stagger-2 { animation-delay: 0.2s; opacity: 0; }
+        .stagger-3 { animation-delay: 0.3s; opacity: 0; }
+        .stagger-4 { animation-delay: 0.4s; opacity: 0; }
+        .stagger-5 { animation-delay: 0.5s; opacity: 0; }
+
+        /* Option cards */
+        .option-card { transition: all 0.3s ease; cursor: pointer; }
+        .option-card:hover { transform: translateY(-4px); box-shadow: 0 12px 40px rgba(0,0,0,0.15); }
+        .option-card.selected { border-color: #3b82f6; background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); }
+        .option-card.selected::after { content: '✓ Selected'; position: absolute; top: 12px; right: 12px; background: #3b82f6; color: white; font-size: 11px; padding: 4px 8px; border-radius: 4px; }
+
+        /* Flow diagram */
+        .flow-step { transition: all 0.3s ease; }
+        .flow-step:hover { transform: scale(1.02); }
+        .flow-arrow { color: #94a3b8; }
+
+        /* Progress bar */
+        .progress-bar { height: 4px; background: #e2e8f0; position: fixed; top: 0; left: 0; right: 0; z-index: 100; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, #3b82f6, #8b5cf6); transition: width 0.3s ease; }
+
+        /* Navigation */
+        .nav-dot { width: 10px; height: 10px; border-radius: 50%; background: #cbd5e1; transition: all 0.3s ease; cursor: pointer; }
+        .nav-dot.active { background: #3b82f6; transform: scale(1.3); }
+        .nav-dot:hover { background: #94a3b8; }
+
+        /* Mockup frames */
+        .mockup-browser { background: #1e293b; border-radius: 12px; overflow: hidden; box-shadow: 0 25px 50px rgba(0,0,0,0.25); }
+        .mockup-toolbar { background: #334155; padding: 12px 16px; display: flex; align-items: center; gap: 8px; }
+        .mockup-dot { width: 12px; height: 12px; border-radius: 50%; }
+        .mockup-url { background: #1e293b; border-radius: 6px; padding: 6px 12px; flex: 1; margin-left: 12px; color: #94a3b8; font-size: 13px; }
+        .mockup-content { background: #f8fafc; }
+
+        /* Process timeline */
+        .timeline-step { position: relative; padding-left: 40px; }
+        .timeline-step::before { content: ''; position: absolute; left: 15px; top: 30px; bottom: -20px; width: 2px; background: #e2e8f0; }
+        .timeline-step:last-child::before { display: none; }
+        .timeline-dot { position: absolute; left: 8px; top: 4px; width: 16px; height: 16px; border-radius: 50%; background: #3b82f6; border: 3px solid white; box-shadow: 0 0 0 2px #3b82f6; }
+
+        /* Tabs */
+        .tab-btn { transition: all 0.2s ease; }
+        .tab-btn.active { background: #3b82f6; color: white; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeIn 0.3s ease; }
+
+        /* Gradient backgrounds */
+        .bg-gradient-hero { background: linear-gradient(135deg, #1e3a5f 0%, #0f172a 100%); }
+        .bg-gradient-card { background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%); }
+
+        /* Print styles */
+        @media print {
+            .slide { display: block !important; page-break-after: always; }
+            .no-print { display: none !important; }
+        }
+    </style>
+</head>
+<body class="bg-slate-100">
+    <!-- Progress Bar -->
+    <div class="progress-bar no-print">
+        <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+    </div>
+
+    <!-- Navigation Dots -->
+    <div class="fixed right-6 top-1/2 transform -translate-y-1/2 flex flex-col gap-3 z-50 no-print">
+        <div class="nav-dot active" onclick="goToSlide(0)" title="Welcome"></div>
+        <div class="nav-dot" onclick="goToSlide(1)" title="Problem"></div>
+        <div class="nav-dot" onclick="goToSlide(2)" title="Solution"></div>
+        <div class="nav-dot" onclick="goToSlide(3)" title="Cash Flow"></div>
+        <div class="nav-dot" onclick="goToSlide(4)" title="Use Cases"></div>
+        <div class="nav-dot" onclick="goToSlide(5)" title="UI Options"></div>
+        <div class="nav-dot" onclick="goToSlide(6)" title="Entry Options"></div>
+        <div class="nav-dot" onclick="goToSlide(7)" title="Reports"></div>
+        <div class="nav-dot" onclick="goToSlide(8)" title="Database"></div>
+        <div class="nav-dot" onclick="goToSlide(9)" title="Phases"></div>
+        <div class="nav-dot" onclick="goToSlide(10)" title="Next Steps"></div>
+    </div>
+
+    <!-- Slide 0: Welcome -->
+    <section class="slide active bg-gradient-hero text-white">
+        <div class="min-h-screen flex items-center justify-center px-8">
+            <div class="max-w-4xl text-center">
+                <div class="animate-in stagger-1">
+                    <div class="inline-block bg-blue-500/20 backdrop-blur-sm text-blue-300 px-4 py-2 rounded-full text-sm font-medium mb-6">
+                        C-Space HR • New Module Proposal
+                    </div>
+                </div>
+                <h1 class="text-5xl md:text-7xl font-bold mb-6 animate-in stagger-2">
+                    Branch <span class="text-blue-400">Finances</span>
+                </h1>
+                <p class="text-xl md:text-2xl text-slate-300 mb-12 animate-in stagger-3">
+                    Double-entry accounting with simplified UI<br>
+                    for complete financial visibility across all branches
+                </p>
+                <div class="flex justify-center gap-4 animate-in stagger-4">
+                    <button onclick="nextSlide()" class="bg-blue-500 hover:bg-blue-600 text-white px-8 py-4 rounded-xl font-semibold transition-all hover:scale-105">
+                        Start Presentation →
+                    </button>
+                </div>
+                <div class="mt-16 animate-in stagger-5">
+                    <p class="text-slate-400 text-sm">Press <kbd class="bg-slate-700 px-2 py-1 rounded">→</kbd> or <kbd class="bg-slate-700 px-2 py-1 rounded">Space</kbd> to navigate</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Slide 1: Current Problem -->
+    <section class="slide bg-white">
+        <div class="min-h-screen flex items-center px-8 py-16">
+            <div class="max-w-6xl mx-auto">
+                <div class="text-center mb-12">
+                    <span class="text-red-500 font-semibold text-sm uppercase tracking-wider">The Problem</span>
+                    <h2 class="text-4xl font-bold mt-2 text-slate-800">Current State: Scattered Data</h2>
+                </div>
+
+                <div class="grid md:grid-cols-3 gap-6 mb-12">
+                    <div class="bg-red-50 border border-red-200 rounded-2xl p-6 animate-in stagger-1">
+                        <div class="text-4xl mb-4">📊</div>
+                        <h3 class="font-bold text-lg mb-2 text-red-800">Google Sheets</h3>
+                        <p class="text-red-700 text-sm">Reception sales recorded manually. "Sales 2025 (Labzak)" has 3,966 rows across 10 columns.</p>
+                    </div>
+                    <div class="bg-orange-50 border border-orange-200 rounded-2xl p-6 animate-in stagger-2">
+                        <div class="text-4xl mb-4">📁</div>
+                        <h3 class="font-bold text-lg mb-2 text-orange-800">Excel Files</h3>
+                        <p class="text-orange-700 text-sm">"All payments - LABZAK" has 20+ sheets. Bank payments tracked separately from reception.</p>
+                    </div>
+                    <div class="bg-yellow-50 border border-yellow-200 rounded-2xl p-6 animate-in stagger-3">
+                        <div class="text-4xl mb-4">🧮</div>
+                        <h3 class="font-bold text-lg mb-2 text-yellow-800">Manual Reconciliation</h3>
+                        <p class="text-yellow-700 text-sm">Monthly reconciliation by accountants (bank) and branch managers (cash). Time-consuming.</p>
+                    </div>
+                </div>
+
+                <div class="bg-slate-800 rounded-2xl p-8 text-white">
+                    <h3 class="font-bold text-xl mb-6">Real Data from Your Files</h3>
+                    <div class="grid md:grid-cols-2 gap-8">
+                        <div>
+                            <h4 class="text-blue-400 font-semibold mb-3">Sales 2025 (Labzak)</h4>
+                            <div class="space-y-2 text-sm">
+                                <div class="flex justify-between"><span class="text-slate-400">Total transactions:</span><span>3,966</span></div>
+                                <div class="flex justify-between"><span class="text-slate-400">Cash payments:</span><span>504,451,500 UZS</span></div>
+                                <div class="flex justify-between"><span class="text-slate-400">Terminal:</span><span>118,676,000 UZS</span></div>
+                                <div class="flex justify-between"><span class="text-slate-400">Payme:</span><span>112,687,000 UZS</span></div>
+                                <div class="flex justify-between"><span class="text-slate-400">Click:</span><span>111,333,000 UZS</span></div>
+                                <div class="flex justify-between"><span class="text-slate-400">Uzum:</span><span>50,262,500 UZS</span></div>
+                            </div>
+                        </div>
+                        <div>
+                            <h4 class="text-green-400 font-semibold mb-3">Revenue by Service</h4>
+                            <div class="space-y-2 text-sm">
+                                <div class="flex justify-between"><span class="text-slate-400">Office:</span><span>417,939,000 UZS</span></div>
+                                <div class="flex justify-between"><span class="text-slate-400">Dedicated:</span><span>138,150,000 UZS</span></div>
+                                <div class="flex justify-between"><span class="text-slate-400">Conference:</span><span>111,528,000 UZS</span></div>
+                                <div class="flex justify-between"><span class="text-slate-400">Meeting:</span><span>78,035,000 UZS</span></div>
+                                <div class="flex justify-between"><span class="text-slate-400">Flex:</span><span>76,950,000 UZS</span></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Slide 2: Solution Overview -->
+    <section class="slide bg-slate-50">
+        <div class="min-h-screen flex items-center px-8 py-16">
+            <div class="max-w-6xl mx-auto">
+                <div class="text-center mb-12">
+                    <span class="text-green-500 font-semibold text-sm uppercase tracking-wider">The Solution</span>
+                    <h2 class="text-4xl font-bold mt-2 text-slate-800">Unified Branch Finances Module</h2>
+                </div>
+
+                <div class="grid md:grid-cols-2 gap-8 mb-12">
+                    <div class="bg-white rounded-2xl shadow-lg p-8">
+                        <h3 class="text-2xl font-bold mb-6 text-slate-800">What We're Building</h3>
+                        <div class="space-y-4">
+                            <div class="flex items-start gap-4">
+                                <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center text-blue-600 font-bold">1</div>
+                                <div>
+                                    <h4 class="font-semibold">Double-Entry Accounting</h4>
+                                    <p class="text-slate-600 text-sm">Proper financial statements (P&L, Balance Sheet, Cash Flow)</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start gap-4">
+                                <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center text-blue-600 font-bold">2</div>
+                                <div>
+                                    <h4 class="font-semibold">Simplified UI</h4>
+                                    <p class="text-slate-600 text-sm">Users never see debits/credits. System handles complexity.</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start gap-4">
+                                <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center text-blue-600 font-bold">3</div>
+                                <div>
+                                    <h4 class="font-semibold">Safe Management</h4>
+                                    <p class="text-slate-600 text-sm">Track Secondary Safe → Primary Safe → Dividend flow</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start gap-4">
+                                <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center text-blue-600 font-bold">4</div>
+                                <div>
+                                    <h4 class="font-semibold">Excel Import</h4>
+                                    <p class="text-slate-600 text-sm">Import historical data, continue using Excel if preferred</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-2xl shadow-lg p-8">
+                        <h3 class="text-2xl font-bold mb-6 text-slate-800">Role-Based Access</h3>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-sm">
+                                <thead>
+                                    <tr class="border-b">
+                                        <th class="text-left py-2">Role</th>
+                                        <th class="text-center py-2">Record</th>
+                                        <th class="text-center py-2">View</th>
+                                        <th class="text-center py-2">Approve</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr class="border-b">
+                                        <td class="py-2 font-medium">Receptionist</td>
+                                        <td class="text-center text-green-500">✓ Sales</td>
+                                        <td class="text-center text-slate-400">—</td>
+                                        <td class="text-center text-slate-400">—</td>
+                                    </tr>
+                                    <tr class="border-b">
+                                        <td class="py-2 font-medium">Branch Manager</td>
+                                        <td class="text-center text-green-500">✓ All</td>
+                                        <td class="text-center text-green-500">Own branch</td>
+                                        <td class="text-center text-green-500">≤500K</td>
+                                    </tr>
+                                    <tr class="border-b">
+                                        <td class="py-2 font-medium">Accountant</td>
+                                        <td class="text-center text-green-500">✓ All</td>
+                                        <td class="text-center text-green-500">All branches</td>
+                                        <td class="text-center text-slate-400">—</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="py-2 font-medium">CEO/GM</td>
+                                        <td class="text-center text-green-500">✓ All</td>
+                                        <td class="text-center text-green-500">All branches</td>
+                                        <td class="text-center text-green-500">>500K</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-8 text-white">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h3 class="text-2xl font-bold mb-2">Integration with C-Space HR</h3>
+                            <p class="text-blue-100">Lives inside the Branches module as a new "Finances" tab</p>
+                        </div>
+                        <div class="text-6xl opacity-50">🏢</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Slide 3: Cash Flow Lifecycle -->
+    <section class="slide bg-white">
+        <div class="min-h-screen flex items-center px-8 py-16">
+            <div class="max-w-6xl mx-auto">
+                <div class="text-center mb-12">
+                    <span class="text-purple-500 font-semibold text-sm uppercase tracking-wider">Core Process</span>
+                    <h2 class="text-4xl font-bold mt-2 text-slate-800">Cash Flow Lifecycle</h2>
+                    <p class="text-slate-600 mt-2">From customer payment to dividend distribution</p>
+                </div>
+
+                <div class="relative">
+                    <!-- Flow Diagram -->
+                    <div class="flex flex-col gap-4">
+                        <!-- Step 1: Customer Payment -->
+                        <div class="flow-step bg-gradient-to-r from-green-50 to-green-100 border border-green-200 rounded-2xl p-6">
+                            <div class="flex items-center gap-6">
+                                <div class="w-16 h-16 bg-green-500 rounded-xl flex items-center justify-center text-white text-2xl">💵</div>
+                                <div class="flex-1">
+                                    <h3 class="font-bold text-lg text-green-800">Customer Payment</h3>
+                                    <p class="text-green-700 text-sm">Cash, Card, Payme, Click, Uzum received at reception</p>
+                                </div>
+                                <div class="text-right">
+                                    <div class="text-2xl font-bold text-green-600">+800,000</div>
+                                    <div class="text-sm text-green-500">Meeting Room - Payme</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex justify-center text-4xl flow-arrow">↓</div>
+
+                        <!-- Step 2: Secondary Safe -->
+                        <div class="flow-step bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-200 rounded-2xl p-6">
+                            <div class="flex items-center gap-6">
+                                <div class="w-16 h-16 bg-blue-500 rounded-xl flex items-center justify-center text-white text-2xl">🔐</div>
+                                <div class="flex-1">
+                                    <h3 class="font-bold text-lg text-blue-800">Secondary Safe (Reception)</h3>
+                                    <p class="text-blue-700 text-sm">Cash stored in small safe. Digital payments tracked separately.</p>
+                                </div>
+                                <div class="text-right">
+                                    <div class="text-lg font-bold text-blue-600">Balance: 5,200,000</div>
+                                    <div class="text-sm text-blue-500">Labzak Reception</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex justify-center text-4xl flow-arrow">↓</div>
+
+                        <!-- Step 3: Branch Manager Allocation -->
+                        <div class="flow-step bg-gradient-to-r from-purple-50 to-purple-100 border border-purple-200 rounded-2xl p-6">
+                            <div class="flex items-center gap-6">
+                                <div class="w-16 h-16 bg-purple-500 rounded-xl flex items-center justify-center text-white text-2xl">👔</div>
+                                <div class="flex-1">
+                                    <h3 class="font-bold text-lg text-purple-800">Branch Manager Allocation</h3>
+                                    <p class="text-purple-700 text-sm">Allocates funds for operations, reserves salary, calculates profit</p>
+                                    <div class="flex gap-4 mt-2 text-xs">
+                                        <span class="bg-red-100 text-red-700 px-2 py-1 rounded">Maintenance: -850K</span>
+                                        <span class="bg-orange-100 text-orange-700 px-2 py-1 rounded">Supplies: -420K</span>
+                                        <span class="bg-yellow-100 text-yellow-700 px-2 py-1 rounded">Salary: -2M</span>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <div class="text-lg font-bold text-purple-600">Profit: 1,930,000</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex justify-center text-4xl flow-arrow">↓</div>
+
+                        <!-- Step 4: Special Fund -->
+                        <div class="flow-step bg-gradient-to-r from-amber-50 to-amber-100 border border-amber-200 rounded-2xl p-6">
+                            <div class="flex items-center gap-6">
+                                <div class="w-16 h-16 bg-amber-500 rounded-xl flex items-center justify-center text-white text-2xl">🏦</div>
+                                <div class="flex-1">
+                                    <h3 class="font-bold text-lg text-amber-800">Special Fund Deduction</h3>
+                                    <p class="text-amber-700 text-sm">2.5-5% of profit goes to reserve fund (varies by branch)</p>
+                                </div>
+                                <div class="text-right">
+                                    <div class="text-lg font-bold text-amber-600">3% = -57,900</div>
+                                    <div class="text-sm text-amber-500">Labzak rate</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex justify-center text-4xl flow-arrow">↓</div>
+
+                        <!-- Step 5: Primary Safe -->
+                        <div class="flow-step bg-gradient-to-r from-indigo-50 to-indigo-100 border border-indigo-200 rounded-2xl p-6">
+                            <div class="flex items-center gap-6">
+                                <div class="w-16 h-16 bg-indigo-500 rounded-xl flex items-center justify-center text-white text-2xl">🏛️</div>
+                                <div class="flex-1">
+                                    <h3 class="font-bold text-lg text-indigo-800">Primary Safe (GM)</h3>
+                                    <p class="text-indigo-700 text-sm">General Manager receives and verifies funds</p>
+                                </div>
+                                <div class="text-right">
+                                    <div class="text-lg font-bold text-indigo-600">+1,872,100</div>
+                                    <div class="text-sm text-indigo-500">Net from Labzak</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex justify-center text-4xl flow-arrow">↓</div>
+
+                        <!-- Step 6: Dividend -->
+                        <div class="flow-step bg-gradient-to-r from-emerald-50 to-emerald-100 border border-emerald-200 rounded-2xl p-6">
+                            <div class="flex items-center gap-6">
+                                <div class="w-16 h-16 bg-emerald-500 rounded-xl flex items-center justify-center text-white text-2xl">💎</div>
+                                <div class="flex-1">
+                                    <h3 class="font-bold text-lg text-emerald-800">Dividend Pool</h3>
+                                    <p class="text-emerald-700 text-sm">After company-level costs, available for distribution</p>
+                                    <div class="flex gap-4 mt-2 text-xs">
+                                        <span class="bg-red-100 text-red-700 px-2 py-1 rounded">⚠️ Withdrawals possible for unexpected expenses</span>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <div class="text-2xl font-bold text-emerald-600">45,000,000</div>
+                                    <div class="text-sm text-emerald-500">Available</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Slide 4: Real Use Cases -->
+    <section class="slide bg-slate-50">
+        <div class="min-h-screen flex items-center px-8 py-16">
+            <div class="max-w-6xl mx-auto">
+                <div class="text-center mb-12">
+                    <span class="text-blue-500 font-semibold text-sm uppercase tracking-wider">Real Examples</span>
+                    <h2 class="text-4xl font-bold mt-2 text-slate-800">Use Cases from Your Data</h2>
+                </div>
+
+                <!-- Tabs -->
+                <div class="flex justify-center gap-2 mb-8">
+                    <button onclick="showUseCase('sale')" class="tab-btn active px-6 py-3 rounded-xl font-medium">Recording a Sale</button>
+                    <button onclick="showUseCase('expense')" class="tab-btn px-6 py-3 rounded-xl font-medium bg-slate-200">Expense Approval</button>
+                    <button onclick="showUseCase('import')" class="tab-btn px-6 py-3 rounded-xl font-medium bg-slate-200">Excel Import</button>
+                    <button onclick="showUseCase('allocation')" class="tab-btn px-6 py-3 rounded-xl font-medium bg-slate-200">Allocation</button>
+                </div>
+
+                <!-- Use Case: Recording a Sale -->
+                <div id="usecase-sale" class="tab-content active">
+                    <div class="grid md:grid-cols-2 gap-8">
+                        <div>
+                            <h3 class="text-xl font-bold mb-4">Scenario</h3>
+                            <div class="bg-white rounded-xl p-6 shadow-sm mb-4">
+                                <p class="text-slate-600">
+                                    <strong>Oybek Dadashev</strong> walks into C-Space Labzak and wants to book a meeting room for 2 hours.
+                                    He pays <strong>150,000 UZS</strong> via <strong>Payme</strong>.
+                                </p>
+                            </div>
+
+                            <h3 class="text-xl font-bold mb-4">What Happens</h3>
+                            <div class="space-y-4">
+                                <div class="timeline-step">
+                                    <div class="timeline-dot"></div>
+                                    <div class="bg-white rounded-xl p-4 shadow-sm">
+                                        <h4 class="font-semibold">Receptionist (Abror) records sale</h4>
+                                        <p class="text-sm text-slate-600">Selects Meeting, enters amount, chooses Payme</p>
+                                    </div>
+                                </div>
+                                <div class="timeline-step">
+                                    <div class="timeline-dot"></div>
+                                    <div class="bg-white rounded-xl p-4 shadow-sm">
+                                        <h4 class="font-semibold">System creates transaction</h4>
+                                        <p class="text-sm text-slate-600">Links to Abror's employee record, records timestamp</p>
+                                    </div>
+                                </div>
+                                <div class="timeline-step">
+                                    <div class="timeline-dot"></div>
+                                    <div class="bg-white rounded-xl p-4 shadow-sm">
+                                        <h4 class="font-semibold">Auto-generates journal entry</h4>
+                                        <p class="text-sm text-slate-600">DR: Payme Receivable 150K / CR: Meeting Income 150K</p>
+                                    </div>
+                                </div>
+                                <div class="timeline-step">
+                                    <div class="timeline-dot"></div>
+                                    <div class="bg-white rounded-xl p-4 shadow-sm">
+                                        <h4 class="font-semibold">Receipt printed</h4>
+                                        <p class="text-sm text-slate-600">Customer receives printed receipt</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="mockup-browser">
+                                <div class="mockup-toolbar">
+                                    <div class="mockup-dot bg-red-500"></div>
+                                    <div class="mockup-dot bg-yellow-500"></div>
+                                    <div class="mockup-dot bg-green-500"></div>
+                                    <div class="mockup-url">hr.cspace.uz/branches/labzak/finances/new-sale</div>
+                                </div>
+                                <div class="mockup-content p-6">
+                                    <h3 class="font-bold text-lg mb-4">Record Sale</h3>
+                                    <div class="space-y-4">
+                                        <div>
+                                            <label class="text-sm text-slate-500">Service Type</label>
+                                            <div class="mt-1 border rounded-lg px-4 py-3 bg-blue-50 border-blue-300 font-medium">🤝 Meeting Room</div>
+                                        </div>
+                                        <div>
+                                            <label class="text-sm text-slate-500">Amount (UZS)</label>
+                                            <div class="mt-1 border rounded-lg px-4 py-3 font-mono text-xl">150,000</div>
+                                        </div>
+                                        <div>
+                                            <label class="text-sm text-slate-500">Customer Name</label>
+                                            <div class="mt-1 border rounded-lg px-4 py-3">Oybek Dadashev</div>
+                                        </div>
+                                        <div>
+                                            <label class="text-sm text-slate-500">Payment Method</label>
+                                            <div class="flex gap-2 mt-1">
+                                                <span class="px-4 py-2 bg-slate-100 rounded-lg text-sm">Cash</span>
+                                                <span class="px-4 py-2 bg-slate-100 rounded-lg text-sm">Card</span>
+                                                <span class="px-4 py-2 bg-blue-500 text-white rounded-lg text-sm font-medium">Payme</span>
+                                                <span class="px-4 py-2 bg-slate-100 rounded-lg text-sm">Click</span>
+                                            </div>
+                                        </div>
+                                        <button class="w-full bg-blue-500 text-white py-4 rounded-xl font-semibold text-lg mt-4">
+                                            Record Sale + Print Receipt
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Use Case: Expense Approval -->
+                <div id="usecase-expense" class="tab-content">
+                    <div class="grid md:grid-cols-2 gap-8">
+                        <div>
+                            <h3 class="text-xl font-bold mb-4">Scenario</h3>
+                            <div class="bg-white rounded-xl p-6 shadow-sm mb-4">
+                                <p class="text-slate-600">
+                                    The AC unit at Labzak needs repair. Cost is <strong>850,000 UZS</strong>.
+                                    This exceeds the 500K threshold, so it needs <strong>GM approval</strong>.
+                                </p>
+                            </div>
+
+                            <h3 class="text-xl font-bold mb-4">What Happens</h3>
+                            <div class="space-y-4">
+                                <div class="timeline-step">
+                                    <div class="timeline-dot"></div>
+                                    <div class="bg-white rounded-xl p-4 shadow-sm">
+                                        <h4 class="font-semibold">Branch Manager submits expense</h4>
+                                        <p class="text-sm text-slate-600">Category: Maintenance, Amount: 850,000</p>
+                                    </div>
+                                </div>
+                                <div class="timeline-step">
+                                    <div class="timeline-dot"></div>
+                                    <div class="bg-yellow-50 border border-yellow-200 rounded-xl p-4">
+                                        <h4 class="font-semibold text-yellow-800">System checks threshold</h4>
+                                        <p class="text-sm text-yellow-700">850K > 500K → Requires GM approval</p>
+                                    </div>
+                                </div>
+                                <div class="timeline-step">
+                                    <div class="timeline-dot"></div>
+                                    <div class="bg-white rounded-xl p-4 shadow-sm">
+                                        <h4 class="font-semibold">GM receives Telegram notification</h4>
+                                        <p class="text-sm text-slate-600">"Approval needed: AC repair 850K - Labzak"</p>
+                                    </div>
+                                </div>
+                                <div class="timeline-step">
+                                    <div class="timeline-dot"></div>
+                                    <div class="bg-green-50 border border-green-200 rounded-xl p-4">
+                                        <h4 class="font-semibold text-green-800">GM approves</h4>
+                                        <p class="text-sm text-green-700">Expense recorded, journal entry created</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="mockup-browser">
+                                <div class="mockup-toolbar">
+                                    <div class="mockup-dot bg-red-500"></div>
+                                    <div class="mockup-dot bg-yellow-500"></div>
+                                    <div class="mockup-dot bg-green-500"></div>
+                                    <div class="mockup-url">hr.cspace.uz/approvals</div>
+                                </div>
+                                <div class="mockup-content p-6">
+                                    <h3 class="font-bold text-lg mb-4">Pending Approvals</h3>
+                                    <div class="border border-yellow-200 bg-yellow-50 rounded-xl p-4 mb-4">
+                                        <div class="flex justify-between items-start mb-3">
+                                            <div>
+                                                <span class="bg-yellow-200 text-yellow-800 text-xs px-2 py-1 rounded">PENDING</span>
+                                                <h4 class="font-semibold mt-2">AC Unit Repair</h4>
+                                                <p class="text-sm text-slate-600">Labzak • Maintenance</p>
+                                            </div>
+                                            <div class="text-right">
+                                                <div class="text-2xl font-bold">850,000</div>
+                                                <div class="text-sm text-slate-500">UZS</div>
+                                            </div>
+                                        </div>
+                                        <p class="text-sm text-slate-600 mb-4">AC unit in meeting room 3 stopped working. Technician quote attached.</p>
+                                        <div class="flex gap-3">
+                                            <button class="flex-1 bg-green-500 text-white py-2 rounded-lg font-medium">✓ Approve</button>
+                                            <button class="flex-1 bg-red-100 text-red-600 py-2 rounded-lg font-medium">✗ Reject</button>
+                                        </div>
+                                    </div>
+                                    <div class="border rounded-xl p-4 opacity-50">
+                                        <div class="flex justify-between items-center">
+                                            <div>
+                                                <span class="bg-green-200 text-green-800 text-xs px-2 py-1 rounded">APPROVED</span>
+                                                <h4 class="font-semibold mt-2">Office Supplies</h4>
+                                            </div>
+                                            <div class="text-lg font-bold">320,000</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Use Case: Excel Import -->
+                <div id="usecase-import" class="tab-content">
+                    <div class="grid md:grid-cols-2 gap-8">
+                        <div>
+                            <h3 class="text-xl font-bold mb-4">Scenario</h3>
+                            <div class="bg-white rounded-xl p-6 shadow-sm mb-4">
+                                <p class="text-slate-600">
+                                    Accountant wants to import <strong>"Sales 2025 (Labzak).xlsx"</strong>
+                                    with 3,966 transactions into the system.
+                                </p>
+                            </div>
+
+                            <h3 class="text-xl font-bold mb-4">What Happens</h3>
+                            <div class="space-y-4">
+                                <div class="timeline-step">
+                                    <div class="timeline-dot"></div>
+                                    <div class="bg-white rounded-xl p-4 shadow-sm">
+                                        <h4 class="font-semibold">Upload Excel file</h4>
+                                        <p class="text-sm text-slate-600">System detects columns: Date, Name, Servis turi, To'lov, Payment method</p>
+                                    </div>
+                                </div>
+                                <div class="timeline-step">
+                                    <div class="timeline-dot"></div>
+                                    <div class="bg-white rounded-xl p-4 shadow-sm">
+                                        <h4 class="font-semibold">Column mapping preview</h4>
+                                        <p class="text-sm text-slate-600">"Servis turi" → Service Type, "To'lov" → Amount</p>
+                                    </div>
+                                </div>
+                                <div class="timeline-step">
+                                    <div class="timeline-dot"></div>
+                                    <div class="bg-white rounded-xl p-4 shadow-sm">
+                                        <h4 class="font-semibold">Service → Account mapping</h4>
+                                        <p class="text-sm text-slate-600">"Meeting" → 4400 Meeting Income, "Flex" → 4300 Flex Income</p>
+                                    </div>
+                                </div>
+                                <div class="timeline-step">
+                                    <div class="timeline-dot"></div>
+                                    <div class="bg-green-50 border border-green-200 rounded-xl p-4">
+                                        <h4 class="font-semibold text-green-800">Import complete</h4>
+                                        <p class="text-sm text-green-700">3,950 imported, 16 duplicates skipped</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="mockup-browser">
+                                <div class="mockup-toolbar">
+                                    <div class="mockup-dot bg-red-500"></div>
+                                    <div class="mockup-dot bg-yellow-500"></div>
+                                    <div class="mockup-dot bg-green-500"></div>
+                                    <div class="mockup-url">hr.cspace.uz/branches/labzak/finances/import</div>
+                                </div>
+                                <div class="mockup-content p-6">
+                                    <h3 class="font-bold text-lg mb-4">Import Excel Data</h3>
+                                    <div class="border-2 border-dashed border-slate-300 rounded-xl p-8 text-center bg-slate-50 mb-6">
+                                        <div class="text-4xl mb-2">📄</div>
+                                        <p class="font-medium">Sales 2025 (Labzak).xlsx</p>
+                                        <p class="text-sm text-slate-500">3,966 rows detected</p>
+                                    </div>
+
+                                    <h4 class="font-semibold mb-3">Column Mapping</h4>
+                                    <div class="space-y-2 text-sm mb-6">
+                                        <div class="flex items-center gap-3 p-2 bg-slate-50 rounded">
+                                            <span class="w-32 font-medium">Date</span>
+                                            <span class="text-slate-400">→</span>
+                                            <span class="text-green-600">transaction_date ✓</span>
+                                        </div>
+                                        <div class="flex items-center gap-3 p-2 bg-slate-50 rounded">
+                                            <span class="w-32 font-medium">Servis turi</span>
+                                            <span class="text-slate-400">→</span>
+                                            <span class="text-green-600">service_type ✓</span>
+                                        </div>
+                                        <div class="flex items-center gap-3 p-2 bg-slate-50 rounded">
+                                            <span class="w-32 font-medium">To'lov</span>
+                                            <span class="text-slate-400">→</span>
+                                            <span class="text-green-600">amount ✓</span>
+                                        </div>
+                                        <div class="flex items-center gap-3 p-2 bg-slate-50 rounded">
+                                            <span class="w-32 font-medium">Agent</span>
+                                            <span class="text-slate-400">→</span>
+                                            <span class="text-green-600">processed_by ✓</span>
+                                        </div>
+                                    </div>
+
+                                    <button class="w-full bg-blue-500 text-white py-3 rounded-xl font-semibold">
+                                        Import 3,966 Transactions
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Use Case: Allocation -->
+                <div id="usecase-allocation" class="tab-content">
+                    <div class="grid md:grid-cols-2 gap-8">
+                        <div>
+                            <h3 class="text-xl font-bold mb-4">Scenario</h3>
+                            <div class="bg-white rounded-xl p-6 shadow-sm mb-4">
+                                <p class="text-slate-600">
+                                    End of week at Labzak. Branch Manager needs to allocate
+                                    <strong>10,500,000 UZS</strong> from Secondary Safe:
+                                    cover expenses, deduct Special Fund, transfer rest to GM.
+                                </p>
+                            </div>
+
+                            <h3 class="text-xl font-bold mb-4">Allocation Breakdown</h3>
+                            <div class="bg-white rounded-xl p-6 shadow-sm">
+                                <div class="space-y-3">
+                                    <div class="flex justify-between py-2 border-b">
+                                        <span class="font-medium">Total Income</span>
+                                        <span class="font-bold text-green-600">10,500,000</span>
+                                    </div>
+                                    <div class="flex justify-between py-2 text-red-600">
+                                        <span>Maintenance</span>
+                                        <span>-850,000</span>
+                                    </div>
+                                    <div class="flex justify-between py-2 text-red-600">
+                                        <span>Supplies</span>
+                                        <span>-420,000</span>
+                                    </div>
+                                    <div class="flex justify-between py-2 text-red-600">
+                                        <span>Salary Reserve</span>
+                                        <span>-2,000,000</span>
+                                    </div>
+                                    <div class="flex justify-between py-2 text-red-600">
+                                        <span>Other</span>
+                                        <span>-180,000</span>
+                                    </div>
+                                    <div class="flex justify-between py-2 border-t font-semibold">
+                                        <span>Gross Profit</span>
+                                        <span>7,050,000</span>
+                                    </div>
+                                    <div class="flex justify-between py-2 text-amber-600">
+                                        <span>Special Fund (3%)</span>
+                                        <span>-211,500</span>
+                                    </div>
+                                    <div class="flex justify-between py-3 border-t-2 font-bold text-lg text-blue-600">
+                                        <span>Net to Primary Safe</span>
+                                        <span>6,838,500</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="mockup-browser">
+                                <div class="mockup-toolbar">
+                                    <div class="mockup-dot bg-red-500"></div>
+                                    <div class="mockup-dot bg-yellow-500"></div>
+                                    <div class="mockup-dot bg-green-500"></div>
+                                    <div class="mockup-url">hr.cspace.uz/branches/labzak/finances/allocate</div>
+                                </div>
+                                <div class="mockup-content p-6">
+                                    <div class="flex justify-between items-center mb-6">
+                                        <h3 class="font-bold text-lg">Cash Allocation</h3>
+                                        <span class="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-sm">Draft</span>
+                                    </div>
+
+                                    <div class="bg-green-50 border border-green-200 rounded-xl p-4 mb-4">
+                                        <div class="text-sm text-green-600">Secondary Safe Balance</div>
+                                        <div class="text-3xl font-bold text-green-700">10,500,000 UZS</div>
+                                    </div>
+
+                                    <div class="space-y-3 mb-4">
+                                        <div>
+                                            <label class="text-sm text-slate-500">Maintenance</label>
+                                            <input type="text" value="850,000" class="w-full border rounded-lg px-4 py-2 mt-1">
+                                        </div>
+                                        <div>
+                                            <label class="text-sm text-slate-500">Supplies</label>
+                                            <input type="text" value="420,000" class="w-full border rounded-lg px-4 py-2 mt-1">
+                                        </div>
+                                        <div>
+                                            <label class="text-sm text-slate-500">Salary Reserve</label>
+                                            <input type="text" value="2,000,000" class="w-full border rounded-lg px-4 py-2 mt-1">
+                                        </div>
+                                    </div>
+
+                                    <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-4">
+                                        <div class="flex justify-between text-sm">
+                                            <span>Gross Profit</span>
+                                            <span class="font-semibold">7,050,000</span>
+                                        </div>
+                                        <div class="flex justify-between text-sm text-amber-600">
+                                            <span>Special Fund (3%)</span>
+                                            <span>-211,500</span>
+                                        </div>
+                                        <div class="flex justify-between font-bold text-lg mt-2 pt-2 border-t">
+                                            <span>To Primary Safe</span>
+                                            <span class="text-blue-600">6,838,500</span>
+                                        </div>
+                                    </div>
+
+                                    <button class="w-full bg-blue-500 text-white py-3 rounded-xl font-semibold">
+                                        Submit for GM Approval
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Slide 5: Dashboard UI Options -->
+    <section class="slide bg-white">
+        <div class="min-h-screen flex items-center px-8 py-16">
+            <div class="max-w-6xl mx-auto">
+                <div class="text-center mb-12">
+                    <span class="text-orange-500 font-semibold text-sm uppercase tracking-wider">Choose Your Style</span>
+                    <h2 class="text-4xl font-bold mt-2 text-slate-800">Dashboard Layout Options</h2>
+                    <p class="text-slate-600 mt-2">Click to select your preferred dashboard style</p>
+                </div>
+
+                <div class="grid md:grid-cols-2 gap-8">
+                    <!-- Option A -->
+                    <div class="option-card relative border-2 border-slate-200 rounded-2xl p-6 bg-white" onclick="selectOption(this, 'dashboard')">
+                        <div class="flex items-center gap-3 mb-4">
+                            <span class="bg-blue-500 text-white text-sm font-bold px-3 py-1 rounded-lg">A</span>
+                            <h3 class="font-bold text-lg">KPI Cards + Charts</h3>
+                        </div>
+                        <div class="bg-slate-100 rounded-xl p-4">
+                            <div class="grid grid-cols-4 gap-2 mb-4">
+                                <div class="bg-green-100 rounded-lg p-3 text-center">
+                                    <div class="text-xs text-green-600">Revenue</div>
+                                    <div class="font-bold text-green-700">245M</div>
+                                </div>
+                                <div class="bg-red-100 rounded-lg p-3 text-center">
+                                    <div class="text-xs text-red-600">Costs</div>
+                                    <div class="font-bold text-red-700">82M</div>
+                                </div>
+                                <div class="bg-blue-100 rounded-lg p-3 text-center">
+                                    <div class="text-xs text-blue-600">Profit</div>
+                                    <div class="font-bold text-blue-700">163M</div>
+                                </div>
+                                <div class="bg-amber-100 rounded-lg p-3 text-center">
+                                    <div class="text-xs text-amber-600">Debt</div>
+                                    <div class="font-bold text-amber-700">12M</div>
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-2 gap-2">
+                                <div class="bg-white rounded-lg h-24 flex items-center justify-center text-slate-400 text-sm">Revenue Trend</div>
+                                <div class="bg-white rounded-lg h-24 flex items-center justify-center text-slate-400 text-sm">By Service</div>
+                            </div>
+                        </div>
+                        <p class="text-sm text-slate-500 mt-4">Best for: Quick overview, CEO/management</p>
+                    </div>
+
+                    <!-- Option B -->
+                    <div class="option-card relative border-2 border-slate-200 rounded-2xl p-6 bg-white" onclick="selectOption(this, 'dashboard')">
+                        <div class="flex items-center gap-3 mb-4">
+                            <span class="bg-purple-500 text-white text-sm font-bold px-3 py-1 rounded-lg">B</span>
+                            <h3 class="font-bold text-lg">Split View: Summary + Activity</h3>
+                        </div>
+                        <div class="bg-slate-100 rounded-xl p-4">
+                            <div class="flex gap-4">
+                                <div class="flex-1">
+                                    <div class="text-xs font-medium text-slate-500 mb-2">This Month</div>
+                                    <div class="bg-white rounded-lg p-3 space-y-2">
+                                        <div class="flex justify-between text-sm"><span>Revenue</span><span class="text-green-600">+245M</span></div>
+                                        <div class="flex justify-between text-sm"><span>Expenses</span><span class="text-red-600">-82M</span></div>
+                                        <div class="flex justify-between text-sm font-bold border-t pt-2"><span>Net</span><span>163M</span></div>
+                                    </div>
+                                </div>
+                                <div class="flex-1">
+                                    <div class="text-xs font-medium text-slate-500 mb-2">Recent Activity</div>
+                                    <div class="bg-white rounded-lg p-3 space-y-2 text-xs">
+                                        <div class="flex justify-between"><span>Meeting - Cash</span><span>+150K</span></div>
+                                        <div class="flex justify-between"><span>Supplies</span><span class="text-red-600">-45K</span></div>
+                                        <div class="flex justify-between"><span>Flex - Payme</span><span>+800K</span></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <p class="text-sm text-slate-500 mt-4">Best for: Accountants, detailed tracking</p>
+                    </div>
+
+                    <!-- Option C -->
+                    <div class="option-card relative border-2 border-slate-200 rounded-2xl p-6 bg-white selected" onclick="selectOption(this, 'dashboard')">
+                        <div class="flex items-center gap-3 mb-4">
+                            <span class="bg-green-500 text-white text-sm font-bold px-3 py-1 rounded-lg">C</span>
+                            <h3 class="font-bold text-lg">Action-Focused</h3>
+                            <span class="bg-green-100 text-green-700 text-xs px-2 py-1 rounded">Recommended</span>
+                        </div>
+                        <div class="bg-slate-100 rounded-xl p-4">
+                            <div class="flex gap-2 mb-3">
+                                <button class="flex-1 bg-blue-500 text-white text-xs py-2 rounded-lg">+ Sale</button>
+                                <button class="flex-1 bg-slate-200 text-xs py-2 rounded-lg">+ Expense</button>
+                                <button class="flex-1 bg-slate-200 text-xs py-2 rounded-lg">Allocate</button>
+                            </div>
+                            <div class="bg-yellow-100 border border-yellow-300 rounded-lg p-3 mb-3">
+                                <div class="text-xs font-medium text-yellow-800">⚠️ 3 overdue payments (8.5M)</div>
+                            </div>
+                            <div class="bg-white rounded-lg p-3">
+                                <div class="flex justify-between text-sm">
+                                    <span>Today: 2.4M</span>
+                                    <span>Safe: 5.2M</span>
+                                </div>
+                            </div>
+                        </div>
+                        <p class="text-sm text-slate-500 mt-4">Best for: Branch managers, daily operations</p>
+                    </div>
+
+                    <!-- Option D -->
+                    <div class="option-card relative border-2 border-slate-200 rounded-2xl p-6 bg-white" onclick="selectOption(this, 'dashboard')">
+                        <div class="flex items-center gap-3 mb-4">
+                            <span class="bg-orange-500 text-white text-sm font-bold px-3 py-1 rounded-lg">D</span>
+                            <h3 class="font-bold text-lg">Full Analytics</h3>
+                        </div>
+                        <div class="bg-slate-100 rounded-xl p-4">
+                            <div class="flex gap-1 mb-3">
+                                <span class="text-xs bg-slate-200 px-2 py-1 rounded">Day</span>
+                                <span class="text-xs bg-blue-500 text-white px-2 py-1 rounded">Month</span>
+                                <span class="text-xs bg-slate-200 px-2 py-1 rounded">Quarter</span>
+                                <span class="text-xs bg-slate-200 px-2 py-1 rounded">Year</span>
+                            </div>
+                            <div class="bg-white rounded-lg h-20 mb-3 flex items-center justify-center text-slate-400 text-xs">Revenue vs Expenses Chart</div>
+                            <div class="grid grid-cols-3 gap-1">
+                                <div class="bg-white rounded p-2 text-center text-xs">
+                                    <div class="text-slate-500">Office</div>
+                                    <div class="font-bold">65%</div>
+                                </div>
+                                <div class="bg-white rounded p-2 text-center text-xs">
+                                    <div class="text-slate-500">Flex</div>
+                                    <div class="font-bold">22%</div>
+                                </div>
+                                <div class="bg-white rounded p-2 text-center text-xs">
+                                    <div class="text-slate-500">Meeting</div>
+                                    <div class="font-bold">13%</div>
+                                </div>
+                            </div>
+                        </div>
+                        <p class="text-sm text-slate-500 mt-4">Best for: Deep analysis, strategic decisions</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Slide 6: Entry Form Options -->
+    <section class="slide bg-slate-50">
+        <div class="min-h-screen flex items-center px-8 py-16">
+            <div class="max-w-6xl mx-auto">
+                <div class="text-center mb-12">
+                    <span class="text-pink-500 font-semibold text-sm uppercase tracking-wider">Choose Your Style</span>
+                    <h2 class="text-4xl font-bold mt-2 text-slate-800">Transaction Entry Options</h2>
+                    <p class="text-slate-600 mt-2">How receptionists will record sales</p>
+                </div>
+
+                <div class="grid md:grid-cols-3 gap-6">
+                    <!-- Option A: Simple Form -->
+                    <div class="option-card relative border-2 border-slate-200 rounded-2xl p-6 bg-white" onclick="selectOption(this, 'entry')">
+                        <div class="flex items-center gap-3 mb-4">
+                            <span class="bg-blue-500 text-white text-sm font-bold px-3 py-1 rounded-lg">A</span>
+                            <h3 class="font-bold">Simple Form</h3>
+                        </div>
+                        <div class="space-y-3">
+                            <div>
+                                <div class="text-xs text-slate-500 mb-1">Service</div>
+                                <div class="border rounded-lg px-3 py-2 text-sm bg-slate-50">Meeting Room ▼</div>
+                            </div>
+                            <div>
+                                <div class="text-xs text-slate-500 mb-1">Amount</div>
+                                <div class="border rounded-lg px-3 py-2 text-sm bg-slate-50">150,000</div>
+                            </div>
+                            <div>
+                                <div class="text-xs text-slate-500 mb-1">Customer</div>
+                                <div class="border rounded-lg px-3 py-2 text-sm bg-slate-50">Oybek D.</div>
+                            </div>
+                            <div class="flex gap-1">
+                                <span class="flex-1 bg-green-500 text-white text-xs py-2 text-center rounded">Cash</span>
+                                <span class="flex-1 bg-slate-100 text-xs py-2 text-center rounded">Card</span>
+                                <span class="flex-1 bg-slate-100 text-xs py-2 text-center rounded">Payme</span>
+                            </div>
+                            <button class="w-full bg-blue-500 text-white py-2 rounded-lg text-sm font-medium">Record</button>
+                        </div>
+                        <p class="text-xs text-slate-500 mt-4 text-center">Standard, clear labels</p>
+                    </div>
+
+                    <!-- Option B: Quick Buttons -->
+                    <div class="option-card relative border-2 border-slate-200 rounded-2xl p-6 bg-white selected" onclick="selectOption(this, 'entry')">
+                        <div class="flex items-center gap-3 mb-4">
+                            <span class="bg-purple-500 text-white text-sm font-bold px-3 py-1 rounded-lg">B</span>
+                            <h3 class="font-bold">Quick Buttons</h3>
+                            <span class="bg-purple-100 text-purple-700 text-xs px-2 py-1 rounded">Recommended</span>
+                        </div>
+                        <div class="space-y-3">
+                            <div class="text-xs text-slate-500 mb-1">Quick Select</div>
+                            <div class="grid grid-cols-3 gap-1">
+                                <button class="bg-slate-100 text-xs py-2 rounded hover:bg-slate-200">🏢 Office</button>
+                                <button class="bg-slate-100 text-xs py-2 rounded hover:bg-slate-200">💺 Dedicated</button>
+                                <button class="bg-blue-100 border border-blue-400 text-xs py-2 rounded">🚀 Flex</button>
+                                <button class="bg-slate-100 text-xs py-2 rounded hover:bg-slate-200">🤝 Meeting</button>
+                                <button class="bg-slate-100 text-xs py-2 rounded hover:bg-slate-200">🎤 Conference</button>
+                                <button class="bg-slate-100 text-xs py-2 rounded hover:bg-slate-200">⏰ Hour</button>
+                            </div>
+                            <div class="flex gap-2">
+                                <input class="flex-1 border rounded-lg px-3 py-2 text-sm" placeholder="Amount">
+                                <input class="flex-1 border rounded-lg px-3 py-2 text-sm" placeholder="Customer">
+                            </div>
+                            <div class="flex gap-1">
+                                <span class="flex-1 bg-green-100 text-center text-xs py-2 rounded">Cash</span>
+                                <span class="flex-1 bg-slate-100 text-center text-xs py-2 rounded">Card</span>
+                                <span class="flex-1 bg-blue-500 text-white text-center text-xs py-2 rounded">Payme</span>
+                            </div>
+                        </div>
+                        <p class="text-xs text-slate-500 mt-4 text-center">Fast for high volume</p>
+                    </div>
+
+                    <!-- Option C: POS Style -->
+                    <div class="option-card relative border-2 border-slate-200 rounded-2xl p-6 bg-white" onclick="selectOption(this, 'entry')">
+                        <div class="flex items-center gap-3 mb-4">
+                            <span class="bg-green-500 text-white text-sm font-bold px-3 py-1 rounded-lg">C</span>
+                            <h3 class="font-bold">POS Style</h3>
+                        </div>
+                        <div class="flex gap-3">
+                            <div class="flex-1">
+                                <div class="text-xs text-slate-500 mb-2">Services</div>
+                                <div class="space-y-1 text-xs">
+                                    <div class="flex justify-between p-2 bg-slate-50 rounded">
+                                        <span>Meeting</span>
+                                        <span>150K/hr</span>
+                                    </div>
+                                    <div class="flex justify-between p-2 bg-blue-50 border border-blue-300 rounded">
+                                        <span>Flex</span>
+                                        <span>800K</span>
+                                    </div>
+                                    <div class="flex justify-between p-2 bg-slate-50 rounded">
+                                        <span>Day Pass</span>
+                                        <span>120K</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="w-20">
+                                <div class="text-xs text-slate-500 mb-2">Cart</div>
+                                <div class="text-xs mb-2">Flex x1</div>
+                                <div class="text-sm font-bold border-t pt-2">800K</div>
+                                <button class="w-full bg-green-500 text-white text-xs py-2 rounded mt-2">Pay</button>
+                            </div>
+                        </div>
+                        <p class="text-xs text-slate-500 mt-4 text-center">Multi-item, retail-like</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Slide 7: Reports -->
+    <section class="slide bg-white">
+        <div class="min-h-screen flex items-center px-8 py-16">
+            <div class="max-w-6xl mx-auto">
+                <div class="text-center mb-12">
+                    <span class="text-emerald-500 font-semibold text-sm uppercase tracking-wider">Financial Statements</span>
+                    <h2 class="text-4xl font-bold mt-2 text-slate-800">Reports You'll Get</h2>
+                </div>
+
+                <div class="grid md:grid-cols-3 gap-6">
+                    <!-- Income Statement -->
+                    <div class="bg-white border rounded-2xl overflow-hidden shadow-lg">
+                        <div class="bg-gradient-to-r from-green-500 to-emerald-500 text-white p-4">
+                            <h3 class="font-bold text-lg">Income Statement</h3>
+                            <p class="text-green-100 text-sm">Profit & Loss</p>
+                        </div>
+                        <div class="p-4">
+                            <div class="space-y-2 text-sm">
+                                <div class="font-semibold text-green-600">Revenue</div>
+                                <div class="flex justify-between pl-2"><span class="text-slate-600">Office Rental</span><span>185,000,000</span></div>
+                                <div class="flex justify-between pl-2"><span class="text-slate-600">Dedicated</span><span>32,000,000</span></div>
+                                <div class="flex justify-between pl-2"><span class="text-slate-600">Meeting</span><span>8,200,000</span></div>
+                                <div class="flex justify-between font-semibold border-t pt-2"><span>Total</span><span class="text-green-600">256,500,000</span></div>
+
+                                <div class="font-semibold text-red-600 mt-4">Expenses</div>
+                                <div class="flex justify-between pl-2"><span class="text-slate-600">Goods</span><span>(8,500,000)</span></div>
+                                <div class="flex justify-between pl-2"><span class="text-slate-600">Utilities</span><span>(15,000,000)</span></div>
+                                <div class="flex justify-between font-semibold border-t pt-2"><span>Total</span><span class="text-red-600">(29,500,000)</span></div>
+
+                                <div class="flex justify-between font-bold text-lg border-t-2 pt-3 mt-3">
+                                    <span>Net Income</span>
+                                    <span class="text-blue-600">227,000,000</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Balance Sheet -->
+                    <div class="bg-white border rounded-2xl overflow-hidden shadow-lg">
+                        <div class="bg-gradient-to-r from-blue-500 to-indigo-500 text-white p-4">
+                            <h3 class="font-bold text-lg">Balance Sheet</h3>
+                            <p class="text-blue-100 text-sm">Assets & Liabilities</p>
+                        </div>
+                        <div class="p-4">
+                            <div class="space-y-2 text-sm">
+                                <div class="font-semibold text-blue-600">Assets</div>
+                                <div class="flex justify-between pl-2"><span class="text-slate-600">Cash (Safes)</span><span>45,000,000</span></div>
+                                <div class="flex justify-between pl-2"><span class="text-slate-600">Bank</span><span>180,000,000</span></div>
+                                <div class="flex justify-between pl-2"><span class="text-slate-600">Receivables</span><span>17,700,000</span></div>
+                                <div class="flex justify-between font-semibold border-t pt-2"><span>Total Assets</span><span>242,700,000</span></div>
+
+                                <div class="font-semibold text-red-600 mt-4">Liabilities</div>
+                                <div class="flex justify-between pl-2"><span class="text-slate-600">Payables</span><span>8,500,000</span></div>
+                                <div class="flex justify-between pl-2"><span class="text-slate-600">Deferred Rev</span><span>12,000,000</span></div>
+                                <div class="flex justify-between font-semibold border-t pt-2"><span>Total Liab.</span><span>20,500,000</span></div>
+
+                                <div class="flex justify-between font-bold text-lg border-t-2 pt-3 mt-3">
+                                    <span>Equity</span>
+                                    <span class="text-purple-600">222,200,000</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Cash Flow -->
+                    <div class="bg-white border rounded-2xl overflow-hidden shadow-lg">
+                        <div class="bg-gradient-to-r from-purple-500 to-pink-500 text-white p-4">
+                            <h3 class="font-bold text-lg">Cash Flow</h3>
+                            <p class="text-purple-100 text-sm">Money Movement</p>
+                        </div>
+                        <div class="p-4">
+                            <div class="space-y-2 text-sm">
+                                <div class="font-semibold text-purple-600">Operating</div>
+                                <div class="flex justify-between pl-2"><span class="text-slate-600">Net Income</span><span>227,000,000</span></div>
+                                <div class="flex justify-between pl-2"><span class="text-slate-600">Δ Receivables</span><span class="text-red-600">(15,000,000)</span></div>
+                                <div class="flex justify-between pl-2"><span class="text-slate-600">Δ Payables</span><span>5,000,000</span></div>
+                                <div class="flex justify-between font-semibold border-t pt-2"><span>From Ops</span><span>217,000,000</span></div>
+
+                                <div class="font-semibold text-purple-600 mt-4">Financing</div>
+                                <div class="flex justify-between pl-2"><span class="text-slate-600">Dividends</span><span class="text-red-600">(50,000,000)</span></div>
+
+                                <div class="flex justify-between font-bold text-lg border-t-2 pt-3 mt-3">
+                                    <span>Net Δ Cash</span>
+                                    <span class="text-green-600">+167,000,000</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-8 bg-amber-50 border border-amber-200 rounded-2xl p-6">
+                    <h3 class="font-bold text-lg text-amber-800 mb-3">📊 Additional Reports</h3>
+                    <div class="grid md:grid-cols-4 gap-4 text-sm">
+                        <div class="bg-white rounded-lg p-3">
+                            <div class="font-semibold">Receivables Aging</div>
+                            <div class="text-slate-600">30/60/90 day buckets</div>
+                        </div>
+                        <div class="bg-white rounded-lg p-3">
+                            <div class="font-semibold">Revenue by Service</div>
+                            <div class="text-slate-600">Office, Flex, Meeting...</div>
+                        </div>
+                        <div class="bg-white rounded-lg p-3">
+                            <div class="font-semibold">Budget vs Actual</div>
+                            <div class="text-slate-600">Variance analysis</div>
+                        </div>
+                        <div class="bg-white rounded-lg p-3">
+                            <div class="font-semibold">Safe Balances</div>
+                            <div class="text-slate-600">Daily reconciliation</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Slide 8: Database Schema -->
+    <section class="slide bg-slate-900 text-white">
+        <div class="min-h-screen flex items-center px-8 py-16">
+            <div class="max-w-6xl mx-auto">
+                <div class="text-center mb-12">
+                    <span class="text-cyan-400 font-semibold text-sm uppercase tracking-wider">Technical</span>
+                    <h2 class="text-4xl font-bold mt-2">Database Architecture</h2>
+                </div>
+
+                <div class="grid md:grid-cols-2 gap-8">
+                    <div>
+                        <h3 class="text-xl font-bold mb-4 text-cyan-400">Core Tables</h3>
+                        <div class="space-y-3">
+                            <div class="bg-slate-800 rounded-xl p-4">
+                                <div class="font-mono text-cyan-300 mb-2">accounts</div>
+                                <p class="text-sm text-slate-400">Chart of Accounts (1xxx Assets, 4xxx Revenue, 5xxx Expenses)</p>
+                            </div>
+                            <div class="bg-slate-800 rounded-xl p-4">
+                                <div class="font-mono text-green-300 mb-2">transactions</div>
+                                <p class="text-sm text-slate-400">User-friendly view of all money movements</p>
+                            </div>
+                            <div class="bg-slate-800 rounded-xl p-4">
+                                <div class="font-mono text-purple-300 mb-2">journal_entries + lines</div>
+                                <p class="text-sm text-slate-400">Double-entry backbone (hidden from users)</p>
+                            </div>
+                            <div class="bg-slate-800 rounded-xl p-4">
+                                <div class="font-mono text-amber-300 mb-2">safes + safe_transactions</div>
+                                <p class="text-sm text-slate-400">Secondary Safe, Primary Safe, Special Fund tracking</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-bold mb-4 text-pink-400">Supporting Tables</h3>
+                        <div class="space-y-3">
+                            <div class="bg-slate-800 rounded-xl p-4">
+                                <div class="font-mono text-pink-300 mb-2">allocations</div>
+                                <p class="text-sm text-slate-400">Branch Manager expense allocation records</p>
+                            </div>
+                            <div class="bg-slate-800 rounded-xl p-4">
+                                <div class="font-mono text-blue-300 mb-2">receivables</div>
+                                <p class="text-sm text-slate-400">Debt tracking with aging, reminders</p>
+                            </div>
+                            <div class="bg-slate-800 rounded-xl p-4">
+                                <div class="font-mono text-orange-300 mb-2">budgets</div>
+                                <p class="text-sm text-slate-400">Per-branch, per-category budget limits</p>
+                            </div>
+                            <div class="bg-slate-800 rounded-xl p-4">
+                                <div class="font-mono text-red-300 mb-2">import_batches</div>
+                                <p class="text-sm text-slate-400">Excel import history and error logs</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-8 bg-slate-800 rounded-xl p-6">
+                    <h3 class="font-bold mb-4">Entity Relationships</h3>
+                    <pre class="text-sm text-slate-300 font-mono overflow-x-auto">
+branches ─────┬───── transactions ───── employees
+              │            │
+              │            └───── journal_entries ───── journal_entry_lines ───── accounts
+              │
+              ├───── safes ───── safe_transactions
+              │
+              ├───── allocations
+              │
+              ├───── receivables ───── finance_customers
+              │
+              └───── budgets ───── accounts
+                    </pre>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Slide 9: Implementation Phases -->
+    <section class="slide bg-white">
+        <div class="min-h-screen flex items-center px-8 py-16">
+            <div class="max-w-6xl mx-auto">
+                <div class="text-center mb-12">
+                    <span class="text-indigo-500 font-semibold text-sm uppercase tracking-wider">Roadmap</span>
+                    <h2 class="text-4xl font-bold mt-2 text-slate-800">Implementation Phases</h2>
+                </div>
+
+                <div class="relative">
+                    <!-- Timeline line -->
+                    <div class="absolute left-1/2 top-0 bottom-0 w-1 bg-slate-200 transform -translate-x-1/2 hidden md:block"></div>
+
+                    <!-- Phase 1 -->
+                    <div class="flex items-center mb-12">
+                        <div class="w-full md:w-1/2 md:pr-12 md:text-right">
+                            <div class="bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-2xl p-6 inline-block">
+                                <div class="text-sm opacity-80 mb-1">Phase 1</div>
+                                <h3 class="text-2xl font-bold mb-2">Visibility</h3>
+                                <p class="text-blue-100 mb-4">See everything in one place</p>
+                                <ul class="text-sm space-y-1 text-left">
+                                    <li>✓ Database schema & migrations</li>
+                                    <li>✓ Chart of Accounts setup</li>
+                                    <li>✓ Excel import functionality</li>
+                                    <li>✓ Basic dashboard</li>
+                                    <li>✓ Transaction list view</li>
+                                    <li>✓ Receivables aging report</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="hidden md:flex w-12 h-12 bg-blue-500 rounded-full items-center justify-center text-white font-bold z-10">1</div>
+                        <div class="w-1/2 pl-12 hidden md:block">
+                            <div class="text-slate-400">Week 1-2</div>
+                        </div>
+                    </div>
+
+                    <!-- Phase 2 -->
+                    <div class="flex items-center mb-12">
+                        <div class="hidden md:block w-1/2 pr-12 text-right">
+                            <div class="text-slate-400">Week 3-4</div>
+                        </div>
+                        <div class="hidden md:flex w-12 h-12 bg-purple-500 rounded-full items-center justify-center text-white font-bold z-10">2</div>
+                        <div class="w-full md:w-1/2 md:pl-12">
+                            <div class="bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-2xl p-6 inline-block">
+                                <div class="text-sm opacity-80 mb-1">Phase 2</div>
+                                <h3 class="text-2xl font-bold mb-2">Control</h3>
+                                <p class="text-purple-100 mb-4">Enter data directly, enforce rules</p>
+                                <ul class="text-sm space-y-1">
+                                    <li>✓ Sale entry form (reception)</li>
+                                    <li>✓ Expense entry with approval</li>
+                                    <li>✓ Safe management</li>
+                                    <li>✓ Branch allocation workflow</li>
+                                    <li>✓ Telegram notifications</li>
+                                    <li>✓ Receipt printing</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Phase 3 -->
+                    <div class="flex items-center">
+                        <div class="w-full md:w-1/2 md:pr-12 md:text-right">
+                            <div class="bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-2xl p-6 inline-block">
+                                <div class="text-sm opacity-80 mb-1">Phase 3</div>
+                                <h3 class="text-2xl font-bold mb-2">Intelligence</h3>
+                                <p class="text-emerald-100 mb-4">Plan and predict</p>
+                                <ul class="text-sm space-y-1 text-left">
+                                    <li>✓ Budget management</li>
+                                    <li>✓ Financial statements (P&L, BS, CF)</li>
+                                    <li>✓ Debt reminder automation</li>
+                                    <li>✓ Multi-branch consolidated view</li>
+                                    <li>✓ Trend analysis</li>
+                                    <li>✓ Export to Excel/PDF</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="hidden md:flex w-12 h-12 bg-emerald-500 rounded-full items-center justify-center text-white font-bold z-10">3</div>
+                        <div class="w-1/2 pl-12 hidden md:block">
+                            <div class="text-slate-400">Week 5-6</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Slide 10: Next Steps -->
+    <section class="slide bg-gradient-hero text-white">
+        <div class="min-h-screen flex items-center px-8 py-16">
+            <div class="max-w-4xl mx-auto text-center">
+                <div class="text-6xl mb-6">🚀</div>
+                <h2 class="text-4xl md:text-5xl font-bold mb-6">Ready to Build?</h2>
+                <p class="text-xl text-slate-300 mb-12">
+                    Let's confirm your choices and start implementation
+                </p>
+
+                <div class="bg-white/10 backdrop-blur-sm rounded-2xl p-8 text-left mb-12">
+                    <h3 class="text-xl font-bold mb-6">Decisions to Confirm</h3>
+                    <div class="space-y-4">
+                        <div class="flex items-center gap-4">
+                            <div class="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center">1</div>
+                            <div>
+                                <div class="font-semibold">Dashboard Style</div>
+                                <div class="text-slate-300 text-sm">A (KPI), B (Split), C (Action), or D (Analytics)?</div>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-4">
+                            <div class="w-8 h-8 bg-purple-500 rounded-lg flex items-center justify-center">2</div>
+                            <div>
+                                <div class="font-semibold">Entry Form Style</div>
+                                <div class="text-slate-300 text-sm">A (Simple), B (Quick Buttons), or C (POS)?</div>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-4">
+                            <div class="w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center">3</div>
+                            <div>
+                                <div class="font-semibold">Special Fund Percentages</div>
+                                <div class="text-slate-300 text-sm">What % for each branch? (Labzak: 3%, Chilanzar: ?)</div>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-4">
+                            <div class="w-8 h-8 bg-amber-500 rounded-lg flex items-center justify-center">4</div>
+                            <div>
+                                <div class="font-semibold">Allocation Frequency</div>
+                                <div class="text-slate-300 text-sm">Weekly? Monthly? Ad-hoc?</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex justify-center gap-4">
+                    <button onclick="goToSlide(0)" class="bg-white/20 hover:bg-white/30 text-white px-8 py-4 rounded-xl font-semibold transition-all">
+                        ← Review Again
+                    </button>
+                    <a href="#" class="bg-blue-500 hover:bg-blue-600 text-white px-8 py-4 rounded-xl font-semibold transition-all hover:scale-105 inline-block">
+                        Let's Start Phase 1 →
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Navigation Buttons -->
+    <div class="fixed bottom-8 left-1/2 transform -translate-x-1/2 flex gap-4 no-print">
+        <button onclick="prevSlide()" class="bg-white shadow-lg hover:shadow-xl px-6 py-3 rounded-full font-medium transition-all hover:scale-105">
+            ← Previous
+        </button>
+        <button onclick="nextSlide()" class="bg-blue-500 text-white shadow-lg hover:shadow-xl px-6 py-3 rounded-full font-medium transition-all hover:scale-105">
+            Next →
+        </button>
+    </div>
+
+    <script>
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.slide');
+        const navDots = document.querySelectorAll('.nav-dot');
+        const totalSlides = slides.length;
+
+        function showSlide(index) {
+            slides.forEach((slide, i) => {
+                slide.classList.remove('active');
+                if (i === index) slide.classList.add('active');
+            });
+            navDots.forEach((dot, i) => {
+                dot.classList.remove('active');
+                if (i === index) dot.classList.add('active');
+            });
+            document.getElementById('progressFill').style.width = ((index + 1) / totalSlides * 100) + '%';
+        }
+
+        function nextSlide() {
+            currentSlide = (currentSlide + 1) % totalSlides;
+            showSlide(currentSlide);
+        }
+
+        function prevSlide() {
+            currentSlide = (currentSlide - 1 + totalSlides) % totalSlides;
+            showSlide(currentSlide);
+        }
+
+        function goToSlide(index) {
+            currentSlide = index;
+            showSlide(currentSlide);
+        }
+
+        function selectOption(element, group) {
+            const parent = element.closest('.grid');
+            parent.querySelectorAll('.option-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            element.classList.add('selected');
+        }
+
+        function showUseCase(id) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+                btn.classList.add('bg-slate-200');
+            });
+            document.getElementById('usecase-' + id).classList.add('active');
+            event.target.classList.add('active');
+            event.target.classList.remove('bg-slate-200');
+        }
+
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === ' ') {
+                e.preventDefault();
+                nextSlide();
+            } else if (e.key === 'ArrowLeft') {
+                e.preventDefault();
+                prevSlide();
+            }
+        });
+
+        // Initialize
+        showSlide(0);
+    </script>
+</body>
+</html>
