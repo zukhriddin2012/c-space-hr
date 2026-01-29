@@ -7,14 +7,15 @@ import type { User } from '@/types';
 // Mock user for testing
 export const mockUser: User = {
   id: 'test-user-id',
-  employee_id: 'TEST001',
-  full_name: 'Test User',
+  employeeId: 'TEST001',
+  name: 'Test User',
   email: 'test@example.com',
   role: 'hr',
-  system_role: 'hr',
-  branch_id: 'branch-1',
+  branchId: 'branch-1',
   position: 'HR Manager',
-  department_id: 'dept-1',
+  department: 'HR Department',
+  createdAt: new Date('2024-01-01'),
+  updatedAt: new Date('2024-01-01'),
 };
 
 interface CustomRenderOptions extends Omit<RenderOptions, 'wrapper'> {
