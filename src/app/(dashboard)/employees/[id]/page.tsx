@@ -5,6 +5,7 @@ import { ArrowLeft, User, Briefcase, MapPin, Clock, Phone, Mail, Calendar, Check
 import Link from 'next/link';
 import { getEmployeeById, getBranches, getAttendanceByEmployeeAndMonth } from '@/lib/db';
 import EmployeeWagesSection from '@/components/EmployeeWagesSection';
+import WageTrendChart from '@/components/WageTrendChart';
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -276,6 +277,11 @@ export default async function EmployeeDetailPage({ params, searchParams }: PageP
           employeeId={id}
           canEdit={canEditSalary}
         />
+      )}
+
+      {/* Wage Trend Chart - only for users who can view salary */}
+      {canViewSalary && (
+        <WageTrendChart employeeId={id} />
       )}
 
       {/* Monthly Work Hours Section */}
