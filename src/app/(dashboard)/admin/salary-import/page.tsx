@@ -64,43 +64,61 @@ export default function SalaryImportPage() {
   const [selectedYear, setSelectedYear] = useState(2025);
   const [selectedMonth, setSelectedMonth] = useState(1);
 
-  // Fetch employees for matching
-  const fetchEmployees = async () => {
+  // Fetch employees for matching - returns the employees array directly
+  const fetchEmployees = async (): Promise<{ id: string; full_name: string; employee_id: string }[]> => {
     try {
       const response = await fetch('/api/employees');
       if (response.ok) {
         const data = await response.json();
-        setEmployees(data.employees || []);
+        const empList = data.employees || [];
+        setEmployees(empList);
+        return empList;
       }
     } catch (err) {
       console.error('Failed to fetch employees:', err);
     }
+    return [];
   };
 
-  // Match employee name to employee record
-  const matchEmployee = (name: string): { id: string; employee_id: string } | null => {
+  // Match employee name to employee record - accepts employee list as parameter
+  const matchEmployee = (name: string, empList?: { id: string; full_name: string; employee_id: string }[]): { id: string; employee_id: string } | null => {
     if (!name) return null;
     const normalizedName = name.toLowerCase().trim();
+    const searchList = empList || employees;
 
     // Try exact match first
-    let match = employees.find(e =>
+    let match = searchList.find(e =>
       e.full_name.toLowerCase() === normalizedName
     );
 
-    // Try partial match
+    // Try partial match - name contains or is contained
     if (!match) {
-      match = employees.find(e =>
+      match = searchList.find(e =>
         e.full_name.toLowerCase().includes(normalizedName) ||
         normalizedName.includes(e.full_name.toLowerCase())
       );
     }
 
-    // Try matching by first name
+    // Try matching by first name only
     if (!match) {
       const firstName = normalizedName.split(' ')[0];
-      match = employees.find(e =>
-        e.full_name.toLowerCase().startsWith(firstName)
-      );
+      if (firstName.length >= 3) {
+        match = searchList.find(e =>
+          e.full_name.toLowerCase().startsWith(firstName)
+        );
+      }
+    }
+
+    // Try matching by last name only
+    if (!match) {
+      const parts = normalizedName.split(' ');
+      const lastName = parts[parts.length - 1];
+      if (lastName.length >= 3) {
+        match = searchList.find(e =>
+          e.full_name.toLowerCase().endsWith(lastName) ||
+          e.full_name.toLowerCase().includes(lastName)
+        );
+      }
     }
 
     return match ? { id: match.id, employee_id: match.employee_id } : null;
@@ -164,8 +182,9 @@ export default function SalaryImportPage() {
     setError(null);
 
     try {
-      // Fetch employees first for matching
-      await fetchEmployees();
+      // Fetch employees first for matching - get the list directly
+      const empList = await fetchEmployees();
+      console.log('Fetched employees for matching:', empList.length);
 
       const text = await file.text();
       const lines = text.split('\n');
@@ -193,8 +212,8 @@ export default function SalaryImportPage() {
           const salary = parseAmount(cols[5] || '0');
           const notes = cols[6]?.trim() || '';
 
-          // Match employee
-          const match = matchEmployee(employeeName);
+          // Match employee - pass the fetched employee list directly
+          const match = matchEmployee(employeeName, empList);
 
           const record: SalaryRecord = {
             id: generateId(),
@@ -213,8 +232,9 @@ export default function SalaryImportPage() {
           newRecords.push(record);
         }
 
+        const matchedCount = newRecords.filter(r => r.matched).length;
         setRecords(newRecords);
-        setSuccess(`Parsed ${newRecords.length} salary records from CSV.`);
+        setSuccess(`Parsed ${newRecords.length} salary records from CSV. ${matchedCount} employees matched.`);
       } else {
         // Legacy format - original spreadsheet format with branch headers
         let currentBranch = '';
@@ -238,8 +258,8 @@ export default function SalaryImportPage() {
           // Skip header rows and special entries
           if (employeeName === 'Ism' || employeeName.includes("bo'lim")) continue;
 
-          // Match employee
-          const match = matchEmployee(employeeName);
+          // Match employee - pass the fetched employee list directly
+          const match = matchEmployee(employeeName, empList);
 
           const record: SalaryRecord = {
             id: generateId(),
