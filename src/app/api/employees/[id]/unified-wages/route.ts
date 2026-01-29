@@ -139,6 +139,11 @@ export const GET = withAuth(async (
       return NextResponse.json({ error: 'Failed to fetch branch wages' }, { status: 500 });
     }
 
+    // Log advance payments errors but don't fail the request
+    if (advancePaymentsResult.error) {
+      console.error('Error fetching advance payments (non-fatal):', advancePaymentsResult.error);
+    }
+
     const primaryWages = primaryWagesResult.data || [];
     const branchWages = branchWagesResult.data || [];
     let payslips = payslipsResult;
