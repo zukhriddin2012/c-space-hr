@@ -7,6 +7,7 @@ interface SalaryHistoryRecord {
   year: number;
   month: number;
   total: number;
+  is_projected?: boolean;
 }
 
 interface SalaryStats {
@@ -338,30 +339,36 @@ export default function WageTrendChart({ employeeId }: WageTrendChartProps) {
           />
 
           {/* Data points */}
-          {points.map((point, i) => (
-            <g key={i}>
-              {/* Outer circle (white border) */}
-              <circle
-                cx={point.x}
-                cy={point.y}
-                r={hoveredPoint === i ? 8 : 5}
-                fill="white"
-                stroke="#9333ea"
-                strokeWidth="2"
-                className="transition-all duration-150 cursor-pointer"
-                onMouseEnter={() => setHoveredPoint(i)}
-                onMouseLeave={() => setHoveredPoint(null)}
-              />
-              {/* Inner circle */}
-              <circle
-                cx={point.x}
-                cy={point.y}
-                r={hoveredPoint === i ? 4 : 2}
-                fill="#9333ea"
-                className="transition-all duration-150 pointer-events-none"
-              />
-            </g>
-          ))}
+          {points.map((point, i) => {
+            const isProjected = point.record.is_projected;
+            return (
+              <g key={i}>
+                {/* Outer circle (white border) - dashed for projected */}
+                <circle
+                  cx={point.x}
+                  cy={point.y}
+                  r={hoveredPoint === i ? 8 : 5}
+                  fill="white"
+                  stroke={isProjected ? '#a855f7' : '#9333ea'}
+                  strokeWidth="2"
+                  strokeDasharray={isProjected ? '3 2' : undefined}
+                  className="transition-all duration-150 cursor-pointer"
+                  onMouseEnter={() => setHoveredPoint(i)}
+                  onMouseLeave={() => setHoveredPoint(null)}
+                />
+                {/* Inner circle - hollow for projected */}
+                <circle
+                  cx={point.x}
+                  cy={point.y}
+                  r={hoveredPoint === i ? 4 : 2}
+                  fill={isProjected ? 'white' : '#9333ea'}
+                  stroke={isProjected ? '#a855f7' : undefined}
+                  strokeWidth={isProjected ? 1 : 0}
+                  className="transition-all duration-150 pointer-events-none"
+                />
+              </g>
+            );
+          })}
 
           {/* X-axis labels */}
           {points.map((point, i) => (
@@ -377,35 +384,50 @@ export default function WageTrendChart({ employeeId }: WageTrendChartProps) {
           ))}
 
           {/* Tooltip */}
-          {hoveredPoint !== null && (
-            <g>
-              <rect
-                x={points[hoveredPoint].x - 45}
-                y={points[hoveredPoint].y - 45}
-                width="90"
-                height="32"
-                rx="6"
-                fill="#1f2937"
-                className="drop-shadow-lg"
-              />
-              <text
-                x={points[hoveredPoint].x}
-                y={points[hoveredPoint].y - 32}
-                textAnchor="middle"
-                className="text-[10px] fill-gray-300"
-              >
-                {MONTH_NAMES[history[hoveredPoint].month - 1]} {history[hoveredPoint].year}
-              </text>
-              <text
-                x={points[hoveredPoint].x}
-                y={points[hoveredPoint].y - 20}
-                textAnchor="middle"
-                className="text-[11px] fill-white font-semibold"
-              >
-                {formatCompact(history[hoveredPoint].total)} UZS
-              </text>
-            </g>
-          )}
+          {hoveredPoint !== null && (() => {
+            const record = history[hoveredPoint];
+            const isProjected = record.is_projected;
+            const tooltipHeight = isProjected ? 44 : 32;
+            return (
+              <g>
+                <rect
+                  x={points[hoveredPoint].x - 50}
+                  y={points[hoveredPoint].y - tooltipHeight - 13}
+                  width="100"
+                  height={tooltipHeight}
+                  rx="6"
+                  fill="#1f2937"
+                  className="drop-shadow-lg"
+                />
+                <text
+                  x={points[hoveredPoint].x}
+                  y={points[hoveredPoint].y - tooltipHeight}
+                  textAnchor="middle"
+                  className="text-[10px] fill-gray-300"
+                >
+                  {MONTH_NAMES[record.month - 1]} {record.year}
+                </text>
+                <text
+                  x={points[hoveredPoint].x}
+                  y={points[hoveredPoint].y - tooltipHeight + 12}
+                  textAnchor="middle"
+                  className="text-[11px] fill-white font-semibold"
+                >
+                  {formatCompact(record.total)} UZS
+                </text>
+                {isProjected && (
+                  <text
+                    x={points[hoveredPoint].x}
+                    y={points[hoveredPoint].y - tooltipHeight + 25}
+                    textAnchor="middle"
+                    className="text-[9px] fill-purple-300"
+                  >
+                    (Projected)
+                  </text>
+                )}
+              </g>
+            );
+          })()}
         </svg>
       </div>
     </div>

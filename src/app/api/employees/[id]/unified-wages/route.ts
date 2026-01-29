@@ -22,6 +22,7 @@ interface MonthlyPayslip {
   total: number;
   legal_entity_id: string | null;
   legal_entity_name?: string;
+  is_projected?: boolean; // True if this is projected from configured wages (no payslip yet)
 }
 
 interface UnifiedWageResponse {
@@ -114,7 +115,12 @@ export const GET = withAuth(async (
 
     const primaryWages = primaryWagesResult.data || [];
     const branchWages = branchWagesResult.data || [];
-    const payslips = payslipsResult;
+    let payslips = payslipsResult;
+
+    // Get current date info
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth() + 1;
 
     // Process primary wages
     const primarySources: WageSource[] = primaryWages.map((w: any) => ({
@@ -139,6 +145,24 @@ export const GET = withAuth(async (
     const primaryTotal = primarySources.reduce((sum, w) => sum + w.wage_amount, 0);
     const additionalTotal = additionalSources.reduce((sum, w) => sum + w.wage_amount, 0);
     const grandTotal = primaryTotal + additionalTotal;
+
+    // Check if current month has payslip data, if not add projected entry from configured wages
+    const hasCurrentMonth = payslips.some(p => p.year === currentYear && p.month === currentMonth);
+    if (!hasCurrentMonth && grandTotal > 0) {
+      // Add current month as projected based on configured wages
+      payslips = [...payslips, {
+        year: currentYear,
+        month: currentMonth,
+        total: grandTotal,
+        advance_bank: 0,
+        advance_naqd: 0,
+        salary_bank: grandTotal, // Show as salary_bank for simplicity
+        salary_naqd: 0,
+        legal_entity_id: primarySources[0]?.source_id || null,
+        legal_entity_name: primarySources[0]?.source_name,
+        is_projected: true, // Mark as projected
+      }];
+    }
 
     // Calculate historical stats
     const totals = payslips.map(p => p.total);
