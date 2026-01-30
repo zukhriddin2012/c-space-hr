@@ -1,12 +1,147 @@
-# Session Starter Template
+# Session Starter - C-Space HR Web App
 
-> Copy the relevant section below when starting a new Cowork session.
+> **🆕 For full platform context (web app + bot), see `../SESSION_PROMPT.md`**
+> **For quick sessions, see `../QUICK_START_PROMPT.md`**
 
 ---
 
-## 🚀 Worker Session (Recommended for Task Work)
+## 🚀 Quick Start Prompt (Copy This)
 
-Use this for task-specific sessions. **No git commands allowed** - coordinator handles git.
+```
+C-Space HR - Development Session
+
+PROJECT: HR management system for C-Space coworking (Tashkent, Uzbekistan)
+STACK: Next.js 16 + TypeScript + Tailwind CSS 4 + Supabase + Vercel
+PRODUCTION: https://hr.cspace.uz
+
+CONTEXT FILES (read these first):
+1. `.claude-context/PROJECT_CONTEXT.md` - Full project details
+2. `.claude-context/TASKS.md` - Current sprint and pending tasks
+3. `../SESSION_PROMPT.md` - Complete platform overview (includes bot)
+
+KEY CONVENTIONS:
+- Components: Import from feature folders (@/components/employee, @/components/ui)
+- Database: Import from @/lib/db (modular files)
+- Translations: Add to types.ts first, then en.ts, ru.ts, uz.ts
+- API routes: Use PATCH for actions, kebab-case naming
+
+TASK: [DESCRIBE YOUR TASK HERE]
+
+Before committing: npx tsc --noEmit && npm run test:run
+```
+
+---
+
+## 📋 Task-Specific Prompts
+
+### Translation Work
+```
+C-Space HR - Translation Task
+
+Context: Read `.claude-context/PROJECT_CONTEXT.md`
+
+Translation files:
+- Types: src/lib/i18n/types.ts (add interface first!)
+- English: src/lib/i18n/en.ts
+- Russian: src/lib/i18n/ru.ts
+- Uzbek: src/lib/i18n/uz.ts
+
+Task: [DESCRIBE what needs translation]
+
+⚠️ Always update ALL 4 files. Check PROJECT_CONTEXT.md for existing patterns.
+```
+
+### Employee Module
+```
+C-Space HR - Employee Module Work
+
+Context: Read `.claude-context/PROJECT_CONTEXT.md`
+
+Key files:
+- Page: src/app/(dashboard)/employees/page.tsx
+- Components: src/components/employee/ (EmployeesTable, AddEmployeeModal, etc.)
+- Database: src/lib/db/employees.ts
+- API: src/app/api/employees/route.ts
+
+Task: [DESCRIBE]
+```
+
+### Attendance Module
+```
+C-Space HR - Attendance Module Work
+
+Context: Read `.claude-context/PROJECT_CONTEXT.md`
+
+Key files:
+- Sheet: src/app/(dashboard)/attendance/sheet/page.tsx
+- Dashboard: src/app/(dashboard)/attendance/dashboard/page.tsx
+- Components: src/components/attendance/
+- Database: src/lib/db/attendance.ts
+- API: src/app/api/attendance/*/route.ts
+
+Task: [DESCRIBE]
+```
+
+### Recruitment Module
+```
+C-Space HR - Recruitment Module Work
+
+Context: Read `.claude-context/PROJECT_CONTEXT.md`
+
+Key files:
+- Board: src/app/(dashboard)/recruitment/board/page.tsx
+- Components: src/components/recruitment/ (CandidatesKanban, CandidateDetailModal)
+- Database: src/lib/db/recruitment.ts
+- API: src/app/api/candidates/route.ts
+
+Task: [DESCRIBE]
+```
+
+### New Component
+```
+C-Space HR - New Component
+
+Context: Read `.claude-context/PROJECT_CONTEXT.md`
+
+UI Primitives in src/components/ui/:
+- Button, Input, Card, Modal, Select, Badge (use these as base)
+
+Pattern to follow:
+1. Create component in appropriate feature folder
+2. Add to folder's index.ts barrel export
+3. Import: import { MyComponent } from '@/components/feature';
+
+Task: [DESCRIBE]
+```
+
+### API Endpoint
+```
+C-Space HR - API Work
+
+Context: Read `.claude-context/PROJECT_CONTEXT.md`
+
+API conventions:
+- Location: src/app/api/[feature]/route.ts
+- Auth: Use withAuth() wrapper
+- Actions: Consolidate into PATCH handler with action field
+- Naming: kebab-case (telegram-action, not tg-action)
+
+Example pattern:
+export const PATCH = withAuth(async (request, user) => {
+  const { action, ...data } = await request.json();
+  switch (action) {
+    case 'approve': // ...
+  }
+});
+
+Task: [DESCRIBE]
+```
+
+---
+
+## 🔄 Worker Session (Multi-Session Setup)
+
+Use when running parallel sessions. **No git commands** - coordinator handles git.
 
 ```
 C-Space HR - Worker Session
@@ -14,12 +149,12 @@ C-Space HR - Worker Session
 ⚠️ IMPORTANT: This is a WORKER session. Do NOT use git commands.
 A coordinator session handles all git operations.
 
-Context: Read `.claude-context/PROJECT_CONTEXT.md` for project overview.
+Context: Read `.claude-context/PROJECT_CONTEXT.md`
 
 Your Task: [TASK_ID] - [TASK_TITLE]
 [TASK_DESCRIPTION]
 
-Files to work on:
+Files to modify:
 - [FILE_1]
 - [FILE_2]
 
@@ -27,163 +162,45 @@ When done:
 1. Run `npx tsc --noEmit` to verify no errors
 2. List all files you modified/created
 3. Summarize changes made
-4. DO NOT commit or push - coordinator will handle it
+4. DO NOT commit - coordinator will handle it
 ```
 
 ---
 
-## 🎯 Coordinator Session
-
-Use this for the main planning/coordination session that handles git.
-
-```
-C-Space HR - Coordinator Session
-
-This session coordinates development:
-- Manages git operations (commit, push, pull)
-- Updates .claude-context/ files
-- Merges changes from worker sessions
-
-Read `.claude-context/WORKFLOW.md` for the hub-and-spoke model.
-```
-
----
-
-## Option 1: Full Context Load (Recommended for new sessions)
-
-```
-I'm working on the C-Space HR project. Please read the context files to understand the project:
-
-1. Read `.claude-context/PROJECT_CONTEXT.md` for full project overview
-2. Read `.claude-context/TASKS.md` for current task status
-3. Read `.claude-context/context.json` for structured data
-
-After reading, I'll tell you the specific task to work on.
-```
-
----
-
-## Option 2: Quick Task Assignment
-
-```
-C-Space HR Project - Task: [TASK_NAME]
-
-Context files are in `.claude-context/` folder. Key info:
-- Next.js 16 + TypeScript + Tailwind 4 + Supabase + Vitest
-- Production: https://hr.cspace.uz
-- Translations: src/lib/i18n/ (en.ts, ru.ts, uz.ts, types.ts)
-- Tests: npm run test:run
-
-Task: [DESCRIBE TASK]
-
-Files likely involved:
-- [LIST FILES]
-
-Please read the context files first, then implement the task.
-```
-
----
-
-## Option 3: Specific Feature Work
-
-### Employee Feature
-```
-C-Space HR - Employee Module Work
-
-Read `.claude-context/PROJECT_CONTEXT.md` then work on:
-- Page: src/app/(dashboard)/employees/
-- Table: src/components/EmployeesTable.tsx
-- API: src/app/api/employees/
-
-Task: [DESCRIBE]
-```
-
-### Attendance Feature
-```
-C-Space HR - Attendance Module Work
-
-Read `.claude-context/PROJECT_CONTEXT.md` then work on:
-- Sheet: src/app/(dashboard)/attendance/sheet/page.tsx
-- Table: src/app/(dashboard)/attendance/AttendanceTable.tsx
-- API: src/app/api/attendance/
-
-Task: [DESCRIBE]
-```
-
-### Recruitment Feature
-```
-C-Space HR - Recruitment Module Work
-
-Read `.claude-context/PROJECT_CONTEXT.md` then work on:
-- Board: src/app/(dashboard)/recruitment/board/page.tsx
-- API: src/app/api/candidates/
-
-Task: [DESCRIBE]
-```
-
-### Translation Work
-```
-C-Space HR - Translation Task
-
-Read `.claude-context/PROJECT_CONTEXT.md` then work on translations:
-- Types: src/lib/i18n/types.ts (add interface first)
-- English: src/lib/i18n/en.ts
-- Russian: src/lib/i18n/ru.ts
-- Uzbek: src/lib/i18n/uz.ts
-
-Task: [DESCRIBE what needs translation]
-```
-
----
-
-## Session End Checklist
+## ✅ Session End Checklist
 
 Before ending your session:
 
-- [ ] Run `npm run test:run` - all tests pass
-- [ ] Run `npx tsc --noEmit` - no errors
-- [ ] Update `.claude-context/TASKS.md` - mark task complete
-- [ ] Update `.claude-context/PROJECT_CONTEXT.md` - add to changelog
-- [ ] Commit and push changes
-- [ ] Summarize what was done for handoff
+- [ ] `npx tsc --noEmit` - No TypeScript errors
+- [ ] `npm run test:run` - All tests pass
+- [ ] Tested with multiple languages (EN/RU/UZ)
+- [ ] Tested with relevant user roles
+- [ ] Update `.claude-context/TASKS.md` - Mark task complete
+- [ ] Update `.claude-context/PROJECT_CONTEXT.md` - Add to "Recent Changes Log"
+- [ ] Commit with descriptive message
 
 ---
 
-## Example Task Prompts
+## 📦 Commands Reference
 
-### Example 1: Add a new filter
-```
-C-Space HR - Add filter to recruitment board
-
-Read `.claude-context/PROJECT_CONTEXT.md` for context.
-
-Task: Add a "Source" filter dropdown to the recruitment board that lets users filter candidates by their application source (LinkedIn, Referral, Website, etc.)
-
-The source field already exists in the candidates table.
+```bash
+npm run dev           # Start dev server (localhost:3000)
+npm run build         # Production build
+npm run test          # Watch mode
+npm run test:run      # Single test run
+npm run test:coverage # With coverage
+npx tsc --noEmit      # Type check
 ```
 
-### Example 2: Fix a bug
-```
-C-Space HR - Bug Fix
+---
 
-Read `.claude-context/PROJECT_CONTEXT.md` for context.
+## 🔗 Related Files
 
-Bug: When switching language on the Employees page, the "Level" filter options don't update until page refresh.
-
-Please investigate and fix.
-```
-
-### Example 3: New feature
-```
-C-Space HR - New Feature: Shift Notes
-
-Read `.claude-context/PROJECT_CONTEXT.md` for context.
-
-Feature: Allow branch managers to add notes to employee shifts. Notes should be visible on the attendance sheet and in employee attendance history.
-
-Requirements:
-1. Add notes field to attendance table (migration)
-2. Add notes display on attendance sheet
-3. Add ability to edit notes (for managers only)
-4. Translate UI elements to all 3 languages
-```
+| File | Purpose |
+|------|---------|
+| `../SESSION_PROMPT.md` | Complete platform context (web + bot) |
+| `../QUICK_START_PROMPT.md` | Condensed quick-start version |
+| `PROJECT_CONTEXT.md` | Detailed project documentation |
+| `TASKS.md` | Current sprint and task tracker |
+| `context.json` | Structured project metadata |
+| `WORKFLOW.md` | Hub-and-spoke multi-session workflow |
