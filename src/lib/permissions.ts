@@ -397,6 +397,7 @@ export function getRoleBadgeColor(role: UserRole): string {
     accountant: 'bg-cyan-100 text-cyan-800 border-cyan-200',
     hr: 'bg-blue-100 text-blue-800 border-blue-200',
     legal_manager: 'bg-indigo-100 text-indigo-800 border-indigo-200',
+    reports_manager: 'bg-orange-100 text-orange-800 border-orange-200',
     branch_manager: 'bg-emerald-100 text-emerald-800 border-emerald-200',
     recruiter: 'bg-green-100 text-green-800 border-green-200',
     employee: 'bg-gray-100 text-gray-800 border-gray-200',
@@ -406,7 +407,7 @@ export function getRoleBadgeColor(role: UserRole): string {
 
 // Get all available roles
 export function getAllRoles(): UserRole[] {
-  return ['general_manager', 'ceo', 'chief_accountant', 'accountant', 'hr', 'legal_manager', 'branch_manager', 'recruiter', 'employee'];
+  return ['general_manager', 'ceo', 'chief_accountant', 'accountant', 'hr', 'legal_manager', 'reports_manager', 'branch_manager', 'recruiter', 'employee'];
 }
 
 // Permission groups for UI display
