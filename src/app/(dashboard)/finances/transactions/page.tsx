@@ -19,6 +19,11 @@ import {
   Calendar,
   ArrowUpRight,
   ArrowDownRight,
+  Check,
+  X,
+  MoreHorizontal,
+  GripVertical,
+  Wallet,
 } from 'lucide-react';
 
 interface Transaction {
@@ -37,6 +42,7 @@ interface Transaction {
   approval_status: 'approved' | 'pending' | 'rejected';
   isNew?: boolean;
   isDirty?: boolean;
+  isProcessed?: boolean;
 }
 
 interface Branch {
@@ -53,21 +59,67 @@ const SERVICE_TYPES = ['Office', 'Dedicated', 'Flex', 'Meeting', 'Conference', '
 const EXPENSE_CATEGORIES = ['Goods', 'Utility', 'Maintenance', 'Staff', 'Marketing', 'Tax', 'CapEx', 'Other'];
 const PAYMENT_METHODS = ['cash', 'terminal', 'payme', 'click', 'uzum', 'bank'];
 
-const PaymentIcon = ({ method }: { method: string }) => {
-  switch (method) {
-    case 'cash':
-      return <Banknote className="w-3.5 h-3.5" />;
-    case 'terminal':
-      return <CreditCard className="w-3.5 h-3.5" />;
-    case 'payme':
-    case 'click':
-    case 'uzum':
-      return <Smartphone className="w-3.5 h-3.5" />;
-    case 'bank':
-      return <Building2 className="w-3.5 h-3.5" />;
-    default:
-      return <CreditCard className="w-3.5 h-3.5" />;
-  }
+const PaymentBadge = ({ method }: { method: string }) => {
+  const config: Record<string, { bg: string; text: string; icon: string }> = {
+    cash: { bg: 'bg-green-50', text: 'text-green-700', icon: '💵' },
+    terminal: { bg: 'bg-blue-50', text: 'text-blue-700', icon: '💳' },
+    payme: { bg: 'bg-cyan-50', text: 'text-cyan-700', icon: '💳' },
+    click: { bg: 'bg-blue-50', text: 'text-blue-700', icon: '📱' },
+    uzum: { bg: 'bg-yellow-50', text: 'text-yellow-700', icon: '📱' },
+    bank: { bg: 'bg-purple-50', text: 'text-purple-700', icon: '🏦' },
+  };
+  const c = config[method] || { bg: 'bg-gray-50', text: 'text-gray-700', icon: '💳' };
+
+  return (
+    <span className={`inline-flex items-center gap-1 px-2 py-0.5 ${c.bg} ${c.text} rounded text-xs`}>
+      {c.icon} {method.charAt(0).toUpperCase() + method.slice(1)}
+    </span>
+  );
+};
+
+const CategoryBadge = ({ category, type }: { category: string; type: 'revenue' | 'expense' }) => {
+  const colors: Record<string, string> = {
+    Office: 'bg-blue-100 text-blue-700',
+    Dedicated: 'bg-indigo-100 text-indigo-700',
+    Flex: 'bg-violet-100 text-violet-700',
+    Meeting: 'bg-purple-100 text-purple-700',
+    Conference: 'bg-fuchsia-100 text-fuchsia-700',
+    Hour: 'bg-pink-100 text-pink-700',
+    'Day Pass': 'bg-rose-100 text-rose-700',
+    Goods: 'bg-amber-100 text-amber-700',
+    Utility: 'bg-orange-100 text-orange-700',
+    Maintenance: 'bg-yellow-100 text-yellow-700',
+    Staff: 'bg-lime-100 text-lime-700',
+    Marketing: 'bg-teal-100 text-teal-700',
+    Tax: 'bg-red-100 text-red-700',
+    CapEx: 'bg-slate-100 text-slate-700',
+    Other: 'bg-gray-100 text-gray-700',
+  };
+
+  return (
+    <span className={`inline-block px-2 py-0.5 rounded text-xs ${colors[category] || 'bg-gray-100 text-gray-700'}`}>
+      {category}
+    </span>
+  );
+};
+
+const AvatarBadge = ({ name }: { name: string }) => {
+  const initial = name ? name.charAt(0).toUpperCase() : '?';
+  const colors = [
+    'from-purple-400 to-pink-400',
+    'from-blue-400 to-cyan-400',
+    'from-green-400 to-teal-400',
+    'from-yellow-400 to-orange-400',
+    'from-red-400 to-pink-400',
+    'from-indigo-400 to-purple-400',
+  ];
+  const colorIndex = name ? name.charCodeAt(0) % colors.length : 0;
+
+  return (
+    <div className={`w-6 h-6 bg-gradient-to-br ${colors[colorIndex]} rounded-full flex items-center justify-center text-white text-xs font-medium`}>
+      {initial}
+    </div>
+  );
 };
 
 function formatCurrency(amount: number): string {
@@ -76,7 +128,7 @@ function formatCurrency(amount: number): string {
 
 function formatDate(dateStr: string): string {
   const date = new Date(dateStr);
-  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
 // Inline editable cell component
@@ -166,7 +218,7 @@ function InlineCell({
   return (
     <div
       onClick={onStartEdit}
-      className={`min-h-[32px] px-2 py-1.5 cursor-text rounded hover:bg-gray-100 transition-colors flex items-center ${
+      className={`min-h-[32px] px-2 py-1.5 cursor-text rounded hover:bg-purple-50 transition-colors flex items-center ${
         align === 'right' ? 'justify-end' : ''
       } ${className}`}
     >
@@ -190,6 +242,9 @@ export default function TransactionsPage() {
   const [editingCell, setEditingCell] = useState<EditingCell>(null);
   const [showBranchDropdown, setShowBranchDropdown] = useState(false);
   const [showTypeFilter, setShowTypeFilter] = useState(false);
+  const [processingIds, setProcessingIds] = useState<Set<string>>(new Set());
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [showProcessModal, setShowProcessModal] = useState(false);
 
   const [dateFrom, setDateFrom] = useState(
     new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0]
@@ -265,13 +320,12 @@ export default function TransactionsPage() {
       customer_name: '',
       payment_method: 'cash',
       notes: '',
-      approval_status: 'approved',
+      approval_status: 'pending',
       isNew: true,
       isDirty: true,
     };
     setTransactions([newTxn, ...transactions]);
     setHasChanges(true);
-    // Start editing the date cell of the new row
     setEditingCell({ rowId: newTxn.id, field: 'transaction_date' });
   };
 
@@ -299,6 +353,11 @@ export default function TransactionsPage() {
 
   const deleteTransaction = (id: string) => {
     setTransactions((prev) => prev.filter((t) => t.id !== id));
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      next.delete(id);
+      return next;
+    });
     setHasChanges(true);
   };
 
@@ -319,11 +378,19 @@ export default function TransactionsPage() {
           vendor_name: txn.vendor_name,
           payment_method: txn.payment_method,
           notes: txn.notes,
+          approval_status: txn.approval_status,
         };
 
         if (txn.isNew) {
           await fetch('/api/finances/transactions', {
             method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+          });
+        } else {
+          // Update existing transaction
+          await fetch(`/api/finances/transactions/${txn.id}`, {
+            method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload),
           });
@@ -339,8 +406,54 @@ export default function TransactionsPage() {
     }
   };
 
+  // Process payments - mark as approved and processed
+  const processPayments = async () => {
+    if (selectedIds.size === 0) return;
+
+    setProcessingIds(new Set(selectedIds));
+    try {
+      const idsToProcess = Array.from(selectedIds);
+
+      for (const id of idsToProcess) {
+        await fetch(`/api/finances/transactions/${id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ approval_status: 'approved' }),
+        });
+      }
+
+      await fetchTransactions();
+      setSelectedIds(new Set());
+      setShowProcessModal(false);
+    } catch (error) {
+      console.error('Error processing payments:', error);
+    } finally {
+      setProcessingIds(new Set());
+    }
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === transactions.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(transactions.map((t) => t.id)));
+    }
+  };
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
+
   const exportCSV = () => {
-    const headers = ['Date', 'Type', 'Service/Category', 'Customer/Vendor', 'Payment', 'Amount', 'Notes'];
+    const headers = ['Date', 'Type', 'Service/Category', 'Customer/Vendor', 'Payment', 'Amount', 'Status', 'Notes'];
     const rows = transactions.map((t) => [
       t.transaction_date,
       t.transaction_type,
@@ -348,6 +461,7 @@ export default function TransactionsPage() {
       t.customer_name || t.vendor_name || '',
       t.payment_method || '',
       t.amount.toString(),
+      t.approval_status,
       t.notes || '',
     ]);
 
@@ -364,6 +478,7 @@ export default function TransactionsPage() {
   const totalRevenue = transactions.filter((t) => t.transaction_type === 'revenue').reduce((sum, t) => sum + t.amount, 0);
   const totalExpenses = transactions.filter((t) => t.transaction_type === 'expense').reduce((sum, t) => sum + t.amount, 0);
   const netAmount = totalRevenue - totalExpenses;
+  const pendingCount = transactions.filter((t) => t.approval_status === 'pending').length;
 
   const selectedBranchName = branches.find((b) => b.id === selectedBranch)?.name || 'Select Branch';
 
@@ -381,27 +496,62 @@ export default function TransactionsPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white border-b sticky top-0 z-20">
+      {/* Airtable-style Header */}
+      <div className="bg-gradient-to-r from-purple-600 to-purple-700 text-white">
         <div className="max-w-[1600px] mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <Link
                 href="/finances"
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors text-gray-500 hover:text-gray-700"
+                className="p-2 hover:bg-white/20 rounded-lg transition-colors"
               >
                 <ArrowLeft className="w-5 h-5" />
               </Link>
 
-              <div>
-                <h1 className="text-xl font-semibold text-gray-900">Transactions</h1>
-                <p className="text-sm text-gray-500">{totalCount} records</p>
+              <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
+                <Wallet className="w-5 h-5" />
               </div>
 
-              <div className="relative ml-4">
+              <div>
+                <h1 className="text-xl font-semibold">Transactions</h1>
+                <p className="text-purple-200 text-sm">{selectedBranchName} • {totalCount} records</p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <button className="px-3 py-1.5 bg-white/20 rounded-lg text-sm hover:bg-white/30 transition-colors">
+                Views
+              </button>
+              <button className="px-3 py-1.5 bg-white/20 rounded-lg text-sm hover:bg-white/30 transition-colors">
+                Share
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* View Tabs + Toolbar */}
+      <div className="bg-white border-b sticky top-0 z-20">
+        <div className="max-w-[1600px] mx-auto px-6 py-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <button className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-100 text-purple-700 rounded-full text-sm font-medium">
+                <span>☰</span> Grid view
+              </button>
+              <button className="flex items-center gap-1.5 px-3 py-1.5 hover:bg-gray-100 rounded-full text-sm text-gray-600">
+                <span>📊</span> Gallery
+              </button>
+              <button className="flex items-center gap-1.5 px-3 py-1.5 hover:bg-gray-100 rounded-full text-sm text-gray-600">
+                <span>📅</span> Calendar
+              </button>
+            </div>
+
+            <div className="flex items-center gap-2">
+              {/* Branch Selector */}
+              <div className="relative">
                 <button
                   onClick={() => setShowBranchDropdown(!showBranchDropdown)}
-                  className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                  className="flex items-center gap-2 px-3 py-1.5 hover:bg-gray-100 rounded-lg text-sm transition-colors"
                 >
                   <Building2 className="w-4 h-4 text-gray-500" />
                   <span className="font-medium text-gray-700">{selectedBranchName}</span>
@@ -411,7 +561,7 @@ export default function TransactionsPage() {
                 {showBranchDropdown && (
                   <>
                     <div className="fixed inset-0 z-20" onClick={() => setShowBranchDropdown(false)} />
-                    <div className="absolute top-full mt-2 left-0 bg-white rounded-xl shadow-lg border py-2 min-w-[200px] z-30">
+                    <div className="absolute top-full mt-2 right-0 bg-white rounded-xl shadow-lg border py-2 min-w-[200px] z-30">
                       {branches.map((branch) => (
                         <button
                           key={branch.id}
@@ -430,194 +580,234 @@ export default function TransactionsPage() {
                   </>
                 )}
               </div>
-            </div>
 
-            <div className="flex items-center gap-3">
-              {hasChanges && (
+              <div className="w-px h-6 bg-gray-200" />
+
+              {/* Search */}
+              <div className="relative">
+                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Find..."
+                  className="w-48 pl-9 pr-3 py-1.5 bg-gray-100 border-0 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 focus:bg-white transition-colors"
+                />
+              </div>
+
+              {/* Type Filter */}
+              <div className="relative">
                 <button
-                  onClick={saveChanges}
-                  disabled={saving}
-                  className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg text-sm font-medium hover:bg-purple-700 transition-colors disabled:opacity-50"
+                  onClick={() => setShowTypeFilter(!showTypeFilter)}
+                  className="flex items-center gap-1 px-3 py-1.5 hover:bg-gray-100 rounded-lg text-sm transition-colors"
                 >
-                  {saving ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                  Save Changes
+                  <Filter className="w-4 h-4 text-gray-500" />
+                  <span className="text-gray-700">
+                    {typeFilter === 'all' ? 'Filter' : typeFilter === 'revenue' ? 'Revenue' : 'Expense'}
+                  </span>
                 </button>
-              )}
 
-              <button
-                onClick={exportCSV}
-                className="flex items-center gap-2 px-4 py-2 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
-              >
-                <Download className="w-4 h-4" />
-                Export
-              </button>
+                {showTypeFilter && (
+                  <>
+                    <div className="fixed inset-0 z-20" onClick={() => setShowTypeFilter(false)} />
+                    <div className="absolute top-full mt-2 right-0 bg-white rounded-xl shadow-lg border py-2 min-w-[150px] z-30">
+                      {['all', 'revenue', 'expense'].map((type) => (
+                        <button
+                          key={type}
+                          onClick={() => {
+                            setTypeFilter(type as typeof typeFilter);
+                            setShowTypeFilter(false);
+                          }}
+                          className={`w-full px-4 py-2 text-left text-sm hover:bg-gray-50 transition-colors ${
+                            typeFilter === type ? 'bg-purple-50 text-purple-700 font-medium' : 'text-gray-700'
+                          }`}
+                        >
+                          {type === 'all' ? 'All Types' : type.charAt(0).toUpperCase() + type.slice(1)}
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
 
-              <button
-                onClick={addNewRow}
-                className="flex items-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors"
-              >
-                <Plus className="w-4 h-4" />
-                New
-              </button>
-            </div>
-          </div>
-
-          {/* Filters */}
-          <div className="flex items-center gap-4 mt-4">
-            <div className="relative flex-1 max-w-md">
-              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search transactions..."
-                className="w-full pl-10 pr-4 py-2 bg-gray-100 border-0 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 focus:bg-white transition-colors"
-              />
-            </div>
-
-            <div className="relative">
-              <button
-                onClick={() => setShowTypeFilter(!showTypeFilter)}
-                className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm transition-colors"
-              >
-                <Filter className="w-4 h-4 text-gray-500" />
-                <span className="text-gray-700">
-                  {typeFilter === 'all' ? 'All Types' : typeFilter === 'revenue' ? 'Revenue' : 'Expense'}
-                </span>
-                <ChevronDown className="w-4 h-4 text-gray-400" />
-              </button>
-
-              {showTypeFilter && (
-                <>
-                  <div className="fixed inset-0 z-20" onClick={() => setShowTypeFilter(false)} />
-                  <div className="absolute top-full mt-2 left-0 bg-white rounded-xl shadow-lg border py-2 min-w-[150px] z-30">
-                    {['all', 'revenue', 'expense'].map((type) => (
-                      <button
-                        key={type}
-                        onClick={() => {
-                          setTypeFilter(type as typeof typeFilter);
-                          setShowTypeFilter(false);
-                        }}
-                        className={`w-full px-4 py-2 text-left text-sm hover:bg-gray-50 transition-colors ${
-                          typeFilter === type ? 'bg-purple-50 text-purple-700 font-medium' : 'text-gray-700'
-                        }`}
-                      >
-                        {type === 'all' ? 'All Types' : type.charAt(0).toUpperCase() + type.slice(1)}
-                      </button>
-                    ))}
-                  </div>
-                </>
-              )}
-            </div>
-
-            <div className="flex items-center gap-2 bg-gray-100 rounded-lg px-3 py-1.5">
-              <Calendar className="w-4 h-4 text-gray-500" />
-              <input
-                type="date"
-                value={dateFrom}
-                onChange={(e) => setDateFrom(e.target.value)}
-                className="bg-transparent border-0 text-sm text-gray-700 focus:ring-0 w-32"
-              />
-              <span className="text-gray-400">→</span>
-              <input
-                type="date"
-                value={dateTo}
-                onChange={(e) => setDateTo(e.target.value)}
-                className="bg-transparent border-0 text-sm text-gray-700 focus:ring-0 w-32"
-              />
+              {/* Date Range */}
+              <div className="flex items-center gap-2 bg-gray-100 rounded-lg px-3 py-1">
+                <Calendar className="w-4 h-4 text-gray-500" />
+                <input
+                  type="date"
+                  value={dateFrom}
+                  onChange={(e) => setDateFrom(e.target.value)}
+                  className="bg-transparent border-0 text-sm text-gray-700 focus:ring-0 w-28"
+                />
+                <span className="text-gray-400">→</span>
+                <input
+                  type="date"
+                  value={dateTo}
+                  onChange={(e) => setDateTo(e.target.value)}
+                  className="bg-transparent border-0 text-sm text-gray-700 focus:ring-0 w-28"
+                />
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Main Content */}
-      <div className="max-w-[1600px] mx-auto px-6 py-6">
-        {/* Summary Cards */}
-        <div className="grid grid-cols-3 gap-4 mb-6">
-          <div className="bg-white rounded-xl p-4 border">
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-500">Revenue</span>
-              <div className="p-1.5 bg-green-100 rounded-lg">
-                <ArrowUpRight className="w-4 h-4 text-green-600" />
-              </div>
-            </div>
-            <p className="text-2xl font-semibold text-green-600 mt-1">{formatCurrency(totalRevenue)}</p>
+      {/* Actions Bar */}
+      <div className="bg-white border-b">
+        <div className="max-w-[1600px] mx-auto px-6 py-2 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            {selectedIds.size > 0 && (
+              <>
+                <span className="text-sm text-gray-600">
+                  {selectedIds.size} selected
+                </span>
+                <button
+                  onClick={() => setShowProcessModal(true)}
+                  className="flex items-center gap-2 px-3 py-1.5 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 transition-colors"
+                >
+                  <Check className="w-4 h-4" />
+                  Process Payments
+                </button>
+                <button
+                  onClick={() => setSelectedIds(new Set())}
+                  className="flex items-center gap-1 px-3 py-1.5 text-gray-600 hover:bg-gray-100 rounded-lg text-sm transition-colors"
+                >
+                  <X className="w-4 h-4" />
+                  Clear
+                </button>
+              </>
+            )}
           </div>
-          <div className="bg-white rounded-xl p-4 border">
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-500">Expenses</span>
-              <div className="p-1.5 bg-red-100 rounded-lg">
-                <ArrowDownRight className="w-4 h-4 text-red-600" />
-              </div>
-            </div>
-            <p className="text-2xl font-semibold text-red-600 mt-1">{formatCurrency(totalExpenses)}</p>
-          </div>
-          <div className="bg-white rounded-xl p-4 border">
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-500">Net</span>
-              <div className={`p-1.5 rounded-lg ${netAmount >= 0 ? 'bg-blue-100' : 'bg-red-100'}`}>
-                {netAmount >= 0 ? (
-                  <ArrowUpRight className="w-4 h-4 text-blue-600" />
-                ) : (
-                  <ArrowDownRight className="w-4 h-4 text-red-600" />
-                )}
-              </div>
-            </div>
-            <p className={`text-2xl font-semibold mt-1 ${netAmount >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
-              {formatCurrency(netAmount)}
-            </p>
+
+          <div className="flex items-center gap-3">
+            {hasChanges && (
+              <button
+                onClick={saveChanges}
+                disabled={saving}
+                className="flex items-center gap-2 px-4 py-1.5 bg-purple-600 text-white rounded-lg text-sm font-medium hover:bg-purple-700 transition-colors disabled:opacity-50"
+              >
+                {saving ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                Save
+              </button>
+            )}
+
+            <button
+              onClick={exportCSV}
+              className="flex items-center gap-2 px-3 py-1.5 border border-gray-200 rounded-lg text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+            >
+              <Download className="w-4 h-4" />
+              Export
+            </button>
+
+            <button
+              onClick={addNewRow}
+              className="flex items-center gap-2 px-4 py-1.5 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors"
+            >
+              <Plus className="w-4 h-4" />
+              Add Record
+            </button>
           </div>
         </div>
+      </div>
 
-        {/* Table */}
-        <div className="bg-white rounded-xl border overflow-hidden">
+      {/* Main Content */}
+      <div className="max-w-[1600px] mx-auto px-6 py-4">
+        {/* Airtable-style Table */}
+        <div className="bg-white rounded-xl border overflow-hidden shadow-sm">
           {loading ? (
             <div className="flex items-center justify-center h-64">
               <RefreshCw className="w-8 h-8 animate-spin text-purple-500" />
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b bg-gray-50">
-                    <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-28">
-                      Date
+              <table className="w-full text-sm">
+                <thead className="bg-gray-50 sticky top-0">
+                  <tr>
+                    <th className="w-10 px-2 py-3 border-b border-r">
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.size === transactions.length && transactions.length > 0}
+                        onChange={toggleSelectAll}
+                        className="w-4 h-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                      />
                     </th>
-                    <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-28">
-                      Type
+                    <th className="px-3 py-3 border-b border-r text-left font-medium text-gray-600 min-w-[110px]">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-purple-500">📅</span> Date
+                      </div>
                     </th>
-                    <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32">
-                      Category
+                    <th className="px-3 py-3 border-b border-r text-left font-medium text-gray-600 min-w-[100px]">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-green-500">🏷️</span> Type
+                      </div>
                     </th>
-                    <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[180px]">
-                      Description
+                    <th className="px-3 py-3 border-b border-r text-left font-medium text-gray-600 min-w-[120px]">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-blue-500">📦</span> Service
+                      </div>
                     </th>
-                    <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-28">
-                      Payment
+                    <th className="px-3 py-3 border-b border-r text-left font-medium text-gray-600 min-w-[180px]">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-orange-500">👤</span> Customer/Vendor
+                      </div>
                     </th>
-                    <th className="px-2 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider w-32">
-                      Amount
+                    <th className="px-3 py-3 border-b border-r text-left font-medium text-gray-600 min-w-[110px]">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-cyan-500">💳</span> Payment
+                      </div>
                     </th>
-                    <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[150px]">
-                      Notes
+                    <th className="px-3 py-3 border-b border-r text-right font-medium text-gray-600 min-w-[130px]">
+                      <div className="flex items-center justify-end gap-1.5">
+                        <span className="text-yellow-500">💰</span> Amount
+                      </div>
                     </th>
-                    <th className="px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-12">
+                    <th className="px-3 py-3 border-b border-r text-left font-medium text-gray-600 min-w-[90px]">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-emerald-500">✓</span> Status
+                      </div>
                     </th>
+                    <th className="px-3 py-3 border-b text-left font-medium text-gray-600">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-gray-400">📝</span> Notes
+                      </div>
+                    </th>
+                    <th className="w-10 px-2 py-3 border-b"></th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {transactions.map((txn) => (
+                <tbody>
+                  {transactions.map((txn, index) => (
                     <tr
                       key={txn.id}
-                      className={`group transition-colors ${
-                        txn.isNew ? 'bg-green-50/50' : txn.isDirty ? 'bg-amber-50/50' : 'hover:bg-gray-50'
+                      className={`group border-b transition-colors ${
+                        txn.isNew
+                          ? 'bg-green-50/50'
+                          : txn.isDirty
+                          ? 'bg-amber-50/50'
+                          : selectedIds.has(txn.id)
+                          ? 'bg-purple-50'
+                          : 'hover:bg-purple-50/30'
                       }`}
                     >
+                      {/* Checkbox + Row Number */}
+                      <td className="px-2 py-2 border-r bg-gray-50/50">
+                        <div className="flex items-center gap-1">
+                          <span className="opacity-0 group-hover:opacity-100 cursor-move text-gray-400">
+                            <GripVertical className="w-3 h-3" />
+                          </span>
+                          <input
+                            type="checkbox"
+                            checked={selectedIds.has(txn.id)}
+                            onChange={() => toggleSelect(txn.id)}
+                            className="w-4 h-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                          />
+                        </div>
+                      </td>
+
                       {/* Date */}
-                      <td className="px-2 py-1">
+                      <td className="px-3 py-2 border-r">
                         <InlineCell
                           value={txn.transaction_date}
-                          displayValue={<span className="text-sm text-gray-900">{formatDate(txn.transaction_date)}</span>}
+                          displayValue={<span className="text-sm">{formatDate(txn.transaction_date)}</span>}
                           isEditing={isEditingCell(txn.id, 'transaction_date')}
                           onStartEdit={() => startEditing(txn.id, 'transaction_date')}
                           onChange={(v) => updateTransaction(txn.id, 'transaction_date', v)}
@@ -627,22 +817,15 @@ export default function TransactionsPage() {
                       </td>
 
                       {/* Type */}
-                      <td className="px-2 py-1">
+                      <td className="px-3 py-2 border-r">
                         <InlineCell
                           value={txn.transaction_type}
                           displayValue={
                             <span
-                              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${
-                                txn.transaction_type === 'revenue'
-                                  ? 'bg-green-100 text-green-700'
-                                  : 'bg-red-100 text-red-700'
+                              className={`inline-block px-2 py-1 rounded-full text-xs font-medium text-white ${
+                                txn.transaction_type === 'revenue' ? 'bg-green-500' : 'bg-red-500'
                               }`}
                             >
-                              {txn.transaction_type === 'revenue' ? (
-                                <ArrowUpRight className="w-3 h-3" />
-                              ) : (
-                                <ArrowDownRight className="w-3 h-3" />
-                              )}
                               {txn.transaction_type === 'revenue' ? 'Revenue' : 'Expense'}
                             </span>
                           }
@@ -655,14 +838,19 @@ export default function TransactionsPage() {
                         />
                       </td>
 
-                      {/* Category */}
-                      <td className="px-2 py-1">
+                      {/* Category/Service */}
+                      <td className="px-3 py-2 border-r">
                         <InlineCell
                           value={txn.transaction_type === 'revenue' ? txn.service_type || '' : txn.expense_category || ''}
                           displayValue={
-                            <span className="text-sm text-gray-700">
-                              {txn.service_type || txn.expense_category || <span className="text-gray-400">—</span>}
-                            </span>
+                            txn.service_type || txn.expense_category ? (
+                              <CategoryBadge
+                                category={txn.service_type || txn.expense_category || ''}
+                                type={txn.transaction_type}
+                              />
+                            ) : (
+                              <span className="text-gray-400">—</span>
+                            )
                           }
                           isEditing={isEditingCell(txn.id, 'category')}
                           onStartEdit={() => startEditing(txn.id, 'category')}
@@ -676,18 +864,22 @@ export default function TransactionsPage() {
                           onFinishEdit={finishEditing}
                           type="select"
                           options={txn.transaction_type === 'revenue' ? SERVICE_TYPES : EXPENSE_CATEGORIES}
-                          placeholder="Select..."
                         />
                       </td>
 
-                      {/* Description */}
-                      <td className="px-2 py-1">
+                      {/* Customer/Vendor */}
+                      <td className="px-3 py-2 border-r">
                         <InlineCell
                           value={txn.transaction_type === 'revenue' ? txn.customer_name || '' : txn.vendor_name || ''}
                           displayValue={
-                            <span className="text-sm font-medium text-gray-900">
-                              {txn.customer_name || txn.vendor_name || <span className="text-gray-400 font-normal">—</span>}
-                            </span>
+                            txn.customer_name || txn.vendor_name ? (
+                              <div className="flex items-center gap-2">
+                                <AvatarBadge name={txn.customer_name || txn.vendor_name || ''} />
+                                <span>{txn.customer_name || txn.vendor_name}</span>
+                              </div>
+                            ) : (
+                              <span className="text-gray-400">—</span>
+                            )
                           }
                           isEditing={isEditingCell(txn.id, 'description')}
                           onStartEdit={() => startEditing(txn.id, 'description')}
@@ -703,18 +895,15 @@ export default function TransactionsPage() {
                         />
                       </td>
 
-                      {/* Payment */}
-                      <td className="px-2 py-1">
+                      {/* Payment Method */}
+                      <td className="px-3 py-2 border-r">
                         <InlineCell
                           value={txn.payment_method || ''}
                           displayValue={
                             txn.payment_method ? (
-                              <span className="inline-flex items-center gap-1.5 text-sm text-gray-600 bg-gray-100 px-2 py-0.5 rounded">
-                                <PaymentIcon method={txn.payment_method} />
-                                {txn.payment_method.charAt(0).toUpperCase() + txn.payment_method.slice(1)}
-                              </span>
+                              <PaymentBadge method={txn.payment_method} />
                             ) : (
-                              <span className="text-gray-400 text-sm">—</span>
+                              <span className="text-gray-400">—</span>
                             )
                           }
                           isEditing={isEditingCell(txn.id, 'payment_method')}
@@ -727,16 +916,16 @@ export default function TransactionsPage() {
                       </td>
 
                       {/* Amount */}
-                      <td className="px-2 py-1">
+                      <td className="px-3 py-2 border-r">
                         <InlineCell
                           value={txn.amount}
                           displayValue={
                             <span
-                              className={`text-sm font-semibold tabular-nums ${
+                              className={`font-medium tabular-nums ${
                                 txn.transaction_type === 'revenue' ? 'text-green-600' : 'text-red-600'
                               }`}
                             >
-                              {txn.transaction_type === 'revenue' ? '+' : '-'}
+                              {txn.transaction_type === 'expense' ? '-' : ''}
                               {formatCurrency(txn.amount)}
                             </span>
                           }
@@ -749,12 +938,28 @@ export default function TransactionsPage() {
                         />
                       </td>
 
+                      {/* Status */}
+                      <td className="px-3 py-2 border-r">
+                        <span
+                          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium ${
+                            txn.approval_status === 'approved'
+                              ? 'bg-green-100 text-green-700'
+                              : txn.approval_status === 'pending'
+                              ? 'bg-yellow-100 text-yellow-700'
+                              : 'bg-red-100 text-red-700'
+                          }`}
+                        >
+                          {txn.approval_status === 'approved' && <Check className="w-3 h-3" />}
+                          {txn.approval_status.charAt(0).toUpperCase() + txn.approval_status.slice(1)}
+                        </span>
+                      </td>
+
                       {/* Notes */}
-                      <td className="px-2 py-1">
+                      <td className="px-3 py-2">
                         <InlineCell
                           value={txn.notes || ''}
                           displayValue={
-                            <span className="text-sm text-gray-500 truncate block max-w-[200px]">
+                            <span className="text-gray-500 truncate block max-w-[200px]">
                               {txn.notes || <span className="text-gray-400">—</span>}
                             </span>
                           }
@@ -767,7 +972,7 @@ export default function TransactionsPage() {
                       </td>
 
                       {/* Actions */}
-                      <td className="px-2 py-1 text-center">
+                      <td className="px-2 py-2">
                         <button
                           onClick={() => deleteTransaction(txn.id)}
                           className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg opacity-0 group-hover:opacity-100 transition-all"
@@ -777,29 +982,24 @@ export default function TransactionsPage() {
                       </td>
                     </tr>
                   ))}
-
-                  {/* Add Row */}
-                  {transactions.length > 0 && (
-                    <tr
-                      className="hover:bg-gray-50 cursor-pointer transition-colors border-t-2 border-dashed border-gray-200"
-                      onClick={addNewRow}
-                    >
-                      <td colSpan={8} className="px-4 py-4">
-                        <div className="flex items-center justify-center gap-2 text-gray-400 hover:text-purple-600 transition-colors">
-                          <Plus className="w-4 h-4" />
-                          <span className="text-sm">Click to add new transaction</span>
-                        </div>
-                      </td>
-                    </tr>
-                  )}
                 </tbody>
               </table>
+
+              {/* Add Row Button */}
+              {transactions.length > 0 && (
+                <div
+                  className="px-4 py-3 border-t hover:bg-purple-50 cursor-pointer text-purple-600 text-sm font-medium transition-colors"
+                  onClick={addNewRow}
+                >
+                  + Add record
+                </div>
+              )}
 
               {/* Empty state */}
               {transactions.length === 0 && !loading && (
                 <div className="py-16 text-center">
-                  <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Receipt className="w-8 h-8 text-gray-400" />
+                  <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Wallet className="w-8 h-8 text-purple-500" />
                   </div>
                   <h3 className="text-lg font-medium text-gray-900 mb-1">No transactions yet</h3>
                   <p className="text-sm text-gray-500 mb-4">Get started by adding your first transaction</p>
@@ -814,10 +1014,20 @@ export default function TransactionsPage() {
               )}
             </div>
           )}
+
+          {/* Footer with summary */}
+          <div className="px-4 py-3 bg-gray-50 border-t text-xs text-gray-600 flex justify-between items-center">
+            <span>{totalCount} records • {pendingCount} pending</span>
+            <div className="flex items-center gap-6">
+              <span>Revenue: <strong className="text-green-600">{formatCurrency(totalRevenue)}</strong></span>
+              <span>Expenses: <strong className="text-red-600">{formatCurrency(totalExpenses)}</strong></span>
+              <span>Net: <strong className={netAmount >= 0 ? 'text-purple-600' : 'text-red-600'}>{formatCurrency(netAmount)}</strong></span>
+            </div>
+          </div>
         </div>
 
         {/* Unsaved changes banner */}
-        {transactions.filter((t) => t.isDirty).length > 0 && (
+        {hasChanges && (
           <div className="mt-4 flex items-center justify-between bg-amber-50 rounded-xl px-4 py-3 border border-amber-200">
             <div className="flex items-center gap-2 text-amber-700">
               <div className="w-2 h-2 bg-amber-500 rounded-full animate-pulse" />
@@ -836,16 +1046,66 @@ export default function TransactionsPage() {
           </div>
         )}
       </div>
-    </div>
-  );
-}
 
-function Receipt({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1-2-1Z" />
-      <path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8" />
-      <path d="M12 17V7" />
-    </svg>
+      {/* Process Payments Modal */}
+      {showProcessModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full mx-4 p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                <Check className="w-5 h-5 text-green-600" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">Process Payments</h3>
+                <p className="text-sm text-gray-500">Mark selected transactions as approved</p>
+              </div>
+            </div>
+
+            <div className="bg-gray-50 rounded-lg p-4 mb-6">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-gray-600">Transactions to process:</span>
+                <span className="font-semibold text-gray-900">{selectedIds.size}</span>
+              </div>
+              <div className="flex items-center justify-between text-sm mt-2">
+                <span className="text-gray-600">Total amount:</span>
+                <span className="font-semibold text-green-600">
+                  {formatCurrency(
+                    transactions
+                      .filter((t) => selectedIds.has(t.id))
+                      .reduce((sum, t) => sum + (t.transaction_type === 'revenue' ? t.amount : -t.amount), 0)
+                  )} UZS
+                </span>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setShowProcessModal(false)}
+                className="flex-1 px-4 py-2 border border-gray-200 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={processPayments}
+                disabled={processingIds.size > 0}
+                className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {processingIds.size > 0 ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                    Processing...
+                  </>
+                ) : (
+                  <>
+                    <Check className="w-4 h-4" />
+                    Process Payments
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }

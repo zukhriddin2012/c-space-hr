@@ -70,6 +70,14 @@ export const PERMISSIONS = {
   FEEDBACK_SUBMIT: 'feedback:submit',
   FEEDBACK_VIEW_ALL: 'feedback:view_all',
 
+  // Finance/Transactions
+  FINANCES_VIEW: 'finances:view',
+  FINANCES_VIEW_ALL: 'finances:view_all',
+  FINANCES_CREATE: 'finances:create',
+  FINANCES_EDIT: 'finances:edit',
+  FINANCES_APPROVE: 'finances:approve',
+  FINANCES_EXPORT: 'finances:export',
+
   // Accounting Requests
   ACCOUNTING_REQUESTS_VIEW: 'accounting_requests:view',
   ACCOUNTING_REQUESTS_VIEW_ALL: 'accounting_requests:view_all',
@@ -161,6 +169,13 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     // Telegram Bot - Full access
     PERMISSIONS.TELEGRAM_BOT_VIEW,
     PERMISSIONS.TELEGRAM_BOT_EDIT,
+    // Finance - Full access
+    PERMISSIONS.FINANCES_VIEW,
+    PERMISSIONS.FINANCES_VIEW_ALL,
+    PERMISSIONS.FINANCES_CREATE,
+    PERMISSIONS.FINANCES_EDIT,
+    PERMISSIONS.FINANCES_APPROVE,
+    PERMISSIONS.FINANCES_EXPORT,
   ],
 
   ceo: [
@@ -196,6 +211,11 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     PERMISSIONS.ACCOUNTING_REQUESTS_CANCEL_OWN,
     PERMISSIONS.ACCOUNTING_REQUESTS_APPROVE_HIGH,
     PERMISSIONS.ACCOUNTING_REQUESTS_REPORTS,
+    // Finance - View all and approve
+    PERMISSIONS.FINANCES_VIEW,
+    PERMISSIONS.FINANCES_VIEW_ALL,
+    PERMISSIONS.FINANCES_APPROVE,
+    PERMISSIONS.FINANCES_EXPORT,
   ],
 
   hr: [
@@ -250,6 +270,10 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     PERMISSIONS.TASKS_CREATE,
     PERMISSIONS.DASHBOARD_VIEW,
     PERMISSIONS.FEEDBACK_SUBMIT,
+    // Finance - View and create for their branch
+    PERMISSIONS.FINANCES_VIEW,
+    PERMISSIONS.FINANCES_CREATE,
+    PERMISSIONS.FINANCES_EXPORT,
     // Accounting - Create and manage own requests
     PERMISSIONS.ACCOUNTING_REQUESTS_VIEW,
     PERMISSIONS.ACCOUNTING_REQUESTS_CREATE,
@@ -304,6 +328,13 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     PERMISSIONS.ACCOUNTING_REQUESTS_PROCESS,
     PERMISSIONS.ACCOUNTING_REQUESTS_APPROVE_STANDARD,
     PERMISSIONS.ACCOUNTING_REQUESTS_REPORTS,
+    // Finance - Full access
+    PERMISSIONS.FINANCES_VIEW,
+    PERMISSIONS.FINANCES_VIEW_ALL,
+    PERMISSIONS.FINANCES_CREATE,
+    PERMISSIONS.FINANCES_EDIT,
+    PERMISSIONS.FINANCES_APPROVE,
+    PERMISSIONS.FINANCES_EXPORT,
   ],
 
   accountant: [
@@ -317,6 +348,13 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     PERMISSIONS.ACCOUNTING_REQUESTS_VIEW_ALL,
     PERMISSIONS.ACCOUNTING_REQUESTS_PROCESS,
     PERMISSIONS.ACCOUNTING_REQUESTS_REPORTS,
+    // Finance - View all, create, edit
+    PERMISSIONS.FINANCES_VIEW,
+    PERMISSIONS.FINANCES_VIEW_ALL,
+    PERMISSIONS.FINANCES_CREATE,
+    PERMISSIONS.FINANCES_EDIT,
+    PERMISSIONS.FINANCES_APPROVE,
+    PERMISSIONS.FINANCES_EXPORT,
   ],
 
   legal_manager: [
@@ -343,6 +381,10 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     // View accounting reports
     PERMISSIONS.ACCOUNTING_REQUESTS_VIEW,
     PERMISSIONS.ACCOUNTING_REQUESTS_REPORTS,
+    // Finance - View all and export
+    PERMISSIONS.FINANCES_VIEW,
+    PERMISSIONS.FINANCES_VIEW_ALL,
+    PERMISSIONS.FINANCES_EXPORT,
   ],
 };
 
@@ -469,6 +511,14 @@ export const PERMISSION_GROUPS = {
   'Recruitment': [
     { key: PERMISSIONS.RECRUITMENT_VIEW, label: 'View Recruitment Pipeline' },
     { key: PERMISSIONS.RECRUITMENT_MANAGE, label: 'Manage Candidates' },
+  ],
+  'Finance': [
+    { key: PERMISSIONS.FINANCES_VIEW, label: 'View Own Branch Finances' },
+    { key: PERMISSIONS.FINANCES_VIEW_ALL, label: 'View All Branches Finances' },
+    { key: PERMISSIONS.FINANCES_CREATE, label: 'Create Transactions' },
+    { key: PERMISSIONS.FINANCES_EDIT, label: 'Edit Transactions' },
+    { key: PERMISSIONS.FINANCES_APPROVE, label: 'Approve Transactions' },
+    { key: PERMISSIONS.FINANCES_EXPORT, label: 'Export Finance Data' },
   ],
   'Accounting Requests': [
     { key: PERMISSIONS.ACCOUNTING_REQUESTS_VIEW, label: 'View Own Requests' },
