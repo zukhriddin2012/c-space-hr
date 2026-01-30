@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, KeyboardEvent } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import {
   ArrowLeft,
@@ -9,7 +9,6 @@ import {
   Trash2,
   RefreshCw,
   Download,
-  Upload,
   Search,
   Filter,
   ChevronDown,
@@ -17,7 +16,6 @@ import {
   Banknote,
   Smartphone,
   Building2,
-  MoreHorizontal,
   Calendar,
   ArrowUpRight,
   ArrowDownRight,
@@ -46,12 +44,15 @@ interface Branch {
   name: string;
 }
 
-// Service types and expense categories
+type EditingCell = {
+  rowId: string;
+  field: string;
+} | null;
+
 const SERVICE_TYPES = ['Office', 'Dedicated', 'Flex', 'Meeting', 'Conference', 'Hour', 'Day Pass', 'Other'];
 const EXPENSE_CATEGORIES = ['Goods', 'Utility', 'Maintenance', 'Staff', 'Marketing', 'Tax', 'CapEx', 'Other'];
 const PAYMENT_METHODS = ['cash', 'terminal', 'payme', 'click', 'uzum', 'bank'];
 
-// Payment method icons
 const PaymentIcon = ({ method }: { method: string }) => {
   switch (method) {
     case 'cash':
@@ -69,15 +70,113 @@ const PaymentIcon = ({ method }: { method: string }) => {
   }
 };
 
-// Format currency
 function formatCurrency(amount: number): string {
   return amount.toLocaleString('uz-UZ');
 }
 
-// Format date for display
 function formatDate(dateStr: string): string {
   const date = new Date(dateStr);
   return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
+// Inline editable cell component
+function InlineCell({
+  value,
+  displayValue,
+  isEditing,
+  onStartEdit,
+  onChange,
+  onFinishEdit,
+  type = 'text',
+  options,
+  placeholder,
+  className = '',
+  align = 'left',
+}: {
+  value: string | number;
+  displayValue?: React.ReactNode;
+  isEditing: boolean;
+  onStartEdit: () => void;
+  onChange: (value: string) => void;
+  onFinishEdit: () => void;
+  type?: 'text' | 'number' | 'date' | 'select';
+  options?: string[];
+  placeholder?: string;
+  className?: string;
+  align?: 'left' | 'right';
+}) {
+  const inputRef = useRef<HTMLInputElement | HTMLSelectElement>(null);
+
+  useEffect(() => {
+    if (isEditing && inputRef.current) {
+      inputRef.current.focus();
+      if (inputRef.current instanceof HTMLInputElement) {
+        inputRef.current.select();
+      }
+    }
+  }, [isEditing]);
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' || e.key === 'Tab') {
+      e.preventDefault();
+      onFinishEdit();
+    }
+    if (e.key === 'Escape') {
+      onFinishEdit();
+    }
+  };
+
+  if (isEditing) {
+    if (type === 'select' && options) {
+      return (
+        <select
+          ref={inputRef as React.RefObject<HTMLSelectElement>}
+          value={String(value)}
+          onChange={(e) => onChange(e.target.value)}
+          onBlur={onFinishEdit}
+          onKeyDown={handleKeyDown}
+          className={`w-full h-8 px-2 text-sm border border-purple-400 rounded bg-white focus:ring-2 focus:ring-purple-500 focus:outline-none ${className}`}
+        >
+          <option value="">Select...</option>
+          {options.map((opt) => (
+            <option key={opt} value={opt}>
+              {opt.charAt(0).toUpperCase() + opt.slice(1)}
+            </option>
+          ))}
+        </select>
+      );
+    }
+
+    return (
+      <input
+        ref={inputRef as React.RefObject<HTMLInputElement>}
+        type={type}
+        value={String(value)}
+        onChange={(e) => onChange(e.target.value)}
+        onBlur={onFinishEdit}
+        onKeyDown={handleKeyDown}
+        placeholder={placeholder}
+        className={`w-full h-8 px-2 text-sm border border-purple-400 rounded bg-white focus:ring-2 focus:ring-purple-500 focus:outline-none ${
+          align === 'right' ? 'text-right' : ''
+        } ${className}`}
+      />
+    );
+  }
+
+  return (
+    <div
+      onClick={onStartEdit}
+      className={`min-h-[32px] px-2 py-1.5 cursor-text rounded hover:bg-gray-100 transition-colors flex items-center ${
+        align === 'right' ? 'justify-end' : ''
+      } ${className}`}
+    >
+      {displayValue !== undefined ? displayValue : (
+        <span className={!value ? 'text-gray-400' : ''}>
+          {value || placeholder || '—'}
+        </span>
+      )}
+    </div>
+  );
 }
 
 export default function TransactionsPage() {
@@ -88,11 +187,10 @@ export default function TransactionsPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [totalCount, setTotalCount] = useState(0);
   const [hasChanges, setHasChanges] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingCell, setEditingCell] = useState<EditingCell>(null);
   const [showBranchDropdown, setShowBranchDropdown] = useState(false);
   const [showTypeFilter, setShowTypeFilter] = useState(false);
 
-  // Filters
   const [dateFrom, setDateFrom] = useState(
     new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0]
   );
@@ -100,7 +198,6 @@ export default function TransactionsPage() {
   const [typeFilter, setTypeFilter] = useState<'all' | 'revenue' | 'expense'>('all');
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Fetch branches
   useEffect(() => {
     const fetchBranches = async () => {
       try {
@@ -119,7 +216,6 @@ export default function TransactionsPage() {
     fetchBranches();
   }, []);
 
-  // Fetch transactions
   const fetchTransactions = useCallback(async () => {
     if (!selectedBranch) return;
 
@@ -157,7 +253,6 @@ export default function TransactionsPage() {
     fetchTransactions();
   }, [fetchTransactions]);
 
-  // Add new row
   const addNewRow = () => {
     const newTxn: Transaction = {
       id: `new-${Date.now()}`,
@@ -175,11 +270,11 @@ export default function TransactionsPage() {
       isDirty: true,
     };
     setTransactions([newTxn, ...transactions]);
-    setEditingId(newTxn.id);
     setHasChanges(true);
+    // Start editing the date cell of the new row
+    setEditingCell({ rowId: newTxn.id, field: 'transaction_date' });
   };
 
-  // Update transaction field
   const updateTransaction = (id: string, field: keyof Transaction, value: string | number) => {
     setTransactions((prev) =>
       prev.map((t) => {
@@ -202,19 +297,11 @@ export default function TransactionsPage() {
     setHasChanges(true);
   };
 
-  // Delete transaction
   const deleteTransaction = (id: string) => {
-    const txn = transactions.find((t) => t.id === id);
-    if (txn?.isNew) {
-      setTransactions((prev) => prev.filter((t) => t.id !== id));
-    } else {
-      setTransactions((prev) => prev.filter((t) => t.id !== id));
-      setHasChanges(true);
-    }
-    if (editingId === id) setEditingId(null);
+    setTransactions((prev) => prev.filter((t) => t.id !== id));
+    setHasChanges(true);
   };
 
-  // Save all changes
   const saveChanges = async () => {
     setSaving(true);
     try {
@@ -245,7 +332,6 @@ export default function TransactionsPage() {
 
       await fetchTransactions();
       setHasChanges(false);
-      setEditingId(null);
     } catch (error) {
       console.error('Error saving changes:', error);
     } finally {
@@ -253,7 +339,6 @@ export default function TransactionsPage() {
     }
   };
 
-  // Export to CSV
   const exportCSV = () => {
     const headers = ['Date', 'Type', 'Service/Category', 'Customer/Vendor', 'Payment', 'Amount', 'Notes'];
     const rows = transactions.map((t) => [
@@ -276,12 +361,23 @@ export default function TransactionsPage() {
     URL.revokeObjectURL(url);
   };
 
-  // Calculate totals
   const totalRevenue = transactions.filter((t) => t.transaction_type === 'revenue').reduce((sum, t) => sum + t.amount, 0);
   const totalExpenses = transactions.filter((t) => t.transaction_type === 'expense').reduce((sum, t) => sum + t.amount, 0);
   const netAmount = totalRevenue - totalExpenses;
 
   const selectedBranchName = branches.find((b) => b.id === selectedBranch)?.name || 'Select Branch';
+
+  const isEditingCell = (rowId: string, field: string) => {
+    return editingCell?.rowId === rowId && editingCell?.field === field;
+  };
+
+  const startEditing = (rowId: string, field: string) => {
+    setEditingCell({ rowId, field });
+  };
+
+  const finishEditing = () => {
+    setEditingCell(null);
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -289,7 +385,6 @@ export default function TransactionsPage() {
       <div className="bg-white border-b sticky top-0 z-20">
         <div className="max-w-[1600px] mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
-            {/* Left: Back + Title + Branch Selector */}
             <div className="flex items-center gap-4">
               <Link
                 href="/finances"
@@ -303,7 +398,6 @@ export default function TransactionsPage() {
                 <p className="text-sm text-gray-500">{totalCount} records</p>
               </div>
 
-              {/* Branch Selector Dropdown */}
               <div className="relative ml-4">
                 <button
                   onClick={() => setShowBranchDropdown(!showBranchDropdown)}
@@ -315,27 +409,29 @@ export default function TransactionsPage() {
                 </button>
 
                 {showBranchDropdown && (
-                  <div className="absolute top-full mt-2 left-0 bg-white rounded-xl shadow-lg border py-2 min-w-[200px] z-30">
-                    {branches.map((branch) => (
-                      <button
-                        key={branch.id}
-                        onClick={() => {
-                          setSelectedBranch(branch.id);
-                          setShowBranchDropdown(false);
-                        }}
-                        className={`w-full px-4 py-2 text-left text-sm hover:bg-gray-50 transition-colors ${
-                          selectedBranch === branch.id ? 'bg-purple-50 text-purple-700 font-medium' : 'text-gray-700'
-                        }`}
-                      >
-                        {branch.name}
-                      </button>
-                    ))}
-                  </div>
+                  <>
+                    <div className="fixed inset-0 z-20" onClick={() => setShowBranchDropdown(false)} />
+                    <div className="absolute top-full mt-2 left-0 bg-white rounded-xl shadow-lg border py-2 min-w-[200px] z-30">
+                      {branches.map((branch) => (
+                        <button
+                          key={branch.id}
+                          onClick={() => {
+                            setSelectedBranch(branch.id);
+                            setShowBranchDropdown(false);
+                          }}
+                          className={`w-full px-4 py-2 text-left text-sm hover:bg-gray-50 transition-colors ${
+                            selectedBranch === branch.id ? 'bg-purple-50 text-purple-700 font-medium' : 'text-gray-700'
+                          }`}
+                        >
+                          {branch.name}
+                        </button>
+                      ))}
+                    </div>
+                  </>
                 )}
               </div>
             </div>
 
-            {/* Right: Actions */}
             <div className="flex items-center gap-3">
               {hasChanges && (
                 <button
@@ -361,14 +457,13 @@ export default function TransactionsPage() {
                 className="flex items-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors"
               >
                 <Plus className="w-4 h-4" />
-                New Transaction
+                New
               </button>
             </div>
           </div>
 
-          {/* Filters Row */}
+          {/* Filters */}
           <div className="flex items-center gap-4 mt-4">
-            {/* Search */}
             <div className="relative flex-1 max-w-md">
               <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
               <input
@@ -380,7 +475,6 @@ export default function TransactionsPage() {
               />
             </div>
 
-            {/* Type Filter */}
             <div className="relative">
               <button
                 onClick={() => setShowTypeFilter(!showTypeFilter)}
@@ -394,26 +488,28 @@ export default function TransactionsPage() {
               </button>
 
               {showTypeFilter && (
-                <div className="absolute top-full mt-2 left-0 bg-white rounded-xl shadow-lg border py-2 min-w-[150px] z-30">
-                  {['all', 'revenue', 'expense'].map((type) => (
-                    <button
-                      key={type}
-                      onClick={() => {
-                        setTypeFilter(type as typeof typeFilter);
-                        setShowTypeFilter(false);
-                      }}
-                      className={`w-full px-4 py-2 text-left text-sm hover:bg-gray-50 transition-colors ${
-                        typeFilter === type ? 'bg-purple-50 text-purple-700 font-medium' : 'text-gray-700'
-                      }`}
-                    >
-                      {type === 'all' ? 'All Types' : type.charAt(0).toUpperCase() + type.slice(1)}
-                    </button>
-                  ))}
-                </div>
+                <>
+                  <div className="fixed inset-0 z-20" onClick={() => setShowTypeFilter(false)} />
+                  <div className="absolute top-full mt-2 left-0 bg-white rounded-xl shadow-lg border py-2 min-w-[150px] z-30">
+                    {['all', 'revenue', 'expense'].map((type) => (
+                      <button
+                        key={type}
+                        onClick={() => {
+                          setTypeFilter(type as typeof typeFilter);
+                          setShowTypeFilter(false);
+                        }}
+                        className={`w-full px-4 py-2 text-left text-sm hover:bg-gray-50 transition-colors ${
+                          typeFilter === type ? 'bg-purple-50 text-purple-700 font-medium' : 'text-gray-700'
+                        }`}
+                      >
+                        {type === 'all' ? 'All Types' : type.charAt(0).toUpperCase() + type.slice(1)}
+                      </button>
+                    ))}
+                  </div>
+                </>
               )}
             </div>
 
-            {/* Date Range */}
             <div className="flex items-center gap-2 bg-gray-100 rounded-lg px-3 py-1.5">
               <Calendar className="w-4 h-4 text-gray-500" />
               <input
@@ -483,30 +579,29 @@ export default function TransactionsPage() {
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b bg-gray-50/50">
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <tr className="border-b bg-gray-50">
+                    <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-28">
                       Date
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-28">
                       Type
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32">
                       Category
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[180px]">
                       Description
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-28">
                       Payment
                     </th>
-                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-2 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider w-32">
                       Amount
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[150px]">
                       Notes
                     </th>
-                    <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-12">
-
+                    <th className="px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-12">
                     </th>
                   </tr>
                 </thead>
@@ -514,176 +609,167 @@ export default function TransactionsPage() {
                   {transactions.map((txn) => (
                     <tr
                       key={txn.id}
-                      className={`group hover:bg-purple-50/50 transition-colors ${
-                        txn.isNew ? 'bg-green-50/50' : txn.isDirty ? 'bg-amber-50/50' : ''
+                      className={`group transition-colors ${
+                        txn.isNew ? 'bg-green-50/50' : txn.isDirty ? 'bg-amber-50/50' : 'hover:bg-gray-50'
                       }`}
-                      onClick={() => setEditingId(txn.id)}
                     >
                       {/* Date */}
-                      <td className="px-4 py-3">
-                        {editingId === txn.id ? (
-                          <input
-                            type="date"
-                            value={txn.transaction_date}
-                            onChange={(e) => updateTransaction(txn.id, 'transaction_date', e.target.value)}
-                            className="w-full px-2 py-1 text-sm border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                            onClick={(e) => e.stopPropagation()}
-                          />
-                        ) : (
-                          <span className="text-sm text-gray-900">{formatDate(txn.transaction_date)}</span>
-                        )}
+                      <td className="px-2 py-1">
+                        <InlineCell
+                          value={txn.transaction_date}
+                          displayValue={<span className="text-sm text-gray-900">{formatDate(txn.transaction_date)}</span>}
+                          isEditing={isEditingCell(txn.id, 'transaction_date')}
+                          onStartEdit={() => startEditing(txn.id, 'transaction_date')}
+                          onChange={(v) => updateTransaction(txn.id, 'transaction_date', v)}
+                          onFinishEdit={finishEditing}
+                          type="date"
+                        />
                       </td>
 
-                      {/* Type Badge */}
-                      <td className="px-4 py-3">
-                        {editingId === txn.id ? (
-                          <select
-                            value={txn.transaction_type}
-                            onChange={(e) => updateTransaction(txn.id, 'transaction_type', e.target.value)}
-                            className="w-full px-2 py-1 text-sm border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <option value="revenue">Revenue</option>
-                            <option value="expense">Expense</option>
-                          </select>
-                        ) : (
-                          <span
-                            className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium ${
-                              txn.transaction_type === 'revenue'
-                                ? 'bg-green-100 text-green-700'
-                                : 'bg-red-100 text-red-700'
-                            }`}
-                          >
-                            {txn.transaction_type === 'revenue' ? (
-                              <ArrowUpRight className="w-3 h-3" />
-                            ) : (
-                              <ArrowDownRight className="w-3 h-3" />
-                            )}
-                            {txn.transaction_type === 'revenue' ? 'Revenue' : 'Expense'}
-                          </span>
-                        )}
+                      {/* Type */}
+                      <td className="px-2 py-1">
+                        <InlineCell
+                          value={txn.transaction_type}
+                          displayValue={
+                            <span
+                              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${
+                                txn.transaction_type === 'revenue'
+                                  ? 'bg-green-100 text-green-700'
+                                  : 'bg-red-100 text-red-700'
+                              }`}
+                            >
+                              {txn.transaction_type === 'revenue' ? (
+                                <ArrowUpRight className="w-3 h-3" />
+                              ) : (
+                                <ArrowDownRight className="w-3 h-3" />
+                              )}
+                              {txn.transaction_type === 'revenue' ? 'Revenue' : 'Expense'}
+                            </span>
+                          }
+                          isEditing={isEditingCell(txn.id, 'transaction_type')}
+                          onStartEdit={() => startEditing(txn.id, 'transaction_type')}
+                          onChange={(v) => updateTransaction(txn.id, 'transaction_type', v)}
+                          onFinishEdit={finishEditing}
+                          type="select"
+                          options={['revenue', 'expense']}
+                        />
                       </td>
 
                       {/* Category */}
-                      <td className="px-4 py-3">
-                        {editingId === txn.id ? (
-                          <select
-                            value={txn.transaction_type === 'revenue' ? txn.service_type || '' : txn.expense_category || ''}
-                            onChange={(e) =>
-                              updateTransaction(
-                                txn.id,
-                                txn.transaction_type === 'revenue' ? 'service_type' : 'expense_category',
-                                e.target.value
-                              )
-                            }
-                            className="w-full px-2 py-1 text-sm border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <option value="">Select...</option>
-                            {(txn.transaction_type === 'revenue' ? SERVICE_TYPES : EXPENSE_CATEGORIES).map((opt) => (
-                              <option key={opt} value={opt}>{opt}</option>
-                            ))}
-                          </select>
-                        ) : (
-                          <span className="text-sm text-gray-600">
-                            {txn.service_type || txn.expense_category || '—'}
-                          </span>
-                        )}
+                      <td className="px-2 py-1">
+                        <InlineCell
+                          value={txn.transaction_type === 'revenue' ? txn.service_type || '' : txn.expense_category || ''}
+                          displayValue={
+                            <span className="text-sm text-gray-700">
+                              {txn.service_type || txn.expense_category || <span className="text-gray-400">—</span>}
+                            </span>
+                          }
+                          isEditing={isEditingCell(txn.id, 'category')}
+                          onStartEdit={() => startEditing(txn.id, 'category')}
+                          onChange={(v) =>
+                            updateTransaction(
+                              txn.id,
+                              txn.transaction_type === 'revenue' ? 'service_type' : 'expense_category',
+                              v
+                            )
+                          }
+                          onFinishEdit={finishEditing}
+                          type="select"
+                          options={txn.transaction_type === 'revenue' ? SERVICE_TYPES : EXPENSE_CATEGORIES}
+                          placeholder="Select..."
+                        />
                       </td>
 
-                      {/* Description (Customer/Vendor) */}
-                      <td className="px-4 py-3">
-                        {editingId === txn.id ? (
-                          <input
-                            type="text"
-                            value={txn.transaction_type === 'revenue' ? txn.customer_name || '' : txn.vendor_name || ''}
-                            onChange={(e) =>
-                              updateTransaction(
-                                txn.id,
-                                txn.transaction_type === 'revenue' ? 'customer_name' : 'vendor_name',
-                                e.target.value
-                              )
-                            }
-                            placeholder={txn.transaction_type === 'revenue' ? 'Customer name' : 'Vendor name'}
-                            className="w-full px-2 py-1 text-sm border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                            onClick={(e) => e.stopPropagation()}
-                          />
-                        ) : (
-                          <span className="text-sm font-medium text-gray-900">
-                            {txn.customer_name || txn.vendor_name || '—'}
-                          </span>
-                        )}
+                      {/* Description */}
+                      <td className="px-2 py-1">
+                        <InlineCell
+                          value={txn.transaction_type === 'revenue' ? txn.customer_name || '' : txn.vendor_name || ''}
+                          displayValue={
+                            <span className="text-sm font-medium text-gray-900">
+                              {txn.customer_name || txn.vendor_name || <span className="text-gray-400 font-normal">—</span>}
+                            </span>
+                          }
+                          isEditing={isEditingCell(txn.id, 'description')}
+                          onStartEdit={() => startEditing(txn.id, 'description')}
+                          onChange={(v) =>
+                            updateTransaction(
+                              txn.id,
+                              txn.transaction_type === 'revenue' ? 'customer_name' : 'vendor_name',
+                              v
+                            )
+                          }
+                          onFinishEdit={finishEditing}
+                          placeholder={txn.transaction_type === 'revenue' ? 'Customer name' : 'Vendor name'}
+                        />
                       </td>
 
-                      {/* Payment Method */}
-                      <td className="px-4 py-3">
-                        {editingId === txn.id ? (
-                          <select
-                            value={txn.payment_method || ''}
-                            onChange={(e) => updateTransaction(txn.id, 'payment_method', e.target.value)}
-                            className="w-full px-2 py-1 text-sm border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <option value="">Select...</option>
-                            {PAYMENT_METHODS.map((method) => (
-                              <option key={method} value={method}>{method.charAt(0).toUpperCase() + method.slice(1)}</option>
-                            ))}
-                          </select>
-                        ) : (
-                          <span className="inline-flex items-center gap-1.5 text-sm text-gray-600 bg-gray-100 px-2 py-0.5 rounded">
-                            <PaymentIcon method={txn.payment_method || ''} />
-                            {txn.payment_method ? txn.payment_method.charAt(0).toUpperCase() + txn.payment_method.slice(1) : '—'}
-                          </span>
-                        )}
+                      {/* Payment */}
+                      <td className="px-2 py-1">
+                        <InlineCell
+                          value={txn.payment_method || ''}
+                          displayValue={
+                            txn.payment_method ? (
+                              <span className="inline-flex items-center gap-1.5 text-sm text-gray-600 bg-gray-100 px-2 py-0.5 rounded">
+                                <PaymentIcon method={txn.payment_method} />
+                                {txn.payment_method.charAt(0).toUpperCase() + txn.payment_method.slice(1)}
+                              </span>
+                            ) : (
+                              <span className="text-gray-400 text-sm">—</span>
+                            )
+                          }
+                          isEditing={isEditingCell(txn.id, 'payment_method')}
+                          onStartEdit={() => startEditing(txn.id, 'payment_method')}
+                          onChange={(v) => updateTransaction(txn.id, 'payment_method', v)}
+                          onFinishEdit={finishEditing}
+                          type="select"
+                          options={PAYMENT_METHODS}
+                        />
                       </td>
 
                       {/* Amount */}
-                      <td className="px-4 py-3 text-right">
-                        {editingId === txn.id ? (
-                          <input
-                            type="number"
-                            value={txn.amount}
-                            onChange={(e) => updateTransaction(txn.id, 'amount', parseFloat(e.target.value) || 0)}
-                            className="w-32 px-2 py-1 text-sm border rounded-lg text-right focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                            onClick={(e) => e.stopPropagation()}
-                          />
-                        ) : (
-                          <span
-                            className={`text-sm font-semibold tabular-nums ${
-                              txn.transaction_type === 'revenue' ? 'text-green-600' : 'text-red-600'
-                            }`}
-                          >
-                            {txn.transaction_type === 'revenue' ? '+' : '-'}
-                            {formatCurrency(txn.amount)}
-                          </span>
-                        )}
+                      <td className="px-2 py-1">
+                        <InlineCell
+                          value={txn.amount}
+                          displayValue={
+                            <span
+                              className={`text-sm font-semibold tabular-nums ${
+                                txn.transaction_type === 'revenue' ? 'text-green-600' : 'text-red-600'
+                              }`}
+                            >
+                              {txn.transaction_type === 'revenue' ? '+' : '-'}
+                              {formatCurrency(txn.amount)}
+                            </span>
+                          }
+                          isEditing={isEditingCell(txn.id, 'amount')}
+                          onStartEdit={() => startEditing(txn.id, 'amount')}
+                          onChange={(v) => updateTransaction(txn.id, 'amount', parseFloat(v) || 0)}
+                          onFinishEdit={finishEditing}
+                          type="number"
+                          align="right"
+                        />
                       </td>
 
                       {/* Notes */}
-                      <td className="px-4 py-3">
-                        {editingId === txn.id ? (
-                          <input
-                            type="text"
-                            value={txn.notes || ''}
-                            onChange={(e) => updateTransaction(txn.id, 'notes', e.target.value)}
-                            placeholder="Add note..."
-                            className="w-full px-2 py-1 text-sm border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                            onClick={(e) => e.stopPropagation()}
-                          />
-                        ) : (
-                          <span className="text-sm text-gray-500 truncate block max-w-[200px]">
-                            {txn.notes || '—'}
-                          </span>
-                        )}
+                      <td className="px-2 py-1">
+                        <InlineCell
+                          value={txn.notes || ''}
+                          displayValue={
+                            <span className="text-sm text-gray-500 truncate block max-w-[200px]">
+                              {txn.notes || <span className="text-gray-400">—</span>}
+                            </span>
+                          }
+                          isEditing={isEditingCell(txn.id, 'notes')}
+                          onStartEdit={() => startEditing(txn.id, 'notes')}
+                          onChange={(v) => updateTransaction(txn.id, 'notes', v)}
+                          onFinishEdit={finishEditing}
+                          placeholder="Add note..."
+                        />
                       </td>
 
                       {/* Actions */}
-                      <td className="px-4 py-3 text-center">
+                      <td className="px-2 py-1 text-center">
                         <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            deleteTransaction(txn.id);
-                          }}
+                          onClick={() => deleteTransaction(txn.id)}
                           className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg opacity-0 group-hover:opacity-100 transition-all"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -692,43 +778,45 @@ export default function TransactionsPage() {
                     </tr>
                   ))}
 
-                  {/* Add New Row */}
-                  <tr
-                    className="hover:bg-gray-50 cursor-pointer transition-colors"
-                    onClick={addNewRow}
-                  >
-                    <td colSpan={8} className="px-4 py-4">
-                      <div className="flex items-center justify-center gap-2 text-gray-400 hover:text-purple-600 transition-colors">
-                        <Plus className="w-4 h-4" />
-                        <span className="text-sm">Click to add new transaction</span>
-                      </div>
-                    </td>
-                  </tr>
+                  {/* Add Row */}
+                  {transactions.length > 0 && (
+                    <tr
+                      className="hover:bg-gray-50 cursor-pointer transition-colors border-t-2 border-dashed border-gray-200"
+                      onClick={addNewRow}
+                    >
+                      <td colSpan={8} className="px-4 py-4">
+                        <div className="flex items-center justify-center gap-2 text-gray-400 hover:text-purple-600 transition-colors">
+                          <Plus className="w-4 h-4" />
+                          <span className="text-sm">Click to add new transaction</span>
+                        </div>
+                      </td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
-            </div>
-          )}
 
-          {/* Empty state */}
-          {transactions.length === 0 && !loading && (
-            <div className="py-16 text-center">
-              <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Receipt className="w-8 h-8 text-gray-400" />
-              </div>
-              <h3 className="text-lg font-medium text-gray-900 mb-1">No transactions yet</h3>
-              <p className="text-sm text-gray-500 mb-4">Get started by adding your first transaction</p>
-              <button
-                onClick={addNewRow}
-                className="inline-flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg text-sm font-medium hover:bg-purple-700 transition-colors"
-              >
-                <Plus className="w-4 h-4" />
-                Add Transaction
-              </button>
+              {/* Empty state */}
+              {transactions.length === 0 && !loading && (
+                <div className="py-16 text-center">
+                  <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Receipt className="w-8 h-8 text-gray-400" />
+                  </div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-1">No transactions yet</h3>
+                  <p className="text-sm text-gray-500 mb-4">Get started by adding your first transaction</p>
+                  <button
+                    onClick={addNewRow}
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg text-sm font-medium hover:bg-purple-700 transition-colors"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Add Transaction
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </div>
 
-        {/* Footer Stats */}
+        {/* Unsaved changes banner */}
         {transactions.filter((t) => t.isDirty).length > 0 && (
           <div className="mt-4 flex items-center justify-between bg-amber-50 rounded-xl px-4 py-3 border border-amber-200">
             <div className="flex items-center gap-2 text-amber-700">
@@ -748,19 +836,10 @@ export default function TransactionsPage() {
           </div>
         )}
       </div>
-
-      {/* Click outside to close editing */}
-      {editingId && (
-        <div
-          className="fixed inset-0 z-10"
-          onClick={() => setEditingId(null)}
-        />
-      )}
     </div>
   );
 }
 
-// Missing import fix
 function Receipt({ className }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
