@@ -105,52 +105,63 @@ export async function getTransactionsWithCount(
     return { transactions: [], total: 0, totalRevenue: 0, totalExpenses: 0 };
   }
 
-  // Build base query for filtering - returns typed query for FinanceTransaction
-  const applyFilters = <T>(query: T & { gte: Function; lte: Function; eq: Function; or: Function }): T => {
-    let q = query;
-    if (options?.startDate) {
-      q = q.gte('transaction_date', options.startDate);
-    }
-    if (options?.endDate) {
-      q = q.lte('transaction_date', options.endDate);
-    }
-    if (options?.transactionType) {
-      q = q.eq('transaction_type', options.transactionType);
-    }
-    if (options?.serviceType) {
-      q = q.eq('service_type', options.serviceType);
-    }
-    if (options?.expenseCategory) {
-      q = q.eq('expense_category', options.expenseCategory);
-    }
-    if (options?.paymentMethod) {
-      q = q.eq('payment_method', options.paymentMethod);
-    }
-    if (options?.approvalStatus) {
-      q = q.eq('approval_status', options.approvalStatus);
-    }
-    if (options?.search) {
-      q = q.or(
-        `customer_name.ilike.%${options.search}%,vendor_name.ilike.%${options.search}%,notes.ilike.%${options.search}%`
-      );
-    }
-    return q;
-  };
+  // Build filter conditions as an array of filter objects
+  const filters: Array<{ column: string; op: string; value: string }> = [];
+
+  if (options?.startDate) {
+    filters.push({ column: 'transaction_date', op: 'gte', value: options.startDate });
+  }
+  if (options?.endDate) {
+    filters.push({ column: 'transaction_date', op: 'lte', value: options.endDate });
+  }
+  if (options?.transactionType) {
+    filters.push({ column: 'transaction_type', op: 'eq', value: options.transactionType });
+  }
+  if (options?.serviceType) {
+    filters.push({ column: 'service_type', op: 'eq', value: options.serviceType });
+  }
+  if (options?.expenseCategory) {
+    filters.push({ column: 'expense_category', op: 'eq', value: options.expenseCategory });
+  }
+  if (options?.paymentMethod) {
+    filters.push({ column: 'payment_method', op: 'eq', value: options.paymentMethod });
+  }
+  if (options?.approvalStatus) {
+    filters.push({ column: 'approval_status', op: 'eq', value: options.approvalStatus });
+  }
+
+  const searchFilter = options?.search
+    ? `customer_name.ilike.%${options.search}%,vendor_name.ilike.%${options.search}%,notes.ilike.%${options.search}%`
+    : null;
 
   // Get count
-  const countQuery = supabaseAdmin!
+  let countQuery = supabaseAdmin!
     .from('finance_transactions')
     .select('*', { count: 'exact', head: true })
     .eq('branch_id', branchId);
-  const { count } = await applyFilters(countQuery);
 
-  // Get paginated data with proper typing
+  for (const f of filters) {
+    if (f.op === 'gte') countQuery = countQuery.gte(f.column, f.value);
+    else if (f.op === 'lte') countQuery = countQuery.lte(f.column, f.value);
+    else if (f.op === 'eq') countQuery = countQuery.eq(f.column, f.value);
+  }
+  if (searchFilter) countQuery = countQuery.or(searchFilter);
+
+  const { count } = await countQuery;
+
+  // Get paginated data
   let dataQuery = supabaseAdmin!
     .from('finance_transactions')
-    .select<'*', FinanceTransaction>('*')
+    .select('*')
     .eq('branch_id', branchId);
 
-  dataQuery = applyFilters(dataQuery);
+  for (const f of filters) {
+    if (f.op === 'gte') dataQuery = dataQuery.gte(f.column, f.value);
+    else if (f.op === 'lte') dataQuery = dataQuery.lte(f.column, f.value);
+    else if (f.op === 'eq') dataQuery = dataQuery.eq(f.column, f.value);
+  }
+  if (searchFilter) dataQuery = dataQuery.or(searchFilter);
+
   dataQuery = dataQuery
     .order('transaction_date', { ascending: false })
     .order('created_at', { ascending: false });
@@ -172,12 +183,20 @@ export async function getTransactionsWithCount(
     .from('finance_transactions')
     .select('transaction_type, amount')
     .eq('branch_id', branchId);
-  totalsQuery = applyFilters(totalsQuery);
+
+  for (const f of filters) {
+    if (f.op === 'gte') totalsQuery = totalsQuery.gte(f.column, f.value);
+    else if (f.op === 'lte') totalsQuery = totalsQuery.lte(f.column, f.value);
+    else if (f.op === 'eq') totalsQuery = totalsQuery.eq(f.column, f.value);
+  }
+  if (searchFilter) totalsQuery = totalsQuery.or(searchFilter);
+
   const { data: allFiltered } = await totalsQuery;
 
   let totalRevenue = 0;
   let totalExpenses = 0;
-  const filtered = allFiltered as unknown as { transaction_type: string; amount: number }[] | null;
+  interface TotalsRow { transaction_type: string; amount: number }
+  const filtered = allFiltered as TotalsRow[] | null;
   (filtered || []).forEach(t => {
     if (t.transaction_type === 'revenue') {
       totalRevenue += t.amount || 0;
@@ -187,7 +206,7 @@ export async function getTransactionsWithCount(
   });
 
   return {
-    transactions: data || [],
+    transactions: (data || []) as FinanceTransaction[],
     total: count || 0,
     totalRevenue,
     totalExpenses,
