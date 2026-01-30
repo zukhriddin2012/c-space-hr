@@ -105,49 +105,53 @@ export async function getTransactionsWithCount(
     return { transactions: [], total: 0, totalRevenue: 0, totalExpenses: 0 };
   }
 
-  // Build base query for filtering
-  const buildQuery = (selectClause: string, forCount = false) => {
-    let query = supabaseAdmin!
-      .from('finance_transactions')
-      .select(selectClause, forCount ? { count: 'exact', head: true } : undefined)
-      .eq('branch_id', branchId);
-
+  // Build base query for filtering - returns typed query for FinanceTransaction
+  const applyFilters = <T>(query: T & { gte: Function; lte: Function; eq: Function; or: Function }): T => {
+    let q = query;
     if (options?.startDate) {
-      query = query.gte('transaction_date', options.startDate);
+      q = q.gte('transaction_date', options.startDate);
     }
     if (options?.endDate) {
-      query = query.lte('transaction_date', options.endDate);
+      q = q.lte('transaction_date', options.endDate);
     }
     if (options?.transactionType) {
-      query = query.eq('transaction_type', options.transactionType);
+      q = q.eq('transaction_type', options.transactionType);
     }
     if (options?.serviceType) {
-      query = query.eq('service_type', options.serviceType);
+      q = q.eq('service_type', options.serviceType);
     }
     if (options?.expenseCategory) {
-      query = query.eq('expense_category', options.expenseCategory);
+      q = q.eq('expense_category', options.expenseCategory);
     }
     if (options?.paymentMethod) {
-      query = query.eq('payment_method', options.paymentMethod);
+      q = q.eq('payment_method', options.paymentMethod);
     }
     if (options?.approvalStatus) {
-      query = query.eq('approval_status', options.approvalStatus);
+      q = q.eq('approval_status', options.approvalStatus);
     }
     if (options?.search) {
-      // Search in customer_name, vendor_name, notes
-      query = query.or(
+      q = q.or(
         `customer_name.ilike.%${options.search}%,vendor_name.ilike.%${options.search}%,notes.ilike.%${options.search}%`
       );
     }
-
-    return query;
+    return q;
   };
 
   // Get count
-  const { count } = await buildQuery('*', true);
+  const countQuery = supabaseAdmin!
+    .from('finance_transactions')
+    .select('*', { count: 'exact', head: true })
+    .eq('branch_id', branchId);
+  const { count } = await applyFilters(countQuery);
 
-  // Get paginated data
-  let dataQuery = buildQuery('*')
+  // Get paginated data with proper typing
+  let dataQuery = supabaseAdmin!
+    .from('finance_transactions')
+    .select<'*', FinanceTransaction>('*')
+    .eq('branch_id', branchId);
+
+  dataQuery = applyFilters(dataQuery);
+  dataQuery = dataQuery
     .order('transaction_date', { ascending: false })
     .order('created_at', { ascending: false });
 
@@ -164,11 +168,16 @@ export async function getTransactionsWithCount(
   }
 
   // Calculate totals from all filtered data (not just paginated)
-  const { data: allFiltered } = await buildQuery('transaction_type, amount');
+  let totalsQuery = supabaseAdmin!
+    .from('finance_transactions')
+    .select('transaction_type, amount')
+    .eq('branch_id', branchId);
+  totalsQuery = applyFilters(totalsQuery);
+  const { data: allFiltered } = await totalsQuery;
 
   let totalRevenue = 0;
   let totalExpenses = 0;
-  const filtered = allFiltered as { transaction_type: string; amount: number }[] | null;
+  const filtered = allFiltered as unknown as { transaction_type: string; amount: number }[] | null;
   (filtered || []).forEach(t => {
     if (t.transaction_type === 'revenue') {
       totalRevenue += t.amount || 0;
@@ -178,7 +187,7 @@ export async function getTransactionsWithCount(
   });
 
   return {
-    transactions: (data as FinanceTransaction[]) || [],
+    transactions: data || [],
     total: count || 0,
     totalRevenue,
     totalExpenses,
