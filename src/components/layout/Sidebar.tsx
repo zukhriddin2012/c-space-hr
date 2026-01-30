@@ -30,6 +30,9 @@ import {
   Bot,
   GitBranch,
   Upload,
+  DollarSign,
+  TrendingUp,
+  Receipt,
 } from 'lucide-react';
 import type { User, UserRole } from '@/types';
 import { getRoleLabel } from '@/lib/auth';
@@ -154,6 +157,27 @@ const navItems: NavItem[] = [
     icon: MapPin,
     roles: ['general_manager', 'hr'],
   },
+  // Finances group
+  {
+    nameKey: 'finances',
+    href: '/finances',
+    icon: DollarSign,
+    roles: ['general_manager', 'ceo', 'branch_manager', 'reports_manager'],
+    children: [
+      {
+        nameKey: 'financesDashboard',
+        href: '/finances',
+        icon: TrendingUp,
+        roles: ['general_manager', 'ceo', 'branch_manager', 'reports_manager'],
+      },
+      {
+        nameKey: 'financesTransactions',
+        href: '/finances/transactions',
+        icon: Receipt,
+        roles: ['general_manager', 'ceo', 'branch_manager', 'reports_manager'],
+      },
+    ],
+  },
   {
     nameKey: 'reports',
     href: '/reports',
@@ -228,6 +252,9 @@ export default function Sidebar({ user }: SidebarProps) {
       approvals: t.nav.approvals,
       departments: t.nav.departments,
       salaryImport: 'Salary Import',
+      finances: 'Finances',
+      financesDashboard: 'Dashboard',
+      financesTransactions: 'Transactions',
       feedback: t.nav.feedback,
       feedbackInbox: t.nav.feedbackInbox,
       settings: t.nav.settings,

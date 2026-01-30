@@ -859,6 +859,15 @@ export const ROLE_PERMISSIONS: Record<UserRole, string[]> = {
     'create_accounting_requests',
     'view_own_accounting_requests',
   ],
+  reports_manager: [
+    'view_own_profile',
+    'view_own_attendance',
+    'view_own_payslips',
+    'check_in_out',
+    'view_all_finances',
+    'view_reports',
+    'view_analytics',
+  ],
 };
 
 export function hasPermission(role: UserRole, permission: string): boolean {
@@ -876,6 +885,7 @@ export function getRoleLabel(role: UserRole): string {
     accountant: 'Accountant',
     chief_accountant: 'Chief Accountant',
     legal_manager: 'Legal Manager',
+    reports_manager: 'Reports Manager',
   };
   return labels[role];
 }
