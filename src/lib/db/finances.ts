@@ -178,7 +178,7 @@ export async function getTransactionsWithCount(
   });
 
   return {
-    transactions: data || [],
+    transactions: (data as FinanceTransaction[]) || [],
     total: count || 0,
     totalRevenue,
     totalExpenses,
