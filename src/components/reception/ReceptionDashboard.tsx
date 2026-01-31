@@ -249,13 +249,16 @@ export default function ReceptionDashboard() {
                   {[2024, 2025, 2026].map((year) => (
                     <button
                       key={year}
-                      onClick={() => {
+                      type="button"
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={(e) => {
+                        e.stopPropagation();
                         setCustomFrom(`${year}-01-01`);
                         setCustomTo(`${year}-12-31`);
                         setSelectedPeriod('custom');
                         setShowPeriodDropdown(false);
                       }}
-                      className="px-3 py-2 text-sm rounded-lg text-center transition-colors hover:bg-gray-100 text-gray-700"
+                      className="px-3 py-2 text-sm rounded-lg text-center transition-colors hover:bg-purple-100 hover:text-purple-700 text-gray-700 cursor-pointer active:bg-purple-200"
                     >
                       {year}
                     </button>
@@ -275,14 +278,17 @@ export default function ReceptionDashboard() {
                   ].map((q) => (
                     <button
                       key={q.label}
-                      onClick={() => {
+                      type="button"
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={(e) => {
+                        e.stopPropagation();
                         const year = new Date().getFullYear();
                         setCustomFrom(`${year}-${q.start}`);
                         setCustomTo(`${year}-${q.end}`);
                         setSelectedPeriod('custom');
                         setShowPeriodDropdown(false);
                       }}
-                      className="px-2 py-2 text-sm rounded-lg text-center transition-colors hover:bg-gray-100 text-gray-700"
+                      className="px-2 py-2 text-sm rounded-lg text-center transition-colors hover:bg-purple-100 hover:text-purple-700 text-gray-700 cursor-pointer active:bg-purple-200"
                     >
                       {q.label}
                     </button>
@@ -310,14 +316,17 @@ export default function ReceptionDashboard() {
                   ].map((m) => (
                     <button
                       key={m.label}
-                      onClick={() => {
+                      type="button"
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={(e) => {
+                        e.stopPropagation();
                         const year = new Date().getFullYear();
                         setCustomFrom(`${year}-${m.month}-01`);
                         setCustomTo(`${year}-${m.month}-${m.days}`);
                         setSelectedPeriod('custom');
                         setShowPeriodDropdown(false);
                       }}
-                      className="px-2 py-1.5 text-sm rounded-lg text-center transition-colors hover:bg-gray-100 text-gray-700"
+                      className="px-2 py-1.5 text-sm rounded-lg text-center transition-colors hover:bg-purple-100 hover:text-purple-700 text-gray-700 cursor-pointer active:bg-purple-200"
                     >
                       {m.label}
                     </button>
