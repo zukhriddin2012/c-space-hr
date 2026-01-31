@@ -23,58 +23,75 @@ export const GET = withAuth(async (request: NextRequest) => {
     const dateFrom = searchParams.get('dateFrom') || firstOfMonth.toISOString().split('T')[0];
     const dateTo = searchParams.get('dateTo') || today.toISOString().split('T')[0];
 
-    console.log('DEBUG: Date params received - dateFrom:', dateFrom, 'dateTo:', dateTo, 'branchId:', branchId);
+    // Build base filter for transactions
+    const baseFilter = {
+      is_voided: false,
+      dateFrom,
+      dateTo,
+      branchId: branchId && branchId !== 'all' ? branchId : null
+    };
 
-    // Get transactions summary (Income/Paid) - includes debt column
-    // Use select('*') to ensure all columns including newly added 'debt' are returned
-    // IMPORTANT: Supabase defaults to 1000 row limit, we need all rows for accurate totals
-    let transactionsQuery = supabaseAdmin!
+    // Query 1: Get ALL transactions for totals (using separate query to avoid limit)
+    // Supabase JS client has 1000 row default limit, so we fetch in batches or use RPC
+    let allTransactionsQuery = supabaseAdmin!
       .from('transactions')
-      .select('*', { count: 'exact' })
+      .select('amount, debt, service_type_id', { count: 'exact' })
       .eq('is_voided', false)
       .gte('transaction_date', dateFrom)
-      .lte('transaction_date', dateTo)
-      .limit(10000);
+      .lte('transaction_date', dateTo);
 
-    if (branchId && branchId !== 'all') {
-      transactionsQuery = transactionsQuery.eq('branch_id', branchId);
+    if (baseFilter.branchId) {
+      allTransactionsQuery = allTransactionsQuery.eq('branch_id', baseFilter.branchId);
     }
 
-    const { data: transactions, count: transactionCount } = await transactionsQuery;
+    // Fetch all transactions in batches to overcome 1000 row limit
+    const allTransactions: Array<{ amount: number; debt: number; service_type_id: string }> = [];
+    let offset = 0;
+    const batchSize = 1000;
+    let hasMore = true;
+    let transactionCount = 0;
 
-    // Type assertion to handle debt column (added after types were generated)
-    type TransactionWithDebt = { amount: number; debt?: number; service_type_id: string; payment_method_id: string; transaction_number?: string };
+    while (hasMore) {
+      let batchQuery = supabaseAdmin!
+        .from('transactions')
+        .select('amount, debt, service_type_id', { count: 'exact' })
+        .eq('is_voided', false)
+        .gte('transaction_date', dateFrom)
+        .lte('transaction_date', dateTo)
+        .range(offset, offset + batchSize - 1);
 
-    // DEBUG: Log sample transactions to see if debt column is being returned
-    const sampleWithDebt = (transactions || [])
-      .filter(t => {
-        const raw = t as Record<string, unknown>;
-        return raw.debt && Number(raw.debt) > 0;
-      })
-      .slice(0, 5)
-      .map(t => {
-        const raw = t as Record<string, unknown>;
-        return {
-          transaction_number: raw.transaction_number,
-          amount: raw.amount,
-          debt: raw.debt,
-          keys: Object.keys(raw)
-        };
-      });
-    console.log('DEBUG: Total transactions:', transactions?.length);
-    console.log('DEBUG: Sample transactions with debt > 0:', JSON.stringify(sampleWithDebt, null, 2));
+      if (baseFilter.branchId) {
+        batchQuery = batchQuery.eq('branch_id', baseFilter.branchId);
+      }
 
-    // Calculate totals - Paid is the amount, Debt is unpaid portion
-    const totalPaid = (transactions || []).reduce((sum, t) => {
-      const txn = t as unknown as TransactionWithDebt;
-      return sum + Number(txn.amount || 0);
-    }, 0);
-    const totalDebt = (transactions || []).reduce((sum, t) => {
-      const raw = t as Record<string, unknown>;
-      return sum + Number(raw.debt || 0);
-    }, 0);
+      const { data: batch, count } = await batchQuery;
 
-    console.log('DEBUG: Calculated totalDebt:', totalDebt);
+      if (count !== null && transactionCount === 0) {
+        transactionCount = count;
+      }
+
+      if (batch && batch.length > 0) {
+        batch.forEach(t => {
+          const raw = t as Record<string, unknown>;
+          allTransactions.push({
+            amount: Number(raw.amount || 0),
+            debt: Number(raw.debt || 0),
+            service_type_id: String(raw.service_type_id || '')
+          });
+        });
+        offset += batchSize;
+        hasMore = batch.length === batchSize;
+      } else {
+        hasMore = false;
+      }
+    }
+
+    // Calculate totals from all transactions
+    const totalPaid = allTransactions.reduce((sum, t) => sum + t.amount, 0);
+    const totalDebt = allTransactions.reduce((sum, t) => sum + t.debt, 0);
+
+    // For service type breakdown
+    const transactions = allTransactions;
 
     // Get expenses summary with expense type info for categorization
     let expensesQuery = supabaseAdmin!
@@ -160,14 +177,14 @@ export const GET = withAuth(async (request: NextRequest) => {
 
     // Get breakdown by service type (for income details)
     const serviceTypeBreakdown: Record<string, { count: number; amount: number }> = {};
-    (transactions || []).forEach(t => {
-      const txn = t as unknown as TransactionWithDebt;
-      const key = txn.service_type_id;
+    transactions.forEach(t => {
+      const key = t.service_type_id;
+      if (!key) return;
       if (!serviceTypeBreakdown[key]) {
         serviceTypeBreakdown[key] = { count: 0, amount: 0 };
       }
       serviceTypeBreakdown[key].count++;
-      serviceTypeBreakdown[key].amount += Number(txn.amount || 0);
+      serviceTypeBreakdown[key].amount += t.amount;
     });
 
     // Get service type names
@@ -266,23 +283,17 @@ export const GET = withAuth(async (request: NextRequest) => {
     ].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).slice(0, 10);
 
     // DEBUG: Count transactions with debt for debugging
-    const debugDebtCount = (transactions || []).filter(t => {
-      const raw = t as Record<string, unknown>;
-      return Number(raw.debt || 0) > 0;
-    }).length;
+    const debugDebtCount = transactions.filter(t => t.debt > 0).length;
 
     return NextResponse.json({
       dateRange: { from: dateFrom, to: dateTo },
       // DEBUG info - remove after fixing
       _debug: {
-        totalTransactions: transactions?.length || 0,
+        totalTransactions: transactions.length,
         transactionsWithDebt: debugDebtCount,
         calculatedDebt: totalDebt,
         branchId: branchId || 'not set',
-        sampleDebt: (transactions || []).slice(0, 3).map(t => {
-          const raw = t as Record<string, unknown>;
-          return { tn: raw.transaction_number, debt: raw.debt };
-        })
+        batchesFetched: Math.ceil(transactions.length / 1000)
       },
       // Income Statement format
       income: {
