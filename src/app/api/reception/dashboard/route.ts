@@ -195,6 +195,7 @@ export const GET = withAuth(async (request: NextRequest) => {
       expenseTypeBreakdown[key].amount += e.amount;
     });
 
+    // Top 5 expense categories - EXCLUDE CapEx since it's shown separately
     const topExpenseCategories = Object.entries(expenseTypeBreakdown)
       .map(([id, data]) => ({
         id,
@@ -204,6 +205,7 @@ export const GET = withAuth(async (request: NextRequest) => {
         count: data.count,
         amount: data.amount,
       }))
+      .filter(cat => !capexCodes.some(c => cat.code.toLowerCase().includes(c)))
       .sort((a, b) => b.amount - a.amount)
       .slice(0, 5);
 
