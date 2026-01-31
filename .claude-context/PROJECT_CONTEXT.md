@@ -1,7 +1,7 @@
 # C-Space HR System - Project Context
 
 > **Last Updated:** 2026-01-31
-> **Updated By:** Claude (Reception Mode Phase 3 - Full Screen UI)
+> **Updated By:** Claude (Reception Mode Phase 4 - Branch Context)
 
 ## Quick Start for New Sessions
 
@@ -374,6 +374,24 @@ const { data, error } = await supabaseAdmin
 ---
 
 ## Recent Changes Log
+
+### 2026-01-31 (Reception Mode Phase 4 - Branch Context)
+- **Multi-branch Access Control**: Branch-scoped data and permissions
+  - Database migration for `reception_branch_access` table with RLS
+  - CEO/GM see all branches, BMs see their branch, receptionists see granted
+- **API Endpoints**:
+  - `GET /api/reception/branches` - User's accessible branches
+  - `GET/POST /api/reception/admin/branch-access` - Grant/list access
+  - `DELETE /api/reception/admin/branch-access/[userId]/[branchId]` - Revoke
+- **Context Updates** (ReceptionModeContext):
+  - Branch state: selectedBranchId, accessibleBranches
+  - Branch switch confirmation workflow, session persistence
+- **UI Components**:
+  - `BranchSelector.tsx` - Dropdown or label based on access
+  - `BranchSwitchModal.tsx` - Switch confirmation dialog
+  - Header turns red when "All Branches" selected
+  - Settings tab for managing Branch Access grants
+- **Data Filtering**: Dashboard, Transactions, Expenses all filter by branch
 
 ### 2026-01-31 (Reception Mode Phase 3 - Full Screen UI)
 - **Full-screen Reception Mode**: Dedicated interface for reception staff
