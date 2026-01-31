@@ -87,8 +87,10 @@ export const GET = withAuth(async (request: NextRequest) => {
     }
 
     // Calculate totals from all transactions
-    const totalPaid = allTransactions.reduce((sum, t) => sum + t.amount, 0);
+    // Paid = Amount - Debt (net collected, excluding outstanding debt)
+    const totalAmount = allTransactions.reduce((sum, t) => sum + t.amount, 0);
     const totalDebt = allTransactions.reduce((sum, t) => sum + t.debt, 0);
+    const totalPaid = totalAmount - totalDebt;
 
     // For service type breakdown
     const transactions = allTransactions;
