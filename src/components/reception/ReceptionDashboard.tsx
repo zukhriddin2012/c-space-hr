@@ -105,17 +105,8 @@ function getDateRange(period: PeriodType, customFrom?: string, customTo?: string
   }
 }
 
-function formatCompactNumber(num: number): string {
-  if (num >= 1_000_000_000) {
-    return (num / 1_000_000_000).toFixed(1).replace(/\.0$/, '') + 'B';
-  }
-  if (num >= 1_000_000) {
-    return (num / 1_000_000).toFixed(1).replace(/\.0$/, '') + 'M';
-  }
-  if (num >= 1_000) {
-    return (num / 1_000).toFixed(0) + 'K';
-  }
-  return num.toLocaleString();
+function formatFullNumber(num: number): string {
+  return Math.round(num).toLocaleString('en-US');
 }
 
 export default function ReceptionDashboard() {
@@ -289,13 +280,13 @@ export default function ReceptionDashboard() {
             <Card className="border-2 border-blue-200 bg-white">
               <div className="p-2">
                 <p className="text-sm text-blue-600 font-medium">Paid</p>
-                <p className="text-3xl font-bold text-blue-700">{formatCompactNumber(stats?.income.paid || 0)}</p>
+                <p className="text-3xl font-bold text-blue-700">{formatFullNumber(stats?.income.paid || 0)}</p>
               </div>
             </Card>
             <Card className="border-2 border-blue-200 bg-white">
               <div className="p-2">
                 <p className="text-sm text-red-600 font-medium">Debt</p>
-                <p className="text-3xl font-bold text-red-600">{formatCompactNumber(stats?.income.debt || 0)}</p>
+                <p className="text-3xl font-bold text-red-600">{formatFullNumber(stats?.income.debt || 0)}</p>
               </div>
             </Card>
           </div>
@@ -305,13 +296,13 @@ export default function ReceptionDashboard() {
             <Card className="border-2 border-blue-200 bg-white">
               <div className="p-2">
                 <p className="text-sm text-blue-600 font-medium">OpEx</p>
-                <p className="text-3xl font-bold text-blue-700">{formatCompactNumber(stats?.expenses.opex || 0)}</p>
+                <p className="text-3xl font-bold text-blue-700">{formatFullNumber(stats?.expenses.opex || 0)}</p>
               </div>
             </Card>
             <Card className="border-2 border-blue-200 bg-white">
               <div className="p-2">
                 <p className="text-sm text-blue-600 font-medium">CapEx</p>
-                <p className="text-3xl font-bold text-blue-700">{formatCompactNumber(stats?.expenses.capex || 0)}</p>
+                <p className="text-3xl font-bold text-blue-700">{formatFullNumber(stats?.expenses.capex || 0)}</p>
               </div>
             </Card>
           </div>
@@ -325,7 +316,7 @@ export default function ReceptionDashboard() {
                   {stats.expenses.topCategories.map((cat) => (
                     <div key={cat.id} className="text-center">
                       <p className="text-sm text-red-600 font-medium">{cat.name}</p>
-                      <p className="text-xl font-bold text-red-700">{formatCompactNumber(cat.amount)}</p>
+                      <p className="text-xl font-bold text-red-700">{formatFullNumber(cat.amount)}</p>
                     </div>
                   ))}
                 </div>
@@ -341,7 +332,7 @@ export default function ReceptionDashboard() {
               <div className="p-2">
                 <p className="text-sm text-green-600 font-medium">Operating Profit</p>
                 <p className={`text-3xl font-bold ${(stats?.profit.operating || 0) >= 0 ? 'text-green-700' : 'text-red-600'}`}>
-                  {formatCompactNumber(stats?.profit.operating || 0)}
+                  {formatFullNumber(stats?.profit.operating || 0)}
                 </p>
               </div>
             </Card>
@@ -349,7 +340,7 @@ export default function ReceptionDashboard() {
               <div className="p-2">
                 <p className="text-sm text-green-600 font-medium">Profit</p>
                 <p className={`text-3xl font-bold ${(stats?.profit.net || 0) >= 0 ? 'text-green-700' : 'text-red-600'}`}>
-                  {formatCompactNumber(stats?.profit.net || 0)}
+                  {formatFullNumber(stats?.profit.net || 0)}
                 </p>
               </div>
             </Card>
