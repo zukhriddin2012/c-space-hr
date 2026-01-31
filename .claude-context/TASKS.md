@@ -35,6 +35,9 @@
 | T020 | Fix "No branch assigned" in Reception Mode | 2026-01-31 | Main |
 | T021 | Labzak Historical Data Import (2024-2025) | 2026-01-31 | Main |
 | T022 | Clients Table for Customer Management | 2026-01-31 | Main |
+| T023 | Fix Supabase 1000 Row Limit (Batch Fetching) | 2026-01-31 | Main |
+| T024 | Reception Dashboard Date Picker Redesign | 2026-01-31 | Main |
+| T025 | Reception Mode Persistence on Refresh | 2026-01-31 | Main |
 
 ### 🟡 In Progress
 

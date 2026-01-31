@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, useRef, ReactNode } from 'react';
 import type { BranchOption } from '@/modules/reception/types';
 
 interface BranchData {
@@ -39,10 +39,34 @@ interface ReceptionModeContextType {
 const ReceptionModeContext = createContext<ReceptionModeContextType | undefined>(undefined);
 
 const STORAGE_KEY = 'reception_selected_branch';
+const MODE_STORAGE_KEY = 'reception_mode_active';
 
 export function ReceptionModeProvider({ children }: { children: ReactNode }) {
-  // Mode state
-  const [isReceptionMode, setIsReceptionMode] = useState(false);
+  // Mode state - starts false, then restores from storage after mount
+  const [isReceptionMode, setIsReceptionModeState] = useState(false);
+  const isInitialMount = useRef(true);
+
+  // Restore mode from sessionStorage after mount (avoids hydration mismatch)
+  useEffect(() => {
+    const stored = sessionStorage.getItem(MODE_STORAGE_KEY);
+    console.log('[ReceptionMode] Restoring from storage:', stored);
+    if (stored === 'true') {
+      setIsReceptionModeState(true);
+    }
+    // Mark initial mount complete after a tick to ensure state is set
+    setTimeout(() => {
+      isInitialMount.current = false;
+    }, 0);
+  }, []);
+
+  // Wrapper to persist mode changes
+  const setIsReceptionMode = useCallback((value: boolean) => {
+    setIsReceptionModeState(value);
+    if (!isInitialMount.current) {
+      console.log('[ReceptionMode] Persisting to storage:', value);
+      sessionStorage.setItem(MODE_STORAGE_KEY, value ? 'true' : 'false');
+    }
+  }, []);
 
   // Branch state
   const [branchData, setBranchData] = useState<BranchData>({
@@ -99,6 +123,7 @@ export function ReceptionModeProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+
   // Fetch branches when entering reception mode
   useEffect(() => {
     if (isReceptionMode) {
@@ -106,13 +131,14 @@ export function ReceptionModeProvider({ children }: { children: ReactNode }) {
     }
   }, [isReceptionMode, fetchBranches]);
 
-  const toggleReceptionMode = () => {
-    setIsReceptionMode((prev) => !prev);
-  };
+  const toggleReceptionMode = useCallback(() => {
+    const newValue = !isReceptionMode;
+    setIsReceptionMode(newValue);
+  }, [isReceptionMode, setIsReceptionMode]);
 
-  const setReceptionMode = (value: boolean) => {
+  const setReceptionMode = useCallback((value: boolean) => {
     setIsReceptionMode(value);
-  };
+  }, [setIsReceptionMode]);
 
   // Get selected branch object
   const selectedBranch = branchData.branches.find(b => b.id === selectedBranchId) || null;

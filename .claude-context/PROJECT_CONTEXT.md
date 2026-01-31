@@ -1,7 +1,7 @@
 # C-Space HR System - Project Context
 
 > **Last Updated:** 2026-01-31
-> **Updated By:** Claude (Clients Table + Historical Import)
+> **Updated By:** Claude (Dashboard Batch Fetching + Date Picker)
 
 ## Quick Start for New Sessions
 
@@ -375,6 +375,26 @@ const { data, error } = await supabaseAdmin
 
 ## Recent Changes Log
 
+### 2026-01-31 (Dashboard Batch Fetching + Date Picker)
+- **Fixed Supabase 1000 Row Limit Bug**: Dashboard was showing incorrect totals
+  - Root cause: Supabase JS client defaults to 1000 rows per query
+  - Problem: Database had 2,321 transactions but API only summed first 1,000
+  - Debt showed 3.6M UZS instead of correct 404M UZS (only 2 debt records in first 1000)
+  - Fix: Implemented batch fetching with `.range(offset, offset + batchSize - 1)`
+  - Applied same fix for expenses (1,914 records)
+  - File: `src/app/api/reception/dashboard/route.ts`
+- **Fixed Calculation Formulas**: Aligned with old dashboard
+  - Paid = Amount - Debt (not just Amount)
+  - Operating Profit = Amount - OpEx (not Paid - OpEx)
+  - Final result: 11/11 metrics match between old and new dashboards
+- **Redesigned Date Picker**: Year-first logical selection
+  - Added `pickerYear` state for year navigation
+  - Year selector with arrows: `← 2025 →` and "Full Year" button
+  - Quarter/Month buttons now use selected year (e.g., "Q1 2025")
+  - Fixed click-outside detection with `dropdownRef`
+  - Fixed button event handling (stopPropagation, preventDefault)
+  - File: `src/components/reception/ReceptionDashboard.tsx`
+
 ### 2026-01-31 (Clients Table + Historical Import)
 - **Clients Database**: New table for customer management
   - Migration: `supabase/migrations/20260131_a_clients_table.sql`
@@ -393,6 +413,13 @@ const { data, error } = await supabaseAdmin
 - **Migration Order**:
   1. `20260131_a_clients_table.sql` - Create clients table, seed data
   2. `20260131_b_labzak_historical_import.sql` - Import with client_id links
+
+### 2026-01-31 (Reception Mode Persistence)
+- **Fixed Reception Mode exiting on page refresh**: Mode now persists across refreshes
+  - Added `sessionStorage` persistence for reception mode state
+  - Used `useRef` to track initial mount and avoid overwriting stored state
+  - State restores from storage on mount, persists on user-triggered changes
+  - Files modified: `src/contexts/ReceptionModeContext.tsx`
 
 ### 2026-01-31 (Reception Mode Branch Fix)
 - **Fixed "No branch assigned" bug**: Branch selector was showing no branches
