@@ -7,6 +7,12 @@ import type { BranchOption } from '@/modules/reception/types';
 // Returns the list of branches the current user can access in Reception Mode
 export const GET = withAuth(async (request, { user }) => {
   try {
+    // Check if Supabase is configured
+    if (!supabaseAdmin) {
+      console.error('[Branches API] Supabase admin client not configured');
+      return NextResponse.json({ error: 'Database not configured' }, { status: 500 });
+    }
+
     console.log('[Branches API] User:', { id: user.id, role: user.role, email: user.email });
 
     // Roles that can see all branches
@@ -19,7 +25,7 @@ export const GET = withAuth(async (request, { user }) => {
 
     // Try by UUID ID first (if it looks like a UUID)
     if (user.id && user.id.includes('-')) {
-      const { data: empById } = await supabaseAdmin!
+      const { data: empById } = await supabaseAdmin
         .from('employees')
         .select('id, branch_id')
         .eq('id', user.id)
@@ -33,7 +39,7 @@ export const GET = withAuth(async (request, { user }) => {
 
     // Try by email
     if (!employee && user.email) {
-      const { data: empByEmail } = await supabaseAdmin!
+      const { data: empByEmail } = await supabaseAdmin
         .from('employees')
         .select('id, branch_id')
         .eq('email', user.email)
@@ -48,7 +54,7 @@ export const GET = withAuth(async (request, { user }) => {
     // Try by employee_id (e.g., 'EMP018' from '18')
     if (!employee && user.id && !user.id.includes('-')) {
       const empIdFormatted = `EMP${user.id.padStart(3, '0')}`;
-      const { data: empByEmpId } = await supabaseAdmin!
+      const { data: empByEmpId } = await supabaseAdmin
         .from('employees')
         .select('id, branch_id')
         .eq('employee_id', empIdFormatted)
@@ -62,7 +68,7 @@ export const GET = withAuth(async (request, { user }) => {
 
     // Try by name as last resort
     if (!employee && user.name) {
-      const { data: empByName } = await supabaseAdmin!
+      const { data: empByName } = await supabaseAdmin
         .from('employees')
         .select('id, branch_id')
         .eq('full_name', user.name)
@@ -83,9 +89,9 @@ export const GET = withAuth(async (request, { user }) => {
     console.log('[Branches API] Assigned branch:', assignedBranchId);
 
     // Get all branches
-    const { data: allBranches, error: branchError } = await supabaseAdmin!
+    const { data: allBranches, error: branchError } = await supabaseAdmin
       .from('branches')
-      .select('id, name, code')
+      .select('id, name')
       .order('name');
 
     if (branchError) {
@@ -94,7 +100,7 @@ export const GET = withAuth(async (request, { user }) => {
     }
 
     // Get additional branch access grants for this user
-    const { data: accessGrants, error: accessError } = await supabaseAdmin!
+    const { data: accessGrants, error: accessError } = await supabaseAdmin
       .from('reception_branch_access')
       .select('branch_id')
       .eq('user_id', employeeId);
@@ -126,7 +132,6 @@ export const GET = withAuth(async (request, { user }) => {
         branches.push({
           id: branch.id,
           name: branch.name,
-          code: branch.code,
           isAllBranches: false,
           isAssigned: branch.id === assignedBranchId,
           isGranted: grantedBranchIds.has(branch.id),
@@ -142,7 +147,6 @@ export const GET = withAuth(async (request, { user }) => {
           branches.push({
             id: branch.id,
             name: branch.name,
-            code: branch.code,
             isAllBranches: false,
             isAssigned,
             isGranted,
