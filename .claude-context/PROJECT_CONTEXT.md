@@ -1,7 +1,7 @@
 # C-Space HR System - Project Context
 
 > **Last Updated:** 2026-01-31
-> **Updated By:** Claude (Labzak Historical Data Import)
+> **Updated By:** Claude (Clients Table + Historical Import)
 
 ## Quick Start for New Sessions
 
@@ -375,15 +375,24 @@ const { data, error } = await supabaseAdmin
 
 ## Recent Changes Log
 
-### 2026-01-31 (Labzak Historical Data Import)
+### 2026-01-31 (Clients Table + Historical Import)
+- **Clients Database**: New table for customer management
+  - Migration: `supabase/migrations/20260131_a_clients_table.sql`
+  - **668 unique clients** (328 companies, 340 individuals)
+  - Includes industry metadata (IT, Finance, Healthcare, etc.)
+  - Linked to branch_id for multi-branch support
+  - Unique constraint on (name_normalized, branch_id)
+  - Added client_id FK to transactions table
 - **Historical Data Migration**: Import 2024-2025 data from "All payments - LABZAK" spreadsheet
-  - Migration: `supabase/migrations/20260131_labzak_historical_import.sql`
+  - Migration: `supabase/migrations/20260131_b_labzak_historical_import.sql`
   - **Revenue (Transactions)**: 2,231 records, 9.1 billion UZS total
   - **Costs (Expenses)**: 1,913 records, 3.8 billion UZS total
   - Added missing service types: E-Ijara, Virtual Office, 100 Hour
-  - Uses staging tables for efficient bulk import
+  - Transactions linked to clients via client_id FK
   - All data mapped to 'labzak' branch
-- **To run migration**: Execute SQL in Supabase Dashboard or via CLI
+- **Migration Order**:
+  1. `20260131_a_clients_table.sql` - Create clients table, seed data
+  2. `20260131_b_labzak_historical_import.sql` - Import with client_id links
 
 ### 2026-01-31 (Reception Mode Branch Fix)
 - **Fixed "No branch assigned" bug**: Branch selector was showing no branches

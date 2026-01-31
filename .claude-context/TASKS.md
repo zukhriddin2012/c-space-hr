@@ -34,6 +34,7 @@
 | T019 | Reception Mode Phase 4 - Branch Context | 2026-01-31 | Main |
 | T020 | Fix "No branch assigned" in Reception Mode | 2026-01-31 | Main |
 | T021 | Labzak Historical Data Import (2024-2025) | 2026-01-31 | Main |
+| T022 | Clients Table for Customer Management | 2026-01-31 | Main |
 
 ### 🟡 In Progress
 
