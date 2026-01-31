@@ -14,22 +14,26 @@ export const GET = withAuth(async (request, { user }) => {
     const canSeeAllButNoTotal = ['hr'].includes(user.role);
     console.log('[Branches API] Permissions:', { canSeeAllBranches, canSeeAllButNoTotal });
 
-    // Get user's assigned branch - try by ID first, then by email as fallback
+    // Get user's assigned branch - try multiple lookup strategies
     let employee: { id: string; branch_id: string | null } | null = null;
 
-    // Try by ID first
-    const { data: empById, error: empByIdError } = await supabaseAdmin!
-      .from('employees')
-      .select('id, branch_id')
-      .eq('id', user.id)
-      .maybeSingle();
+    // Try by UUID ID first (if it looks like a UUID)
+    if (user.id && user.id.includes('-')) {
+      const { data: empById } = await supabaseAdmin!
+        .from('employees')
+        .select('id, branch_id')
+        .eq('id', user.id)
+        .maybeSingle();
 
-    if (empById) {
-      employee = empById;
-      console.log('[Branches API] Found employee by ID:', employee.id);
-    } else if (user.email) {
-      // Fallback to email lookup
-      const { data: empByEmail, error: empByEmailError } = await supabaseAdmin!
+      if (empById) {
+        employee = empById;
+        console.log('[Branches API] Found employee by UUID:', employee.id);
+      }
+    }
+
+    // Try by email
+    if (!employee && user.email) {
+      const { data: empByEmail } = await supabaseAdmin!
         .from('employees')
         .select('id, branch_id')
         .eq('email', user.email)
@@ -38,9 +42,40 @@ export const GET = withAuth(async (request, { user }) => {
       if (empByEmail) {
         employee = empByEmail;
         console.log('[Branches API] Found employee by email:', employee.id);
-      } else {
-        console.log('[Branches API] No employee found for:', { id: user.id, email: user.email });
       }
+    }
+
+    // Try by employee_id (e.g., 'EMP018' from '18')
+    if (!employee && user.id && !user.id.includes('-')) {
+      const empIdFormatted = `EMP${user.id.padStart(3, '0')}`;
+      const { data: empByEmpId } = await supabaseAdmin!
+        .from('employees')
+        .select('id, branch_id')
+        .eq('employee_id', empIdFormatted)
+        .maybeSingle();
+
+      if (empByEmpId) {
+        employee = empByEmpId;
+        console.log('[Branches API] Found employee by employee_id:', empIdFormatted);
+      }
+    }
+
+    // Try by name as last resort
+    if (!employee && user.name) {
+      const { data: empByName } = await supabaseAdmin!
+        .from('employees')
+        .select('id, branch_id')
+        .eq('full_name', user.name)
+        .maybeSingle();
+
+      if (empByName) {
+        employee = empByName;
+        console.log('[Branches API] Found employee by name:', user.name);
+      }
+    }
+
+    if (!employee) {
+      console.log('[Branches API] No employee found for:', { id: user.id, email: user.email, name: user.name });
     }
 
     const assignedBranchId = employee?.branch_id || null;
