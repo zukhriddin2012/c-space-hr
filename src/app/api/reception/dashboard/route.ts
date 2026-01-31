@@ -24,9 +24,10 @@ export const GET = withAuth(async (request: NextRequest) => {
     const dateTo = searchParams.get('dateTo') || today.toISOString().split('T')[0];
 
     // Get transactions summary (Income/Paid) - includes debt column
+    // Use select('*') to ensure all columns including newly added 'debt' are returned
     let transactionsQuery = supabaseAdmin!
       .from('transactions')
-      .select('amount, debt, service_type_id, payment_method_id', { count: 'exact' })
+      .select('*', { count: 'exact' })
       .eq('is_voided', false)
       .gte('transaction_date', dateFrom)
       .lte('transaction_date', dateTo);
@@ -37,9 +38,18 @@ export const GET = withAuth(async (request: NextRequest) => {
 
     const { data: transactions, count: transactionCount } = await transactionsQuery;
 
+    // Type assertion to handle debt column (added after types were generated)
+    type TransactionWithDebt = { amount: number; debt?: number; service_type_id: string; payment_method_id: string };
+
     // Calculate totals - Paid is the amount, Debt is unpaid portion
-    const totalPaid = (transactions || []).reduce((sum, t) => sum + Number(t.amount), 0);
-    const totalDebt = (transactions || []).reduce((sum, t) => sum + Number(t.debt || 0), 0);
+    const totalPaid = (transactions || []).reduce((sum, t) => {
+      const txn = t as unknown as TransactionWithDebt;
+      return sum + Number(txn.amount || 0);
+    }, 0);
+    const totalDebt = (transactions || []).reduce((sum, t) => {
+      const txn = t as unknown as TransactionWithDebt;
+      return sum + Number(txn.debt || 0);
+    }, 0);
 
     // Get expenses summary with expense type info for categorization
     let expensesQuery = supabaseAdmin!
@@ -126,12 +136,13 @@ export const GET = withAuth(async (request: NextRequest) => {
     // Get breakdown by service type (for income details)
     const serviceTypeBreakdown: Record<string, { count: number; amount: number }> = {};
     (transactions || []).forEach(t => {
-      const key = t.service_type_id;
+      const txn = t as unknown as TransactionWithDebt;
+      const key = txn.service_type_id;
       if (!serviceTypeBreakdown[key]) {
         serviceTypeBreakdown[key] = { count: 0, amount: 0 };
       }
       serviceTypeBreakdown[key].count++;
-      serviceTypeBreakdown[key].amount += Number(t.amount);
+      serviceTypeBreakdown[key].amount += Number(txn.amount || 0);
     });
 
     // Get service type names
