@@ -63,8 +63,11 @@ export function ReceptionModeProvider({ children }: { children: ReactNode }) {
     setIsLoadingBranches(true);
     try {
       const response = await fetch('/api/reception/branches');
+      console.log('[ReceptionMode] Fetching branches, status:', response.status);
+
       if (response.ok) {
         const data: BranchData = await response.json();
+        console.log('[ReceptionMode] Branches received:', data);
         setBranchData(data);
 
         // Set initial branch from storage or default
@@ -73,16 +76,24 @@ export function ReceptionModeProvider({ children }: { children: ReactNode }) {
 
         if (validBranch) {
           setSelectedBranchId(storedBranchId);
+          console.log('[ReceptionMode] Using stored branch:', storedBranchId);
         } else if (data.defaultBranchId) {
           setSelectedBranchId(data.defaultBranchId);
+          console.log('[ReceptionMode] Using default branch:', data.defaultBranchId);
         } else if (data.branches.length > 0) {
           // Fall back to first non-"all" branch
           const firstBranch = data.branches.find(b => !b.isAllBranches) || data.branches[0];
           setSelectedBranchId(firstBranch.id);
+          console.log('[ReceptionMode] Using first branch:', firstBranch.id);
+        } else {
+          console.log('[ReceptionMode] No branches available');
         }
+      } else {
+        const errorData = await response.json().catch(() => ({}));
+        console.error('[ReceptionMode] Failed to fetch branches:', response.status, errorData);
       }
     } catch (error) {
-      console.error('Failed to fetch branches:', error);
+      console.error('[ReceptionMode] Error fetching branches:', error);
     } finally {
       setIsLoadingBranches(false);
     }

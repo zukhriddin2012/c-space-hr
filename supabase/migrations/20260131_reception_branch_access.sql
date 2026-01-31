@@ -14,7 +14,7 @@
 CREATE TABLE IF NOT EXISTS reception_branch_access (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   user_id UUID NOT NULL REFERENCES employees(id) ON DELETE CASCADE,
-  branch_id UUID NOT NULL REFERENCES branches(id) ON DELETE CASCADE,
+  branch_id TEXT NOT NULL REFERENCES branches(id) ON DELETE CASCADE,
   granted_by UUID NOT NULL REFERENCES employees(id),
   granted_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   notes TEXT,  -- Optional notes about why access was granted
@@ -54,7 +54,7 @@ CREATE POLICY "Admins can view all branch access"
     EXISTS (
       SELECT 1 FROM employees
       WHERE id::text = auth.uid()::text
-      AND role IN ('hr', 'general_manager', 'ceo')
+      AND system_role IN ('hr', 'general_manager', 'ceo')
     )
   );
 
@@ -65,7 +65,7 @@ CREATE POLICY "Branch managers can view branch access"
     EXISTS (
       SELECT 1 FROM employees
       WHERE id::text = auth.uid()::text
-      AND role = 'branch_manager'
+      AND system_role = 'branch_manager'
       AND branch_id = reception_branch_access.branch_id
     )
   );
@@ -77,7 +77,7 @@ CREATE POLICY "Admins can grant branch access"
     EXISTS (
       SELECT 1 FROM employees
       WHERE id::text = auth.uid()::text
-      AND role IN ('hr', 'general_manager', 'ceo')
+      AND system_role IN ('hr', 'general_manager', 'ceo')
     )
   );
 
@@ -88,7 +88,7 @@ CREATE POLICY "Branch managers can grant access to their branch"
     EXISTS (
       SELECT 1 FROM employees
       WHERE id::text = auth.uid()::text
-      AND role = 'branch_manager'
+      AND system_role = 'branch_manager'
       AND branch_id = reception_branch_access.branch_id
     )
   );
@@ -100,7 +100,7 @@ CREATE POLICY "Admins can revoke branch access"
     EXISTS (
       SELECT 1 FROM employees
       WHERE id::text = auth.uid()::text
-      AND role IN ('hr', 'general_manager', 'ceo')
+      AND system_role IN ('hr', 'general_manager', 'ceo')
     )
   );
 
@@ -111,7 +111,7 @@ CREATE POLICY "Branch managers can revoke access to their branch"
     EXISTS (
       SELECT 1 FROM employees
       WHERE id::text = auth.uid()::text
-      AND role = 'branch_manager'
+      AND system_role = 'branch_manager'
       AND branch_id = reception_branch_access.branch_id
     )
   );

@@ -7,23 +7,45 @@ import type { BranchOption } from '@/modules/reception/types';
 // Returns the list of branches the current user can access in Reception Mode
 export const GET = withAuth(async (request, { user }) => {
   try {
+    console.log('[Branches API] User:', { id: user.id, role: user.role, email: user.email });
+
     // Roles that can see all branches
     const canSeeAllBranches = ['ceo', 'general_manager'].includes(user.role);
     const canSeeAllButNoTotal = ['hr'].includes(user.role);
+    console.log('[Branches API] Permissions:', { canSeeAllBranches, canSeeAllButNoTotal });
 
-    // Get user's assigned branch
-    const { data: employee, error: empError } = await supabaseAdmin!
+    // Get user's assigned branch - try by ID first, then by email as fallback
+    let employee: { id: string; branch_id: string | null } | null = null;
+
+    // Try by ID first
+    const { data: empById, error: empByIdError } = await supabaseAdmin!
       .from('employees')
-      .select('branch_id')
+      .select('id, branch_id')
       .eq('id', user.id)
-      .single();
+      .maybeSingle();
 
-    if (empError) {
-      console.error('Error fetching employee:', empError);
-      return NextResponse.json({ error: 'Failed to fetch user data' }, { status: 500 });
+    if (empById) {
+      employee = empById;
+      console.log('[Branches API] Found employee by ID:', employee.id);
+    } else if (user.email) {
+      // Fallback to email lookup
+      const { data: empByEmail, error: empByEmailError } = await supabaseAdmin!
+        .from('employees')
+        .select('id, branch_id')
+        .eq('email', user.email)
+        .maybeSingle();
+
+      if (empByEmail) {
+        employee = empByEmail;
+        console.log('[Branches API] Found employee by email:', employee.id);
+      } else {
+        console.log('[Branches API] No employee found for:', { id: user.id, email: user.email });
+      }
     }
 
-    const assignedBranchId = employee?.branch_id;
+    const assignedBranchId = employee?.branch_id || null;
+    const employeeId = employee?.id || user.id;
+    console.log('[Branches API] Assigned branch:', assignedBranchId);
 
     // Get all branches
     const { data: allBranches, error: branchError } = await supabaseAdmin!
@@ -40,7 +62,7 @@ export const GET = withAuth(async (request, { user }) => {
     const { data: accessGrants, error: accessError } = await supabaseAdmin!
       .from('reception_branch_access')
       .select('branch_id')
-      .eq('user_id', user.id);
+      .eq('user_id', employeeId);
 
     if (accessError) {
       console.error('Error fetching branch access:', accessError);

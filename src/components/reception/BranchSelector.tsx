@@ -40,7 +40,13 @@ export function BranchSelector() {
   }
 
   if (!selectedBranch) {
-    return null;
+    // No branch selected - show a warning indicator
+    return (
+      <div className="flex items-center gap-2 px-3 py-1.5 bg-amber-500/20 rounded-lg text-amber-100">
+        <Building2 className="w-4 h-4" />
+        <span className="text-sm">No branch assigned</span>
+      </div>
+    );
   }
 
   // Single branch - just display it
