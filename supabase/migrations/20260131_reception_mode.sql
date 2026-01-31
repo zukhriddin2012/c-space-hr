@@ -20,8 +20,8 @@ CREATE TABLE IF NOT EXISTS service_types (
 );
 
 -- Indexes for service_types
-CREATE INDEX idx_service_types_active ON service_types(is_active, sort_order);
-CREATE INDEX idx_service_types_code ON service_types(code);
+CREATE INDEX IF NOT EXISTS idx_service_types_active ON service_types(is_active, sort_order);
+CREATE INDEX IF NOT EXISTS idx_service_types_code ON service_types(code);
 
 -- ============================================
 -- 2. EXPENSE TYPES TABLE (Admin-Configurable)
@@ -39,8 +39,8 @@ CREATE TABLE IF NOT EXISTS expense_types (
 );
 
 -- Indexes for expense_types
-CREATE INDEX idx_expense_types_active ON expense_types(is_active, sort_order);
-CREATE INDEX idx_expense_types_code ON expense_types(code);
+CREATE INDEX IF NOT EXISTS idx_expense_types_active ON expense_types(is_active, sort_order);
+CREATE INDEX IF NOT EXISTS idx_expense_types_code ON expense_types(code);
 
 -- ============================================
 -- 3. PAYMENT METHODS TABLE (Admin-Configurable)
@@ -58,8 +58,8 @@ CREATE TABLE IF NOT EXISTS payment_methods (
 );
 
 -- Indexes for payment_methods
-CREATE INDEX idx_payment_methods_active ON payment_methods(is_active, sort_order);
-CREATE INDEX idx_payment_methods_code ON payment_methods(code);
+CREATE INDEX IF NOT EXISTS idx_payment_methods_active ON payment_methods(is_active, sort_order);
+CREATE INDEX IF NOT EXISTS idx_payment_methods_code ON payment_methods(code);
 
 -- ============================================
 -- 4. TRANSACTIONS TABLE (Main - Replaces Google Sheet)
@@ -102,14 +102,14 @@ CREATE TABLE IF NOT EXISTS transactions (
 );
 
 -- Indexes for transactions
-CREATE INDEX idx_transactions_branch ON transactions(branch_id);
-CREATE INDEX idx_transactions_date ON transactions(transaction_date DESC);
-CREATE INDEX idx_transactions_agent ON transactions(agent_id);
-CREATE INDEX idx_transactions_service ON transactions(service_type_id);
-CREATE INDEX idx_transactions_customer ON transactions(customer_name);
-CREATE INDEX idx_transactions_method ON transactions(payment_method_id);
-CREATE INDEX idx_transactions_number ON transactions(transaction_number);
-CREATE INDEX idx_transactions_active ON transactions(is_voided, transaction_date DESC);
+CREATE INDEX IF NOT EXISTS idx_transactions_branch ON transactions(branch_id);
+CREATE INDEX IF NOT EXISTS idx_transactions_date ON transactions(transaction_date DESC);
+CREATE INDEX IF NOT EXISTS idx_transactions_agent ON transactions(agent_id);
+CREATE INDEX IF NOT EXISTS idx_transactions_service ON transactions(service_type_id);
+CREATE INDEX IF NOT EXISTS idx_transactions_customer ON transactions(customer_name);
+CREATE INDEX IF NOT EXISTS idx_transactions_method ON transactions(payment_method_id);
+CREATE INDEX IF NOT EXISTS idx_transactions_number ON transactions(transaction_number);
+CREATE INDEX IF NOT EXISTS idx_transactions_active ON transactions(is_voided, transaction_date DESC);
 
 -- ============================================
 -- 5. EXPENSES TABLE (Replaces "All Payments - LABZAK" Spreadsheet)
@@ -145,13 +145,13 @@ CREATE TABLE IF NOT EXISTS expenses (
 );
 
 -- Indexes for expenses
-CREATE INDEX idx_expenses_branch ON expenses(branch_id);
-CREATE INDEX idx_expenses_date ON expenses(expense_date DESC);
-CREATE INDEX idx_expenses_type ON expenses(expense_type_id);
-CREATE INDEX idx_expenses_method ON expenses(payment_method);
-CREATE INDEX idx_expenses_subject ON expenses(subject);
-CREATE INDEX idx_expenses_number ON expenses(expense_number);
-CREATE INDEX idx_expenses_active ON expenses(is_voided, expense_date DESC);
+CREATE INDEX IF NOT EXISTS idx_expenses_branch ON expenses(branch_id);
+CREATE INDEX IF NOT EXISTS idx_expenses_date ON expenses(expense_date DESC);
+CREATE INDEX IF NOT EXISTS idx_expenses_type ON expenses(expense_type_id);
+CREATE INDEX IF NOT EXISTS idx_expenses_method ON expenses(payment_method);
+CREATE INDEX IF NOT EXISTS idx_expenses_subject ON expenses(subject);
+CREATE INDEX IF NOT EXISTS idx_expenses_number ON expenses(expense_number);
+CREATE INDEX IF NOT EXISTS idx_expenses_active ON expenses(is_voided, expense_date DESC);
 
 -- ============================================
 -- 6. SEQUENCE TABLES FOR AUTO-NUMBERING

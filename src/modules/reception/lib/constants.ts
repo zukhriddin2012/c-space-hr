@@ -8,6 +8,12 @@ export const EXPENSE_PAYMENT_METHODS = {
   bank: { en: 'Bank', ru: 'Банк', uz: 'Bank' },
 } as const;
 
+// Expense payment methods as array for UI dropdowns
+export const EXPENSE_PAYMENT_METHODS_LIST = [
+  { value: 'cash', label: 'Cash', icon: '💵' },
+  { value: 'bank', label: 'Bank', icon: '🏦' },
+] as const;
+
 // Status labels for transactions/expenses
 export const TRANSACTION_STATUS = {
   active: { en: 'Active', ru: 'Активный' },

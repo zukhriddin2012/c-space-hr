@@ -150,7 +150,7 @@ export interface CreateTransactionInput {
   amount: number;
   paymentMethodId: string;
   transactionCode?: string;
-  branchId: string;
+  branchId?: string;  // Optional - will default to user's branch
   notes?: string;
   transactionDate?: string;
 }
@@ -184,6 +184,7 @@ export interface Expense {
 
   // From spreadsheet
   subject: string;         // "Subject" column - vendor/description
+  description?: string;    // Additional details
   amount: number;          // "Price" column
 
   // Type (FK to expense_types)
@@ -211,10 +212,11 @@ export interface Expense {
 
 export interface CreateExpenseInput {
   subject: string;
+  description?: string;
   amount: number;
   expenseTypeId: string;
   paymentMethod: ExpensePaymentMethod;
-  branchId: string;
+  branchId?: string;  // Optional - will default to user's branch
   expenseDate?: string;
 }
 
@@ -378,6 +380,7 @@ export interface ExpenseRow {
   id: string;
   expense_number: string;
   subject: string;
+  description: string | null;
   amount: number;
   expense_type_id: string;
   payment_method: ExpensePaymentMethod;
@@ -467,6 +470,7 @@ export function transformExpense(row: ExpenseRow): Expense {
     id: row.id,
     expenseNumber: row.expense_number,
     subject: row.subject,
+    description: row.description ?? undefined,
     amount: Number(row.amount),
     expenseTypeId: row.expense_type_id,
     paymentMethod: row.payment_method,

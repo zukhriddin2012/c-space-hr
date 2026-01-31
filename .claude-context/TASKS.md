@@ -29,6 +29,7 @@
 | T013 | Set up Vitest testing infrastructure | 2026-01-30 | Main |
 | T014 | Remote work check-in feature | 2026-01-29 | Main |
 | T016 | Reception Mode Phase 1 - Admin Config | 2026-01-31 | Main |
+| T017 | Reception Mode Phase 2 - Core Functionality | 2026-01-31 | Main |
 
 ### 🟡 In Progress
 
@@ -40,7 +41,6 @@
 
 | Task ID | Title | Priority | Notes |
 |---------|-------|----------|-------|
-| T017 | Reception Mode Phase 2 - Transactions | High | Recording form, table, filters |
 | T015 | Language switching fixes | High | 8 of 12 sections have hardcoded text |
 | T005 | Employee profile editing | High | Improve edit form UX |
 | T006 | Recruitment pipeline filters | Medium | Filter by position, date, source |
@@ -124,6 +124,16 @@ When starting a session:
 - Components: `src/components/recruitment/` (CandidateDetailModal, CandidatesKanban, RecruitmentFilters)
 - Table: `src/app/(dashboard)/recruitment/page.tsx`
 - API: `src/app/api/candidates/route.ts`
+
+**Reception Mode:**
+- Layout: `src/app/(dashboard)/reception/layout.tsx`
+- Dashboard: `src/app/(dashboard)/reception/page.tsx`
+- Transactions: `src/app/(dashboard)/reception/transactions/page.tsx`
+- Expenses: `src/app/(dashboard)/reception/expenses/page.tsx`
+- Admin: `src/app/(dashboard)/reception/admin/page.tsx`
+- Types: `src/modules/reception/types/index.ts`
+- Constants: `src/modules/reception/lib/constants.ts`
+- API: `src/app/api/reception/` (transactions, expenses, dashboard, admin)
 
 **Translations:**
 - Types: `src/lib/i18n/types.ts`
