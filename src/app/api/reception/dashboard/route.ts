@@ -263,8 +263,25 @@ export const GET = withAuth(async (request: NextRequest) => {
       }),
     ].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).slice(0, 10);
 
+    // DEBUG: Count transactions with debt for debugging
+    const debugDebtCount = (transactions || []).filter(t => {
+      const raw = t as Record<string, unknown>;
+      return Number(raw.debt || 0) > 0;
+    }).length;
+
     return NextResponse.json({
       dateRange: { from: dateFrom, to: dateTo },
+      // DEBUG info - remove after fixing
+      _debug: {
+        totalTransactions: transactions?.length || 0,
+        transactionsWithDebt: debugDebtCount,
+        calculatedDebt: totalDebt,
+        branchId: branchId || 'not set',
+        sampleDebt: (transactions || []).slice(0, 3).map(t => {
+          const raw = t as Record<string, unknown>;
+          return { tn: raw.transaction_number, debt: raw.debt };
+        })
+      },
       // Income Statement format
       income: {
         paid: totalPaid,
