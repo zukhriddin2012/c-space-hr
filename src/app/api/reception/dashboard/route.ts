@@ -22,10 +22,10 @@ export const GET = withAuth(async (request: NextRequest) => {
     const dateFrom = searchParams.get('dateFrom') || firstOfMonth.toISOString().split('T')[0];
     const dateTo = searchParams.get('dateTo') || today.toISOString().split('T')[0];
 
-    // Get transactions summary (Income/Paid)
+    // Get transactions summary (Income/Paid) - includes debt column
     let transactionsQuery = supabaseAdmin!
       .from('transactions')
-      .select('amount, service_type_id, payment_method_id', { count: 'exact' })
+      .select('amount, debt, service_type_id, payment_method_id', { count: 'exact' })
       .eq('is_voided', false)
       .gte('transaction_date', dateFrom)
       .lte('transaction_date', dateTo);
@@ -36,24 +36,9 @@ export const GET = withAuth(async (request: NextRequest) => {
 
     const { data: transactions, count: transactionCount } = await transactionsQuery;
 
-    // Calculate totals
+    // Calculate totals - Paid is the amount, Debt is unpaid portion
     const totalPaid = (transactions || []).reduce((sum, t) => sum + Number(t.amount), 0);
-
-    // Get outstanding debt (receivables)
-    let receivablesQuery = supabaseAdmin!
-      .from('receivables')
-      .select('amount, paid_amount, status')
-      .eq('status', 'outstanding');
-
-    if (branchId && branchId !== 'all') {
-      receivablesQuery = receivablesQuery.eq('branch_id', branchId);
-    }
-
-    const { data: receivables } = await receivablesQuery;
-    const totalDebt = (receivables || []).reduce((sum, r) => {
-      const outstanding = Number(r.amount) - Number(r.paid_amount || 0);
-      return sum + outstanding;
-    }, 0);
+    const totalDebt = (transactions || []).reduce((sum, t) => sum + Number(t.debt || 0), 0);
 
     // Get expenses summary with expense type info for categorization
     let expensesQuery = supabaseAdmin!
