@@ -15,8 +15,12 @@ export const GET = withAuth(async (request: NextRequest) => {
 
     const searchParams = request.nextUrl.searchParams;
     const branchId = searchParams.get('branchId');
-    const dateFrom = searchParams.get('dateFrom') || new Date().toISOString().split('T')[0];
-    const dateTo = searchParams.get('dateTo') || new Date().toISOString().split('T')[0];
+
+    // Default to current month (1st of month to today)
+    const today = new Date();
+    const firstOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+    const dateFrom = searchParams.get('dateFrom') || firstOfMonth.toISOString().split('T')[0];
+    const dateTo = searchParams.get('dateTo') || today.toISOString().split('T')[0];
 
     // Get transactions summary
     let transactionsQuery = supabaseAdmin!

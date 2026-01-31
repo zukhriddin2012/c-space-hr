@@ -89,7 +89,7 @@ export default function ReceptionDashboard() {
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-        <p className="text-gray-500">Today&apos;s overview</p>
+        <p className="text-gray-500">This month&apos;s overview</p>
       </div>
 
       {/* Stats Cards */}
@@ -165,7 +165,7 @@ export default function ReceptionDashboard() {
               </div>
             ))}
             {(!stats?.transactions.byServiceType || stats.transactions.byServiceType.length === 0) && (
-              <p className="text-gray-400 text-sm">No transactions today</p>
+              <p className="text-gray-400 text-sm">No transactions this month</p>
             )}
           </div>
         </Card>
@@ -188,7 +188,7 @@ export default function ReceptionDashboard() {
               </div>
             ))}
             {(!stats?.expenses.byExpenseType || stats.expenses.byExpenseType.length === 0) && (
-              <p className="text-gray-400 text-sm">No expenses today</p>
+              <p className="text-gray-400 text-sm">No expenses this month</p>
             )}
           </div>
         </Card>
