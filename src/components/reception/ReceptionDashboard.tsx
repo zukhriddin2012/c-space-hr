@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { ArrowLeftRight, Building2, Calendar, ChevronDown } from 'lucide-react';
 import Card from '@/components/ui/Card';
 import { formatCurrency } from '@/modules/reception/lib/constants';
@@ -118,6 +118,7 @@ export default function ReceptionDashboard() {
   const [customFrom, setCustomFrom] = useState<string>('');
   const [customTo, setCustomTo] = useState<string>('');
   const [showPeriodDropdown, setShowPeriodDropdown] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   const dateRange = useMemo(() =>
     getDateRange(selectedPeriod, customFrom, customTo),
@@ -151,9 +152,18 @@ export default function ReceptionDashboard() {
   }, [fetchStats]);
 
   useEffect(() => {
-    const handleClickOutside = () => setShowPeriodDropdown(false);
+    const handleClickOutside = (event: MouseEvent) => {
+      // Don't close if clicking inside the dropdown
+      if (dropdownRef.current && dropdownRef.current.contains(event.target as Node)) {
+        return;
+      }
+      setShowPeriodDropdown(false);
+    };
     if (showPeriodDropdown) {
-      document.addEventListener('click', handleClickOutside);
+      // Use setTimeout to avoid immediate trigger
+      setTimeout(() => {
+        document.addEventListener('click', handleClickOutside);
+      }, 0);
       return () => document.removeEventListener('click', handleClickOutside);
     }
   }, [showPeriodDropdown]);
@@ -194,7 +204,7 @@ export default function ReceptionDashboard() {
         </div>
 
         {/* Period Selector */}
-        <div className="relative">
+        <div className="relative" ref={dropdownRef}>
           <button
             onClick={(e) => {
               e.stopPropagation();
