@@ -233,35 +233,47 @@ export default function ReceptionDashboard() {
 
               <div className="p-3">
                 <p className="px-1 py-1 text-xs font-semibold text-gray-400 uppercase mb-2">Custom Range</p>
-                <div className="flex gap-2 items-center">
-                  <input
-                    type="date"
-                    value={customFrom || dateRange.from}
-                    onChange={(e) => {
-                      setCustomFrom(e.target.value);
-                      setSelectedPeriod('custom');
-                    }}
-                    className="flex-1 px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
-                  />
-                  <span className="text-gray-400">to</span>
-                  <input
-                    type="date"
-                    value={customTo || dateRange.to}
-                    onChange={(e) => {
-                      setCustomTo(e.target.value);
-                      setSelectedPeriod('custom');
-                    }}
-                    className="flex-1 px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
-                  />
-                </div>
-                {selectedPeriod === 'custom' && (
+                <div className="space-y-2">
+                  <div className="flex gap-2 items-center">
+                    <div className="flex-1">
+                      <label className="block text-xs text-gray-500 mb-1">From</label>
+                      <input
+                        type="date"
+                        value={selectedPeriod === 'custom' ? customFrom : dateRange.from}
+                        onChange={(e) => {
+                          setCustomFrom(e.target.value);
+                          if (!customTo) setCustomTo(dateRange.to);
+                          setSelectedPeriod('custom');
+                        }}
+                        className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <label className="block text-xs text-gray-500 mb-1">To</label>
+                      <input
+                        type="date"
+                        value={selectedPeriod === 'custom' ? customTo : dateRange.to}
+                        onChange={(e) => {
+                          setCustomTo(e.target.value);
+                          if (!customFrom) setCustomFrom(dateRange.from);
+                          setSelectedPeriod('custom');
+                        }}
+                        className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                      />
+                    </div>
+                  </div>
                   <button
-                    onClick={() => setShowPeriodDropdown(false)}
-                    className="mt-3 w-full px-4 py-2 bg-purple-600 text-white text-sm font-medium rounded-lg hover:bg-purple-700"
+                    onClick={() => {
+                      if (!customFrom) setCustomFrom(dateRange.from);
+                      if (!customTo) setCustomTo(dateRange.to);
+                      setSelectedPeriod('custom');
+                      setShowPeriodDropdown(false);
+                    }}
+                    className="w-full px-4 py-2 bg-purple-600 text-white text-sm font-medium rounded-lg hover:bg-purple-700 transition-colors"
                   >
-                    Apply
+                    Apply Custom Range
                   </button>
-                )}
+                </div>
               </div>
             </div>
           )}
