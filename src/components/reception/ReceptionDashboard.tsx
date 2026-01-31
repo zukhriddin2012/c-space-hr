@@ -220,8 +220,9 @@ export default function ReceptionDashboard() {
           {showPeriodDropdown && (
             <div
               onClick={(e) => e.stopPropagation()}
-              className="absolute right-0 mt-2 w-72 bg-white border border-gray-200 rounded-xl shadow-lg z-50 overflow-hidden"
+              className="absolute right-0 mt-2 w-80 bg-white border border-gray-200 rounded-xl shadow-lg z-50 overflow-hidden max-h-[500px] overflow-y-auto"
             >
+              {/* Quick Select */}
               <div className="p-2 border-b border-gray-100">
                 <p className="px-2 py-1 text-xs font-semibold text-gray-400 uppercase">Quick Select</p>
                 <div className="grid grid-cols-2 gap-1">
@@ -241,6 +242,90 @@ export default function ReceptionDashboard() {
                 </div>
               </div>
 
+              {/* Year Picker */}
+              <div className="p-2 border-b border-gray-100">
+                <p className="px-2 py-1 text-xs font-semibold text-gray-400 uppercase">Year</p>
+                <div className="grid grid-cols-3 gap-1">
+                  {[2024, 2025, 2026].map((year) => (
+                    <button
+                      key={year}
+                      onClick={() => {
+                        setCustomFrom(`${year}-01-01`);
+                        setCustomTo(`${year}-12-31`);
+                        setSelectedPeriod('custom');
+                        setShowPeriodDropdown(false);
+                      }}
+                      className="px-3 py-2 text-sm rounded-lg text-center transition-colors hover:bg-gray-100 text-gray-700"
+                    >
+                      {year}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Quarter Picker */}
+              <div className="p-2 border-b border-gray-100">
+                <p className="px-2 py-1 text-xs font-semibold text-gray-400 uppercase">Quarter</p>
+                <div className="grid grid-cols-4 gap-1">
+                  {[
+                    { label: 'Q1', start: '01-01', end: '03-31' },
+                    { label: 'Q2', start: '04-01', end: '06-30' },
+                    { label: 'Q3', start: '07-01', end: '09-30' },
+                    { label: 'Q4', start: '10-01', end: '12-31' },
+                  ].map((q) => (
+                    <button
+                      key={q.label}
+                      onClick={() => {
+                        const year = new Date().getFullYear();
+                        setCustomFrom(`${year}-${q.start}`);
+                        setCustomTo(`${year}-${q.end}`);
+                        setSelectedPeriod('custom');
+                        setShowPeriodDropdown(false);
+                      }}
+                      className="px-2 py-2 text-sm rounded-lg text-center transition-colors hover:bg-gray-100 text-gray-700"
+                    >
+                      {q.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Month Picker */}
+              <div className="p-2 border-b border-gray-100">
+                <p className="px-2 py-1 text-xs font-semibold text-gray-400 uppercase">Month</p>
+                <div className="grid grid-cols-4 gap-1">
+                  {[
+                    { label: 'Jan', month: '01', days: '31' },
+                    { label: 'Feb', month: '02', days: '28' },
+                    { label: 'Mar', month: '03', days: '31' },
+                    { label: 'Apr', month: '04', days: '30' },
+                    { label: 'May', month: '05', days: '31' },
+                    { label: 'Jun', month: '06', days: '30' },
+                    { label: 'Jul', month: '07', days: '31' },
+                    { label: 'Aug', month: '08', days: '31' },
+                    { label: 'Sep', month: '09', days: '30' },
+                    { label: 'Oct', month: '10', days: '31' },
+                    { label: 'Nov', month: '11', days: '30' },
+                    { label: 'Dec', month: '12', days: '31' },
+                  ].map((m) => (
+                    <button
+                      key={m.label}
+                      onClick={() => {
+                        const year = new Date().getFullYear();
+                        setCustomFrom(`${year}-${m.month}-01`);
+                        setCustomTo(`${year}-${m.month}-${m.days}`);
+                        setSelectedPeriod('custom');
+                        setShowPeriodDropdown(false);
+                      }}
+                      className="px-2 py-1.5 text-sm rounded-lg text-center transition-colors hover:bg-gray-100 text-gray-700"
+                    >
+                      {m.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Custom Range */}
               <div className="p-3">
                 <p className="px-1 py-1 text-xs font-semibold text-gray-400 uppercase mb-2">Custom Range</p>
                 <div className="space-y-2">
