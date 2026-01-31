@@ -1,7 +1,7 @@
 # C-Space HR System - Project Context
 
 > **Last Updated:** 2026-01-31
-> **Updated By:** Claude (Reception Mode Phase 4 - Branch Context)
+> **Updated By:** Claude (Reception Mode Branch Fix)
 
 ## Quick Start for New Sessions
 
@@ -374,6 +374,13 @@ const { data, error } = await supabaseAdmin
 ---
 
 ## Recent Changes Log
+
+### 2026-01-31 (Reception Mode Branch Fix)
+- **Fixed "No branch assigned" bug**: Branch selector was showing no branches
+  - Root cause: API queried non-existent `code` column from `branches` table
+  - Fix: Removed `code` from SELECT query and response objects
+  - Added null check for `supabaseAdmin` with proper error handling
+  - Commit: `0611bfb` - fix(reception): Remove non-existent 'code' column from branches query
 
 ### 2026-01-31 (Reception Mode Phase 4 - Branch Context)
 - **Multi-branch Access Control**: Branch-scoped data and permissions
