@@ -9,6 +9,7 @@ import Modal from '@/components/ui/Modal';
 import Badge from '@/components/ui/Badge';
 import { formatCurrency, EXPENSE_PAYMENT_METHODS_LIST } from '@/modules/reception/lib/constants';
 import { useReceptionMode } from '@/contexts/ReceptionModeContext';
+import { useTranslation } from '@/lib/i18n/LanguageContext';
 import type { Expense, ExpenseType, CreateExpenseInput } from '@/modules/reception/types';
 
 interface ExpenseFormData {
@@ -31,6 +32,7 @@ const initialFormData: ExpenseFormData = {
 
 export default function ReceptionExpenses() {
   const { selectedBranchId } = useReceptionMode();
+  const { t } = useTranslation();
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [expenseTypes, setExpenseTypes] = useState<ExpenseType[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -182,12 +184,12 @@ export default function ReceptionExpenses() {
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Expenses</h1>
-          <p className="text-gray-500">Record and manage expenses</p>
+          <h1 className="text-2xl font-bold text-gray-900">{t('reception.expenses')}</h1>
+          <p className="text-gray-500">{t('reception.recordExpenses')}</p>
         </div>
         <Button onClick={() => setShowAddModal(true)}>
           <Plus className="w-4 h-4 mr-2" />
-          New Expense
+          {t('reception.newExpense')}
         </Button>
       </div>
 
@@ -197,7 +199,7 @@ export default function ReceptionExpenses() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input
               type="text"
-              placeholder="Search by subject..."
+              placeholder={t('reception.searchExpenses')}
               value={searchQuery}
               onChange={(e) => { setSearchQuery(e.target.value); setPage(1); }}
               className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"

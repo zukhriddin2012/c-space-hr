@@ -1,4 +1,4 @@
-# Session Starter - C-Space HR Web App
+# Session Starter - C-Space Niya Web App
 
 > **🆕 For full platform context (web app + bot), see `../SESSION_PROMPT.md`**
 > **For quick sessions, see `../QUICK_START_PROMPT.md`**
@@ -8,7 +8,7 @@
 ## 🚀 Quick Start Prompt (Copy This)
 
 ```
-C-Space HR - Development Session
+C-Space Niya - Development Session
 
 PROJECT: HR management system for C-Space coworking (Tashkent, Uzbekistan)
 STACK: Next.js 16 + TypeScript + Tailwind CSS 4 + Supabase + Vercel
@@ -36,7 +36,7 @@ Before committing: npx tsc --noEmit && npm run test:run
 
 ### Translation Work
 ```
-C-Space HR - Translation Task
+C-Space Niya - Translation Task
 
 Context: Read `.claude-context/PROJECT_CONTEXT.md`
 
@@ -53,7 +53,7 @@ Task: [DESCRIBE what needs translation]
 
 ### Employee Module
 ```
-C-Space HR - Employee Module Work
+C-Space Niya - Employee Module Work
 
 Context: Read `.claude-context/PROJECT_CONTEXT.md`
 
@@ -68,7 +68,7 @@ Task: [DESCRIBE]
 
 ### Attendance Module
 ```
-C-Space HR - Attendance Module Work
+C-Space Niya - Attendance Module Work
 
 Context: Read `.claude-context/PROJECT_CONTEXT.md`
 
@@ -84,7 +84,7 @@ Task: [DESCRIBE]
 
 ### Recruitment Module
 ```
-C-Space HR - Recruitment Module Work
+C-Space Niya - Recruitment Module Work
 
 Context: Read `.claude-context/PROJECT_CONTEXT.md`
 
@@ -99,7 +99,7 @@ Task: [DESCRIBE]
 
 ### New Component
 ```
-C-Space HR - New Component
+C-Space Niya - New Component
 
 Context: Read `.claude-context/PROJECT_CONTEXT.md`
 
@@ -116,7 +116,7 @@ Task: [DESCRIBE]
 
 ### API Endpoint
 ```
-C-Space HR - API Work
+C-Space Niya - API Work
 
 Context: Read `.claude-context/PROJECT_CONTEXT.md`
 
@@ -144,7 +144,7 @@ Task: [DESCRIBE]
 Use when running parallel sessions. **No git commands** - coordinator handles git.
 
 ```
-C-Space HR - Worker Session
+C-Space Niya - Worker Session
 
 ⚠️ IMPORTANT: This is a WORKER session. Do NOT use git commands.
 A coordinator session handles all git operations.

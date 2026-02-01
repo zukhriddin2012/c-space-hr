@@ -1,4 +1,4 @@
-# C-Space HR - Task Tracker
+# C-Space Niya - Task Tracker
 
 > This file tracks active tasks across Cowork sessions.
 > Update this file when starting/completing tasks.
@@ -39,6 +39,7 @@
 | T024 | Reception Dashboard Date Picker Redesign | 2026-01-31 | Main |
 | T025 | Reception Mode Persistence on Refresh | 2026-01-31 | Main |
 | T026 | Transaction Filters & Client Autocomplete | 2026-01-31 | Main |
+| T027 | Shift Planning Database Schema & Functions | 2026-02-03 | Spoke |
 
 ### 🟡 In Progress
 

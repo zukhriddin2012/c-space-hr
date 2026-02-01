@@ -49,7 +49,7 @@
 Copy this to start a worker session:
 
 ```
-C-Space HR - Worker Session
+C-Space Niya - Worker Session
 
 ⚠️ IMPORTANT: This is a WORKER session. Do NOT use git commands.
 A coordinator session handles all git operations.

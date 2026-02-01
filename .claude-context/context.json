@@ -11,10 +11,10 @@
     "strategyDoc": "../../docs/COMPANY_STRATEGY.md"
   },
   "project": {
-    "name": "C-Space HR",
-    "description": "HR management system for C-Space coworking spaces",
+    "name": "C-Space Niya",
+    "description": "Business operations platform for C-Space coworking spaces",
     "productionUrl": "https://hr.cspace.uz",
-    "repository": "https://github.com/zukhriddin2012/c-space-hr",
+    "repository": "https://github.com/zukhriddin2012/c-space-niya",
     "lastUpdated": "2026-01-31"
   },
   "techStack": {
@@ -171,21 +171,24 @@
       "utils": "src/test/utils/test-utils.tsx"
     }
   },
+  "aiRoles": {
+    "file": "ROLES.md",
+    "available": ["Proda", "Deva", "Testa", "Designa", "Analysta", "Accounta", "HRa"],
+    "default": "Deva for code tasks, answer questions otherwise"
+  },
   "currentWork": {
     "recentChanges": [
-      "2026-01-29: Remote work check-in feature (remote_work_enabled per employee)",
-      "2026-01-29: Remote verification type badge in attendance UI",
+      "2026-02-01: Full Reception Mode i18n (90+ keys in EN/RU/UZ)",
+      "2026-02-01: Renamed project C-Space HR → C-Space Niya",
+      "2026-02-01: Consolidated docs into docs/ folder",
+      "2026-01-31: Reception Mode 4-phase completion",
       "2026-01-30: Set up Vitest testing infrastructure (28 tests)",
       "2026-01-30: Split db.ts into 20 domain modules in db/ folder",
-      "2026-01-30: Flattened deep API routes into PATCH handlers",
-      "2026-01-30: Renamed tg-action/tg-check to telegram-action/telegram-check",
-      "2026-01-29: Component refactoring - 24 components into 8 feature folders",
-      "2026-01-29: Created 6 UI primitives (Button, Input, Card, Modal, Select, Badge)",
-      "2026-01-28: Org chart with expandable tree"
+      "2026-01-29: Component refactoring - 24 components into 8 feature folders"
     ],
     "pendingTasks": [
-      "Language switching fixes (8 sections need translation)",
-      "Employee profile editing improvements",
+      "Employee profile editing improvements (SPEC-005)",
+      "Client deduplication (668 clients may have duplicates)",
       "Recruitment pipeline filters",
       "Shift notes feature"
     ]

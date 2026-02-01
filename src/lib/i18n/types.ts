@@ -716,4 +716,133 @@ export interface Translations {
     deleted: string;
     submitted: string;
   };
+
+  // Reception Mode
+  reception: {
+    // Page titles
+    title: string;
+    incomeStatement: string;
+    transactions: string;
+    expenses: string;
+    settings: string;
+    recordSales: string;
+    recordExpenses: string;
+    manageSettings: string;
+
+    // Date periods
+    today: string;
+    yesterday: string;
+    thisWeek: string;
+    thisMonth: string;
+    lastMonth: string;
+    thisQuarter: string;
+    thisYear: string;
+    allTime: string;
+    customRange: string;
+    quickSelect: string;
+    selectYear: string;
+    fullYear: string;
+    quarterOf: string;
+    monthOf: string;
+    from: string;
+    to: string;
+    applyRange: string;
+    resetToToday: string;
+
+    // Financial stats
+    paid: string;
+    debt: string;
+    opex: string;
+    capex: string;
+    operatingProfit: string;
+    profit: string;
+    topExpenseCategories: string;
+    noExpensesInPeriod: string;
+    incomeByServiceType: string;
+    recentActivity: string;
+    noTransactionsInPeriod: string;
+    noRecentActivity: string;
+
+    // Transactions
+    newTransaction: string;
+    searchTransactions: string;
+    moreFilters: string;
+    allServices: string;
+    allPayments: string;
+    noTransactionsFound: string;
+    showingTransactions: string;
+    transactionDetails: string;
+    voidTransaction: string;
+
+    // Form fields
+    customer: string;
+    customerClient: string;
+    serviceType: string;
+    amount: string;
+    paymentMethod: string;
+    transactionDate: string;
+    transactionCode: string;
+    selectService: string;
+    selectPayment: string;
+    searchOrCreateClient: string;
+    enterCode: string;
+    optionalNotes: string;
+
+    // Expenses
+    newExpense: string;
+    searchExpenses: string;
+    expenseDetails: string;
+    voidExpense: string;
+    subject: string;
+    expenseType: string;
+    expenseDate: string;
+    noExpensesFound: string;
+    showingExpenses: string;
+    selectExpenseType: string;
+    enterSubject: string;
+    cashBank: string;
+
+    // Status
+    active: string;
+    voided: string;
+    voidReason: string;
+    voiding: string;
+    creating: string;
+    enterReason: string;
+
+    // Settings tabs
+    serviceTypes: string;
+    expenseTypes: string;
+    paymentMethods: string;
+    branchAccess: string;
+    addNewItem: string;
+    editItem: string;
+    grantAccess: string;
+    grantingAccess: string;
+    revokeAccess: string;
+    noAccessGrants: string;
+    itemName: string;
+    itemCode: string;
+    itemIcon: string;
+    requiresCode: string;
+    sortOrder: string;
+
+    // Table headers
+    date: string;
+    service: string;
+    payment: string;
+    branch: string;
+    status: string;
+    actions: string;
+
+    // Client
+    createClient: string;
+    clientName: string;
+    clientType: string;
+    company: string;
+    individual: string;
+    industry: string;
+    phone: string;
+    email: string;
+  };
 }

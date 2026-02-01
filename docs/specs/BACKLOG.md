@@ -1,4 +1,4 @@
-# C-Space HR Platform - Feature Backlog
+# C-Space Niya Platform - Feature Backlog
 
 > Last Updated: January 2026
 > Source: Team Feedback Document (January 2026)

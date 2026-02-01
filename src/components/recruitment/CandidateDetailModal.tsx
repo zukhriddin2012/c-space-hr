@@ -1976,7 +1976,7 @@ export default function CandidateDetailModal({
               <h4 className="font-medium text-blue-800 mb-2">Отправить через:</h4>
               <div className="flex gap-3">
                 <a
-                  href={`mailto:${candidate.email}?subject=Условия трудоустройства - C-Space&body=Здравствуйте, ${candidate.full_name}!%0A%0AПожалуйста, перейдите по ссылке для подписания документа:%0A${encodeURIComponent(signingUrl)}%0A%0AПароль для доступа: ${documentPassword}%0A%0AС уважением,%0AC-Space HR`}
+                  href={`mailto:${candidate.email}?subject=Условия трудоустройства - C-Space&body=Здравствуйте, ${candidate.full_name}!%0A%0AПожалуйста, перейдите по ссылке для подписания документа:%0A${encodeURIComponent(signingUrl)}%0A%0AПароль для доступа: ${documentPassword}%0A%0AС уважением,%0AC-Space Niya`}
                   className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
                 >
                   <Mail size={16} />

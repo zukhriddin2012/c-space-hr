@@ -8,6 +8,7 @@ import Input from '@/components/ui/Input';
 import Modal from '@/components/ui/Modal';
 import Badge from '@/components/ui/Badge';
 import { useReceptionMode } from '@/contexts/ReceptionModeContext';
+import { useTranslation } from '@/lib/i18n/LanguageContext';
 import type { ServiceType, ExpenseType, PaymentMethodConfig, ReceptionBranchAccess } from '@/modules/reception/types';
 
 type Tab = 'services' | 'expenses' | 'payments' | 'branch_access';
@@ -22,6 +23,7 @@ interface Employee {
 
 export default function ReceptionSettings() {
   const { selectedBranchId, selectedBranch } = useReceptionMode();
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<Tab>('services');
   const [serviceTypes, setServiceTypes] = useState<ServiceType[]>([]);
   const [expenseTypes, setExpenseTypes] = useState<ExpenseType[]>([]);
@@ -243,10 +245,10 @@ export default function ReceptionSettings() {
   };
 
   const tabs = [
-    { id: 'services' as const, label: 'Service Types', icon: Package },
-    { id: 'expenses' as const, label: 'Expense Types', icon: Wallet },
-    { id: 'payments' as const, label: 'Payment Methods', icon: CreditCard },
-    ...(selectedBranchId && selectedBranchId !== 'all' ? [{ id: 'branch_access' as const, label: 'Branch Access', icon: Users }] : []),
+    { id: 'services' as const, label: t('reception.serviceTypes'), icon: Package },
+    { id: 'expenses' as const, label: t('reception.expenseTypes'), icon: Wallet },
+    { id: 'payments' as const, label: t('reception.paymentMethods'), icon: CreditCard },
+    ...(selectedBranchId && selectedBranchId !== 'all' ? [{ id: 'branch_access' as const, label: t('reception.branchAccess'), icon: Users }] : []),
   ];
 
   const emojiList = ['📦', '👥', '🪑', '🗓️', '🎤', '🏢', '🖥️', '🔄', '📅', '📆', '🎓', '🛒', '⚡', '👷', '🧾', '🔧', '📢', '🏗️', '❤️', '💵', '📱', '🖱️', '🍇', '💳', '🏦'];
@@ -256,9 +258,9 @@ export default function ReceptionSettings() {
       <div>
         <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
           <Settings className="w-6 h-6 text-purple-600" />
-          Settings
+          {t('reception.settings')}
         </h1>
-        <p className="text-gray-500">Configure service types, expense categories, and payment methods</p>
+        <p className="text-gray-500">{t('reception.manageSettings')}</p>
       </div>
 
       {/* Tabs */}

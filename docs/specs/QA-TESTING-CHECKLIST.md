@@ -1,8 +1,8 @@
-# C-Space HR Platform - QA Testing Checklist
+# C-Space Niya Platform - QA Testing Checklist
 
 ## Overview
-This document outlines the testing procedures for the C-Space HR attendance tracking system, which consists of:
-- **Web App**: Next.js dashboard at https://c-space-hr.vercel.app
+This document outlines the testing procedures for the C-Space Niya attendance tracking system, which consists of:
+- **Web App**: Next.js dashboard at https://c-space-niya.vercel.app
 - **Telegram Bot**: @cspace_attendance_bot
 - **Database**: Supabase (PostgreSQL)
 
@@ -178,7 +178,7 @@ This document outlines the testing procedures for the C-Space HR attendance trac
 
 ## Test Environment
 
-- **Web App URL**: https://c-space-hr.vercel.app
+- **Web App URL**: https://c-space-niya.vercel.app
 - **Bot Username**: @cspace_attendance_bot
 - **Test Accounts**: [Add test account credentials]
 - **Office IPs**: [Add configured office IPs for testing]

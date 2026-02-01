@@ -4,7 +4,7 @@
 
 **C-Space People** is a comprehensive HR management web application built for C-Space coworking company. It provides employee management, attendance tracking, payroll processing, leave management, and role-based access control.
 
-**Repository:** https://github.com/zukhriddin2012/c-space-hr
+**Repository:** https://github.com/zukhriddin2012/c-space-niya
 **Branch:** test
 **Live URL:** Deployed on Vercel
 
@@ -31,7 +31,7 @@
 ## Project Structure
 
 ```
-c-space-hr/
+c-space-niya/
 ├── src/
 │   ├── app/                          # Next.js App Router
 │   │   ├── (auth)/login/             # Login page

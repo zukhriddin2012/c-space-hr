@@ -47,7 +47,7 @@ export function DashboardContent({ children }: DashboardContentProps) {
 
         {/* Footer */}
         <footer className="bg-white border-t border-gray-200 px-4 py-2 text-center text-xs text-gray-500">
-          C-Space HR Platform • Reception Mode • {new Date().toLocaleDateString()}
+          C-Space Niya • Reception Mode • {new Date().toLocaleDateString()}
         </footer>
 
         {/* Branch Switch Confirmation Modal */}

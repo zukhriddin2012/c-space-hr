@@ -1,4 +1,4 @@
-# C-Space HR - Credentials & Access
+# C-Space Niya - Credentials & Access
 
 > ⚠️ **SECURITY NOTE:** This file contains references only. Actual secrets are in `.env.local` (gitignored).
 
@@ -28,11 +28,11 @@ TELEGRAM_BOT_WEBHOOK_SECRET=[webhook-secret]
 - **Access:** Ask project owner for invite
 
 ### Vercel Dashboard
-- **URL:** https://vercel.com/[team]/c-space-hr
+- **URL:** https://vercel.com/[team]/c-space-niya
 - **Access:** Ask project owner for invite
 
 ### GitHub Repository
-- **URL:** https://github.com/zukhriddin2012/c-space-hr
+- **URL:** https://github.com/zukhriddin2012/c-space-niya
 - **Branch:** main
 
 ---

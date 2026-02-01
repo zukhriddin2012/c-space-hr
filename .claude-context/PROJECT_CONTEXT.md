@@ -1,13 +1,15 @@
-# C-Space HR System - Project Context
+# C-Space Niya - Project Context
 
 > **Last Updated:** 2026-01-31
-> **Updated By:** Claude (Dashboard Batch Fetching + Date Picker)
+> **Updated By:** Proda (Rebrand to C-Space Niya)
+>
+> **Name Meaning:** نية (Niyyah) — Intention. "Actions are judged by intentions." Every action in this platform starts with intention.
 
 ## Quick Start for New Sessions
 
 ```bash
 # Project location
-cd "/path/to/c-space-hr"
+cd "/path/to/c-space-niya"
 
 # Install dependencies (if needed)
 npm install
@@ -21,16 +23,15 @@ npx tsc --noEmit
 
 ## Project Overview
 
-**C-Space HR** is a comprehensive HR management system for C-Space coworking spaces in Tashkent, Uzbekistan.
+**C-Space Niya** is a comprehensive business operations platform for C-Space coworking spaces in Tashkent, Uzbekistan.
 
 ### Key Features
-- Employee management with multi-branch support
-- Attendance tracking via Telegram bot (GPS/IP/Remote verification)
-- Payroll management
-- Recruitment pipeline (Kanban board)
-- Accounting requests workflow
-- Organization chart with manager hierarchy
-- Multi-language support (English, Russian, Uzbek)
+- **HR Management:** Employees, attendance, payroll, recruitment
+- **Reception Mode:** Transactions, expenses, client management
+- **Accounting:** Requests workflow, approvals
+- **Operations:** Multi-branch support (15 branches), organization chart
+- **Integrations:** Telegram bot (GPS/IP/Remote verification)
+- **Multi-language:** English, Russian, Uzbek
 
 ### Production URLs
 - **Web App:** https://hr.cspace.uz
@@ -57,7 +58,7 @@ npx tsc --noEmit
 ## Project Structure
 
 ```
-c-space-hr/
+c-space-niya/
 ├── src/
 │   ├── app/                    # Next.js App Router pages
 │   │   ├── (dashboard)/        # Protected dashboard routes
@@ -374,6 +375,30 @@ const { data, error } = await supabaseAdmin
 ---
 
 ## Recent Changes Log
+
+### 2026-02-03 (Shift Planning Database Schema - T027)
+- **5 New Tables** for shift planning module:
+  - `shift_schedules` - Weekly container with Draft→Published→Locked workflow
+  - `shift_assignments` - Employee↔Branch↔Date↔Shift with unique constraint
+  - `branch_shift_requirements` - Min/max staff per branch (seeded for all branches)
+  - `time_off_requests` - With auto-approval trigger (≤2 days = auto ✅)
+  - `employee_availability` - Recurring weekly patterns
+- **Employee Table Extensions**: Added `can_work_night`, `is_floater`, `primary_branch_id`, `max_hours_per_week`
+- **TypeScript Module** (`src/lib/db/shifts.ts`): 25 functions for CRUD operations
+  - Schedule: `getScheduleByWeek`, `createSchedule`, `publishSchedule`, `lockSchedule`
+  - Assignments: `getAssignmentsBySchedule`, `createAssignment`, `deleteAssignment`, `confirmAssignment`
+  - Time off: `createTimeOffRequest`, `getPendingTimeOffRequests`, `reviewTimeOffRequest`
+  - Utilities: `getAvailableEmployeesForShift`, `getScheduleCoverageStatus`, `checkEmployeeConflict`
+- **Migration**: `supabase/migrations/20260203_shift_planning_tables.sql` (251 lines)
+- **Spec**: `docs/specs/SPEC-007-SHIFT-PLANNING.md`
+
+### 2026-02-01 (Reception Mode i18n + Project Rename)
+- **Full i18n for Reception Mode**: 90+ translation keys in EN/RU/UZ
+  - Dashboard, Transactions, Expenses, Settings all use `t.reception.*`
+  - Files: `src/lib/i18n/{en,ru,uz,types}.ts`
+- **Project Renamed**: C-Space HR → C-Space Niya
+  - "نية (Niya)" = Intention - "Actions are judged by intentions"
+  - Updated all references across codebase and documentation
 
 ### 2026-01-31 (Transaction Filters & Client Autocomplete)
 - **Quick Date Filters**: Added one-click filter buttons

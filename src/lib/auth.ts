@@ -2,7 +2,7 @@ import { SignJWT, jwtVerify } from 'jose';
 import type { User, UserRole } from '@/types';
 
 const JWT_SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET || 'c-space-hr-secret-key-change-in-production'
+  process.env.JWT_SECRET || 'c-space-niya-secret-key-change-in-production'
 );
 
 // Helper function to determine role based on position
