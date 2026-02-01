@@ -245,10 +245,10 @@ export default function ReceptionSettings() {
   };
 
   const tabs = [
-    { id: 'services' as const, label: t('reception.serviceTypes'), icon: Package },
-    { id: 'expenses' as const, label: t('reception.expenseTypes'), icon: Wallet },
-    { id: 'payments' as const, label: t('reception.paymentMethods'), icon: CreditCard },
-    ...(selectedBranchId && selectedBranchId !== 'all' ? [{ id: 'branch_access' as const, label: t('reception.branchAccess'), icon: Users }] : []),
+    { id: 'services' as const, label: t.reception.serviceTypes, icon: Package },
+    { id: 'expenses' as const, label: t.reception.expenseTypes, icon: Wallet },
+    { id: 'payments' as const, label: t.reception.paymentMethods, icon: CreditCard },
+    ...(selectedBranchId && selectedBranchId !== 'all' ? [{ id: 'branch_access' as const, label: t.reception.branchAccess, icon: Users }] : []),
   ];
 
   const emojiList = ['📦', '👥', '🪑', '🗓️', '🎤', '🏢', '🖥️', '🔄', '📅', '📆', '🎓', '🛒', '⚡', '👷', '🧾', '🔧', '📢', '🏗️', '❤️', '💵', '📱', '🖱️', '🍇', '💳', '🏦'];
@@ -258,9 +258,9 @@ export default function ReceptionSettings() {
       <div>
         <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
           <Settings className="w-6 h-6 text-purple-600" />
-          {t('reception.settings')}
+          {t.reception.settings}
         </h1>
-        <p className="text-gray-500">{t('reception.manageSettings')}</p>
+        <p className="text-gray-500">{t.reception.manageSettings}</p>
       </div>
 
       {/* Tabs */}

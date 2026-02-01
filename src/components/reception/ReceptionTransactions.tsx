@@ -273,12 +273,12 @@ export default function ReceptionTransactions() {
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">{t('reception.transactions')}</h1>
-          <p className="text-gray-500">{t('reception.recordSales')}</p>
+          <h1 className="text-2xl font-bold text-gray-900">{t.reception.transactions}</h1>
+          <p className="text-gray-500">{t.reception.recordSales}</p>
         </div>
         <Button onClick={() => setShowAddModal(true)}>
           <Plus className="w-4 h-4 mr-2" />
-          {t('reception.newTransaction')}
+          {t.reception.newTransaction}
         </Button>
       </div>
 
@@ -296,11 +296,11 @@ export default function ReceptionTransactions() {
                   : 'text-gray-600 hover:bg-gray-100'
               }`}
             >
-              {filter === 'today' && t('reception.today')}
-              {filter === 'yesterday' && t('reception.yesterday')}
-              {filter === 'week' && t('reception.thisWeek')}
-              {filter === 'month' && t('reception.thisMonth')}
-              {filter === 'all' && t('reception.allTime')}
+              {filter === 'today' && t.reception.today}
+              {filter === 'yesterday' && t.reception.yesterday}
+              {filter === 'week' && t.reception.thisWeek}
+              {filter === 'month' && t.reception.thisMonth}
+              {filter === 'all' && t.reception.allTime}
             </button>
           ))}
           {quickDateFilter === 'custom' && (
@@ -316,7 +316,7 @@ export default function ReceptionTransactions() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input
               type="text"
-              placeholder={t('reception.searchTransactions')}
+              placeholder={t.reception.searchTransactions}
               value={searchQuery}
               onChange={(e) => { setSearchQuery(e.target.value); setPage(1); }}
               className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
@@ -324,7 +324,7 @@ export default function ReceptionTransactions() {
           </div>
           <Button variant={showFilters ? 'primary' : 'secondary'} onClick={() => setShowFilters(!showFilters)}>
             <Filter className="w-4 h-4 mr-2" />
-            {t('reception.moreFilters')}
+            {t.reception.moreFilters}
             {(filterServiceType || filterPaymentMethod) && <span className="ml-2 w-2 h-2 bg-purple-500 rounded-full" />}
           </Button>
         </div>
@@ -335,12 +335,12 @@ export default function ReceptionTransactions() {
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
               <select value={filterServiceType} onChange={(e) => { setFilterServiceType(e.target.value); setPage(1); }}
                 className="px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">
-                <option value="">{t('reception.allServices')}</option>
+                <option value="">{t.reception.allServices}</option>
                 {serviceTypes.map((st) => (<option key={st.id} value={st.id}>{st.icon} {st.name}</option>))}
               </select>
               <select value={filterPaymentMethod} onChange={(e) => { setFilterPaymentMethod(e.target.value); setPage(1); }}
                 className="px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">
-                <option value="">{t('reception.allPayments')}</option>
+                <option value="">{t.reception.allPayments}</option>
                 {paymentMethods.map((pm) => (<option key={pm.id} value={pm.id}>{pm.icon} {pm.name}</option>))}
               </select>
               <input
@@ -358,7 +358,7 @@ export default function ReceptionTransactions() {
             </div>
             {hasActiveFilters && (
               <div className="mt-3 flex justify-end">
-                <Button variant="ghost" size="sm" onClick={clearFilters}><X className="w-4 h-4 mr-1" />{t('reception.resetToToday')}</Button>
+                <Button variant="ghost" size="sm" onClick={clearFilters}><X className="w-4 h-4 mr-1" />{t.reception.resetToToday}</Button>
               </div>
             )}
           </div>
@@ -390,7 +390,7 @@ export default function ReceptionTransactions() {
                   <div className="animate-spin w-6 h-6 border-2 border-purple-600 border-t-transparent rounded-full mx-auto" />
                 </td></tr>
               ) : transactions.length === 0 ? (
-                <tr><td colSpan={showBranchColumn ? 8 : 7} className="px-4 py-12 text-center text-gray-500">{t('reception.noTransactionsFound')}</td></tr>
+                <tr><td colSpan={showBranchColumn ? 8 : 7} className="px-4 py-12 text-center text-gray-500">{t.reception.noTransactionsFound}</td></tr>
               ) : (
                 transactions.map((txn) => (
                   <tr key={txn.id} className={txn.isVoided ? 'bg-gray-50 opacity-60' : 'hover:bg-gray-50'}>
@@ -400,7 +400,7 @@ export default function ReceptionTransactions() {
                           {new Date(txn.transactionDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}
                         </span>
                         {isToday(txn.transactionDate) && (
-                          <span className="px-1.5 py-0.5 text-xs font-medium bg-green-100 text-green-700 rounded">{t('reception.today')}</span>
+                          <span className="px-1.5 py-0.5 text-xs font-medium bg-green-100 text-green-700 rounded">{t.reception.today}</span>
                         )}
                       </div>
                     </td>
@@ -416,7 +416,7 @@ export default function ReceptionTransactions() {
                       </td>
                     )}
                     <td className="px-4 py-3 text-right font-semibold text-green-600">{formatCurrency(txn.amount)}</td>
-                    <td className="px-4 py-3">{txn.isVoided ? <Badge variant="danger">{t('reception.voided')}</Badge> : <Badge variant="success">{t('reception.active')}</Badge>}</td>
+                    <td className="px-4 py-3">{txn.isVoided ? <Badge variant="danger">{t.reception.voided}</Badge> : <Badge variant="success">{t.reception.active}</Badge>}</td>
                     <td className="px-4 py-3 text-right">
                       <button onClick={() => { setSelectedTransaction(txn); setShowViewModal(true); }}
                         className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded"><Eye className="w-4 h-4" /></button>
@@ -453,12 +453,12 @@ export default function ReceptionTransactions() {
         </div>
       </Card>
 
-      <Modal isOpen={showAddModal} onClose={() => { setShowAddModal(false); setFormData(initialFormData); setFormErrors({}); setSelectedClient(null); }} title={t('reception.newTransaction')} size="lg">
+      <Modal isOpen={showAddModal} onClose={() => { setShowAddModal(false); setFormData(initialFormData); setFormErrors({}); setSelectedClient(null); }} title={t.reception.newTransaction} size="lg">
         <form onSubmit={handleSubmit} className="space-y-4">
           {formErrors.submit && <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">{formErrors.submit}</div>}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-1">{t('reception.customerClient')} *</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t.reception.customerClient} *</label>
               <ClientAutocomplete
                 value={selectedClient}
                 onChange={(client) => {
@@ -472,25 +472,25 @@ export default function ReceptionTransactions() {
                   setShowCreateClientModal(true);
                 }}
                 branchId={selectedBranchId || undefined}
-                placeholder={t('reception.searchOrCreateClient')}
+                placeholder={t.reception.searchOrCreateClient}
                 error={formErrors.customerName}
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">{t('reception.serviceType')} *</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t.reception.serviceType} *</label>
               <select value={formData.serviceTypeId} onChange={(e) => setFormData({ ...formData, serviceTypeId: e.target.value })}
                 className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 ${formErrors.serviceTypeId ? 'border-red-300' : 'border-gray-200'}`} required>
-                <option value="">{t('reception.selectService')}</option>
+                <option value="">{t.reception.selectService}</option>
                 {serviceTypes.map((st) => (<option key={st.id} value={st.id}>{st.icon} {st.name}</option>))}
               </select>
               {formErrors.serviceTypeId && <p className="mt-1 text-sm text-red-600">{formErrors.serviceTypeId}</p>}
             </div>
             <Input label="Amount (UZS)" type="number" value={formData.amount} onChange={(e) => setFormData({ ...formData, amount: e.target.value })} placeholder="0" min="0" step="1000" error={formErrors.amount} required />
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">{t('reception.paymentMethod')} *</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t.reception.paymentMethod} *</label>
               <select value={formData.paymentMethodId} onChange={(e) => setFormData({ ...formData, paymentMethodId: e.target.value, transactionCode: '' })}
                 className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 ${formErrors.paymentMethodId ? 'border-red-300' : 'border-gray-200'}`} required>
-                <option value="">{t('reception.selectPayment')}</option>
+                <option value="">{t.reception.selectPayment}</option>
                 {paymentMethods.map((pm) => (<option key={pm.id} value={pm.id}>{pm.icon} {pm.name}</option>))}
               </select>
               {formErrors.paymentMethodId && <p className="mt-1 text-sm text-red-600">{formErrors.paymentMethodId}</p>}
@@ -513,7 +513,7 @@ export default function ReceptionTransactions() {
         </form>
       </Modal>
 
-      <Modal isOpen={showViewModal} onClose={() => { setShowViewModal(false); setSelectedTransaction(null); }} title={t('reception.transactionDetails')} size="lg">
+      <Modal isOpen={showViewModal} onClose={() => { setShowViewModal(false); setSelectedTransaction(null); }} title={t.reception.transactionDetails} size="lg">
         {selectedTransaction && (
           <div className="space-y-4">
             <div className="bg-gray-50 rounded-lg p-4">
@@ -537,7 +537,7 @@ export default function ReceptionTransactions() {
         )}
       </Modal>
 
-      <Modal isOpen={showVoidModal} onClose={() => { setShowVoidModal(false); setSelectedTransaction(null); setVoidReason(''); }} title={t('reception.voidTransaction')} size="md">
+      <Modal isOpen={showVoidModal} onClose={() => { setShowVoidModal(false); setSelectedTransaction(null); setVoidReason(''); }} title={t.reception.voidTransaction} size="md">
         {selectedTransaction && (
           <div className="space-y-4">
             <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">

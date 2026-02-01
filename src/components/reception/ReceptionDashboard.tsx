@@ -57,14 +57,14 @@ interface DashboardStats {
 }
 
 const getPeriodLabels = (t: ReturnType<typeof useTranslation>['t']): Record<PeriodType, string> => ({
-  today: t('reception.today'),
-  this_week: t('reception.thisWeek'),
-  this_month: t('reception.thisMonth'),
-  last_month: t('reception.lastMonth'),
-  this_quarter: t('reception.thisQuarter'),
-  this_year: t('reception.thisYear'),
-  all_time: t('reception.allTime'),
-  custom: t('reception.customRange'),
+  today: t.reception.today,
+  this_week: t.reception.thisWeek,
+  this_month: t.reception.thisMonth,
+  last_month: t.reception.lastMonth,
+  this_quarter: t.reception.thisQuarter,
+  this_year: t.reception.thisYear,
+  all_time: t.reception.allTime,
+  custom: t.reception.customRange,
 });
 
 function getDateRange(period: PeriodType, customFrom?: string, customTo?: string): DateRange {
@@ -180,7 +180,7 @@ export default function ReceptionDashboard() {
   };
 
   const formatDateRangeDisplay = () => {
-    if (selectedPeriod === 'all_time') return t('reception.allTime');
+    if (selectedPeriod === 'all_time') return t.reception.allTime;
     const fromDate = new Date(dateRange.from);
     const toDate = new Date(dateRange.to);
     const options: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric', year: 'numeric' };
@@ -203,7 +203,7 @@ export default function ReceptionDashboard() {
       {/* Header with Period Selector */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">{t('reception.incomeStatement')}</h1>
+          <h1 className="text-2xl font-bold text-gray-900">{t.reception.incomeStatement}</h1>
           <p className="text-gray-500">{formatDateRangeDisplay()}</p>
         </div>
 
@@ -228,7 +228,7 @@ export default function ReceptionDashboard() {
             >
               {/* Quick Select */}
               <div className="p-2 border-b border-gray-100">
-                <p className="px-2 py-1 text-xs font-semibold text-gray-400 uppercase">{t('reception.quickSelect')}</p>
+                <p className="px-2 py-1 text-xs font-semibold text-gray-400 uppercase">{t.reception.quickSelect}</p>
                 <div className="grid grid-cols-2 gap-1">
                   {(['today', 'this_week', 'this_month', 'last_month', 'this_quarter', 'this_year', 'all_time'] as PeriodType[]).map((period) => (
                     <button
@@ -249,7 +249,7 @@ export default function ReceptionDashboard() {
               {/* Year Selector - Select year first, then quarter/month will use this year */}
               <div className="p-2 border-b border-gray-100">
                 <div className="flex items-center justify-between mb-2">
-                  <p className="px-2 text-xs font-semibold text-gray-400 uppercase">{t('reception.selectYear')}</p>
+                  <p className="px-2 text-xs font-semibold text-gray-400 uppercase">{t.reception.selectYear}</p>
                   <div className="flex items-center gap-1">
                     <button
                       type="button"
@@ -290,13 +290,13 @@ export default function ReceptionDashboard() {
                   }}
                   className="w-full px-3 py-2 text-sm rounded-lg text-center transition-colors bg-gray-50 hover:bg-purple-100 hover:text-purple-700 text-gray-700 cursor-pointer font-medium"
                 >
-                  {t('reception.fullYear')} {pickerYear}
+                  {t.reception.fullYear} {pickerYear}
                 </button>
               </div>
 
               {/* Quarter Picker - Uses selected year */}
               <div className="p-2 border-b border-gray-100">
-                <p className="px-2 py-1 text-xs font-semibold text-gray-400 uppercase">{t('reception.quarterOf')} {pickerYear}</p>
+                <p className="px-2 py-1 text-xs font-semibold text-gray-400 uppercase">{t.reception.quarterOf} {pickerYear}</p>
                 <div className="grid grid-cols-4 gap-1">
                   {[
                     { label: 'Q1', start: '01-01', end: '03-31' },
@@ -325,7 +325,7 @@ export default function ReceptionDashboard() {
 
               {/* Month Picker - Uses selected year */}
               <div className="p-2 border-b border-gray-100">
-                <p className="px-2 py-1 text-xs font-semibold text-gray-400 uppercase">{t('reception.monthOf')} {pickerYear}</p>
+                <p className="px-2 py-1 text-xs font-semibold text-gray-400 uppercase">{t.reception.monthOf} {pickerYear}</p>
                 <div className="grid grid-cols-4 gap-1">
                   {[
                     { label: 'Jan', month: '01', days: '31' },
@@ -362,11 +362,11 @@ export default function ReceptionDashboard() {
 
               {/* Custom Range */}
               <div className="p-3">
-                <p className="px-1 py-1 text-xs font-semibold text-gray-400 uppercase mb-2">{t('reception.customRange')}</p>
+                <p className="px-1 py-1 text-xs font-semibold text-gray-400 uppercase mb-2">{t.reception.customRange}</p>
                 <div className="space-y-2">
                   <div className="flex gap-2 items-center">
                     <div className="flex-1">
-                      <label className="block text-xs text-gray-500 mb-1">{t('reception.from')}</label>
+                      <label className="block text-xs text-gray-500 mb-1">{t.reception.from}</label>
                       <input
                         type="date"
                         value={customFrom || dateRange.from}
@@ -382,7 +382,7 @@ export default function ReceptionDashboard() {
                       />
                     </div>
                     <div className="flex-1">
-                      <label className="block text-xs text-gray-500 mb-1">{t('reception.to')}</label>
+                      <label className="block text-xs text-gray-500 mb-1">{t.reception.to}</label>
                       <input
                         type="date"
                         value={customTo || dateRange.to}
@@ -409,7 +409,7 @@ export default function ReceptionDashboard() {
                     }}
                     className="w-full px-4 py-2 bg-purple-600 text-white text-sm font-medium rounded-lg hover:bg-purple-700 transition-colors"
                   >
-                    {t('reception.applyRange')}
+                    {t.reception.applyRange}
                   </button>
                 </div>
               </div>
@@ -429,13 +429,13 @@ export default function ReceptionDashboard() {
           <div className="grid grid-cols-2 gap-4">
             <Card className="border-2 border-blue-200 bg-white">
               <div className="p-2">
-                <p className="text-sm text-blue-600 font-medium">{t('reception.paid')}</p>
+                <p className="text-sm text-blue-600 font-medium">{t.reception.paid}</p>
                 <p className="text-3xl font-bold text-blue-700">{formatFullNumber(stats?.income.paid || 0)}</p>
               </div>
             </Card>
             <Card className="border-2 border-blue-200 bg-white">
               <div className="p-2">
-                <p className="text-sm text-red-600 font-medium">{t('reception.debt')}</p>
+                <p className="text-sm text-red-600 font-medium">{t.reception.debt}</p>
                 <p className="text-3xl font-bold text-red-600">{formatFullNumber(stats?.income.debt || 0)}</p>
               </div>
             </Card>
@@ -445,13 +445,13 @@ export default function ReceptionDashboard() {
           <div className="grid grid-cols-2 gap-4">
             <Card className="border-2 border-blue-200 bg-white">
               <div className="p-2">
-                <p className="text-sm text-blue-600 font-medium">{t('reception.opex')}</p>
+                <p className="text-sm text-blue-600 font-medium">{t.reception.opex}</p>
                 <p className="text-3xl font-bold text-blue-700">{formatFullNumber(stats?.expenses.opex || 0)}</p>
               </div>
             </Card>
             <Card className="border-2 border-blue-200 bg-white">
               <div className="p-2">
-                <p className="text-sm text-blue-600 font-medium">{t('reception.capex')}</p>
+                <p className="text-sm text-blue-600 font-medium">{t.reception.capex}</p>
                 <p className="text-3xl font-bold text-blue-700">{formatFullNumber(stats?.expenses.capex || 0)}</p>
               </div>
             </Card>
@@ -460,7 +460,7 @@ export default function ReceptionDashboard() {
           {/* Top 5 Expense Categories */}
           <Card className="border-2 border-green-200 bg-white">
             <div className="p-2">
-              <h3 className="font-semibold text-gray-900 mb-4">{t('reception.topExpenseCategories')}</h3>
+              <h3 className="font-semibold text-gray-900 mb-4">{t.reception.topExpenseCategories}</h3>
               {(stats?.expenses.topCategories && stats.expenses.topCategories.length > 0) ? (
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
                   {stats.expenses.topCategories.map((cat) => (
@@ -471,7 +471,7 @@ export default function ReceptionDashboard() {
                   ))}
                 </div>
               ) : (
-                <p className="text-gray-400 text-sm text-center py-4">{t('reception.noExpensesInPeriod')}</p>
+                <p className="text-gray-400 text-sm text-center py-4">{t.reception.noExpensesInPeriod}</p>
               )}
             </div>
           </Card>
@@ -480,7 +480,7 @@ export default function ReceptionDashboard() {
           <div className="grid grid-cols-2 gap-4">
             <Card className="border-2 border-green-200 bg-white">
               <div className="p-2">
-                <p className="text-sm text-green-600 font-medium">{t('reception.operatingProfit')}</p>
+                <p className="text-sm text-green-600 font-medium">{t.reception.operatingProfit}</p>
                 <p className={`text-3xl font-bold ${(stats?.profit.operating || 0) >= 0 ? 'text-green-700' : 'text-red-600'}`}>
                   {formatFullNumber(stats?.profit.operating || 0)}
                 </p>
@@ -488,7 +488,7 @@ export default function ReceptionDashboard() {
             </Card>
             <Card className="border-2 border-green-200 bg-white">
               <div className="p-2">
-                <p className="text-sm text-green-600 font-medium">{t('reception.profit')}</p>
+                <p className="text-sm text-green-600 font-medium">{t.reception.profit}</p>
                 <p className={`text-3xl font-bold ${(stats?.profit.net || 0) >= 0 ? 'text-green-700' : 'text-red-600'}`}>
                   {formatFullNumber(stats?.profit.net || 0)}
                 </p>
@@ -500,7 +500,7 @@ export default function ReceptionDashboard() {
           <Card>
             <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
               <ArrowLeftRight className="w-4 h-4 text-purple-600" />
-              {t('reception.incomeByServiceType')}
+              {t.reception.incomeByServiceType}
             </h3>
             <div className="space-y-3">
               {stats?.income.byServiceType.map((item) => (
@@ -514,14 +514,14 @@ export default function ReceptionDashboard() {
                 </div>
               ))}
               {(!stats?.income.byServiceType || stats.income.byServiceType.length === 0) && (
-                <p className="text-gray-400 text-sm">{t('reception.noTransactionsInPeriod')}</p>
+                <p className="text-gray-400 text-sm">{t.reception.noTransactionsInPeriod}</p>
               )}
             </div>
           </Card>
 
           {/* Recent Activity */}
           <Card>
-            <h3 className="font-semibold text-gray-900 mb-4">{t('reception.recentActivity')}</h3>
+            <h3 className="font-semibold text-gray-900 mb-4">{t.reception.recentActivity}</h3>
             <div className="space-y-3">
               {stats?.recentActivity.map((item) => (
                 <div key={`${item.type}-${item.id}`} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
@@ -549,7 +549,7 @@ export default function ReceptionDashboard() {
                 </div>
               ))}
               {(!stats?.recentActivity || stats.recentActivity.length === 0) && (
-                <p className="text-gray-400 text-sm text-center py-4">{t('reception.noRecentActivity')}</p>
+                <p className="text-gray-400 text-sm text-center py-4">{t.reception.noRecentActivity}</p>
               )}
             </div>
           </Card>
