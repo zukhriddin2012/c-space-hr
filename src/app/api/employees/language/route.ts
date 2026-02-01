@@ -4,7 +4,7 @@ import { jwtVerify } from 'jose';
 import { supabaseAdmin } from '@/lib/supabase';
 
 const JWT_SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET || 'c-space-hr-secret-key-change-in-production'
+  process.env.JWT_SECRET || 'c-space-niya-secret-key-change-in-production'
 );
 
 // Update employee's preferred language

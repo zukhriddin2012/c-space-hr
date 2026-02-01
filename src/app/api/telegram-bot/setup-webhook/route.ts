@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
-const WEBAPP_URL = process.env.NEXT_PUBLIC_WEBAPP_URL || 'https://c-space-hr.vercel.app';
+const WEBAPP_URL = process.env.NEXT_PUBLIC_WEBAPP_URL || 'https://c-space-niya.vercel.app';
 
 export async function GET(request: NextRequest) {
   if (!BOT_TOKEN) {

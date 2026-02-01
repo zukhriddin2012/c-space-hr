@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin, isSupabaseAdminConfigured } from '@/lib/supabase';
 
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
-const WEBAPP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://c-space-hr.vercel.app';
+const WEBAPP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://c-space-niya.vercel.app';
 
 export async function POST(request: NextRequest) {
   try {

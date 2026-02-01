@@ -30,7 +30,7 @@ function CheckoutReminderContent() {
     }
 
     try {
-      const apiUrl = 'https://c-space-hr.vercel.app/api/attendance/checkout-check';
+      const apiUrl = 'https://c-space-niya.vercel.app/api/attendance/checkout-check';
 
       const xhr = new XMLHttpRequest();
       xhr.open('POST', apiUrl, true);

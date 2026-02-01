@@ -3,7 +3,7 @@
 -- Only visible to general_manager role
 -- ============================================================================
 
--- Projects (HR Platform, Telegram Bot, etc.)
+-- Projects (C-Space Niya, Telegram Bot, etc.)
 CREATE TABLE IF NOT EXISTS dev_projects (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   name TEXT NOT NULL,

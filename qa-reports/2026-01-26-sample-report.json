@@ -1,11 +1,11 @@
 {
   "reportId": "QA-2026-01-26-SAMPLE",
-  "project": "C-Space HR Platform",
+  "project": "C-Space Niya Platform",
   "tester": "QA Tester Name",
   "dateStarted": "2026-01-26T09:00:00Z",
   "dateCompleted": "2026-01-26T17:00:00Z",
   "environment": {
-    "webAppUrl": "https://c-space-hr.vercel.app",
+    "webAppUrl": "https://c-space-niya.vercel.app",
     "botUsername": "@cspace_attendance_bot",
     "testDevice": "iPhone 14 Pro / MacBook Pro M2",
     "browser": "Chrome 120, Safari 17",

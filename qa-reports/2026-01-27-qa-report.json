@@ -1,11 +1,11 @@
 {
   "reportId": "QA-2026-01-27-001",
-  "project": "C-Space HR Platform",
+  "project": "C-Space Niya Platform",
   "tester": "Claude (AI Assistant)",
   "dateStarted": "2026-01-27T04:00:00Z",
   "dateCompleted": "2026-01-27T04:30:00Z",
   "environment": {
-    "webAppUrl": "https://c-space-hr.vercel.app",
+    "webAppUrl": "https://c-space-niya.vercel.app",
     "botUsername": "@cspacehr_bot",
     "botName": "C-Space Time",
     "testDevice": "Browser (Chrome)",
@@ -143,7 +143,7 @@
       "status": "open",
       "relatedTest": "LSYNC-003",
       "stepsToReproduce": [
-        "1. Login to web app at https://c-space-hr.vercel.app",
+        "1. Login to web app at https://c-space-niya.vercel.app",
         "2. Click language selector in header",
         "3. Select 'Русский' or 'O'zbekcha'",
         "4. Observe the dashboard"

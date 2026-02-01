@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
 
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
-const WEBAPP_URL = process.env.NEXT_PUBLIC_WEBAPP_URL || 'https://c-space-hr.vercel.app';
+const WEBAPP_URL = process.env.NEXT_PUBLIC_WEBAPP_URL || 'https://c-space-niya.vercel.app';
 
 type Lang = 'uz' | 'ru' | 'en';
 
