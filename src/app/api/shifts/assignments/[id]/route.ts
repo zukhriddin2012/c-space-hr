@@ -123,7 +123,7 @@ export const PATCH = withAuth(async (
     if (!canEditAll) {
       if (canEditOwnBranch) {
         // Branch manager can only edit their own branch
-        if (context.user.branch_id !== assignment.branch_id) {
+        if (context.user.branchId !== assignment.branch_id) {
           return NextResponse.json({ error: 'Cannot edit other branches' }, { status: 403 });
         }
       } else {
@@ -174,7 +174,7 @@ export const DELETE = withAuth(async (
     if (!canEditAll) {
       if (canEditOwnBranch) {
         // Branch manager can only edit their own branch
-        if (context.user.branch_id !== assignment.branch_id) {
+        if (context.user.branchId !== assignment.branch_id) {
           return NextResponse.json({ error: 'Cannot delete from other branches' }, { status: 403 });
         }
       } else {
