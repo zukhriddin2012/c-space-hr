@@ -376,6 +376,17 @@ const { data, error } = await supabaseAdmin
 
 ## Recent Changes Log
 
+### 2026-02-03 (Shifts API Routes - T028)
+- **API Endpoints** for shift planning:
+  - `GET/POST /api/shifts/schedules` - List and create schedules
+  - `GET/PATCH /api/shifts/schedules/[id]` - Detail, publish, lock
+  - `GET/POST /api/shifts/assignments` - List and create assignments
+  - `PATCH/DELETE /api/shifts/assignments/[id]` - Update, confirm, delete
+- **Permissions Added** (6 new):
+  - `SHIFTS_VIEW`, `SHIFTS_VIEW_ALL`, `SHIFTS_EDIT`, `SHIFTS_EDIT_OWN_BRANCH`
+  - `SHIFTS_PUBLISH`, `SHIFTS_MANAGE_REQUIREMENTS`
+- **Role Access**: GM/HR full access, Branch Managers own branch only
+
 ### 2026-02-03 (Shift Planning Database Schema - T027)
 - **5 New Tables** for shift planning module:
   - `shift_schedules` - Weekly container with Draft→Published→Locked workflow

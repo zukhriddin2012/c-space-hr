@@ -93,6 +93,14 @@ export const PERMISSIONS = {
   TELEGRAM_BOT_VIEW: 'telegram_bot:view',
   TELEGRAM_BOT_EDIT: 'telegram_bot:edit',
 
+  // Shift Planning
+  SHIFTS_VIEW: 'shifts:view',
+  SHIFTS_VIEW_ALL: 'shifts:view_all',
+  SHIFTS_EDIT: 'shifts:edit',
+  SHIFTS_EDIT_OWN_BRANCH: 'shifts:edit_own_branch',
+  SHIFTS_PUBLISH: 'shifts:publish',
+  SHIFTS_MANAGE_REQUIREMENTS: 'shifts:manage_requirements',
+
   // Reception Mode
   RECEPTION_VIEW: 'reception:view',
   RECEPTION_TRANSACTIONS_CREATE: 'reception:transactions:create',
@@ -201,6 +209,12 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     PERMISSIONS.RECEPTION_EXPENSES_VOID,
     PERMISSIONS.RECEPTION_ADMIN,
     PERMISSIONS.RECEPTION_REPORTS,
+    // Shift Planning - Full access
+    PERMISSIONS.SHIFTS_VIEW,
+    PERMISSIONS.SHIFTS_VIEW_ALL,
+    PERMISSIONS.SHIFTS_EDIT,
+    PERMISSIONS.SHIFTS_PUBLISH,
+    PERMISSIONS.SHIFTS_MANAGE_REQUIREMENTS,
   ],
 
   ceo: [
@@ -246,6 +260,9 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     PERMISSIONS.RECEPTION_TRANSACTIONS_VIEW,
     PERMISSIONS.RECEPTION_EXPENSES_VIEW,
     PERMISSIONS.RECEPTION_REPORTS,
+    // Shift Planning - View all
+    PERMISSIONS.SHIFTS_VIEW,
+    PERMISSIONS.SHIFTS_VIEW_ALL,
   ],
 
   hr: [
@@ -283,6 +300,12 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     PERMISSIONS.ACCOUNTING_REQUESTS_CREATE,
     PERMISSIONS.ACCOUNTING_REQUESTS_EDIT_OWN,
     PERMISSIONS.ACCOUNTING_REQUESTS_CANCEL_OWN,
+    // Shift Planning - Full access
+    PERMISSIONS.SHIFTS_VIEW,
+    PERMISSIONS.SHIFTS_VIEW_ALL,
+    PERMISSIONS.SHIFTS_EDIT,
+    PERMISSIONS.SHIFTS_PUBLISH,
+    PERMISSIONS.SHIFTS_MANAGE_REQUIREMENTS,
   ],
 
   branch_manager: [
@@ -321,6 +344,9 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     PERMISSIONS.RECEPTION_EXPENSES_VOID,
     PERMISSIONS.RECEPTION_ADMIN,
     PERMISSIONS.RECEPTION_REPORTS,
+    // Shift Planning - Own branch only
+    PERMISSIONS.SHIFTS_VIEW,
+    PERMISSIONS.SHIFTS_EDIT_OWN_BRANCH,
   ],
 
   recruiter: [
@@ -356,6 +382,8 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     PERMISSIONS.ACCOUNTING_REQUESTS_CREATE,
     PERMISSIONS.ACCOUNTING_REQUESTS_EDIT_OWN,
     PERMISSIONS.ACCOUNTING_REQUESTS_CANCEL_OWN,
+    // Shift Planning - View own schedule
+    PERMISSIONS.SHIFTS_VIEW,
   ],
 
   chief_accountant: [
