@@ -93,7 +93,15 @@ export async function POST(request: NextRequest) {
 
       if (attError) {
         console.error('Remote check-in error:', attError);
-        return NextResponse.json({ success: false, error: 'Failed to record check-in' }, { status: 500 });
+        // Check if it's a unique constraint violation (duplicate check-in for same day)
+        if (attError.code === '23505') {
+          return NextResponse.json({
+            success: false,
+            error: 'duplicate_checkin',
+            message: 'You already have a check-in record for today. Please check out first or contact admin.',
+          }, { status: 409 });
+        }
+        return NextResponse.json({ success: false, error: 'Failed to record check-in', details: attError.message }, { status: 500 });
       }
 
       console.log('📡 Remote check-in success, attendance:', attendance?.id, 'verification_type:', attendance?.verification_type);
