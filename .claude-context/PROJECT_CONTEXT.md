@@ -34,7 +34,7 @@ npx tsc --noEmit
 - **Multi-language:** English, Russian, Uzbek
 
 ### Production URLs
-- **Web App:** https://hr.cspace.uz
+- **Web App:** https://niya.cspace.uz
 - **Hosted on:** Vercel
 - **Database:** Supabase (PostgreSQL)
 
