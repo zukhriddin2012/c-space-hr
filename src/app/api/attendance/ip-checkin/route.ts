@@ -172,24 +172,22 @@ export async function POST(request: NextRequest) {
       const botWebhookUrl = process.env.TELEGRAM_BOT_WEBHOOK_URL;
       const botWebhookSecret = process.env.TELEGRAM_BOT_WEBHOOK_SECRET;
 
+      // Fire webhook without waiting (faster response to mini app)
+      // The fetch will complete in the background on Vercel
       if (botWebhookUrl && botWebhookSecret) {
-        try {
-          await fetch(`${botWebhookUrl}/webhook/checkin`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${botWebhookSecret}`,
-            },
-            body: JSON.stringify({
-              telegramId,
-              success: false,
-              action: remoteWorkEnabled ? 'remote_choice' : 'need_gps',
-              remoteWorkEnabled,
-            }),
-          });
-        } catch (err) {
-          console.error('Failed to notify bot webhook:', err);
-        }
+        fetch(`${botWebhookUrl}/webhook/checkin`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${botWebhookSecret}`,
+          },
+          body: JSON.stringify({
+            telegramId,
+            success: false,
+            action: remoteWorkEnabled ? 'remote_choice' : 'need_gps',
+            remoteWorkEnabled,
+          }),
+        }).catch(err => console.error('Failed to notify bot webhook:', err));
       }
 
       return NextResponse.json({
