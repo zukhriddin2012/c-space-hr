@@ -97,10 +97,10 @@ export default function ShiftPlanningGrid({
 
       // Filter branches:
       // 1. By branchFilter if set (for branch manager view)
-      // 2. Exclude facility_management and under_construction branches
+      // 2. Only include 'operational' branches (exclude rented, facility_management, under_construction, headquarters)
       branchesList = branchesList.filter((b: Branch) => {
-        // Exclude non-coworking branches (facility management, under construction, headquarters)
-        if (b.operational_status === 'facility_management' || b.operational_status === 'under_construction' || b.operational_status === 'headquarters') {
+        // Only include operational coworking branches
+        if (b.operational_status !== 'operational') {
           return false;
         }
         // Apply branch filter if set
