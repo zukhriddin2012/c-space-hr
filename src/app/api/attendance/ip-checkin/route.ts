@@ -69,25 +69,43 @@ export async function POST(request: NextRequest) {
     // Handle remote check-in (user already chose "Working remotely")
     console.log('📡 ip-checkin called with remoteCheckin:', remoteCheckin);
     if (remoteCheckin) {
-      console.log('📡 Processing remote check-in for employee:', employee.id);
+      // Verify employee has remote work enabled
+      if (!employee.remote_work_enabled) {
+        console.log('📡 Remote check-in denied - employee does not have remote_work_enabled:', employee.id);
+        return NextResponse.json({
+          success: false,
+          error: 'remote_not_enabled',
+          message: 'Remote work is not enabled for this employee',
+        }, { status: 403 });
+      }
+
+      console.log('📡 Processing remote check-in for employee:', employee.id, 'branch_id:', employee.branch_id);
       const tashkent = getTashkentTime();
       const checkInTime = tashkent.toISOString().substring(11, 19);
       const today = tashkent.toISOString().split('T')[0];
       const late = isLate(shiftId);
 
+      // Build insert data - branch_id is optional for remote check-ins
+      const insertData: Record<string, unknown> = {
+        employee_id: employee.id,
+        date: today,
+        check_in: checkInTime,
+        check_in_latitude: 0,
+        check_in_longitude: 0,
+        shift_id: shiftId,
+        status: late ? 'late' : 'present',
+        verification_type: 'remote',
+        is_remote: true,
+      };
+
+      // Only include branch_id if employee has one assigned
+      if (employee.branch_id) {
+        insertData.check_in_branch_id = employee.branch_id;
+      }
+
       const { data: attendance, error: attError } = await supabaseAdmin
         .from('attendance')
-        .insert({
-          employee_id: employee.id,
-          date: today,
-          check_in: checkInTime,
-          check_in_branch_id: employee.branch_id,
-          check_in_latitude: 0,
-          check_in_longitude: 0,
-          shift_id: shiftId,
-          status: late ? 'late' : 'present',
-          verification_type: 'remote',
-        })
+        .insert(insertData)
         .select()
         .single();
 
