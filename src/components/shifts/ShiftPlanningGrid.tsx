@@ -12,6 +12,8 @@ import CoverageIndicator, { type CoverageStatus } from './CoverageIndicator';
 interface Branch {
   id: string;
   name: string;
+  operational_status?: 'under_construction' | 'operational' | 'rented' | 'facility_management';
+  smart_lock_enabled?: boolean;
 }
 
 interface BranchRequirement {
@@ -93,10 +95,20 @@ export default function ShiftPlanningGrid({
       const branchesData = await branchesRes.json();
       let branchesList = branchesData.branches || [];
 
-      // Filter branches if branchFilter is set
-      if (branchFilter) {
-        branchesList = branchesList.filter((b: Branch) => b.id === branchFilter);
-      }
+      // Filter branches:
+      // 1. By branchFilter if set (for branch manager view)
+      // 2. Exclude facility_management and under_construction branches
+      branchesList = branchesList.filter((b: Branch) => {
+        // Exclude facility management and under construction branches
+        if (b.operational_status === 'facility_management' || b.operational_status === 'under_construction') {
+          return false;
+        }
+        // Apply branch filter if set
+        if (branchFilter && b.id !== branchFilter) {
+          return false;
+        }
+        return true;
+      });
       setBranches(branchesList);
 
       // Fetch requirements
@@ -331,40 +343,42 @@ export default function ShiftPlanningGrid({
                   })}
                 </div>
 
-                {/* Night shifts row */}
-                <div className="grid grid-cols-8 gap-2">
-                  <div className="text-xs text-gray-500 p-2 flex items-center">
-                    🌙 Night
-                  </div>
-                  {weekDates.map((date) => {
-                    const dateStr = formatDateString(date);
-                    const req = getRequirement(branch.id, 'night');
-                    if (req && !req.has_shift) {
+                {/* Night shifts row - hidden for smart lock branches */}
+                {!branch.smart_lock_enabled && (
+                  <div className="grid grid-cols-8 gap-2">
+                    <div className="text-xs text-gray-500 p-2 flex items-center">
+                      🌙 Night
+                    </div>
+                    {weekDates.map((date) => {
+                      const dateStr = formatDateString(date);
+                      const req = getRequirement(branch.id, 'night');
+                      if (req && !req.has_shift) {
+                        return (
+                          <div
+                            key={`${branch.id}-${dateStr}-night`}
+                            className="min-h-[80px] bg-gray-100 border border-gray-200 rounded-md flex items-center justify-center text-xs text-gray-400"
+                          >
+                            No night shift
+                          </div>
+                        );
+                      }
                       return (
-                        <div
+                        <ShiftCell
                           key={`${branch.id}-${dateStr}-night`}
-                          className="min-h-[80px] bg-gray-100 border border-gray-200 rounded-md flex items-center justify-center text-xs text-gray-400"
-                        >
-                          No night shift
-                        </div>
+                          branchId={branch.id}
+                          date={dateStr}
+                          shiftType="night"
+                          assignments={getAssignmentsForCell(branch.id, dateStr, 'night')}
+                          minRequired={req?.min_staff || 1}
+                          maxAllowed={req?.max_staff || undefined}
+                          readonly={isReadonly}
+                          onAdd={() => onAssignmentAdd?.(branch.id, dateStr, 'night')}
+                          onRemove={onAssignmentRemove}
+                        />
                       );
-                    }
-                    return (
-                      <ShiftCell
-                        key={`${branch.id}-${dateStr}-night`}
-                        branchId={branch.id}
-                        date={dateStr}
-                        shiftType="night"
-                        assignments={getAssignmentsForCell(branch.id, dateStr, 'night')}
-                        minRequired={req?.min_staff || 1}
-                        maxAllowed={req?.max_staff || undefined}
-                        readonly={isReadonly}
-                        onAdd={() => onAssignmentAdd?.(branch.id, dateStr, 'night')}
-                        onRemove={onAssignmentRemove}
-                      />
-                    );
-                  })}
-                </div>
+                    })}
+                  </div>
+                )}
               </div>
             ))}
           </div>
