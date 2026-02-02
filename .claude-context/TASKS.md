@@ -41,6 +41,7 @@
 | T026 | Transaction Filters & Client Autocomplete | 2026-01-31 | Main |
 | T027 | Shift Planning Database Schema & Functions | 2026-02-03 | Spoke |
 | T028 | Shifts API Routes (CRUD) | 2026-02-03 | Spoke |
+| T029 | Shift Planning Grid UI | 2026-02-03 | Spoke |
 
 ### 🟡 In Progress
 

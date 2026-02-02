@@ -376,6 +376,18 @@ const { data, error } = await supabaseAdmin
 
 ## Recent Changes Log
 
+### 2026-02-03 (Shift Planning Grid UI - T029)
+- **ShiftPlanningGrid Component** (`src/components/shifts/`):
+  - `ShiftPlanningGrid.tsx` - Main weekly grid (15 branches × 7 days)
+  - `ShiftCell.tsx` - Individual slot with status indicators
+  - `WeekNavigator.tsx` - Week prev/next/today navigation
+  - `CoverageIndicator.tsx` - Coverage status badges
+- **/shifts Page** (`src/app/(dashboard)/shifts/`):
+  - Server component with auth/permission checks
+  - Client component with grid and modal
+- **Features**: Empty cells (red), understaffed (amber), confirmed ✓, week navigation
+- **API**: `GET /api/branches/shift-requirements` for branch requirements
+
 ### 2026-02-03 (Shifts API Routes - T028)
 - **API Endpoints** for shift planning:
   - `GET/POST /api/shifts/schedules` - List and create schedules
