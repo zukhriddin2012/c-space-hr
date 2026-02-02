@@ -27,7 +27,7 @@ export interface Branch {
   geofence_radius: number;
   office_ips?: string[] | null;
   // Branch configuration fields (optional for backwards compatibility)
-  operational_status?: 'under_construction' | 'operational' | 'rented' | 'facility_management';
+  operational_status?: 'under_construction' | 'operational' | 'rented' | 'facility_management' | 'headquarters';
   has_night_shift?: boolean;
   smart_lock_enabled?: boolean;
   smart_lock_start_time?: string | null; // TIME format: "18:00"

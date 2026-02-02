@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Plus, MapPin, Users, CheckCircle, Clock, Wallet, Edit, Circle, LayoutGrid, List, Moon, Sun, Lock, Construction, Star, Building2, Wrench } from 'lucide-react';
+import { Plus, MapPin, Users, CheckCircle, Clock, Wallet, Edit, Circle, LayoutGrid, List, Moon, Sun, Lock, Construction, Star, Building2, Wrench, Landmark } from 'lucide-react';
 
 // Operational status configuration
 const statusConfig: Record<string, { icon: React.ElementType; label: string; bg: string; text: string; border: string }> = {
@@ -9,6 +9,7 @@ const statusConfig: Record<string, { icon: React.ElementType; label: string; bg:
   'under_construction': { icon: Construction, label: 'Under Construction', bg: 'bg-orange-100', text: 'text-orange-700', border: 'border-orange-200' },
   'rented': { icon: Building2, label: 'Rented', bg: 'bg-cyan-100', text: 'text-cyan-700', border: 'border-cyan-200' },
   'facility_management': { icon: Wrench, label: 'Facility Mgmt', bg: 'bg-slate-100', text: 'text-slate-700', border: 'border-slate-200' },
+  'headquarters': { icon: Landmark, label: 'Headquarters', bg: 'bg-purple-100', text: 'text-purple-700', border: 'border-purple-200' },
 };
 import Link from 'next/link';
 import { BranchMap } from '@/components/branch';

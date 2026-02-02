@@ -17,7 +17,7 @@ export interface BranchWithStats {
   presentToday: number;
   salaryBudget: number;
   // New branch configuration fields
-  operational_status: 'under_construction' | 'operational' | 'rented' | 'facility_management';
+  operational_status: 'under_construction' | 'operational' | 'rented' | 'facility_management' | 'headquarters';
   has_night_shift: boolean;
   smart_lock_enabled: boolean;
   branch_class: 'A+' | 'A' | 'B+' | 'B' | 'C+' | 'C';

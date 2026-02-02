@@ -12,7 +12,7 @@ import CoverageIndicator, { type CoverageStatus } from './CoverageIndicator';
 interface Branch {
   id: string;
   name: string;
-  operational_status?: 'under_construction' | 'operational' | 'rented' | 'facility_management';
+  operational_status?: 'under_construction' | 'operational' | 'rented' | 'facility_management' | 'headquarters';
   smart_lock_enabled?: boolean;
 }
 
@@ -99,8 +99,8 @@ export default function ShiftPlanningGrid({
       // 1. By branchFilter if set (for branch manager view)
       // 2. Exclude facility_management and under_construction branches
       branchesList = branchesList.filter((b: Branch) => {
-        // Exclude facility management and under construction branches
-        if (b.operational_status === 'facility_management' || b.operational_status === 'under_construction') {
+        // Exclude non-coworking branches (facility management, under construction, headquarters)
+        if (b.operational_status === 'facility_management' || b.operational_status === 'under_construction' || b.operational_status === 'headquarters') {
           return false;
         }
         // Apply branch filter if set

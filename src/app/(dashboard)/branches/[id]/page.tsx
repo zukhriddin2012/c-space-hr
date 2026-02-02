@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { MapPin, Save, ArrowLeft, Trash2, Navigation, Circle, Wifi, Plus, X, Moon, Sun, Lock, Construction, Star, User, Building2, Wrench } from 'lucide-react';
+import { MapPin, Save, ArrowLeft, Trash2, Navigation, Circle, Wifi, Plus, X, Moon, Sun, Lock, Construction, Star, User, Building2, Wrench, Landmark } from 'lucide-react';
 import Link from 'next/link';
 
 interface Branch {
@@ -14,7 +14,7 @@ interface Branch {
   geofence_radius: number;
   office_ips: string[] | null;
   // New configuration fields
-  operational_status: 'under_construction' | 'operational' | 'rented' | 'facility_management';
+  operational_status: 'under_construction' | 'operational' | 'rented' | 'facility_management' | 'headquarters';
   has_night_shift: boolean;
   smart_lock_enabled: boolean;
   smart_lock_start_time: string | null;
@@ -49,7 +49,7 @@ export default function BranchDetailPage() {
     geofence_radius: '100',
     office_ips: [] as string[],
     // New configuration fields
-    operational_status: 'operational' as 'under_construction' | 'operational' | 'rented' | 'facility_management',
+    operational_status: 'operational' as 'under_construction' | 'operational' | 'rented' | 'facility_management' | 'headquarters',
     has_night_shift: false,
     smart_lock_enabled: false,
     smart_lock_start_time: '18:00',
@@ -376,6 +376,25 @@ export default function BranchDetailPage() {
                   <div>
                     <p className="font-medium text-gray-900">Facility Mgmt</p>
                     <p className="text-xs text-gray-500">Cleaning, procurement, etc.</p>
+                  </div>
+                </label>
+                <label className={`flex items-center gap-3 p-4 border rounded-lg cursor-pointer transition-all ${
+                  formData.operational_status === 'headquarters'
+                    ? 'border-purple-500 bg-purple-50'
+                    : 'border-gray-200 hover:border-gray-300'
+                }`}>
+                  <input
+                    type="radio"
+                    name="operational_status"
+                    value="headquarters"
+                    checked={formData.operational_status === 'headquarters'}
+                    onChange={(e) => setFormData(prev => ({ ...prev, operational_status: e.target.value as typeof formData.operational_status }))}
+                    className="sr-only"
+                  />
+                  <Landmark size={20} className={formData.operational_status === 'headquarters' ? 'text-purple-600' : 'text-gray-400'} />
+                  <div>
+                    <p className="font-medium text-gray-900">Headquarters</p>
+                    <p className="text-xs text-gray-500">Internal office, not coworking</p>
                   </div>
                 </label>
               </div>
