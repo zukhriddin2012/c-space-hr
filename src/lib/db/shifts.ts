@@ -788,8 +788,10 @@ export async function getScheduleCoverageStatus(scheduleId: string): Promise<{
     const date = new Date(weekStart);
     date.setDate(date.getDate() + i);
     const dateStr = date.toISOString().split('T')[0];
+    const dayOfWeek = date.getDay(); // 0=Sunday, 1=Monday, etc.
 
-    requirements.forEach(req => {
+    // Only count requirements that match this day of week
+    requirements.filter(req => req.day_of_week === dayOfWeek).forEach(req => {
       totalShifts++;
       const key = `${req.branch_id}-${dateStr}-${req.shift_type}`;
       const count = assignmentCounts.get(key) || 0;
