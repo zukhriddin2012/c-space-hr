@@ -655,9 +655,10 @@ export async function getAvailableEmployeesForShift(
   const dayOfWeek = new Date(date).getDay();
 
   // Get all active employees
+  // Note: primary_branch_id is preferred, but fall back to branch_id for existing employees
   let employeesQuery = supabaseAdmin!
     .from('employees')
-    .select('id, full_name, position, is_floater, primary_branch_id, can_work_night')
+    .select('id, full_name, position, is_floater, primary_branch_id, branch_id, can_work_night')
     .eq('status', 'active');
 
   // Filter by night shift capability if night shift
@@ -665,10 +666,10 @@ export async function getAvailableEmployeesForShift(
     employeesQuery = employeesQuery.eq('can_work_night', true);
   }
 
-  // Filter by branch if specified (include floaters and employees with no branch set)
-  // Note: Include null primary_branch_id since column was recently added
+  // Filter by branch if specified (include floaters and employees assigned to this branch)
+  // Note: Check both primary_branch_id and branch_id for backwards compatibility
   if (branchId) {
-    employeesQuery = employeesQuery.or(`primary_branch_id.eq.${branchId},is_floater.eq.true,primary_branch_id.is.null`);
+    employeesQuery = employeesQuery.or(`primary_branch_id.eq.${branchId},branch_id.eq.${branchId},is_floater.eq.true`);
   }
 
   const { data: employees, error: empError } = await employeesQuery;
@@ -724,7 +725,8 @@ export async function getAvailableEmployeesForShift(
       full_name: emp.full_name,
       position: emp.position,
       is_floater: emp.is_floater || false,
-      primary_branch_id: emp.primary_branch_id || null,
+      // Use primary_branch_id if set, otherwise fall back to branch_id
+      primary_branch_id: emp.primary_branch_id || emp.branch_id || null,
     }));
 }
 
