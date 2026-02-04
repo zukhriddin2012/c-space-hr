@@ -26,7 +26,8 @@ function detectShift(position: string | null): 'day' | 'night' {
   return 'day';
 }
 
-// Check if employee is late
+// Check if employee is late based on shift type
+// Day shift: late after 9:15, Night shift: late after 18:15
 function isLate(shiftId: string): boolean {
   const tashkent = getTashkentTime();
   const hour = tashkent.getUTCHours();
@@ -54,7 +55,7 @@ export async function POST(request: NextRequest) {
     // since user already got to this endpoint through the remote choice flow
     const { data: employee, error: empError } = await supabaseAdmin
       .from('employees')
-      .select('id, full_name, position, branch_id, preferred_language')
+      .select('id, full_name, position, branch_id, preferred_language, default_shift')
       .eq('telegram_id', telegramId.toString())
       .single();
 
@@ -63,8 +64,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'Employee not found' }, { status: 404 });
     }
 
-    // Auto-detect shift from position or time if not provided
-    const shiftId = providedShiftId || detectShift(employee.position);
+    // Use provided shift, or employee's default shift, or auto-detect from position/time
+    const shiftId = providedShiftId || employee.default_shift || detectShift(employee.position);
 
     // Check if employee has active check-in
     const { data: activeCheckin } = await supabaseAdmin
