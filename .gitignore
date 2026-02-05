@@ -48,3 +48,10 @@ next-env.d.ts
 # sensitive data
 /data/
 .env.local
+/archive
+/claude_starter
+/tasks
+/tasks
+/tasks
+/tasks
+/tasks/PR2-017_2026-02-05_fix-and-improve-wages-section/OPS-017_devopsa
