@@ -136,9 +136,12 @@ export function ApprovalsHub({
       const response = await fetch(`/api/termination-requests/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: 'approved' }),
+        body: JSON.stringify({ action: 'approve' }),
       });
-      if (!response.ok) throw new Error('Failed to approve');
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.error || 'Failed to approve');
+      }
       setSuccess('Termination request approved');
       setTimeout(() => { setSuccess(null); window.location.reload(); }, 1500);
     } catch (err) {
@@ -149,15 +152,22 @@ export function ApprovalsHub({
   };
 
   const handleRejectTermination = async (id: string) => {
+    const reason = window.prompt('Please provide a reason for rejection:');
+    if (!reason) {
+      return; // User cancelled or provided empty reason
+    }
     setProcessingId(id);
     setError(null);
     try {
       const response = await fetch(`/api/termination-requests/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: 'rejected' }),
+        body: JSON.stringify({ action: 'reject', rejection_reason: reason }),
       });
-      if (!response.ok) throw new Error('Failed to reject');
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.error || 'Failed to reject');
+      }
       setSuccess('Termination request rejected');
       setTimeout(() => { setSuccess(null); window.location.reload(); }, 1500);
     } catch (err) {
@@ -176,11 +186,40 @@ export function ApprovalsHub({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'approve' }),
       });
-      if (!response.ok) throw new Error('Failed to approve');
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.error || 'Failed to approve');
+      }
       setSuccess('Wage change approved');
       setTimeout(() => { setSuccess(null); window.location.reload(); }, 1500);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to approve');
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
+  const handleRejectWageChange = async (id: string) => {
+    const reason = window.prompt('Please provide a reason for rejection:');
+    if (!reason) {
+      return; // User cancelled or provided empty reason
+    }
+    setProcessingId(id);
+    setError(null);
+    try {
+      const response = await fetch(`/api/wage-change-requests/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'reject', rejection_reason: reason }),
+      });
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.error || 'Failed to reject');
+      }
+      setSuccess('Wage change rejected');
+      setTimeout(() => { setSuccess(null); window.location.reload(); }, 1500);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to reject');
     } finally {
       setProcessingId(null);
     }
@@ -352,7 +391,12 @@ export function ApprovalsHub({
                           disabled={processingId === request.id}
                           className="px-3 py-1.5 border border-red-200 text-red-600 rounded-lg hover:bg-red-50 transition-colors text-sm font-medium disabled:opacity-50 flex items-center gap-1"
                         >
-                          <X size={14} /> Reject
+                          {processingId === request.id ? (
+                            <Loader2 size={14} className="animate-spin" />
+                          ) : (
+                            <X size={14} />
+                          )}
+                          Reject
                         </button>
                         <button
                           onClick={() => handleApproveTermination(request.id)}
@@ -427,7 +471,9 @@ export function ApprovalsHub({
                         </div>
                         <p className={`text-xs mt-1 ${request.change_type === 'increase' ? 'text-green-600' : 'text-red-600'}`}>
                           {request.change_type === 'increase' ? '+' : '-'}
-                          {Math.round(Math.abs((request.proposed_amount - request.current_amount) / request.current_amount * 100))}%
+                          {request.current_amount > 0
+                            ? Math.round(Math.abs((request.proposed_amount - request.current_amount) / request.current_amount * 100))
+                            : 100}%
                         </p>
                       </div>
                       <div className="bg-gray-50 rounded-lg p-3">
@@ -465,6 +511,18 @@ export function ApprovalsHub({
                         >
                           Review Details
                         </Link>
+                        <button
+                          onClick={() => handleRejectWageChange(request.id)}
+                          disabled={processingId === request.id}
+                          className="px-3 py-1.5 border border-red-200 text-red-600 rounded-lg hover:bg-red-50 transition-colors text-sm font-medium disabled:opacity-50 flex items-center gap-1"
+                        >
+                          {processingId === request.id ? (
+                            <Loader2 size={14} className="animate-spin" />
+                          ) : (
+                            <X size={14} />
+                          )}
+                          Reject
+                        </button>
                         <button
                           onClick={() => handleApproveWageChange(request.id)}
                           disabled={processingId === request.id}

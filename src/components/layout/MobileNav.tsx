@@ -21,6 +21,7 @@ import {
   Calculator,
   MessageSquare,
   Inbox,
+  ClipboardCheck,
 } from 'lucide-react';
 import type { User, UserRole } from '@/types';
 import { getRoleLabel } from '@/lib/auth';
@@ -79,6 +80,12 @@ const navItems: NavItem[] = [
     href: '/recruitment',
     icon: UserPlus,
     roles: ['general_manager', 'hr', 'recruiter'],
+  },
+  {
+    nameKey: 'approvals',
+    href: '/approvals',
+    icon: ClipboardCheck,
+    roles: ['general_manager', 'ceo', 'hr', 'chief_accountant'],
   },
   {
     nameKey: 'reports',
