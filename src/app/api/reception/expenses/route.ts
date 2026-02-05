@@ -25,6 +25,8 @@ export const GET = withAuth(async (request: NextRequest) => {
     const dateTo = searchParams.get('dateTo');
     const search = searchParams.get('search');
     const includeVoided = searchParams.get('includeVoided') === 'true';
+    const sortBy = searchParams.get('sortBy') || 'date'; // 'date', 'amount', 'created'
+    const sortOrder = searchParams.get('sortOrder') || 'desc'; // 'asc', 'desc'
 
     // Build query
     let query = supabaseAdmin!
@@ -64,9 +66,21 @@ export const GET = withAuth(async (request: NextRequest) => {
       query = query.or(`subject.ilike.%${search}%,expense_number.ilike.%${search}%`);
     }
 
-    // Apply sorting and pagination
-    query = query.order('expense_date', { ascending: false });
-    query = query.order('created_at', { ascending: false });
+    // Apply sorting based on sortBy parameter
+    const isAscending = sortOrder === 'asc';
+    switch (sortBy) {
+      case 'amount':
+        query = query.order('amount', { ascending: isAscending });
+        break;
+      case 'created':
+        query = query.order('created_at', { ascending: isAscending });
+        break;
+      case 'date':
+      default:
+        query = query.order('expense_date', { ascending: isAscending });
+        query = query.order('created_at', { ascending: isAscending });
+        break;
+    }
 
     const from = (page - 1) * pageSize;
     const to = from + pageSize - 1;

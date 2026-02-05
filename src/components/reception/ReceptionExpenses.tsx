@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Plus, Search, Filter, X, Eye, Ban, ChevronLeft, ChevronRight, Building2 } from 'lucide-react';
+import { Plus, Search, Filter, X, Eye, Ban, ChevronLeft, ChevronRight, Building2, Calendar, Clock, User, ArrowUpDown, ArrowDown, ArrowUp } from 'lucide-react';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
@@ -11,6 +11,35 @@ import { formatCurrency, EXPENSE_PAYMENT_METHODS_LIST } from '@/modules/receptio
 import { useReceptionMode } from '@/contexts/ReceptionModeContext';
 import { useTranslation } from '@/contexts/LanguageContext';
 import type { Expense, ExpenseType, CreateExpenseInput } from '@/modules/reception/types';
+
+// Helper function to format date
+const formatDate = (dateString: string) => {
+  const date = new Date(dateString);
+  return date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+};
+
+// Helper function to format time
+const formatTime = (dateString: string) => {
+  const date = new Date(dateString);
+  return date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+};
+
+// Helper function for relative time
+const getRelativeTime = (dateString: string) => {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMs / 3600000);
+  const diffDays = Math.floor(diffMs / 86400000);
+
+  if (diffMins < 1) return 'Just now';
+  if (diffMins < 60) return `${diffMins}m ago`;
+  if (diffHours < 24) return `${diffHours}h ago`;
+  if (diffDays === 1) return 'Yesterday';
+  if (diffDays < 7) return `${diffDays}d ago`;
+  return null; // Use regular date for older items
+};
 
 interface ExpenseFormData {
   subject: string;
@@ -55,7 +84,28 @@ export default function ReceptionExpenses() {
   const [totalPages, setTotalPages] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
   const [showBranchColumn, setShowBranchColumn] = useState(false);
+  const [sortBy, setSortBy] = useState<'date' | 'amount' | 'created'>('date');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const pageSize = 15;
+
+  // Toggle sort
+  const handleSort = (column: 'date' | 'amount' | 'created') => {
+    if (sortBy === column) {
+      setSortOrder(prev => prev === 'desc' ? 'asc' : 'desc');
+    } else {
+      setSortBy(column);
+      setSortOrder('desc');
+    }
+    setPage(1);
+  };
+
+  // Sort icon helper
+  const SortIcon = ({ column }: { column: 'date' | 'amount' | 'created' }) => {
+    if (sortBy !== column) return <ArrowUpDown className="w-3 h-3 ml-1 opacity-40" />;
+    return sortOrder === 'desc'
+      ? <ArrowDown className="w-3 h-3 ml-1 text-purple-600" />
+      : <ArrowUp className="w-3 h-3 ml-1 text-purple-600" />;
+  };
 
   useEffect(() => {
     const fetchConfig = async () => {
@@ -76,6 +126,8 @@ export default function ReceptionExpenses() {
       const params = new URLSearchParams();
       params.append('page', page.toString());
       params.append('pageSize', pageSize.toString());
+      params.append('sortBy', sortBy);
+      params.append('sortOrder', sortOrder);
       if (selectedBranchId) params.append('branchId', selectedBranchId);
       if (searchQuery) params.append('search', searchQuery);
       if (filterExpenseType) params.append('expenseTypeId', filterExpenseType);
@@ -95,7 +147,7 @@ export default function ReceptionExpenses() {
     } finally {
       setIsLoading(false);
     }
-  }, [page, selectedBranchId, searchQuery, filterExpenseType, filterPaymentMethod, filterDateFrom, filterDateTo]);
+  }, [page, selectedBranchId, searchQuery, filterExpenseType, filterPaymentMethod, filterDateFrom, filterDateTo, sortBy, sortOrder]);
 
   useEffect(() => {
     fetchExpenses();
@@ -246,50 +298,138 @@ export default function ReceptionExpenses() {
           <table className="w-full">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Subject</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  <button
+                    onClick={() => handleSort('date')}
+                    className="inline-flex items-center hover:text-gray-700"
+                  >
+                    <Calendar className="w-3 h-3 mr-1" />
+                    Date & Time
+                    <SortIcon column="date" />
+                  </button>
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Expense</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Payment</th>
                 {showBranchColumn && (
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Branch</th>
                 )}
-                <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Amount</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">
+                  <button
+                    onClick={() => handleSort('amount')}
+                    className="inline-flex items-center hover:text-gray-700 ml-auto"
+                  >
+                    Amount
+                    <SortIcon column="amount" />
+                  </button>
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Recorded By</th>
+                <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Status</th>
                 <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
               {isLoading ? (
-                <tr><td colSpan={showBranchColumn ? 7 : 6} className="px-4 py-12 text-center">
+                <tr><td colSpan={showBranchColumn ? 9 : 8} className="px-4 py-12 text-center">
                   <div className="animate-spin w-6 h-6 border-2 border-purple-600 border-t-transparent rounded-full mx-auto" />
                 </td></tr>
               ) : expenses.length === 0 ? (
-                <tr><td colSpan={showBranchColumn ? 7 : 6} className="px-4 py-12 text-center text-gray-500">No expenses</td></tr>
+                <tr><td colSpan={showBranchColumn ? 9 : 8} className="px-4 py-12 text-center text-gray-500">No expenses found</td></tr>
               ) : (
-                expenses.map((e) => (
-                  <tr key={e.id} className={e.isVoided ? 'bg-gray-50 opacity-60' : 'hover:bg-gray-50'}>
-                    <td className="px-4 py-3 font-medium text-gray-900">{e.subject}</td>
-                    <td className="px-4 py-3"><span>{e.expenseType?.icon}</span> {e.expenseType?.name}</td>
-                    <td className="px-4 py-3"><span>{e.paymentMethod === 'cash' ? '💵' : '🏦'}</span> {e.paymentMethod}</td>
-                    {showBranchColumn && (
+                expenses.map((e) => {
+                  const relativeTime = e.createdAt ? getRelativeTime(e.createdAt) : null;
+                  const isRecent = relativeTime && !relativeTime.includes('d ago') && relativeTime !== 'Yesterday';
+
+                  return (
+                    <tr key={e.id} className={`${e.isVoided ? 'bg-gray-50 opacity-60' : 'hover:bg-gray-50'} ${isRecent ? 'bg-purple-50/30' : ''}`}>
+                      {/* Date & Time */}
                       <td className="px-4 py-3">
-                        <span className="inline-flex items-center gap-1 text-sm text-gray-600">
-                          <Building2 className="w-3 h-3" />
-                          {e.branchName || '-'}
+                        <div className="flex flex-col">
+                          <span className="text-sm font-medium text-gray-900">
+                            {e.expenseDate ? formatDate(e.expenseDate) : '-'}
+                          </span>
+                          <span className="text-xs text-gray-500 flex items-center gap-1">
+                            <Clock className="w-3 h-3" />
+                            {e.createdAt ? formatTime(e.createdAt) : '-'}
+                            {relativeTime && (
+                              <span className={`ml-1 px-1.5 py-0.5 rounded text-xs ${isRecent ? 'bg-purple-100 text-purple-700' : 'text-gray-400'}`}>
+                                {relativeTime}
+                              </span>
+                            )}
+                          </span>
+                        </div>
+                      </td>
+                      {/* Expense (Number + Subject) */}
+                      <td className="px-4 py-3">
+                        <div className="flex flex-col">
+                          <span className="font-medium text-gray-900">{e.subject}</span>
+                          <span className="text-xs text-gray-400 font-mono">{e.expenseNumber || '-'}</span>
+                        </div>
+                      </td>
+                      {/* Type */}
+                      <td className="px-4 py-3">
+                        <span className="inline-flex items-center gap-1.5 px-2 py-1 bg-gray-100 rounded-md text-sm">
+                          <span>{e.expenseType?.icon}</span>
+                          <span className="text-gray-700">{e.expenseType?.name}</span>
                         </span>
                       </td>
-                    )}
-                    <td className="px-4 py-3 text-right font-semibold text-red-600">{formatCurrency(e.amount)}</td>
-                    <td className="px-4 py-3">{e.isVoided ? <Badge variant="danger">Voided</Badge> : <Badge variant="success">Active</Badge>}</td>
-                    <td className="px-4 py-3 text-right">
-                      <button onClick={() => { setSelectedExpense(e); setShowViewModal(true); }}
-                        className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded"><Eye className="w-4 h-4" /></button>
-                      {!e.isVoided && (
-                        <button onClick={() => { setSelectedExpense(e); setShowVoidModal(true); }}
-                          className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded ml-1"><Ban className="w-4 h-4" /></button>
+                      {/* Payment */}
+                      <td className="px-4 py-3">
+                        <span className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-sm ${
+                          e.paymentMethod === 'cash' ? 'bg-green-50 text-green-700' : 'bg-blue-50 text-blue-700'
+                        }`}>
+                          <span>{e.paymentMethod === 'cash' ? '💵' : '🏦'}</span>
+                          <span className="capitalize">{e.paymentMethod}</span>
+                        </span>
+                      </td>
+                      {/* Branch */}
+                      {showBranchColumn && (
+                        <td className="px-4 py-3">
+                          <span className="inline-flex items-center gap-1 text-sm text-gray-600">
+                            <Building2 className="w-3 h-3" />
+                            {e.branchName || '-'}
+                          </span>
+                        </td>
                       )}
-                    </td>
-                  </tr>
-                ))
+                      {/* Amount */}
+                      <td className="px-4 py-3 text-right">
+                        <span className="font-semibold text-red-600 text-lg">{formatCurrency(e.amount)}</span>
+                      </td>
+                      {/* Recorded By */}
+                      <td className="px-4 py-3">
+                        <span className="inline-flex items-center gap-1.5 text-sm text-gray-600">
+                          <User className="w-3.5 h-3.5" />
+                          {e.recordedByName || '-'}
+                        </span>
+                      </td>
+                      {/* Status */}
+                      <td className="px-4 py-3 text-center">
+                        {e.isVoided ? <Badge variant="danger">Voided</Badge> : <Badge variant="success">Active</Badge>}
+                      </td>
+                      {/* Actions */}
+                      <td className="px-4 py-3 text-right">
+                        <div className="inline-flex items-center gap-1">
+                          <button
+                            onClick={() => { setSelectedExpense(e); setShowViewModal(true); }}
+                            className="p-1.5 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded transition-colors"
+                            title="View details"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </button>
+                          {!e.isVoided && (
+                            <button
+                              onClick={() => { setSelectedExpense(e); setShowVoidModal(true); }}
+                              className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+                              title="Void expense"
+                            >
+                              <Ban className="w-4 h-4" />
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>
@@ -347,22 +487,91 @@ export default function ReceptionExpenses() {
       <Modal isOpen={showViewModal} onClose={() => { setShowViewModal(false); setSelectedExpense(null); }} title="Expense Details" size="lg">
         {selectedExpense && (
           <div className="space-y-4">
-            <div className="bg-gray-50 rounded-lg p-4">
+            {/* Header with Amount */}
+            <div className="bg-gradient-to-r from-red-50 to-orange-50 rounded-lg p-4">
               <div className="flex items-center justify-between mb-2">
-                <span className="font-mono font-semibold">{selectedExpense.expenseNumber}</span>
+                <span className="font-mono font-semibold text-gray-600">{selectedExpense.expenseNumber}</span>
                 {selectedExpense.isVoided ? <Badge variant="danger">Voided</Badge> : <Badge variant="success">Active</Badge>}
               </div>
-              <p className="text-2xl font-bold text-red-600">{formatCurrency(selectedExpense.amount)}</p>
+              <p className="text-3xl font-bold text-red-600">{formatCurrency(selectedExpense.amount)}</p>
             </div>
+
+            {/* Subject */}
+            <div className="bg-gray-50 rounded-lg p-4">
+              <p className="text-sm text-gray-500 mb-1">Subject</p>
+              <p className="font-medium text-lg">{selectedExpense.subject}</p>
+            </div>
+
+            {/* Details Grid */}
             <div className="grid grid-cols-2 gap-4">
-              <div className="col-span-2"><p className="text-sm text-gray-500">Subject</p><p className="font-medium">{selectedExpense.subject}</p></div>
-              <div><p className="text-sm text-gray-500">Date</p><p className="font-medium">{selectedExpense.expenseDate}</p></div>
-              <div><p className="text-sm text-gray-500">Type</p><p className="font-medium">{selectedExpense.expenseType?.icon} {selectedExpense.expenseType?.name}</p></div>
-              <div><p className="text-sm text-gray-500">Payment</p><p className="font-medium capitalize">{selectedExpense.paymentMethod === 'cash' ? '💵' : '🏦'} {selectedExpense.paymentMethod}</p></div>
-              {selectedExpense.description && <div className="col-span-2"><p className="text-sm text-gray-500">Description</p><p>{selectedExpense.description}</p></div>}
+              <div className="bg-gray-50 rounded-lg p-3">
+                <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Date</p>
+                <p className="font-medium flex items-center gap-2">
+                  <Calendar className="w-4 h-4 text-gray-400" />
+                  {selectedExpense.expenseDate ? formatDate(selectedExpense.expenseDate) : '-'}
+                </p>
+              </div>
+              <div className="bg-gray-50 rounded-lg p-3">
+                <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Time Created</p>
+                <p className="font-medium flex items-center gap-2">
+                  <Clock className="w-4 h-4 text-gray-400" />
+                  {selectedExpense.createdAt ? formatTime(selectedExpense.createdAt) : '-'}
+                  {selectedExpense.createdAt && getRelativeTime(selectedExpense.createdAt) && (
+                    <span className="text-xs text-gray-400">({getRelativeTime(selectedExpense.createdAt)})</span>
+                  )}
+                </p>
+              </div>
+              <div className="bg-gray-50 rounded-lg p-3">
+                <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Type</p>
+                <p className="font-medium">{selectedExpense.expenseType?.icon} {selectedExpense.expenseType?.name}</p>
+              </div>
+              <div className="bg-gray-50 rounded-lg p-3">
+                <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Payment Method</p>
+                <p className="font-medium capitalize">{selectedExpense.paymentMethod === 'cash' ? '💵' : '🏦'} {selectedExpense.paymentMethod}</p>
+              </div>
+              <div className="bg-gray-50 rounded-lg p-3">
+                <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Recorded By</p>
+                <p className="font-medium flex items-center gap-2">
+                  <User className="w-4 h-4 text-gray-400" />
+                  {selectedExpense.recordedByName || '-'}
+                </p>
+              </div>
+              {selectedExpense.branchName && (
+                <div className="bg-gray-50 rounded-lg p-3">
+                  <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Branch</p>
+                  <p className="font-medium flex items-center gap-2">
+                    <Building2 className="w-4 h-4 text-gray-400" />
+                    {selectedExpense.branchName}
+                  </p>
+                </div>
+              )}
             </div>
-            {selectedExpense.isVoided && <div className="bg-red-50 border border-red-200 rounded-lg p-4"><p className="text-sm font-medium text-red-800">Voided</p><p className="text-sm text-red-600">Reason: {selectedExpense.voidReason || 'N/A'}</p></div>}
-            <div className="flex justify-end pt-4 border-t"><Button variant="secondary" onClick={() => { setShowViewModal(false); setSelectedExpense(null); }}>Close</Button></div>
+
+            {/* Description */}
+            {selectedExpense.description && (
+              <div className="bg-gray-50 rounded-lg p-4">
+                <p className="text-sm text-gray-500 mb-1">Description</p>
+                <p className="text-gray-700">{selectedExpense.description}</p>
+              </div>
+            )}
+
+            {/* Voided Info */}
+            {selectedExpense.isVoided && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                <p className="text-sm font-medium text-red-800 flex items-center gap-2">
+                  <Ban className="w-4 h-4" />
+                  Expense Voided
+                </p>
+                <p className="text-sm text-red-600 mt-1">Reason: {selectedExpense.voidReason || 'N/A'}</p>
+                {selectedExpense.voidedAt && (
+                  <p className="text-xs text-red-500 mt-1">Voided at: {formatDate(selectedExpense.voidedAt)} {formatTime(selectedExpense.voidedAt)}</p>
+                )}
+              </div>
+            )}
+
+            <div className="flex justify-end pt-4 border-t">
+              <Button variant="secondary" onClick={() => { setShowViewModal(false); setSelectedExpense(null); }}>Close</Button>
+            </div>
           </div>
         )}
       </Modal>
