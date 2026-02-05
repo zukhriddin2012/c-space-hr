@@ -32,6 +32,7 @@ interface PayrollData {
   };
   paymentRequestsSummary: any;
   paidAdvances: Record<string, number>;
+  paidStatus?: Record<string, { advancePaid: number | null; advancePaidAt: string | null; wagePaid: number | null; wagePaidAt: string | null }>;
   year: number;
   month: number;
 }
@@ -225,6 +226,7 @@ export default function PayrollContent({ canProcessPayroll, canApprovePayroll }:
           payroll={data.payroll}
           summary={data.paymentRequestsSummary}
           paidAdvances={data.paidAdvances}
+          paidStatus={data.paidStatus}
           canProcess={canProcessPayroll}
           canApprove={canApprovePayroll}
         />

@@ -42,6 +42,7 @@ interface GroupedEmployee {
   employee_position: string;
   totalNet: number;
   advancePaid: number;
+  wagePaid: number;
   wageRecords: PayrollRecord[];
 }
 
@@ -79,12 +80,20 @@ interface Summary {
   requests: PaymentRequest[];
 }
 
+interface EmployeePaidStatus {
+  advancePaid: number | null;
+  advancePaidAt: string | null;
+  wagePaid: number | null;
+  wagePaidAt: string | null;
+}
+
 interface PaymentRequestsSectionProps {
   year: number;
   month: number;
   payroll: PayrollRecord[];
   summary: Summary;
   paidAdvances: Record<string, number>;
+  paidStatus?: Record<string, EmployeePaidStatus>;
   canProcess: boolean;
   canApprove: boolean;
 }
@@ -177,6 +186,7 @@ export default function PaymentRequestsSection({
   payroll,
   summary,
   paidAdvances,
+  paidStatus,
   canProcess,
   canApprove,
 }: PaymentRequestsSectionProps) {
@@ -294,12 +304,14 @@ export default function PaymentRequestsSection({
         existing.totalNet += record.net_salary;
         existing.wageRecords.push(record);
       } else {
+        const empPaidStatus = paidStatus?.[record.employee_id];
         map.set(record.employee_id, {
           employee_id: record.employee_id,
           employee_name: record.employee_name,
           employee_position: record.employee_position,
           totalNet: record.net_salary,
-          advancePaid: paidAdvances[record.employee_id] || 0,
+          advancePaid: empPaidStatus?.advancePaid || paidAdvances[record.employee_id] || 0,
+          wagePaid: empPaidStatus?.wagePaid || 0,
           wageRecords: [record],
         });
       }
@@ -354,7 +366,7 @@ export default function PaymentRequestsSection({
     }
 
     return result;
-  }, [filteredPayroll, paidAdvances, sortField, sortDirection, advanceAmounts, wageAmounts]);
+  }, [filteredPayroll, paidAdvances, paidStatus, sortField, sortDirection, advanceAmounts, wageAmounts]);
 
   // Calculate totals by category
   const primaryNetTotal = filteredPayroll
@@ -392,10 +404,12 @@ export default function PaymentRequestsSection({
   const fillAllWage = () => {
     const newAmounts: Record<string, number> = {};
     payroll.forEach(p => {
-      // Wage = Net salary - paid advance - pending advance input
-      const paidAdvance = paidAdvances[p.employee_id] || 0;
+      // Wage = Net salary - paid advance - paid wage - pending advance input
+      const empPaidStatus = paidStatus?.[p.employee_id];
+      const paidAdvance = empPaidStatus?.advancePaid || paidAdvances[p.employee_id] || 0;
+      const paidWage = empPaidStatus?.wagePaid || 0;
       const pendingAdvance = advanceAmounts[p.id] || 0;
-      newAmounts[p.id] = Math.max(0, p.net_salary - paidAdvance - pendingAdvance);
+      newAmounts[p.id] = Math.max(0, p.net_salary - paidAdvance - paidWage - pendingAdvance);
     });
     setWageAmounts(newAmounts);
   };
@@ -976,8 +990,15 @@ export default function PaymentRequestsSection({
                           {formatCurrency(employee.totalNet)}
                         </td>
                         <td className="px-4 py-2.5 text-sm text-right">
-                          {employee.advancePaid > 0 ? (
-                            <span className="text-blue-600 font-medium">{formatNumber(employee.advancePaid)}</span>
+                          {employee.advancePaid > 0 || employee.wagePaid > 0 ? (
+                            <div className="flex flex-col items-end gap-0.5">
+                              {employee.advancePaid > 0 && (
+                                <span className="text-orange-600 font-medium text-xs">{formatNumber(employee.advancePaid)}</span>
+                              )}
+                              {employee.wagePaid > 0 && (
+                                <span className="text-green-600 font-medium text-xs">{formatNumber(employee.wagePaid)}</span>
+                              )}
+                            </div>
                           ) : (
                             <span className="text-gray-300">-</span>
                           )}
@@ -1108,10 +1129,21 @@ export default function PaymentRequestsSection({
                   <td className="px-4 py-3 text-sm text-gray-900 text-right">
                     {formatCurrency(totalNetSalary)}
                   </td>
-                  <td className="px-4 py-3 text-sm text-blue-600 text-right">
-                    {Object.values(paidAdvances).reduce((sum, v) => sum + v, 0) > 0
-                      ? formatNumber(Object.values(paidAdvances).reduce((sum, v) => sum + v, 0))
-                      : '-'}
+                  <td className="px-4 py-3 text-sm text-right">
+                    {(() => {
+                      const totalPaidAdvance = paidStatus
+                        ? Object.values(paidStatus).reduce((sum, s) => sum + (s.advancePaid || 0), 0)
+                        : Object.values(paidAdvances).reduce((sum, v) => sum + v, 0);
+                      const totalPaidWage = paidStatus
+                        ? Object.values(paidStatus).reduce((sum, s) => sum + (s.wagePaid || 0), 0)
+                        : 0;
+                      return (totalPaidAdvance > 0 || totalPaidWage > 0) ? (
+                        <div className="flex flex-col items-end gap-0.5">
+                          {totalPaidAdvance > 0 && <span className="text-orange-600">{formatNumber(totalPaidAdvance)}</span>}
+                          {totalPaidWage > 0 && <span className="text-green-600">{formatNumber(totalPaidWage)}</span>}
+                        </div>
+                      ) : '-';
+                    })()}
                   </td>
                   <td className="px-4 py-3 text-sm text-orange-600 text-right">
                     {totalAdvanceInput > 0 ? formatNumber(totalAdvanceInput) : '-'}

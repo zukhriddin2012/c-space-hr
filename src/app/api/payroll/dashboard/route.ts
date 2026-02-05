@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth } from '@/lib/api-auth';
 import { PERMISSIONS } from '@/lib/permissions';
-import { getPayrollByMonth, calculatePayrollStats, getPaymentRequestsSummary, getPaidAdvancesByEmployee } from '@/lib/db';
+import { getPayrollByMonth, calculatePayrollStats, getPaymentRequestsSummary, getPaidAdvancesByEmployee, getEmployeePaidStatus } from '@/lib/db';
 
 export const GET = withAuth(async (request: NextRequest) => {
   try {
@@ -11,10 +11,11 @@ export const GET = withAuth(async (request: NextRequest) => {
     const month = parseInt(searchParams.get('month') || String(currentDate.getMonth() + 1));
 
     // Fetch all data in parallel
-    const [payroll, paymentRequestsSummary, paidAdvances] = await Promise.all([
+    const [payroll, paymentRequestsSummary, paidAdvances, paidStatus] = await Promise.all([
       getPayrollByMonth(year, month),
       getPaymentRequestsSummary(year, month),
       getPaidAdvancesByEmployee(year, month),
+      getEmployeePaidStatus(year, month),
     ]);
 
     // Calculate stats from payroll data
@@ -25,6 +26,7 @@ export const GET = withAuth(async (request: NextRequest) => {
       stats,
       paymentRequestsSummary,
       paidAdvances,
+      paidStatus, // Added: includes both advancePaid and wagePaid
       year,
       month,
     });
