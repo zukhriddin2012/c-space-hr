@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { Plus, Search, Filter, X, Eye, Ban, ChevronLeft, ChevronRight, Building2, Calendar } from 'lucide-react';
+import { Plus, Search, Filter, X, Eye, Ban, ChevronLeft, ChevronRight, Building2, Calendar, Clock, User, ArrowUpDown, ArrowDown, ArrowUp } from 'lucide-react';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
@@ -16,27 +16,74 @@ import type { Transaction, ServiceType, PaymentMethodConfig, CreateTransactionIn
 
 type QuickDateFilter = 'today' | 'yesterday' | 'week' | 'month' | 'custom' | 'all';
 
+// ============================================
+// DATE HELPERS - Using LOCAL dates to fix timezone bug!
+// ============================================
+
+// Get local date in YYYY-MM-DD format (fixes UTC timezone bug)
+function getLocalDateString(date: Date = new Date()): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+// Format date for display (handles date-only strings properly)
+function formatDisplayDate(dateString: string): string {
+  // Add time component to parse as local date, not UTC
+  const date = new Date(dateString + 'T00:00:00');
+  return date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+}
+
+// Format short date (day + month)
+function formatShortDate(dateString: string): string {
+  const date = new Date(dateString + 'T00:00:00');
+  return date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
+}
+
+// Format time from timestamp
+function formatTime(dateString: string): string {
+  const date = new Date(dateString);
+  return date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+}
+
+// Get relative time
+function getRelativeTime(dateString: string): string | null {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMs / 3600000);
+  const diffDays = Math.floor(diffMs / 86400000);
+
+  if (diffMins < 1) return 'Just now';
+  if (diffMins < 60) return `${diffMins}m ago`;
+  if (diffHours < 24) return `${diffHours}h ago`;
+  if (diffDays === 1) return 'Yesterday';
+  if (diffDays < 7) return `${diffDays}d ago`;
+  return null;
+}
+
 // Helper to get date range for quick filters
 function getDateRange(filter: QuickDateFilter): { from: string; to: string } | null {
   const today = new Date();
-  const formatDate = (d: Date) => d.toISOString().split('T')[0];
 
   switch (filter) {
     case 'today':
-      return { from: formatDate(today), to: formatDate(today) };
+      return { from: getLocalDateString(today), to: getLocalDateString(today) };
     case 'yesterday': {
       const yesterday = new Date(today);
       yesterday.setDate(yesterday.getDate() - 1);
-      return { from: formatDate(yesterday), to: formatDate(yesterday) };
+      return { from: getLocalDateString(yesterday), to: getLocalDateString(yesterday) };
     }
     case 'week': {
       const weekStart = new Date(today);
       weekStart.setDate(today.getDate() - today.getDay());
-      return { from: formatDate(weekStart), to: formatDate(today) };
+      return { from: getLocalDateString(weekStart), to: getLocalDateString(today) };
     }
     case 'month': {
       const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
-      return { from: formatDate(monthStart), to: formatDate(today) };
+      return { from: getLocalDateString(monthStart), to: getLocalDateString(today) };
     }
     case 'all':
     case 'custom':
@@ -47,7 +94,7 @@ function getDateRange(filter: QuickDateFilter): { from: string; to: string } | n
 
 // Check if a date string is today
 function isToday(dateStr: string): boolean {
-  return dateStr === new Date().toISOString().split('T')[0];
+  return dateStr === getLocalDateString();
 }
 
 interface TransactionFormData {
@@ -60,6 +107,7 @@ interface TransactionFormData {
   transactionDate: string;
 }
 
+// Use local date to fix timezone bug
 const initialFormData: TransactionFormData = {
   customerName: '',
   serviceTypeId: '',
@@ -67,7 +115,7 @@ const initialFormData: TransactionFormData = {
   paymentMethodId: '',
   transactionCode: '',
   notes: '',
-  transactionDate: new Date().toISOString().split('T')[0],
+  transactionDate: getLocalDateString(),
 };
 
 export default function ReceptionTransactions() {
@@ -94,13 +142,34 @@ export default function ReceptionTransactions() {
   const [filterServiceType, setFilterServiceType] = useState('');
   const [filterPaymentMethod, setFilterPaymentMethod] = useState('');
   const [quickDateFilter, setQuickDateFilter] = useState<QuickDateFilter>('today');
-  const [filterDateFrom, setFilterDateFrom] = useState(() => new Date().toISOString().split('T')[0]);
-  const [filterDateTo, setFilterDateTo] = useState(() => new Date().toISOString().split('T')[0]);
+  const [filterDateFrom, setFilterDateFrom] = useState(() => getLocalDateString());
+  const [filterDateTo, setFilterDateTo] = useState(() => getLocalDateString());
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
   const [showBranchColumn, setShowBranchColumn] = useState(false);
+  const [sortBy, setSortBy] = useState<'date' | 'amount' | 'created'>('created');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const pageSize = 15;
+
+  // Toggle sort
+  const handleSort = (column: 'date' | 'amount' | 'created') => {
+    if (sortBy === column) {
+      setSortOrder(prev => prev === 'desc' ? 'asc' : 'desc');
+    } else {
+      setSortBy(column);
+      setSortOrder('desc');
+    }
+    setPage(1);
+  };
+
+  // Sort icon helper
+  const SortIcon = ({ column }: { column: 'date' | 'amount' | 'created' }) => {
+    if (sortBy !== column) return <ArrowUpDown className="w-3 h-3 ml-1 opacity-40" />;
+    return sortOrder === 'desc'
+      ? <ArrowDown className="w-3 h-3 ml-1 text-purple-600" />
+      : <ArrowUp className="w-3 h-3 ml-1 text-purple-600" />;
+  };
 
   const selectedPaymentMethod = paymentMethods.find(pm => pm.id === formData.paymentMethodId);
   const requiresTransactionCode = selectedPaymentMethod?.requiresCode || false;
@@ -136,6 +205,8 @@ export default function ReceptionTransactions() {
       const params = new URLSearchParams();
       params.append('page', page.toString());
       params.append('pageSize', pageSize.toString());
+      params.append('sortBy', sortBy);
+      params.append('sortOrder', sortOrder);
       if (selectedBranchId) params.append('branchId', selectedBranchId);
       if (searchQuery) params.append('search', searchQuery);
       if (filterServiceType) params.append('serviceTypeId', filterServiceType);
@@ -157,7 +228,7 @@ export default function ReceptionTransactions() {
     } finally {
       setIsLoading(false);
     }
-  }, [page, selectedBranchId, searchQuery, filterServiceType, filterPaymentMethod, effectiveDateRange]);
+  }, [page, selectedBranchId, searchQuery, filterServiceType, filterPaymentMethod, effectiveDateRange, sortBy, sortOrder]);
 
   useEffect(() => {
     fetchTransactions();
@@ -261,7 +332,7 @@ export default function ReceptionTransactions() {
     setFilterServiceType('');
     setFilterPaymentMethod('');
     setQuickDateFilter('today');
-    const today = new Date().toISOString().split('T')[0];
+    const today = getLocalDateString();
     setFilterDateFrom(today);
     setFilterDateTo(today);
     setPage(1);
@@ -372,61 +443,136 @@ export default function ReceptionTransactions() {
           <table className="w-full">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Customer</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  <button
+                    onClick={() => handleSort('created')}
+                    className="inline-flex items-center hover:text-gray-700"
+                  >
+                    <Calendar className="w-3 h-3 mr-1" />
+                    Date & Time
+                    <SortIcon column="created" />
+                  </button>
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Transaction</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Service</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Payment</th>
                 {showBranchColumn && (
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Branch</th>
                 )}
-                <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Amount</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">
+                  <button
+                    onClick={() => handleSort('amount')}
+                    className="inline-flex items-center hover:text-gray-700 ml-auto"
+                  >
+                    Amount
+                    <SortIcon column="amount" />
+                  </button>
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Agent</th>
+                <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Status</th>
                 <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
               {isLoading ? (
-                <tr><td colSpan={showBranchColumn ? 8 : 7} className="px-4 py-12 text-center">
+                <tr><td colSpan={showBranchColumn ? 9 : 8} className="px-4 py-12 text-center">
                   <div className="animate-spin w-6 h-6 border-2 border-purple-600 border-t-transparent rounded-full mx-auto" />
                 </td></tr>
               ) : transactions.length === 0 ? (
-                <tr><td colSpan={showBranchColumn ? 8 : 7} className="px-4 py-12 text-center text-gray-500">{t.reception.noTransactionsFound}</td></tr>
+                <tr><td colSpan={showBranchColumn ? 9 : 8} className="px-4 py-12 text-center text-gray-500">{t.reception.noTransactionsFound}</td></tr>
               ) : (
-                transactions.map((txn) => (
-                  <tr key={txn.id} className={txn.isVoided ? 'bg-gray-50 opacity-60' : 'hover:bg-gray-50'}>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm text-gray-600">
-                          {new Date(txn.transactionDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}
-                        </span>
-                        {isToday(txn.transactionDate) && (
-                          <span className="px-1.5 py-0.5 text-xs font-medium bg-green-100 text-green-700 rounded">{t.reception.today}</span>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 font-medium text-gray-900">{txn.customerName}</td>
-                    <td className="px-4 py-3"><span>{txn.serviceType?.icon}</span> {txn.serviceType?.name}</td>
-                    <td className="px-4 py-3"><span>{txn.paymentMethod?.icon}</span> {txn.paymentMethod?.name}</td>
-                    {showBranchColumn && (
+                transactions.map((txn) => {
+                  const relativeTime = txn.createdAt ? getRelativeTime(txn.createdAt) : null;
+                  const isRecent = relativeTime && !relativeTime.includes('d ago') && relativeTime !== 'Yesterday';
+
+                  return (
+                    <tr key={txn.id} className={`${txn.isVoided ? 'bg-gray-50 opacity-60' : 'hover:bg-gray-50'} ${isRecent ? 'bg-green-50/30' : ''}`}>
+                      {/* Date & Time */}
                       <td className="px-4 py-3">
-                        <span className="inline-flex items-center gap-1 text-sm text-gray-600">
-                          <Building2 className="w-3 h-3" />
-                          {txn.branchName || '-'}
+                        <div className="flex flex-col">
+                          <span className="text-sm font-medium text-gray-900">
+                            {txn.transactionDate ? formatShortDate(txn.transactionDate) : '-'}
+                          </span>
+                          <span className="text-xs text-gray-500 flex items-center gap-1">
+                            <Clock className="w-3 h-3" />
+                            {txn.createdAt ? formatTime(txn.createdAt) : '-'}
+                            {relativeTime && (
+                              <span className={`ml-1 px-1.5 py-0.5 rounded text-xs ${isRecent ? 'bg-green-100 text-green-700' : 'text-gray-400'}`}>
+                                {relativeTime}
+                              </span>
+                            )}
+                          </span>
+                        </div>
+                      </td>
+                      {/* Transaction (Customer + Number) */}
+                      <td className="px-4 py-3">
+                        <div className="flex flex-col">
+                          <span className="font-medium text-gray-900">{txn.customerName}</span>
+                          <span className="text-xs text-gray-400 font-mono">{txn.transactionNumber || '-'}</span>
+                        </div>
+                      </td>
+                      {/* Service */}
+                      <td className="px-4 py-3">
+                        <span className="inline-flex items-center gap-1.5 px-2 py-1 bg-gray-100 rounded-md text-sm">
+                          <span>{txn.serviceType?.icon}</span>
+                          <span className="text-gray-700">{txn.serviceType?.name}</span>
                         </span>
                       </td>
-                    )}
-                    <td className="px-4 py-3 text-right font-semibold text-green-600">{formatCurrency(txn.amount)}</td>
-                    <td className="px-4 py-3">{txn.isVoided ? <Badge variant="danger">{t.reception.voided}</Badge> : <Badge variant="success">{t.reception.active}</Badge>}</td>
-                    <td className="px-4 py-3 text-right">
-                      <button onClick={() => { setSelectedTransaction(txn); setShowViewModal(true); }}
-                        className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded"><Eye className="w-4 h-4" /></button>
-                      {!txn.isVoided && (
-                        <button onClick={() => { setSelectedTransaction(txn); setShowVoidModal(true); }}
-                          className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded ml-1"><Ban className="w-4 h-4" /></button>
+                      {/* Payment */}
+                      <td className="px-4 py-3">
+                        <span className="inline-flex items-center gap-1.5 px-2 py-1 bg-blue-50 text-blue-700 rounded-md text-sm">
+                          <span>{txn.paymentMethod?.icon}</span>
+                          <span>{txn.paymentMethod?.name}</span>
+                        </span>
+                      </td>
+                      {/* Branch */}
+                      {showBranchColumn && (
+                        <td className="px-4 py-3">
+                          <span className="inline-flex items-center gap-1 text-sm text-gray-600">
+                            <Building2 className="w-3 h-3" />
+                            {txn.branchName || '-'}
+                          </span>
+                        </td>
                       )}
-                    </td>
-                  </tr>
-                ))
+                      {/* Amount */}
+                      <td className="px-4 py-3 text-right">
+                        <span className="font-semibold text-green-600 text-lg">{formatCurrency(txn.amount)}</span>
+                      </td>
+                      {/* Agent (Recorded By) */}
+                      <td className="px-4 py-3">
+                        <span className="inline-flex items-center gap-1.5 text-sm text-gray-600">
+                          <User className="w-3.5 h-3.5" />
+                          {txn.agentName || '-'}
+                        </span>
+                      </td>
+                      {/* Status */}
+                      <td className="px-4 py-3 text-center">
+                        {txn.isVoided ? <Badge variant="danger">{t.reception.voided}</Badge> : <Badge variant="success">{t.reception.active}</Badge>}
+                      </td>
+                      {/* Actions */}
+                      <td className="px-4 py-3 text-right">
+                        <div className="inline-flex items-center gap-1">
+                          <button
+                            onClick={() => { setSelectedTransaction(txn); setShowViewModal(true); }}
+                            className="p-1.5 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded transition-colors"
+                            title="View details"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </button>
+                          {!txn.isVoided && (
+                            <button
+                              onClick={() => { setSelectedTransaction(txn); setShowVoidModal(true); }}
+                              className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+                              title="Void transaction"
+                            >
+                              <Ban className="w-4 h-4" />
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>
@@ -516,23 +662,99 @@ export default function ReceptionTransactions() {
       <Modal isOpen={showViewModal} onClose={() => { setShowViewModal(false); setSelectedTransaction(null); }} title={t.reception.transactionDetails} size="lg">
         {selectedTransaction && (
           <div className="space-y-4">
-            <div className="bg-gray-50 rounded-lg p-4">
+            {/* Header with Amount */}
+            <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg p-4">
               <div className="flex items-center justify-between mb-2">
-                <span className="font-mono font-semibold">{selectedTransaction.transactionNumber}</span>
+                <span className="font-mono font-semibold text-gray-600">{selectedTransaction.transactionNumber}</span>
                 {selectedTransaction.isVoided ? <Badge variant="danger">Voided</Badge> : <Badge variant="success">Active</Badge>}
               </div>
-              <p className="text-2xl font-bold text-green-600">{formatCurrency(selectedTransaction.amount)}</p>
+              <p className="text-3xl font-bold text-green-600">{formatCurrency(selectedTransaction.amount)}</p>
             </div>
+
+            {/* Customer */}
+            <div className="bg-gray-50 rounded-lg p-4">
+              <p className="text-sm text-gray-500 mb-1">Customer</p>
+              <p className="font-medium text-lg">{selectedTransaction.customerName}</p>
+            </div>
+
+            {/* Details Grid */}
             <div className="grid grid-cols-2 gap-4">
-              <div><p className="text-sm text-gray-500">Customer</p><p className="font-medium">{selectedTransaction.customerName}</p></div>
-              <div><p className="text-sm text-gray-500">Date</p><p className="font-medium">{selectedTransaction.transactionDate}</p></div>
-              <div><p className="text-sm text-gray-500">Service</p><p className="font-medium">{selectedTransaction.serviceType?.icon} {selectedTransaction.serviceType?.name}</p></div>
-              <div><p className="text-sm text-gray-500">Payment</p><p className="font-medium">{selectedTransaction.paymentMethod?.icon} {selectedTransaction.paymentMethod?.name}</p></div>
-              {selectedTransaction.transactionCode && <div className="col-span-2"><p className="text-sm text-gray-500">Code</p><p className="font-mono">{selectedTransaction.transactionCode}</p></div>}
-              {selectedTransaction.notes && <div className="col-span-2"><p className="text-sm text-gray-500">Notes</p><p>{selectedTransaction.notes}</p></div>}
+              <div className="bg-gray-50 rounded-lg p-3">
+                <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Date</p>
+                <p className="font-medium flex items-center gap-2">
+                  <Calendar className="w-4 h-4 text-gray-400" />
+                  {selectedTransaction.transactionDate ? formatDisplayDate(selectedTransaction.transactionDate) : '-'}
+                </p>
+              </div>
+              <div className="bg-gray-50 rounded-lg p-3">
+                <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Time Created</p>
+                <p className="font-medium flex items-center gap-2">
+                  <Clock className="w-4 h-4 text-gray-400" />
+                  {selectedTransaction.createdAt ? formatTime(selectedTransaction.createdAt) : '-'}
+                  {selectedTransaction.createdAt && getRelativeTime(selectedTransaction.createdAt) && (
+                    <span className="text-xs text-gray-400">({getRelativeTime(selectedTransaction.createdAt)})</span>
+                  )}
+                </p>
+              </div>
+              <div className="bg-gray-50 rounded-lg p-3">
+                <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Service</p>
+                <p className="font-medium">{selectedTransaction.serviceType?.icon} {selectedTransaction.serviceType?.name}</p>
+              </div>
+              <div className="bg-gray-50 rounded-lg p-3">
+                <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Payment Method</p>
+                <p className="font-medium">{selectedTransaction.paymentMethod?.icon} {selectedTransaction.paymentMethod?.name}</p>
+              </div>
+              <div className="bg-gray-50 rounded-lg p-3">
+                <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Recorded By</p>
+                <p className="font-medium flex items-center gap-2">
+                  <User className="w-4 h-4 text-gray-400" />
+                  {selectedTransaction.agentName || '-'}
+                </p>
+              </div>
+              {selectedTransaction.branchName && (
+                <div className="bg-gray-50 rounded-lg p-3">
+                  <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Branch</p>
+                  <p className="font-medium flex items-center gap-2">
+                    <Building2 className="w-4 h-4 text-gray-400" />
+                    {selectedTransaction.branchName}
+                  </p>
+                </div>
+              )}
             </div>
-            {selectedTransaction.isVoided && <div className="bg-red-50 border border-red-200 rounded-lg p-4"><p className="text-sm font-medium text-red-800">Voided</p><p className="text-sm text-red-600">Reason: {selectedTransaction.voidReason || 'N/A'}</p></div>}
-            <div className="flex justify-end pt-4 border-t"><Button variant="secondary" onClick={() => { setShowViewModal(false); setSelectedTransaction(null); }}>Close</Button></div>
+
+            {/* Transaction Code */}
+            {selectedTransaction.transactionCode && (
+              <div className="bg-blue-50 rounded-lg p-4">
+                <p className="text-sm text-blue-600 mb-1">Transaction Code</p>
+                <p className="font-mono font-medium text-blue-800">{selectedTransaction.transactionCode}</p>
+              </div>
+            )}
+
+            {/* Notes */}
+            {selectedTransaction.notes && (
+              <div className="bg-gray-50 rounded-lg p-4">
+                <p className="text-sm text-gray-500 mb-1">Notes</p>
+                <p className="text-gray-700">{selectedTransaction.notes}</p>
+              </div>
+            )}
+
+            {/* Voided Info */}
+            {selectedTransaction.isVoided && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                <p className="text-sm font-medium text-red-800 flex items-center gap-2">
+                  <Ban className="w-4 h-4" />
+                  Transaction Voided
+                </p>
+                <p className="text-sm text-red-600 mt-1">Reason: {selectedTransaction.voidReason || 'N/A'}</p>
+                {selectedTransaction.voidedAt && (
+                  <p className="text-xs text-red-500 mt-1">Voided at: {formatDisplayDate(selectedTransaction.voidedAt)} {formatTime(selectedTransaction.voidedAt)}</p>
+                )}
+              </div>
+            )}
+
+            <div className="flex justify-end pt-4 border-t">
+              <Button variant="secondary" onClick={() => { setShowViewModal(false); setSelectedTransaction(null); }}>Close</Button>
+            </div>
           </div>
         )}
       </Modal>
