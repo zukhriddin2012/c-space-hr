@@ -4,8 +4,9 @@ import React, { useState, useEffect } from 'react';
 import Modal from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
-import { Building2, User } from 'lucide-react';
+import { Building2, User, MapPin } from 'lucide-react';
 import type { ClientOption } from './ClientAutocomplete';
+import { useReceptionMode } from '@/contexts/ReceptionModeContext';
 
 interface CreateClientModalProps {
   isOpen: boolean;
@@ -36,6 +37,7 @@ export function CreateClientModal({
   branchId,
   onCreated,
 }: CreateClientModalProps) {
+  const { accessibleBranches } = useReceptionMode();
   const [formData, setFormData] = useState({
     name: '',
     type: 'individual' as 'company' | 'individual',
@@ -43,8 +45,12 @@ export function CreateClientModal({
     companyName: '',
     industry: '',
   });
+  const [selectedBranch, setSelectedBranch] = useState<string>(branchId || '');
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Filter out "All Branches" option - we need a specific branch for clients
+  const availableBranches = accessibleBranches.filter(b => !b.isAllBranches);
 
   // Reset form when modal opens
   useEffect(() => {
@@ -56,14 +62,16 @@ export function CreateClientModal({
         companyName: '',
         industry: '',
       });
+      // Set default branch: use prop, or first available branch
+      setSelectedBranch(branchId || (availableBranches.length > 0 ? availableBranches[0].id : ''));
       setErrors({});
     }
-  }, [isOpen, initialName]);
+  }, [isOpen, initialName, branchId, availableBranches.length]);
 
   const validate = (): boolean => {
     const newErrors: Record<string, string> = {};
     if (!formData.name.trim()) newErrors.name = 'Name is required';
-    if (!branchId) newErrors.submit = 'No branch selected. Please select a branch first.';
+    if (!selectedBranch) newErrors.branch = 'Please select a branch';
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -83,7 +91,7 @@ export function CreateClientModal({
           phone: formData.phone.trim() || undefined,
           companyName: formData.type === 'individual' ? formData.companyName.trim() || undefined : undefined,
           industry: formData.industry || undefined,
-          branchId,
+          branchId: selectedBranch,
         }),
       });
 
@@ -171,6 +179,36 @@ export function CreateClientModal({
               </span>
             </label>
           </div>
+        </div>
+
+        {/* Branch Selection */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            <span className="flex items-center gap-1.5">
+              <MapPin className="w-4 h-4" />
+              Branch *
+            </span>
+          </label>
+          <select
+            value={selectedBranch}
+            onChange={(e) => setSelectedBranch(e.target.value)}
+            className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 ${
+              errors.branch ? 'border-red-300 bg-red-50' : 'border-gray-200'
+            }`}
+          >
+            <option value="">Select branch</option>
+            {availableBranches.map((branch) => (
+              <option key={branch.id} value={branch.id}>
+                {branch.name} {branch.isAssigned ? '(Your branch)' : ''}
+              </option>
+            ))}
+          </select>
+          {errors.branch && (
+            <p className="mt-1 text-sm text-red-600">{errors.branch}</p>
+          )}
+          {availableBranches.length === 0 && (
+            <p className="mt-1 text-sm text-amber-600">No branches available. Contact admin to assign you to a branch.</p>
+          )}
         </div>
 
         {/* Name */}
