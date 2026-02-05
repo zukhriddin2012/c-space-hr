@@ -40,12 +40,12 @@ async function getPendingTerminationRequests(limit: number = 10) {
     .from('termination_requests')
     .select(`
       id,
-      requested_date,
+      termination_date,
       reason,
       status,
       created_at,
-      employee:employees!employee_id(id, full_name, employee_id, position),
-      requester:employees!requested_by(full_name)
+      employee_id,
+      requested_by
     `)
     .eq('status', 'pending')
     .order('created_at', { ascending: false })
@@ -56,16 +56,29 @@ async function getPendingTerminationRequests(limit: number = 10) {
     return [];
   }
 
+  // Fetch employee details separately
+  const employeeIds = [...new Set((data || []).flatMap(d => [d.employee_id, d.requested_by].filter(Boolean)))];
+  const { data: employees } = await supabaseAdmin
+    .from('employees')
+    .select('id, full_name, employee_id, position')
+    .in('id', employeeIds);
+
+  const employeeMap = new Map((employees || []).map(e => [e.id, e]));
+
   // Transform Supabase response to expected format
-  return (data || []).map((item: Record<string, unknown>) => ({
-    id: item.id as string,
-    requested_date: item.requested_date as string,
-    reason: item.reason as string,
-    status: item.status as string,
-    created_at: item.created_at as string,
-    employee: item.employee as TerminationRequestRaw['employee'],
-    requester: item.requester as TerminationRequestRaw['requester'],
-  }));
+  return (data || []).map((item: Record<string, unknown>) => {
+    const emp = employeeMap.get(item.employee_id as string);
+    const req = employeeMap.get(item.requested_by as string);
+    return {
+      id: item.id as string,
+      requested_date: item.termination_date as string,
+      reason: item.reason as string,
+      status: item.status as string,
+      created_at: item.created_at as string,
+      employee: emp ? { id: emp.id, full_name: emp.full_name, employee_id: emp.employee_id, position: emp.position } : null,
+      requester: req ? { full_name: req.full_name } : null,
+    };
+  });
 }
 
 async function getPendingWageChangeRequests(limit: number = 10) {
@@ -83,10 +96,10 @@ async function getPendingWageChangeRequests(limit: number = 10) {
       effective_date,
       status,
       created_at,
-      employee:employees!employee_id(id, full_name, employee_id, position),
-      requester:employees!requested_by(full_name),
-      legal_entity:legal_entities!legal_entity_id(name),
-      branch:branches!branch_id(name)
+      employee_id,
+      requested_by,
+      legal_entity_id,
+      branch_id
     `)
     .eq('status', 'pending')
     .order('created_at', { ascending: false })
@@ -97,22 +110,49 @@ async function getPendingWageChangeRequests(limit: number = 10) {
     return [];
   }
 
+  // Fetch related data separately
+  const employeeIds = [...new Set((data || []).flatMap(d => [d.employee_id, d.requested_by].filter(Boolean)))];
+  const legalEntityIds = [...new Set((data || []).map(d => d.legal_entity_id).filter(Boolean))];
+  const branchIds = [...new Set((data || []).map(d => d.branch_id).filter(Boolean))];
+
+  const [employeesRes, legalEntitiesRes, branchesRes] = await Promise.all([
+    employeeIds.length > 0
+      ? supabaseAdmin.from('employees').select('id, full_name, employee_id, position').in('id', employeeIds)
+      : { data: [] },
+    legalEntityIds.length > 0
+      ? supabaseAdmin.from('legal_entities').select('id, name').in('id', legalEntityIds)
+      : { data: [] },
+    branchIds.length > 0
+      ? supabaseAdmin.from('branches').select('id, name').in('id', branchIds)
+      : { data: [] },
+  ]);
+
+  const employeeMap = new Map((employeesRes.data || []).map(e => [e.id, e]));
+  const legalEntityMap = new Map((legalEntitiesRes.data || []).map(e => [e.id, e]));
+  const branchMap = new Map((branchesRes.data || []).map(e => [e.id, e]));
+
   // Transform Supabase response to expected format
-  return (data || []).map((item: Record<string, unknown>) => ({
-    id: item.id as string,
-    wage_type: item.wage_type as string,
-    current_amount: item.current_amount as number,
-    proposed_amount: item.proposed_amount as number,
-    change_type: item.change_type as string,
-    reason: item.reason as string,
-    effective_date: item.effective_date as string,
-    status: item.status as string,
-    created_at: item.created_at as string,
-    employee: item.employee as WageChangeRequestRaw['employee'],
-    requester: item.requester as WageChangeRequestRaw['requester'],
-    legal_entity: item.legal_entity as WageChangeRequestRaw['legal_entity'],
-    branch: item.branch as WageChangeRequestRaw['branch'],
-  }));
+  return (data || []).map((item: Record<string, unknown>) => {
+    const emp = employeeMap.get(item.employee_id as string);
+    const req = employeeMap.get(item.requested_by as string);
+    const le = legalEntityMap.get(item.legal_entity_id as string);
+    const br = branchMap.get(item.branch_id as string);
+    return {
+      id: item.id as string,
+      wage_type: item.wage_type as string,
+      current_amount: item.current_amount as number,
+      proposed_amount: item.proposed_amount as number,
+      change_type: item.change_type as string,
+      reason: item.reason as string,
+      effective_date: item.effective_date as string,
+      status: item.status as string,
+      created_at: item.created_at as string,
+      employee: emp ? { id: emp.id, full_name: emp.full_name, employee_id: emp.employee_id, position: emp.position } : null,
+      requester: req ? { full_name: req.full_name } : null,
+      legal_entity: le ? { name: le.name } : null,
+      branch: br ? { name: br.name } : null,
+    };
+  });
 }
 
 export default async function ApprovalsPage() {
