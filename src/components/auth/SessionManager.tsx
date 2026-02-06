@@ -2,77 +2,29 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import SessionWarning from './SessionWarning';
 import SessionExpired from './SessionExpired';
 
-// Token lifetime: 1 hour (3600s). Warn at 55 minutes (5 min before expiry).
-const TOKEN_LIFETIME_MS = 60 * 60 * 1000;
-const WARNING_BEFORE_MS = 5 * 60 * 1000;
+// Silently refresh the token every 50 minutes (well before the 1-hour expiry).
+// The refresh token lasts 7 days, so as long as the user opens the app at least
+// once a week, they'll never be logged out.
+const REFRESH_INTERVAL_MS = 50 * 60 * 1000; // 50 minutes
+
+// After user activity, wait this long before refreshing (debounce)
+const ACTIVITY_DEBOUNCE_MS = 2 * 60 * 1000; // 2 minutes
 
 export default function SessionManager() {
   const router = useRouter();
-  const [showWarning, setShowWarning] = useState(false);
   const [showExpired, setShowExpired] = useState(false);
-  const [expiresAt, setExpiresAt] = useState(0);
-  const warningTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
-  const expiryTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const refreshTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const activityTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const lastRefreshRef = useRef<number>(Date.now());
+  const isRefreshingRef = useRef(false);
 
-  const resetTimers = useCallback((expiryTime: number) => {
-    // Clear existing timers
-    if (warningTimerRef.current) clearTimeout(warningTimerRef.current);
-    if (expiryTimerRef.current) clearTimeout(expiryTimerRef.current);
+  const silentRefresh = useCallback(async () => {
+    // Prevent concurrent refresh calls
+    if (isRefreshingRef.current) return;
+    isRefreshingRef.current = true;
 
-    setExpiresAt(expiryTime);
-    setShowWarning(false);
-    setShowExpired(false);
-
-    const now = Date.now();
-    const timeUntilWarning = expiryTime - now - WARNING_BEFORE_MS;
-    const timeUntilExpiry = expiryTime - now;
-
-    if (timeUntilWarning > 0) {
-      warningTimerRef.current = setTimeout(() => {
-        setShowWarning(true);
-      }, timeUntilWarning);
-    }
-
-    if (timeUntilExpiry > 0) {
-      expiryTimerRef.current = setTimeout(() => {
-        setShowWarning(false);
-        setShowExpired(true);
-      }, timeUntilExpiry);
-    }
-  }, []);
-
-  // On mount, set initial timer based on token lifetime
-  useEffect(() => {
-    resetTimers(Date.now() + TOKEN_LIFETIME_MS);
-
-    return () => {
-      if (warningTimerRef.current) clearTimeout(warningTimerRef.current);
-      if (expiryTimerRef.current) clearTimeout(expiryTimerRef.current);
-    };
-  }, [resetTimers]);
-
-  // Listen for token refreshes from other tabs
-  useEffect(() => {
-    if (typeof BroadcastChannel === 'undefined') return;
-
-    const channel = new BroadcastChannel('c-space-session');
-    channel.onmessage = (event) => {
-      if (event.data.type === 'session-refreshed') {
-        resetTimers(event.data.expiresAt);
-      }
-      if (event.data.type === 'session-logout') {
-        setShowWarning(false);
-        setShowExpired(true);
-      }
-    };
-
-    return () => channel.close();
-  }, [resetTimers]);
-
-  const handleExtend = useCallback(async (): Promise<boolean> => {
     try {
       const response = await fetch('/api/auth/refresh', {
         method: 'POST',
@@ -80,51 +32,108 @@ export default function SessionManager() {
       });
 
       if (response.ok) {
-        const newExpiry = Date.now() + TOKEN_LIFETIME_MS;
-        resetTimers(newExpiry);
+        lastRefreshRef.current = Date.now();
 
         // Notify other tabs
         if (typeof BroadcastChannel !== 'undefined') {
           const channel = new BroadcastChannel('c-space-session');
-          channel.postMessage({ type: 'session-refreshed', expiresAt: newExpiry });
+          channel.postMessage({ type: 'session-refreshed' });
           channel.close();
         }
-
-        return true;
+      } else {
+        // Refresh failed — token is truly expired (7+ days inactive)
+        setShowExpired(true);
       }
-      return false;
     } catch {
-      return false;
+      // Network error — don't show expired, will retry on next interval
+    } finally {
+      isRefreshingRef.current = false;
     }
-  }, [resetTimers]);
+  }, []);
 
-  const handleLogout = useCallback(async () => {
-    try {
-      await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
-    } catch {
-      // Continue with client-side logout even if API fails
-    }
+  // Schedule periodic silent refresh
+  const scheduleRefresh = useCallback(() => {
+    if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current);
+    refreshTimerRef.current = setTimeout(() => {
+      silentRefresh();
+      scheduleRefresh(); // re-schedule after each refresh
+    }, REFRESH_INTERVAL_MS);
+  }, [silentRefresh]);
 
-    // Notify other tabs
-    if (typeof BroadcastChannel !== 'undefined') {
-      const channel = new BroadcastChannel('c-space-session');
-      channel.postMessage({ type: 'session-logout' });
-      channel.close();
-    }
+  // On mount: start periodic refresh
+  useEffect(() => {
+    scheduleRefresh();
 
-    router.push('/login');
-    router.refresh();
-  }, [router]);
+    return () => {
+      if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current);
+      if (activityTimerRef.current) clearTimeout(activityTimerRef.current);
+    };
+  }, [scheduleRefresh]);
 
-  return (
-    <>
-      <SessionWarning
-        isOpen={showWarning}
-        expiresAt={expiresAt}
-        onExtend={handleExtend}
-        onLogout={handleLogout}
-      />
-      <SessionExpired isOpen={showExpired} />
-    </>
-  );
+  // On user activity: refresh if it's been a while (debounced)
+  useEffect(() => {
+    const onActivity = () => {
+      const timeSinceRefresh = Date.now() - lastRefreshRef.current;
+
+      // Only refresh if it's been more than half the interval since last refresh
+      if (timeSinceRefresh < REFRESH_INTERVAL_MS / 2) return;
+
+      // Debounce: don't refresh on every keystroke
+      if (activityTimerRef.current) clearTimeout(activityTimerRef.current);
+      activityTimerRef.current = setTimeout(() => {
+        silentRefresh();
+        scheduleRefresh(); // reset the periodic timer
+      }, ACTIVITY_DEBOUNCE_MS);
+    };
+
+    // Passive listeners for minimal performance impact
+    window.addEventListener('click', onActivity, { passive: true });
+    window.addEventListener('keydown', onActivity, { passive: true });
+    window.addEventListener('scroll', onActivity, { passive: true });
+
+    return () => {
+      window.removeEventListener('click', onActivity);
+      window.removeEventListener('keydown', onActivity);
+      window.removeEventListener('scroll', onActivity);
+    };
+  }, [silentRefresh, scheduleRefresh]);
+
+  // Listen for session events from other tabs
+  useEffect(() => {
+    if (typeof BroadcastChannel === 'undefined') return;
+
+    const channel = new BroadcastChannel('c-space-session');
+    channel.onmessage = (event) => {
+      if (event.data.type === 'session-refreshed') {
+        // Another tab refreshed — reset our timer too
+        lastRefreshRef.current = Date.now();
+        scheduleRefresh();
+        setShowExpired(false);
+      }
+      if (event.data.type === 'session-logout') {
+        setShowExpired(true);
+      }
+    };
+
+    return () => channel.close();
+  }, [scheduleRefresh]);
+
+  // Also refresh when tab becomes visible again (user comes back after a break)
+  useEffect(() => {
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        const timeSinceRefresh = Date.now() - lastRefreshRef.current;
+        // If more than 25 min since last refresh, do one now
+        if (timeSinceRefresh > REFRESH_INTERVAL_MS / 2) {
+          silentRefresh();
+          scheduleRefresh();
+        }
+      }
+    };
+
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', onVisibilityChange);
+  }, [silentRefresh, scheduleRefresh]);
+
+  return <SessionExpired isOpen={showExpired} />;
 }
