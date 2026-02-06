@@ -79,7 +79,10 @@ export function ReceptionModeProvider({ children }: { children: ReactNode }) {
     canSeeAllBranches: false,
     totalBranchCount: 0,
   });
-  const [selectedBranchId, setSelectedBranchId] = useState<string | null>(null);
+  const [selectedBranchId, setSelectedBranchId] = useState<string | null>(() => {
+    if (typeof window === 'undefined') return null;
+    return sessionStorage.getItem(STORAGE_KEY) || null;
+  });
   const [isLoadingBranches, setIsLoadingBranches] = useState(false);
 
   // Branch switch confirmation
