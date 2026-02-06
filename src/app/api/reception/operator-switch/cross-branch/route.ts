@@ -99,6 +99,7 @@ async function handler(
 
       return NextResponse.json(
         {
+          success: true,
           operator: {
             id: employeeId,
             name: employee.full_name,
@@ -117,6 +118,7 @@ async function handler(
     if (failureResult.locked) {
       return NextResponse.json(
         {
+          success: false,
           error: 'too_many_attempts',
           lockoutRemainingSeconds: failureResult.lockoutRemainingSeconds,
         },
@@ -126,6 +128,7 @@ async function handler(
 
     return NextResponse.json(
       {
+        success: false,
         error: 'invalid_pin',
         attemptsRemaining: failureResult.attemptsRemaining,
       },
@@ -134,7 +137,7 @@ async function handler(
   } catch (error) {
     console.error('Cross-branch operator switch error:', error);
     return NextResponse.json(
-      { error: 'internal_server_error' },
+      { success: false, error: 'internal_server_error' },
       { status: 500 }
     );
   }
