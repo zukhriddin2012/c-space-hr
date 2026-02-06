@@ -108,7 +108,7 @@ export const GET = withAuth(async (request, { user }) => {
     console.error('Error in GET /api/reception/admin/branch-access:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
-});
+}, { allowKiosk: true });
 
 // POST /api/reception/admin/branch-access
 // Grant branch access to a user
@@ -194,4 +194,4 @@ export const POST = withAuth(async (request, { user }) => {
     console.error('Error in POST /api/reception/admin/branch-access:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
-});
+}, { allowKiosk: true });

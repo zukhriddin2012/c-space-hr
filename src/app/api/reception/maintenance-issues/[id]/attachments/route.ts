@@ -63,5 +63,5 @@ export const POST = withAuth(
       return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
   },
-  { permission: PERMISSIONS.RECEPTION_MAINTENANCE_REPORT }
+  { permission: PERMISSIONS.RECEPTION_MAINTENANCE_REPORT, allowKiosk: true }
 );

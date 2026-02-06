@@ -88,7 +88,7 @@ export const GET = withAuth(async (
       { status: 500 }
     );
   }
-}, { permission: PERMISSIONS.RECEPTION_LEGAL_VIEW });
+}, { permission: PERMISSIONS.RECEPTION_LEGAL_VIEW, allowKiosk: true });
 
 // ============================================
 // POST /api/reception/legal-requests
@@ -203,4 +203,4 @@ export const POST = withAuth(async (
       { status: 500 }
     );
   }
-}, { permission: PERMISSIONS.RECEPTION_LEGAL_SUBMIT });
+}, { permission: PERMISSIONS.RECEPTION_LEGAL_SUBMIT, allowKiosk: true });

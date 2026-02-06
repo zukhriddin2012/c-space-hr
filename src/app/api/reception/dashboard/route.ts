@@ -351,4 +351,4 @@ export const GET = withAuth(async (request: NextRequest) => {
     console.error('Server error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
-}, { permission: PERMISSIONS.RECEPTION_VIEW });
+}, { permission: PERMISSIONS.RECEPTION_VIEW, allowKiosk: true });

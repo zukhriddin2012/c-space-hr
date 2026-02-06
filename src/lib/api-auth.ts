@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { verifyToken } from './auth';
 import { hasPermission, hasAnyPermission, Permission } from './permissions';
+import { verifyKioskToken, KIOSK_COOKIE_NAME } from './kiosk-auth';
 import type { User, UserRole } from '@/types';
 
 const COOKIE_NAME = 'c-space-auth';
@@ -20,6 +21,7 @@ interface ProtectOptions {
   permissions?: Permission[];
   requireAll?: boolean;
   roles?: UserRole[];
+  allowKiosk?: boolean;
 }
 
 /**
@@ -69,19 +71,36 @@ export function withAuth(
       const cookieStore = await cookies();
       const token = cookieStore.get(COOKIE_NAME)?.value;
 
-      if (!token) {
-        return NextResponse.json(
-          { error: 'Authentication required' },
-          { status: 401 }
-        );
+      let user: User | null = null;
+
+      if (token) {
+        // Verify user token
+        user = await verifyToken(token);
       }
 
-      // Verify token
-      const user = await verifyToken(token);
+      // If no valid user token and kiosk auth is allowed, try kiosk cookie
+      if (!user && options?.allowKiosk) {
+        const kioskToken = cookieStore.get(KIOSK_COOKIE_NAME)?.value;
+        if (kioskToken) {
+          const kioskPayload = await verifyKioskToken(kioskToken);
+          if (kioskPayload) {
+            // Create a synthetic kiosk user with reception-only permissions
+            user = {
+              id: `kiosk:${kioskPayload.branchId}`,
+              email: '',
+              name: 'Reception Kiosk',
+              role: 'reception_kiosk' as UserRole,
+              branchId: kioskPayload.branchId,
+              createdAt: new Date(kioskPayload.authenticatedAt * 1000),
+              updatedAt: new Date(),
+            };
+          }
+        }
+      }
 
       if (!user) {
         return NextResponse.json(
-          { error: 'Invalid or expired token' },
+          { error: 'Authentication required' },
           { status: 401 }
         );
       }

@@ -69,7 +69,7 @@ export const GET = withAuth(async (request: NextRequest, { params }) => {
     console.error('Server error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
-}, { permission: PERMISSIONS.RECEPTION_TRANSACTIONS_VIEW });
+}, { permission: PERMISSIONS.RECEPTION_TRANSACTIONS_VIEW, allowKiosk: true });
 
 // ============================================
 // DELETE /api/reception/transactions/[id]
@@ -183,4 +183,4 @@ export const DELETE = withAuth(async (request: NextRequest, { user, params }) =>
     console.error('Server error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
-}, { permission: PERMISSIONS.RECEPTION_TRANSACTIONS_VOID });
+}, { permission: PERMISSIONS.RECEPTION_TRANSACTIONS_VOID, allowKiosk: true });

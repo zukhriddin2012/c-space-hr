@@ -73,7 +73,7 @@ export const GET = withAuth(async (request: NextRequest, { user }) => {
     console.error('Server error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
-}, { permission: PERMISSIONS.RECEPTION_MAINTENANCE_VIEW });
+}, { permission: PERMISSIONS.RECEPTION_MAINTENANCE_VIEW, allowKiosk: true });
 
 // ============================================
 // POST /api/reception/maintenance-issues
@@ -164,4 +164,4 @@ export const POST = withAuth(async (request: NextRequest, { user }) => {
     console.error('Server error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
-}, { permission: PERMISSIONS.RECEPTION_MAINTENANCE_REPORT });
+}, { permission: PERMISSIONS.RECEPTION_MAINTENANCE_REPORT, allowKiosk: true });

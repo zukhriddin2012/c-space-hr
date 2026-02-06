@@ -40,4 +40,4 @@ export const GET = withAuth(async (request: NextRequest, { user }) => {
     console.error('Error in SLA stats endpoint:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
-});
+}, { allowKiosk: true });

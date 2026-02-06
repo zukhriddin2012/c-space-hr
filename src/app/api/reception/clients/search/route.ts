@@ -54,4 +54,4 @@ export const GET = withAuth(async (request: NextRequest) => {
     console.error('Server error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
-});
+}, { allowKiosk: true });

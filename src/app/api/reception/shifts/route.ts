@@ -168,4 +168,4 @@ export const GET = withAuth(async (request: NextRequest, { user }) => {
     console.error('Server error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
-}, { permission: PERMISSIONS.RECEPTION_SHIFTS_VIEW });
+}, { permission: PERMISSIONS.RECEPTION_SHIFTS_VIEW, allowKiosk: true });

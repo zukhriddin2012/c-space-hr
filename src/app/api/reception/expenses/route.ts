@@ -128,7 +128,7 @@ export const GET = withAuth(async (request: NextRequest) => {
     console.error('Server error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
-}, { permission: PERMISSIONS.RECEPTION_EXPENSES_VIEW });
+}, { permission: PERMISSIONS.RECEPTION_EXPENSES_VIEW, allowKiosk: true });
 
 // ============================================
 // POST /api/reception/expenses
@@ -248,4 +248,4 @@ export const POST = withAuth(async (request: NextRequest, { user }) => {
     console.error('Server error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
-}, { permission: PERMISSIONS.RECEPTION_EXPENSES_CREATE });
+}, { permission: PERMISSIONS.RECEPTION_EXPENSES_CREATE, allowKiosk: true });

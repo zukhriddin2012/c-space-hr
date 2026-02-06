@@ -134,7 +134,7 @@ export const GET = withAuth(async (request: NextRequest, { user }) => {
     console.error('Server error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
-}, { permission: PERMISSIONS.RECEPTION_TRANSACTIONS_VIEW });
+}, { permission: PERMISSIONS.RECEPTION_TRANSACTIONS_VIEW, allowKiosk: true });
 
 // ============================================
 // POST /api/reception/transactions
@@ -269,4 +269,4 @@ export const POST = withAuth(async (request: NextRequest, { user }) => {
     console.error('Server error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
-}, { permission: PERMISSIONS.RECEPTION_TRANSACTIONS_CREATE });
+}, { permission: PERMISSIONS.RECEPTION_TRANSACTIONS_CREATE, allowKiosk: true });

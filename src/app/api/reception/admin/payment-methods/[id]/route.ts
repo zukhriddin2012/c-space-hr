@@ -39,7 +39,7 @@ export const GET = withAuth(async (request: NextRequest, { params }) => {
     console.error('Server error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
-}, { permission: PERMISSIONS.RECEPTION_VIEW });
+}, { permission: PERMISSIONS.RECEPTION_VIEW, allowKiosk: true });
 
 // ============================================
 // PUT /api/reception/admin/payment-methods/[id]
@@ -117,7 +117,7 @@ export const PUT = withAuth(async (request: NextRequest, { params }) => {
     console.error('Server error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
-}, { permission: PERMISSIONS.RECEPTION_ADMIN });
+}, { permission: PERMISSIONS.RECEPTION_ADMIN, allowKiosk: true });
 
 // ============================================
 // DELETE /api/reception/admin/payment-methods/[id]
@@ -166,4 +166,4 @@ export const DELETE = withAuth(async (request: NextRequest, { params }) => {
     console.error('Server error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
-}, { permission: PERMISSIONS.RECEPTION_ADMIN });
+}, { permission: PERMISSIONS.RECEPTION_ADMIN, allowKiosk: true });

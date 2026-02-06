@@ -51,4 +51,4 @@ async function handler(
   }
 }
 
-export const GET = withAuth(handler, { permission: PERMISSIONS.RECEPTION_VIEW });
+export const GET = withAuth(handler, { permission: PERMISSIONS.RECEPTION_VIEW, allowKiosk: true });

@@ -103,4 +103,4 @@ export const POST = withAuth(async (
       { status: 500 }
     );
   }
-}, { permission: PERMISSIONS.RECEPTION_LEGAL_VIEW });
+}, { permission: PERMISSIONS.RECEPTION_LEGAL_VIEW, allowKiosk: true });

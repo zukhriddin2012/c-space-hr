@@ -154,6 +154,7 @@ export const ROLE_HIERARCHY: Record<UserRole, number> = {
   branch_manager: 60,
   recruiter: 50,
   employee: 10,
+  reception_kiosk: 5,
 };
 
 // Permission sets for each role
@@ -531,6 +532,27 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     PERMISSIONS.FINANCES_VIEW_ALL,
     PERMISSIONS.FINANCES_EXPORT,
   ],
+
+  reception_kiosk: [
+    // Reception-only access for standalone kiosk mode
+    PERMISSIONS.RECEPTION_VIEW,
+    PERMISSIONS.RECEPTION_TRANSACTIONS_CREATE,
+    PERMISSIONS.RECEPTION_TRANSACTIONS_VIEW,
+    PERMISSIONS.RECEPTION_TRANSACTIONS_EDIT,
+    PERMISSIONS.RECEPTION_TRANSACTIONS_VOID,
+    PERMISSIONS.RECEPTION_EXPENSES_CREATE,
+    PERMISSIONS.RECEPTION_EXPENSES_VIEW,
+    PERMISSIONS.RECEPTION_EXPENSES_EDIT,
+    PERMISSIONS.RECEPTION_EXPENSES_VOID,
+    PERMISSIONS.RECEPTION_REPORTS,
+    PERMISSIONS.RECEPTION_ACCOUNTING_SUBMIT,
+    PERMISSIONS.RECEPTION_ACCOUNTING_VIEW,
+    PERMISSIONS.RECEPTION_LEGAL_SUBMIT,
+    PERMISSIONS.RECEPTION_LEGAL_VIEW,
+    PERMISSIONS.RECEPTION_MAINTENANCE_REPORT,
+    PERMISSIONS.RECEPTION_MAINTENANCE_VIEW,
+    PERMISSIONS.RECEPTION_SHIFTS_VIEW,
+  ],
 };
 
 // Check if a role has a specific permission
@@ -571,6 +593,7 @@ export function getRoleLabel(role: UserRole): string {
     branch_manager: 'Branch Manager',
     recruiter: 'Recruiter',
     employee: 'Employee',
+    reception_kiosk: 'Reception Kiosk',
   };
   return labels[role] ?? role;
 }
@@ -588,6 +611,7 @@ export function getRoleBadgeColor(role: UserRole): string {
     branch_manager: 'bg-emerald-100 text-emerald-800 border-emerald-200',
     recruiter: 'bg-green-100 text-green-800 border-green-200',
     employee: 'bg-gray-100 text-gray-800 border-gray-200',
+    reception_kiosk: 'bg-violet-100 text-violet-800 border-violet-200',
   };
   return colors[role] ?? 'bg-gray-100 text-gray-800 border-gray-200';
 }

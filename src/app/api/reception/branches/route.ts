@@ -189,4 +189,4 @@ export const GET = withAuth(async (request, { user }) => {
     console.error('Error in GET /api/reception/branches:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
-});
+}, { allowKiosk: true });

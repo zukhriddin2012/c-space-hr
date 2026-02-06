@@ -1,5 +1,5 @@
 // User roles for the HR platform
-export type UserRole = 'general_manager' | 'ceo' | 'hr' | 'recruiter' | 'branch_manager' | 'employee' | 'accountant' | 'chief_accountant' | 'legal_manager' | 'reports_manager';
+export type UserRole = 'general_manager' | 'ceo' | 'hr' | 'recruiter' | 'branch_manager' | 'employee' | 'accountant' | 'chief_accountant' | 'legal_manager' | 'reports_manager' | 'reception_kiosk';
 
 export interface User {
   id: string;

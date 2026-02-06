@@ -36,7 +36,7 @@ export const GET = withAuth(
       return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
   },
-  { permission: PERMISSIONS.RECEPTION_MAINTENANCE_VIEW }
+  { permission: PERMISSIONS.RECEPTION_MAINTENANCE_VIEW, allowKiosk: true }
 );
 
 // ============================================
@@ -116,5 +116,5 @@ export const PATCH = withAuth(
       return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
   },
-  { permission: PERMISSIONS.MAINTENANCE_MANAGE }
+  { permission: PERMISSIONS.MAINTENANCE_MANAGE, allowKiosk: true }
 );

@@ -52,7 +52,7 @@ export const GET = withAuth(async (
       { status: 500 }
     );
   }
-}, { permission: PERMISSIONS.RECEPTION_LEGAL_VIEW });
+}, { permission: PERMISSIONS.RECEPTION_LEGAL_VIEW, allowKiosk: true });
 
 // ============================================
 // PATCH /api/reception/legal-requests/[id]
@@ -186,4 +186,4 @@ export const PATCH = withAuth(async (
       { status: 500 }
     );
   }
-}, { permission: PERMISSIONS.LEGAL_REQUESTS_MANAGE });
+}, { permission: PERMISSIONS.LEGAL_REQUESTS_MANAGE, allowKiosk: true });
