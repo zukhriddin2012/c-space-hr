@@ -14,6 +14,8 @@ const PROTECTED_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
 const CSRF_EXEMPT_ROUTES = new Set([
   '/api/auth/login',
   '/api/auth/refresh',
+  '/api/auth/reset-password',
+  '/api/auth/logout',
   '/api/telegram-bot/webhook',
   '/api/telegram-action',
   '/api/attendance/ip-checkin',
