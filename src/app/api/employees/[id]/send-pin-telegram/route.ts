@@ -34,14 +34,15 @@ export const POST = withAuth(
         return NextResponse.json({ error: 'Telegram bot not configured' }, { status: 500 });
       }
 
-      // Fetch employee with branch info (including plaintext password)
+      // Fetch employee with branch info
       const { data: employee, error: fetchError } = await supabaseAdmin!
         .from('employees')
-        .select('id, full_name, telegram_id, branch_id, branches!employees_branch_id_fkey(name, reception_password_plain)')
+        .select('id, full_name, telegram_id, branch_id, branches!employees_branch_id_fkey(name)')
         .eq('id', employeeId)
         .single();
 
       if (fetchError || !employee) {
+        console.error('Error fetching employee:', fetchError);
         return NextResponse.json({ error: 'Employee not found' }, { status: 404 });
       }
 
@@ -70,9 +71,23 @@ export const POST = withAuth(
       }
 
       // Build the Telegram message
-      const branchData = employee.branches as unknown as { name: string; reception_password_plain: string | null } | null;
+      const branchData = employee.branches as unknown as { name: string } | null;
       const branchName = branchData?.name || 'N/A';
-      const branchPassword = branchData?.reception_password_plain || null;
+
+      // Try to fetch branch password (column may not exist if migration hasn't been run)
+      let branchPassword: string | null = null;
+      if (employee.branch_id) {
+        try {
+          const { data: branchRow } = await supabaseAdmin!
+            .from('branches')
+            .select('reception_password_plain')
+            .eq('id', employee.branch_id)
+            .single();
+          branchPassword = branchRow?.reception_password_plain || null;
+        } catch {
+          // Column doesn't exist yet — skip branch password
+        }
+      }
 
       let message = `🔐 <b>Your Reception Access Details</b>\n\n`;
       message += `👤 <b>Employee:</b> ${employee.full_name}\n`;
