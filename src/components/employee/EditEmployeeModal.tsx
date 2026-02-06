@@ -139,7 +139,13 @@ export default function EditEmployeeModal({
 
         if (wagesRes.ok) {
           const data = await wagesRes.json();
-          setWages(data.wages || []);
+          // Filter to only include primary wages - the combined endpoint returns both
+          // primary (employee_wages) and additional (employee_branch_wages) entries.
+          // Additional wages are fetched separately via branch-wages endpoint below.
+          const primaryOnly = (data.wages || []).filter(
+            (w: { source_type?: string }) => w.source_type === 'primary' || !w.source_type
+          );
+          setWages(primaryOnly);
         }
 
         if (branchWagesRes.ok) {
@@ -243,7 +249,11 @@ export default function EditEmployeeModal({
         const wagesRes = await fetch(`/api/employees/${employee.id}/wages`);
         if (wagesRes.ok) {
           const data = await wagesRes.json();
-          setWages(data.wages || []);
+          // Filter to only include primary wages
+          const primaryOnly = (data.wages || []).filter(
+            (w: { source_type?: string }) => w.source_type === 'primary' || !w.source_type
+          );
+          setWages(primaryOnly);
         }
         setNewWage({ entity_id: '', amount: '' });
         setShowAddWage(false);
