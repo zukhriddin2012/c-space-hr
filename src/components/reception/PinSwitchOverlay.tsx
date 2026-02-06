@@ -105,11 +105,11 @@ export function PinSwitchOverlay({ isOpen, onClose }: PinSwitchOverlayProps) {
   const handlePinChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (lockoutCountdown !== null || isLoading) return;
 
-    const value = e.target.value.replace(/\D/g, '').slice(0, 4);
+    const value = e.target.value.replace(/\D/g, '').slice(0, 6);
     setPin(value);
     setError(null);
 
-    if (value.length === 4) {
+    if (value.length === 6) {
       submitPin(value);
     }
   };
@@ -282,10 +282,10 @@ export function PinSwitchOverlay({ isOpen, onClose }: PinSwitchOverlayProps) {
         pattern="\d*"
         value={pin}
         onChange={handlePinChange}
-        maxLength={4}
+        maxLength={6}
         autoFocus
         className="sr-only"
-        aria-label="Enter 4-digit PIN"
+        aria-label="Enter 6-digit PIN"
         disabled={lockoutCountdown !== null || isLoading}
       />
 
@@ -295,7 +295,7 @@ export function PinSwitchOverlay({ isOpen, onClose }: PinSwitchOverlayProps) {
         className="flex justify-center gap-4 cursor-text"
         onClick={handleOverlayClick}
       >
-        {[0, 1, 2, 3].map((index) => (
+        {[0, 1, 2, 3, 4, 5].map((index) => (
           <div
             key={index}
             className={`h-5 w-5 rounded-full border-2 transition-all duration-200 ${
@@ -367,7 +367,7 @@ export function PinSwitchOverlay({ isOpen, onClose }: PinSwitchOverlayProps) {
           <div className="space-y-6">
             <div className="text-center">
               <h2 className="text-2xl font-bold text-gray-900">Operator Switch</h2>
-              <p className="mt-1 text-sm text-gray-600">Enter your 4-digit PIN</p>
+              <p className="mt-1 text-sm text-gray-600">Enter your 6-digit PIN</p>
             </div>
 
             {renderPinEntry()}

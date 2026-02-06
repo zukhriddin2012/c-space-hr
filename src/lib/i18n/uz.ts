@@ -999,7 +999,7 @@ export const uz: Translations = {
     title: 'Operator almashish',
     switchOperator: 'Operatorni almashtirish',
     enterPin: 'PIN kiriting',
-    pinPlaceholder: '4 xonali PIN',
+    pinPlaceholder: '6 xonali PIN',
     crossBranch: 'Boshqa filial',
     searchEmployee: 'Xodimni qidirish...',
     currentOperator: 'Joriy operator',

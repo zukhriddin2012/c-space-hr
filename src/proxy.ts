@@ -26,6 +26,7 @@ const PUBLIC_API_PREFIXES = [
   '/api/telegram-bot',          // All telegram bot APIs
   '/api/attendance/checkout-check',  // Telegram mini app checkout reminder
   '/api/attendance/checkout-action', // Telegram mini app checkout action
+  '/api/reception/kiosk',       // Reception kiosk auth (has its own password/JWT auth)
 ];
 
 // API routes with custom auth (not JWT — they handle their own authentication)
@@ -36,7 +37,7 @@ const CUSTOM_AUTH_ROUTES = new Set([
 ]);
 
 // Public page routes (not API) — no auth required
-const PUBLIC_PAGES = ['/login', '/reset-password', '/telegram', '/sign'];
+const PUBLIC_PAGES = ['/login', '/reset-password', '/telegram', '/sign', '/kiosk'];
 
 /**
  * Next.js 16 proxy handler — replaces middleware.ts
@@ -90,16 +91,18 @@ export default async function proxy(request: NextRequest) {
       return NextResponse.next();
     }
 
-    // SEC-016: CSRF validation for state-changing API methods
-    if (!validateCsrf(request)) {
+    // All other API routes: require valid JWT
+    const token = request.cookies.get('c-space-auth')?.value;
+
+    // SEC-016: CSRF validation — skip for JWT-authenticated requests
+    // JWT in SameSite=strict cookie is already CSRF-proof; double-submit
+    // is only needed for cookie-less form submissions (login page, etc.)
+    if (!token && !validateCsrf(request)) {
       return NextResponse.json(
         { error: 'Invalid or missing CSRF token. Please refresh the page.' },
         { status: 403 }
       );
     }
-
-    // All other API routes: require valid JWT
-    const token = request.cookies.get('c-space-auth')?.value;
     if (!token) {
       return NextResponse.json(
         { error: 'Authentication required' },

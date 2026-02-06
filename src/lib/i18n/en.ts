@@ -1003,7 +1003,7 @@ export const en: Translations = {
     title: 'Operator Switch',
     switchOperator: 'Switch Operator',
     enterPin: 'Enter PIN',
-    pinPlaceholder: '4-digit PIN',
+    pinPlaceholder: '6-digit PIN',
     crossBranch: 'Cross-Branch',
     searchEmployee: 'Search employee...',
     currentOperator: 'Current Operator',

@@ -999,7 +999,7 @@ export const ru: Translations = {
     title: 'Смена оператора',
     switchOperator: 'Сменить оператора',
     enterPin: 'Введите PIN',
-    pinPlaceholder: '4-значный PIN',
+    pinPlaceholder: '6-значный PIN',
     crossBranch: 'Другой филиал',
     searchEmployee: 'Поиск сотрудника...',
     currentOperator: 'Текущий оператор',

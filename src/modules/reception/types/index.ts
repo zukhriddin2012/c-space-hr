@@ -547,7 +547,7 @@ export interface OperatorIdentity {
 }
 
 export interface OperatorSwitchInput {
-  pin: string;       // 4-digit PIN as string
+  pin: string;       // 6-digit PIN as string
   branchId: string;  // current terminal branch
 }
 
@@ -566,7 +566,7 @@ export interface OperatorSwitchResult {
 }
 
 export interface SetOperatorPinInput {
-  pin: string;  // 4-digit string
+  pin: string;  // 6-digit string
   employeeId?: string;  // admin can set for others
 }
 

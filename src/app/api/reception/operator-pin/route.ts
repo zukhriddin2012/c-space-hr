@@ -25,7 +25,7 @@ async function handler(
     const { pin, employeeId } = body;
 
     // Validate PIN format
-    if (!pin || typeof pin !== 'string' || pin.length !== 4 || !/^\d+$/.test(pin)) {
+    if (!pin || typeof pin !== 'string' || pin.length !== 6 || !/^\d+$/.test(pin)) {
       return NextResponse.json(
         { error: 'invalid_pin_format' },
         { status: 400 }

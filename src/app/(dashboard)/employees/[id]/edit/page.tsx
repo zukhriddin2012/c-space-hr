@@ -838,8 +838,8 @@ export default function EditEmployeePage({ params }: { params: Promise<{ id: str
     setPinSuccess(null);
 
     // Validate
-    if (!pinValue || pinValue.length !== 4 || !/^\d{4}$/.test(pinValue)) {
-      setPinError('PIN must be exactly 4 digits');
+    if (!pinValue || pinValue.length !== 6 || !/^\d{6}$/.test(pinValue)) {
+      setPinError('PIN must be exactly 6 digits');
       return;
     }
     if (pinValue !== pinConfirm) {
@@ -1933,7 +1933,7 @@ export default function EditEmployeePage({ params }: { params: Promise<{ id: str
               </Card>
 
               {/* Operator PIN Management */}
-              <Card title="Operator PIN" description="Set a 4-digit PIN for reception mode operator switching">
+              <Card title="Operator PIN" description="Set a 6-digit PIN for reception mode operator switching">
                 <div className="space-y-4">
                   {/* Current PIN Status */}
                   <div className={`flex items-center gap-3 p-4 rounded-lg ${
@@ -1977,13 +1977,13 @@ export default function EditEmployeePage({ params }: { params: Promise<{ id: str
                         type="password"
                         inputMode="numeric"
                         pattern="\d{4}"
-                        maxLength={4}
+                        maxLength={6}
                         value={pinValue}
                         onChange={(e) => {
-                          setPinValue(e.target.value.replace(/\D/g, '').slice(0, 4));
+                          setPinValue(e.target.value.replace(/\D/g, '').slice(0, 6));
                           setPinError(null);
                         }}
-                        placeholder="4 digits"
+                        placeholder="6 digits"
                         className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-200"
                       />
                     </div>
@@ -1995,10 +1995,10 @@ export default function EditEmployeePage({ params }: { params: Promise<{ id: str
                         type="password"
                         inputMode="numeric"
                         pattern="\d{4}"
-                        maxLength={4}
+                        maxLength={6}
                         value={pinConfirm}
                         onChange={(e) => {
-                          setPinConfirm(e.target.value.replace(/\D/g, '').slice(0, 4));
+                          setPinConfirm(e.target.value.replace(/\D/g, '').slice(0, 6));
                           setPinError(null);
                         }}
                         placeholder="Repeat PIN"
@@ -2028,7 +2028,7 @@ export default function EditEmployeePage({ params }: { params: Promise<{ id: str
                     size="sm"
                     onClick={handleSetOperatorPin}
                     isLoading={pinSaving}
-                    disabled={!pinValue || !pinConfirm || pinValue.length !== 4 || pinConfirm.length !== 4}
+                    disabled={!pinValue || !pinConfirm || pinValue.length !== 6 || pinConfirm.length !== 6}
                     leftIcon={<KeyRound size={14} />}
                   >
                     {hasOperatorPin ? 'Change PIN' : 'Set PIN'}
