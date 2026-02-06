@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Settings, Package, CreditCard, Layers, Plus, Pencil, Trash2, ToggleLeft, ToggleRight, Search, AlertCircle } from 'lucide-react';
+import { Settings, Package, CreditCard, Layers, Plus, Pencil, Trash2, ToggleLeft, ToggleRight, Search, AlertCircle, KeyRound, Shuffle, Loader2, Check, Copy, Download } from 'lucide-react';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Modal from '@/components/ui/Modal';
@@ -23,12 +23,13 @@ interface ConfigItem {
   requiresCode?: boolean; // Only for payment methods
 }
 
-type ConfigType = 'service-types' | 'expense-types' | 'payment-methods';
+type ConfigType = 'service-types' | 'expense-types' | 'payment-methods' | 'operator-pins';
 
 const tabs = [
   { id: 'service-types', label: 'Service Types', icon: <Layers size={18} /> },
   { id: 'expense-types', label: 'Expense Types', icon: <Package size={18} /> },
   { id: 'payment-methods', label: 'Payment Methods', icon: <CreditCard size={18} /> },
+  { id: 'operator-pins', label: 'Operator PINs', icon: <KeyRound size={18} /> },
 ];
 
 // Common emojis for quick selection
@@ -219,6 +220,8 @@ export default function ReceptionAdminPage() {
         return 'Expense Types';
       case 'payment-methods':
         return 'Payment Methods';
+      case 'operator-pins':
+        return 'Operator PINs';
     }
   };
 
@@ -245,8 +248,11 @@ export default function ReceptionAdminPage() {
         className="mb-6"
       />
 
-      {/* Content */}
-      <Card>
+      {/* Operator PINs Tab */}
+      {activeTab === 'operator-pins' && <OperatorPinsPanel />}
+
+      {/* Content (Config tabs) */}
+      {activeTab !== 'operator-pins' && <Card>
         {/* Toolbar */}
         <div className="flex flex-col sm:flex-row gap-4 p-4 border-b border-gray-200">
           <div className="flex-1 relative">
@@ -399,7 +405,7 @@ export default function ReceptionAdminPage() {
             </table>
           </div>
         )}
-      </Card>
+      </Card>}
 
       {/* Add/Edit Modal */}
       <Modal
@@ -546,5 +552,262 @@ export default function ReceptionAdminPage() {
         </p>
       </Modal>
     </div>
+  );
+}
+
+// ============================================
+// OPERATOR PINS PANEL (Bulk Assign)
+// ============================================
+
+interface PinAssignment {
+  employeeId: string;
+  employeeName: string;
+  branchId: string;
+  pin: string;
+}
+
+function OperatorPinsPanel() {
+  const [isAssigning, setIsAssigning] = useState(false);
+  const [overwrite, setOverwrite] = useState(false);
+  const [results, setResults] = useState<PinAssignment[] | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [showConfirm, setShowConfirm] = useState(false);
+
+  const handleBulkAssign = async () => {
+    setShowConfirm(false);
+    setIsAssigning(true);
+    setError(null);
+    setSuccess(null);
+    setResults(null);
+
+    try {
+      const response = await fetch('/api/reception/operator-pin/bulk-assign', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ overwrite }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.error || 'Failed to assign PINs');
+        return;
+      }
+
+      setResults(data.assigned);
+      setSuccess(data.message);
+    } catch {
+      setError('Network error. Please try again.');
+    } finally {
+      setIsAssigning(false);
+    }
+  };
+
+  const copyPin = (employeeId: string, pin: string) => {
+    navigator.clipboard.writeText(pin);
+    setCopiedId(employeeId);
+    setTimeout(() => setCopiedId(null), 2000);
+  };
+
+  const copyAllPins = () => {
+    if (!results || results.length === 0) return;
+    const text = results
+      .map((r) => `${r.employeeName}: ${r.pin}`)
+      .join('\n');
+    navigator.clipboard.writeText(text);
+    setCopiedId('all');
+    setTimeout(() => setCopiedId(null), 2000);
+  };
+
+  const downloadCsv = () => {
+    if (!results || results.length === 0) return;
+    const header = 'Employee Name,PIN,Branch ID\n';
+    const rows = results
+      .map((r) => `"${r.employeeName}",${r.pin},${r.branchId}`)
+      .join('\n');
+    const blob = new Blob([header + rows], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `operator-pins-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  return (
+    <Card>
+      <div className="p-6">
+        {/* Header */}
+        <div className="flex items-start gap-4 mb-6">
+          <div className="p-3 bg-purple-100 rounded-xl">
+            <Shuffle size={24} className="text-purple-600" />
+          </div>
+          <div>
+            <h2 className="text-lg font-semibold text-gray-900">Bulk Assign Operator PINs</h2>
+            <p className="text-sm text-gray-500 mt-1">
+              Generate random 6-digit PINs for employees. PINs are unique within each branch.
+            </p>
+          </div>
+        </div>
+
+        {/* Options */}
+        <div className="bg-gray-50 rounded-xl p-4 mb-6">
+          <label className="flex items-start gap-3 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={overwrite}
+              onChange={(e) => setOverwrite(e.target.checked)}
+              className="mt-1 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+            />
+            <div>
+              <span className="text-sm font-medium text-gray-700">Overwrite existing PINs</span>
+              <p className="text-xs text-gray-500 mt-0.5">
+                {overwrite
+                  ? 'All active employees will get new PINs, replacing any existing ones.'
+                  : 'Only employees without a PIN will be assigned one. Existing PINs are kept.'}
+              </p>
+            </div>
+          </label>
+        </div>
+
+        {/* Action button */}
+        <button
+          onClick={() => setShowConfirm(true)}
+          disabled={isAssigning}
+          className="flex items-center gap-2 px-5 py-2.5 bg-purple-600 text-white rounded-xl hover:bg-purple-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors text-sm font-medium"
+        >
+          {isAssigning ? (
+            <>
+              <Loader2 size={16} className="animate-spin" />
+              Assigning PINs...
+            </>
+          ) : (
+            <>
+              <Shuffle size={16} />
+              Assign Random PINs
+            </>
+          )}
+        </button>
+
+        {/* Messages */}
+        {error && (
+          <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-xl mt-4">
+            <AlertCircle size={16} className="text-red-500 flex-shrink-0" />
+            <p className="text-sm text-red-700">{error}</p>
+          </div>
+        )}
+        {success && (
+          <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-xl mt-4">
+            <Check size={16} className="text-green-500 flex-shrink-0" />
+            <p className="text-sm text-green-700">{success}</p>
+          </div>
+        )}
+
+        {/* Results table */}
+        {results && results.length > 0 && (
+          <div className="mt-6">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-semibold text-gray-700">
+                Generated PINs ({results.length})
+              </h3>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={copyAllPins}
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-purple-700 bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors"
+                >
+                  {copiedId === 'all' ? <Check size={12} /> : <Copy size={12} />}
+                  {copiedId === 'all' ? 'Copied!' : 'Copy All'}
+                </button>
+                <button
+                  onClick={downloadCsv}
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-purple-700 bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors"
+                >
+                  <Download size={12} />
+                  Download CSV
+                </button>
+              </div>
+            </div>
+
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 mb-3">
+              <p className="text-xs text-amber-800">
+                <strong>Important:</strong> Save these PINs now. They cannot be retrieved later — only reset.
+              </p>
+            </div>
+
+            <div className="border border-gray-200 rounded-xl overflow-hidden">
+              <table className="w-full">
+                <thead className="bg-gray-50 border-b border-gray-200">
+                  <tr>
+                    <th className="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase">Employee</th>
+                    <th className="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase">PIN</th>
+                    <th className="px-4 py-2.5 text-right text-xs font-semibold text-gray-500 uppercase">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {results.map((r) => (
+                    <tr key={r.employeeId} className="hover:bg-gray-50">
+                      <td className="px-4 py-2.5 text-sm text-gray-900">{r.employeeName}</td>
+                      <td className="px-4 py-2.5">
+                        <code className="px-2 py-1 bg-gray-100 rounded text-sm font-mono font-bold text-gray-800 tracking-widest">
+                          {r.pin}
+                        </code>
+                      </td>
+                      <td className="px-4 py-2.5 text-right">
+                        <button
+                          onClick={() => copyPin(r.employeeId, r.pin)}
+                          className="p-1.5 text-gray-400 hover:text-purple-600 rounded-lg transition-colors"
+                          title="Copy PIN"
+                        >
+                          {copiedId === r.employeeId ? (
+                            <Check size={14} className="text-green-500" />
+                          ) : (
+                            <Copy size={14} />
+                          )}
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {results && results.length === 0 && (
+          <div className="mt-4 p-4 bg-gray-50 rounded-xl text-center">
+            <p className="text-sm text-gray-500">All employees already have PINs assigned.</p>
+          </div>
+        )}
+      </div>
+
+      {/* Confirm Modal */}
+      <Modal
+        isOpen={showConfirm}
+        onClose={() => setShowConfirm(false)}
+        title="Assign Random PINs"
+        size="sm"
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setShowConfirm(false)}>
+              Cancel
+            </Button>
+            <Button variant="primary" onClick={handleBulkAssign}>
+              Confirm
+            </Button>
+          </>
+        }
+      >
+        <p className="text-gray-600">
+          {overwrite
+            ? 'This will generate new random 6-digit PINs for ALL active employees, replacing any existing PINs.'
+            : 'This will generate random 6-digit PINs for all active employees who don\'t have one yet.'}
+        </p>
+        <p className="mt-2 text-sm text-gray-500">
+          PINs are guaranteed unique within each branch. You&apos;ll see the generated PINs in a table to copy or download.
+        </p>
+      </Modal>
+    </Card>
   );
 }

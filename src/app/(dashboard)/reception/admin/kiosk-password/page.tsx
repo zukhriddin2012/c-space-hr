@@ -156,7 +156,7 @@ export default function KioskPasswordPage() {
           <div>
             <p className="text-sm font-medium text-purple-900">Standalone Kiosk URL</p>
             <p className="text-sm text-purple-700 mt-1">
-              Open <code className="bg-purple-100 px-2 py-0.5 rounded text-purple-800 font-mono">/reception</code> on
+              Open <code className="bg-purple-100 px-2 py-0.5 rounded text-purple-800 font-mono">/kiosk</code> on
               the reception computer or tablet. Staff will enter the branch password to access reception mode without
               needing an individual account.
             </p>
