@@ -1,56 +1,159 @@
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { jwtVerify } from 'jose';
+import { rateLimit } from '@/lib/rate-limiter';
+import { validateCsrf, setCsrfCookie } from '@/lib/csrf';
 
-const JWT_SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET || 'c-space-niya-secret-key-change-in-production'
-);
+// SEC-003: JWT_SECRET must come from env — no fallback in production
+const jwtSecret = process.env.JWT_SECRET;
+if (!jwtSecret && process.env.NODE_ENV === 'production') {
+  throw new Error('FATAL: JWT_SECRET environment variable is not set.');
+}
+const JWT_SECRET = new TextEncoder().encode(jwtSecret || 'dev-only-fallback-not-for-production');
 
-const publicPaths = [
-  '/login',
+// API routes that do NOT require authentication
+const PUBLIC_API_ROUTES = new Set([
   '/api/auth/login',
-  '/telegram',
-  '/api/attendance/ip-checkin',
-  '/api/attendance/checkout-check', // Telegram mini app checkout reminder
+  '/api/auth/refresh',
+  '/api/auth/logout',
+  '/api/telegram-bot/webhook',  // Has its own secret_token auth
+  '/api/config',                // Public config endpoint
+  '/api/documents/sign',        // Document signing API (no auth required)
+  '/api/employees/language',    // Language preference API (for bot)
+]);
+
+// API routes that use startsWith matching (prefix-based public routes)
+const PUBLIC_API_PREFIXES = [
+  '/api/telegram-bot',          // All telegram bot APIs
+  '/api/attendance/checkout-check',  // Telegram mini app checkout reminder
   '/api/attendance/checkout-action', // Telegram mini app checkout action
-  '/api/telegram-bot', // All telegram bot APIs
-  '/api/employees/language', // Language preference API (for bot)
-  '/sign', // Document signing page for candidates (no auth required)
-  '/api/documents/sign', // Document signing API (no auth required)
 ];
 
+// API routes with custom auth (not JWT — they handle their own authentication)
+const CUSTOM_AUTH_ROUTES = new Set([
+  '/api/admin/import-employees',  // x-admin-secret header
+  '/api/telegram-action',         // Telegram initData auth
+  '/api/attendance/ip-checkin',   // Telegram-based auth
+]);
+
+// Public page routes (not API) — no auth required
+const PUBLIC_PAGES = ['/login', '/reset-password', '/telegram', '/sign'];
+
+/**
+ * Next.js 16 proxy handler — replaces middleware.ts
+ * Handles: rate limiting, CSRF, JWT auth, page redirects
+ */
 export default async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Allow public paths
-  if (publicPaths.some((path) => pathname.startsWith(path))) {
-    return NextResponse.next();
-  }
-
-  // Allow static files and api routes (except protected ones)
+  // Static assets: always pass through
   if (
     pathname.startsWith('/_next') ||
     pathname.startsWith('/images') ||
-    pathname.includes('.')
+    pathname.endsWith('.ico') ||
+    pathname.endsWith('.svg') ||
+    pathname.endsWith('.png') ||
+    pathname.endsWith('.jpg') ||
+    pathname.endsWith('.css') ||
+    pathname.endsWith('.js')
   ) {
     return NextResponse.next();
   }
 
-  // Check for auth cookie
+  // ─── API ROUTES ───────────────────────────────────────────────
+  if (pathname.startsWith('/api/')) {
+    // SEC-015: Rate limiting on login endpoint
+    if (pathname === '/api/auth/login' && request.method === 'POST') {
+      const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
+        || request.headers.get('x-real-ip')
+        || 'unknown';
+      const result = rateLimit(`login:${ip}`, 5, 15 * 60 * 1000);
+      if (!result.allowed) {
+        return NextResponse.json(
+          { error: 'Too many login attempts. Please try again later.', retryAfter: result.retryAfter },
+          { status: 429, headers: { 'Retry-After': String(result.retryAfter || 900) } }
+        );
+      }
+    }
+
+    // Public API routes: allow through (exact match)
+    if (PUBLIC_API_ROUTES.has(pathname)) {
+      return NextResponse.next();
+    }
+
+    // Public API routes: allow through (prefix match)
+    if (PUBLIC_API_PREFIXES.some((prefix) => pathname.startsWith(prefix))) {
+      return NextResponse.next();
+    }
+
+    // Custom auth routes: allow through (they handle their own auth)
+    if (CUSTOM_AUTH_ROUTES.has(pathname)) {
+      return NextResponse.next();
+    }
+
+    // SEC-016: CSRF validation for state-changing API methods
+    if (!validateCsrf(request)) {
+      return NextResponse.json(
+        { error: 'Invalid or missing CSRF token. Please refresh the page.' },
+        { status: 403 }
+      );
+    }
+
+    // All other API routes: require valid JWT
+    const token = request.cookies.get('c-space-auth')?.value;
+    if (!token) {
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      );
+    }
+
+    try {
+      const { payload } = await jwtVerify(token, JWT_SECRET);
+
+      // Forward user ID to route handlers via header
+      const requestHeaders = new Headers(request.headers);
+      requestHeaders.set('x-user-id', payload.sub as string);
+
+      return NextResponse.next({
+        request: { headers: requestHeaders },
+      });
+    } catch {
+      return NextResponse.json(
+        { error: 'Invalid or expired token' },
+        { status: 401 }
+      );
+    }
+  }
+
+  // ─── PAGE ROUTES ──────────────────────────────────────────────
+
+  // Public pages: set CSRF cookie if missing, then pass through
+  if (PUBLIC_PAGES.some((page) => pathname.startsWith(page))) {
+    const response = NextResponse.next();
+    if (!request.cookies.get('csrf-token')) {
+      return setCsrfCookie(response);
+    }
+    return response;
+  }
+
+  // All other pages: require authentication
+  // Set CSRF cookie if missing on every page response
   const token = request.cookies.get('c-space-auth')?.value;
 
   if (!token) {
-    // Redirect to login if not authenticated
     const loginUrl = new URL('/login', request.url);
     return NextResponse.redirect(loginUrl);
   }
 
   try {
-    // Verify token
     await jwtVerify(token, JWT_SECRET);
-    return NextResponse.next();
+    const response = NextResponse.next();
+    if (!request.cookies.get('csrf-token')) {
+      return setCsrfCookie(response);
+    }
+    return response;
   } catch {
-    // Token invalid - redirect to login
+    // Token invalid — redirect to login and clear cookie
     const loginUrl = new URL('/login', request.url);
     const response = NextResponse.redirect(loginUrl);
     response.cookies.delete('c-space-auth');
@@ -60,13 +163,6 @@ export default async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - public files (public folder)
-     */
-    '/((?!_next/static|_next/image|favicon.ico|images).*)',
+    '/((?!_next/static|_next/image|favicon\\.ico|favicon\\.svg|images).*)',
   ],
 };
