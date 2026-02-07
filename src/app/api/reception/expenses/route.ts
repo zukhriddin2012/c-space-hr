@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { withAuth } from '@/lib/api-auth';
 import { PERMISSIONS } from '@/lib/permissions';
 import { supabaseAdmin, isSupabaseAdminConfigured } from '@/lib/supabase';
+import { validateOperatorSession } from '@/lib/security';
 import type { CreateExpenseInput } from '@/modules/reception/types';
 
 // ============================================
@@ -140,24 +141,42 @@ export const POST = withAuth(async (request: NextRequest, { user }) => {
       return NextResponse.json({ error: 'Database not configured' }, { status: 500 });
     }
 
-    // Get employee
-    // First try to find by auth_user_id, then fall back to email
+    // Resolve the actual operator (supports kiosk PIN switching)
+    const rawOperatorId = request.headers.get('X-Operator-Id') || undefined;
+    const branchIdParam = request.headers.get('X-Branch-Id') || user.branchId || '';
+
+    const operatorValidation = await validateOperatorSession(
+      rawOperatorId,
+      user.id,
+      branchIdParam
+    );
+
+    // Get employee - try operator ID first, then auth user, then email
     let employee: { id: string; branch_id: string } | null = null;
 
-    // Try by auth_user_id first (most reliable)
-    if (user.id) {
+    // If operator was switched via PIN, look up by operator's employee ID directly
+    if (operatorValidation.valid && operatorValidation.operatorId) {
+      const { data: empByOp } = await supabaseAdmin!
+        .from('employees')
+        .select('id, branch_id')
+        .eq('id', operatorValidation.operatorId)
+        .single();
+
+      if (empByOp) employee = empByOp;
+    }
+
+    // Try by auth_user_id (for direct login, not kiosk)
+    if (!employee && user.id && !user.id.startsWith('kiosk:')) {
       const { data: empByAuthId } = await supabaseAdmin!
         .from('employees')
         .select('id, branch_id')
         .eq('auth_user_id', user.id)
         .single();
 
-      if (empByAuthId) {
-        employee = empByAuthId;
-      }
+      if (empByAuthId) employee = empByAuthId;
     }
 
-    // Fall back to email lookup if not found by auth_user_id
+    // Fall back to email lookup
     if (!employee && user.email) {
       const { data: empByEmail } = await supabaseAdmin!
         .from('employees')
@@ -167,9 +186,8 @@ export const POST = withAuth(async (request: NextRequest, { user }) => {
 
       if (empByEmail) {
         employee = empByEmail;
-
         // Auto-link auth_user_id for future lookups
-        if (user.id) {
+        if (user.id && !user.id.startsWith('kiosk:')) {
           await supabaseAdmin!
             .from('employees')
             .update({ auth_user_id: user.id })

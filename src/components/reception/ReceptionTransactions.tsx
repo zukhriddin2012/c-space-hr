@@ -8,7 +8,7 @@ import Input from '@/components/ui/Input';
 import Modal from '@/components/ui/Modal';
 import Badge from '@/components/ui/Badge';
 import { formatCurrency } from '@/modules/reception/lib/constants';
-import { useReceptionMode } from '@/contexts/ReceptionModeContext';
+import { useReceptionMode, getOperatorHeaders } from '@/contexts/ReceptionModeContext';
 import { useTranslation } from '@/contexts/LanguageContext';
 import { ClientAutocomplete, CreateClientModal } from '@/components/reception';
 import type { ClientOption } from '@/components/reception';
@@ -121,7 +121,7 @@ const initialFormData: TransactionFormData = {
 };
 
 export default function ReceptionTransactions() {
-  const { selectedBranchId } = useReceptionMode();
+  const { selectedBranchId, currentOperator } = useReceptionMode();
   const { t } = useTranslation();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [serviceTypes, setServiceTypes] = useState<ServiceType[]>([]);
@@ -267,7 +267,7 @@ export default function ReceptionTransactions() {
       };
       const response = await fetch('/api/reception/transactions', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...getOperatorHeaders(currentOperator, 'self') },
         body: JSON.stringify(payload),
       });
       if (!response.ok) {
@@ -292,7 +292,7 @@ export default function ReceptionTransactions() {
     try {
       const response = await fetch(`/api/reception/transactions/${selectedTransaction.id}`, {
         method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...getOperatorHeaders(currentOperator, 'self') },
         body: JSON.stringify({ reason: voidReason.trim() }),
       });
       if (!response.ok) {

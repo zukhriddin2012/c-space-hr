@@ -8,7 +8,7 @@ import Input from '@/components/ui/Input';
 import Modal from '@/components/ui/Modal';
 import Badge from '@/components/ui/Badge';
 import { formatCurrency, EXPENSE_PAYMENT_METHODS_LIST } from '@/modules/reception/lib/constants';
-import { useReceptionMode } from '@/contexts/ReceptionModeContext';
+import { useReceptionMode, getOperatorHeaders } from '@/contexts/ReceptionModeContext';
 import { useTranslation } from '@/contexts/LanguageContext';
 import type { Expense, ExpenseType, CreateExpenseInput } from '@/modules/reception/types';
 
@@ -96,7 +96,7 @@ const initialFormData: ExpenseFormData = {
 };
 
 export default function ReceptionExpenses() {
-  const { selectedBranchId } = useReceptionMode();
+  const { selectedBranchId, currentOperator } = useReceptionMode();
   const { t } = useTranslation();
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [expenseTypes, setExpenseTypes] = useState<ExpenseType[]>([]);
@@ -226,7 +226,7 @@ export default function ReceptionExpenses() {
       };
       const response = await fetch('/api/reception/expenses', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...getOperatorHeaders(currentOperator, 'self') },
         body: JSON.stringify(payload),
       });
       if (!response.ok) {
@@ -250,7 +250,7 @@ export default function ReceptionExpenses() {
     try {
       const response = await fetch(`/api/reception/expenses/${selectedExpense.id}`, {
         method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...getOperatorHeaders(currentOperator, 'self') },
         body: JSON.stringify({ reason: voidReason.trim() }),
       });
       if (!response.ok) {
