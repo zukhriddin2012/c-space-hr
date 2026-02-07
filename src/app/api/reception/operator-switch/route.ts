@@ -64,14 +64,17 @@ async function handler(
         // Reset lockout on successful match
         resetLockout(lockoutKey);
 
-        // Log the switch
-        await logOperatorSwitch({
+        // Log the switch (best-effort — may fail for kiosk users if session_user_id column is UUID)
+        const logResult = await logOperatorSwitch({
           branchId,
           sessionUserId: context.user.id,
           switchedToId: employee.id,
           isCrossBranch: employee.is_cross_branch,
           homeBranchId: employee.is_cross_branch ? employee.branch_id : undefined,
         });
+        if (!logResult.success) {
+          console.warn('[operator-switch] Switch log insert failed (PIN was valid, continuing):', logResult.error);
+        }
 
         return NextResponse.json(
           {

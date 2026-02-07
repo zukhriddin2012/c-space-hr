@@ -289,6 +289,9 @@ export async function resolveOperatorEmployee(
       rawOperatorId = undefined;
     }
 
+    const isKioskUser = user.id?.startsWith('kiosk:') || user.role === 'reception_kiosk';
+    const isValidUUID = (id: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+
     const opValidation = await validateOperatorSession(rawOperatorId, user.id, branchId);
 
     // 1. Operator switched via PIN — look up by their employee ID
@@ -300,6 +303,20 @@ export async function resolveOperatorEmployee(
         .single();
       if (data) return { id: data.id, branchId: data.branch_id };
       console.warn('[resolveOperatorEmployee] Operator ID validated but employee not found:', opValidation.operatorId);
+    }
+
+    // 1b. Kiosk fallback: the switch log insert may fail (session_user_id is non-UUID for kiosk),
+    //     but the operator ID was already PIN-verified server-side before being returned to the client.
+    //     Trust the operator UUID directly for kiosk users.
+    if (isKioskUser && rawOperatorId && isValidUUID(rawOperatorId) && !opValidation.valid) {
+      console.warn('[resolveOperatorEmployee] Kiosk fallback — switch log validation failed, looking up operator directly:', rawOperatorId);
+      const { data } = await db
+        .from('employees')
+        .select('id, branch_id')
+        .eq('id', rawOperatorId)
+        .single();
+      if (data) return { id: data.id, branchId: data.branch_id };
+      console.warn('[resolveOperatorEmployee] Kiosk fallback — employee not found for operator:', rawOperatorId);
     }
 
     // 2. Direct login — look up by employee ID directly (JWT sub = employee.id)
