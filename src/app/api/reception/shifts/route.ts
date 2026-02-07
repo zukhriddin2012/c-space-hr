@@ -65,11 +65,10 @@ export const GET = withAuth(async (request: NextRequest, { user }) => {
       );
     }
 
-    // Query published schedule for the branch and week
+    // Query published schedule for the week (schedules are global, not per-branch)
     const { data: scheduleData, error: scheduleError } = await supabaseAdmin!
       .from('shift_schedules')
       .select('*')
-      .eq('branch_id', branchId)
       .eq('week_start_date', weekStart)
       .eq('status', 'published')
       .single();
@@ -83,14 +82,15 @@ export const GET = withAuth(async (request: NextRequest, { user }) => {
       });
     }
 
-    // Query shift assignments for this schedule, joined with employee data
+    // Query shift assignments for this schedule + branch, joined with employee data
     const { data: assignmentsData, error: assignmentsError } = await supabaseAdmin!
       .from('shift_assignments')
       .select(`
         *,
         employee:employees(id, full_name)
       `)
-      .eq('schedule_id', scheduleData.id);
+      .eq('schedule_id', scheduleData.id)
+      .eq('branch_id', branchId);
 
     if (assignmentsError) {
       console.error('Error fetching shift assignments:', assignmentsError);
@@ -127,7 +127,7 @@ export const GET = withAuth(async (request: NextRequest, { user }) => {
     // Process assignments
     if (assignmentsData) {
       for (const assignment of assignmentsData) {
-        const assignmentDate = assignment.assignment_date as string;
+        const assignmentDate = assignment.date as string;
         const shiftType = assignment.shift_type as string;
         const employeeId = assignment.employee_id as string;
         const employee = assignment.employee as { id: string; full_name: string } | null;

@@ -38,7 +38,11 @@ const getWeekStart = (date: Date): string => {
   const day = d.getDay();
   const diff = d.getDate() - day + (day === 0 ? -6 : 1);
   d.setDate(diff);
-  return d.toISOString().split('T')[0];
+  // Use local date (not toISOString which converts to UTC and shifts dates in UTC+ timezones)
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const dayStr = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${dayStr}`;
 };
 
 const formatDate = (dateString: string): string => {
@@ -110,16 +114,23 @@ export default function ReceptionShifts() {
     }
   };
 
+  const formatLocalDate = (d: Date): string => {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  };
+
   const handlePreviousWeek = () => {
     const current = new Date(weekStart + 'T00:00:00');
     current.setDate(current.getDate() - 7);
-    setWeekStart(current.toISOString().split('T')[0]);
+    setWeekStart(formatLocalDate(current));
   };
 
   const handleNextWeek = () => {
     const current = new Date(weekStart + 'T00:00:00');
     current.setDate(current.getDate() + 7);
-    setWeekStart(current.toISOString().split('T')[0]);
+    setWeekStart(formatLocalDate(current));
   };
 
   const handleCurrentWeek = () => {
