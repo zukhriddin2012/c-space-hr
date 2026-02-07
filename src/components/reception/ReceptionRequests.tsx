@@ -45,15 +45,17 @@ export default function ReceptionRequests() {
           fetch(`/api/reception/maintenance-issues?branchId=${selectedBranchId}&pageSize=1`, { headers }),
         ]);
 
-        const accountingCount = accountingRes.status === 'fulfilled' && accountingRes.value.ok
-          ? (await accountingRes.value.json()).total || 0
-          : 0;
-        const legalCount = legalRes.status === 'fulfilled' && legalRes.value.ok
-          ? (await legalRes.value.json()).total || 0
-          : 0;
-        const maintenanceCount = maintenanceRes.status === 'fulfilled' && maintenanceRes.value.ok
-          ? (await maintenanceRes.value.json()).total || 0
-          : 0;
+        const extractCount = async (res: PromiseSettledResult<Response>): Promise<number> => {
+          if (res.status !== 'fulfilled' || !res.value.ok) return 0;
+          try {
+            const json = await res.value.json();
+            return json.pagination?.total ?? json.total ?? 0;
+          } catch { return 0; }
+        };
+
+        const accountingCount = await extractCount(accountingRes);
+        const legalCount = await extractCount(legalRes);
+        const maintenanceCount = await extractCount(maintenanceRes);
 
         setCounts({ accounting: accountingCount, legal: legalCount, maintenance: maintenanceCount });
       } catch (error) {
