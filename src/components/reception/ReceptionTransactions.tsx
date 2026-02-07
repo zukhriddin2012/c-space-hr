@@ -267,7 +267,7 @@ export default function ReceptionTransactions() {
       };
       const response = await fetch('/api/reception/transactions', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...getOperatorHeaders(currentOperator, 'self') },
+        headers: { 'Content-Type': 'application/json', ...getOperatorHeaders(currentOperator, 'self', selectedBranchId) },
         body: JSON.stringify(payload),
       });
       if (!response.ok) {
@@ -292,7 +292,7 @@ export default function ReceptionTransactions() {
     try {
       const response = await fetch(`/api/reception/transactions/${selectedTransaction.id}`, {
         method: 'DELETE',
-        headers: { 'Content-Type': 'application/json', ...getOperatorHeaders(currentOperator, 'self') },
+        headers: { 'Content-Type': 'application/json', ...getOperatorHeaders(currentOperator, 'self', selectedBranchId) },
         body: JSON.stringify({ reason: voidReason.trim() }),
       });
       if (!response.ok) {

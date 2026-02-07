@@ -232,7 +232,7 @@ interface OnboardingModalProps {
 }
 
 export default function OnboardingModal({ moduleKey, isOpen, onClose }: OnboardingModalProps) {
-  const { currentOperator } = useReceptionMode();
+  const { currentOperator, selectedBranchId } = useReceptionMode();
   const [guide, setGuide] = useState<OnboardingGuide | null>(null);
   const [steps, setSteps] = useState<OnboardingStep[]>([]);
   const [currentStep, setCurrentStep] = useState(0);
@@ -254,7 +254,7 @@ export default function OnboardingModal({ moduleKey, isOpen, onClose }: Onboardi
     setLoading(true);
 
     const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-    const opHeaders = getOperatorHeaders(currentOperator, 'self');
+    const opHeaders = getOperatorHeaders(currentOperator, 'self', selectedBranchId);
     Object.entries(opHeaders).forEach(([k, v]) => { if (v) headers[k] = v; });
 
     fetch(`/api/reception/onboarding?moduleKey=${moduleKey}`, { headers })
@@ -278,7 +278,7 @@ export default function OnboardingModal({ moduleKey, isOpen, onClose }: Onboardi
   const saveProgress = useCallback((step: number, completed: boolean) => {
     if (!guide) return;
     const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-    const opHeaders = getOperatorHeaders(currentOperator, 'self');
+    const opHeaders = getOperatorHeaders(currentOperator, 'self', selectedBranchId);
     Object.entries(opHeaders).forEach(([k, v]) => { if (v) headers[k] = v; });
 
     fetch('/api/reception/onboarding/progress', {

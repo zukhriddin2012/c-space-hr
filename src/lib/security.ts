@@ -264,7 +264,7 @@ export interface ResolvedEmployee {
 /**
  * Resolves the actual employee performing an action, handling:
  * 1. Kiosk PIN-switched operators (X-Operator-Id header)
- * 2. Direct-login users (auth_user_id lookup)
+ * 2. Direct-login users (employee ID match or auth_user_id lookup)
  * 3. Email fallback with auto-linking
  *
  * Called automatically by withAuth when allowKiosk is true,
@@ -274,53 +274,73 @@ export async function resolveOperatorEmployee(
   request: Request | { headers: { get(name: string): string | null } },
   user: User
 ): Promise<ResolvedEmployee | null> {
-  if (!isSupabaseAdminConfigured()) return null;
-
-  const rawOperatorId = request.headers.get('X-Operator-Id') || undefined;
-  const branchId = request.headers.get('X-Branch-Id') || user.branchId || '';
-
-  const opValidation = await validateOperatorSession(rawOperatorId, user.id, branchId);
-
-  // 1. Operator switched via PIN — look up by their employee ID
-  if (opValidation.valid && opValidation.operatorId) {
-    const { data } = await supabaseAdmin!
-      .from('employees')
-      .select('id, branch_id')
-      .eq('id', opValidation.operatorId)
-      .single();
-    if (data) return { id: data.id, branchId: data.branch_id };
-  }
-
-  // 2. Direct login — look up by auth_user_id
-  if (user.id && !user.id.startsWith('kiosk:')) {
-    const { data } = await supabaseAdmin!
-      .from('employees')
-      .select('id, branch_id')
-      .eq('auth_user_id', user.id)
-      .single();
-    if (data) return { id: data.id, branchId: data.branch_id };
-  }
-
-  // 3. Fallback — email lookup with auto-link
-  if (user.email) {
-    const { data } = await supabaseAdmin!
-      .from('employees')
-      .select('id, branch_id')
-      .eq('email', user.email)
-      .single();
-    if (data) {
-      // Auto-link for future lookups (skip for kiosk synthetic users)
-      if (user.id && !user.id.startsWith('kiosk:')) {
-        await supabaseAdmin!
-          .from('employees')
-          .update({ auth_user_id: user.id })
-          .eq('id', data.id);
-      }
-      return { id: data.id, branchId: data.branch_id };
+  try {
+    if (!isSupabaseAdminConfigured()) {
+      console.warn('[resolveOperatorEmployee] supabaseAdmin not configured');
+      return null;
     }
-  }
 
-  return null;
+    const db = supabaseAdmin!;
+    const rawOperatorId = request.headers.get('X-Operator-Id') || undefined;
+    const branchId = request.headers.get('X-Branch-Id') || user.branchId || '';
+
+    const opValidation = await validateOperatorSession(rawOperatorId, user.id, branchId);
+
+    // 1. Operator switched via PIN — look up by their employee ID
+    if (opValidation.valid && opValidation.operatorId) {
+      const { data } = await db
+        .from('employees')
+        .select('id, branch_id')
+        .eq('id', opValidation.operatorId)
+        .single();
+      if (data) return { id: data.id, branchId: data.branch_id };
+      console.warn('[resolveOperatorEmployee] Operator ID validated but employee not found:', opValidation.operatorId);
+    }
+
+    // 2. Direct login — look up by employee ID directly (JWT sub = employee.id)
+    if (user.id && !user.id.startsWith('kiosk:')) {
+      const { data } = await db
+        .from('employees')
+        .select('id, branch_id')
+        .eq('id', user.id)
+        .single();
+      if (data) return { id: data.id, branchId: data.branch_id };
+
+      // Also try auth_user_id for legacy compatibility
+      const { data: dataByAuth } = await db
+        .from('employees')
+        .select('id, branch_id')
+        .eq('auth_user_id', user.id)
+        .single();
+      if (dataByAuth) return { id: dataByAuth.id, branchId: dataByAuth.branch_id };
+    }
+
+    // 3. Fallback — email lookup with auto-link
+    if (user.email) {
+      const { data } = await db
+        .from('employees')
+        .select('id, branch_id')
+        .eq('email', user.email)
+        .single();
+      if (data) {
+        // Auto-link for future lookups (skip for kiosk synthetic users)
+        if (user.id && !user.id.startsWith('kiosk:')) {
+          await db
+            .from('employees')
+            .update({ auth_user_id: user.id })
+            .eq('id', data.id);
+        }
+        return { id: data.id, branchId: data.branch_id };
+      }
+    }
+
+    console.warn('[resolveOperatorEmployee] Could not resolve employee. user.id=%s, user.email=%s, operatorId=%s, branchId=%s, opValid=%s',
+      user.id, user.email || '(empty)', rawOperatorId || '(none)', branchId, opValidation.valid);
+    return null;
+  } catch (error) {
+    console.error('[resolveOperatorEmployee] Unexpected error:', error);
+    return null;
+  }
 }
 
 // ═══ Pagination Validation (M-02 / L-05) ═══

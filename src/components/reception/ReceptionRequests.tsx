@@ -38,7 +38,7 @@ export default function ReceptionRequests() {
     const fetchCounts = async () => {
       setIsLoading(true);
       try {
-        const headers = getOperatorHeaders(currentOperator, 'self');
+        const headers = getOperatorHeaders(currentOperator, 'self', selectedBranchId);
 
         const [accountingRes, legalRes, maintenanceRes] = await Promise.allSettled([
           fetch(`/api/reception/accounting-requests?branchId=${selectedBranchId}&pageSize=1`, { headers }),

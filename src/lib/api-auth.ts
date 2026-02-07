@@ -145,9 +145,15 @@ export function withAuth(
       // Auto-resolve operator → employee for kiosk-enabled routes
       let employee: ResolvedEmployee | undefined;
       if (options?.allowKiosk) {
-        const resolved = await resolveOperatorEmployee(request, user);
-        if (resolved) {
-          employee = resolved;
+        try {
+          const resolved = await resolveOperatorEmployee(request, user);
+          if (resolved) {
+            employee = resolved;
+          }
+        } catch (resolveError) {
+          // Don't fail the entire request if employee resolution fails
+          // The handler can decide what to do with employee === undefined
+          console.error('[withAuth] Employee resolution failed:', resolveError);
         }
       }
 
