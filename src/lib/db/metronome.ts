@@ -844,7 +844,7 @@ export async function getMetronomeSummary(): Promise<MetronomeSummary> {
       .select('sync_date, next_sync_date')
       .order('sync_date', { ascending: false })
       .limit(1)
-      .single();
+      .maybeSingle();
 
     if (lastSync) {
       defaultSummary.lastSync.date = lastSync.sync_date;

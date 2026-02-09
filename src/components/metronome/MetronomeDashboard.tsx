@@ -213,7 +213,7 @@ export default function MetronomeDashboard({
     actionItemsDone: number;
   }) => {
     try {
-      await fetch('/api/metronome/syncs', {
+      const res = await fetch('/api/metronome/syncs', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -233,11 +233,17 @@ export default function MetronomeDashboard({
         }),
       });
 
+      if (!res.ok) {
+        setError('Failed to save meeting record — please try again');
+        setTimeout(() => setError(null), 5000);
+        return;
+      }
+
       setShowMeeting(false);
       fetchData();
     } catch {
-      setError('Failed to save meeting record');
-      setTimeout(() => setError(null), 3000);
+      setError('Network error — meeting record not saved');
+      setTimeout(() => setError(null), 5000);
     }
   };
 

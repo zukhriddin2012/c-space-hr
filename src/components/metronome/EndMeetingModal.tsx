@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { X, CheckCircle, MessageSquare, ListChecks, Users } from 'lucide-react';
+import { X } from 'lucide-react';
 
 interface EndMeetingModalProps {
   duration: number; // seconds

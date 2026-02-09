@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { X, CheckCircle, Circle, MessageSquare } from 'lucide-react';
+import { X, CheckCircle, Circle } from 'lucide-react';
 import MeetingTimer from './MeetingTimer';
 import EndMeetingModal from './EndMeetingModal';
 import FunctionBadge from './FunctionBadge';
@@ -40,7 +40,7 @@ export default function MeetingMode({
   const [currentIdx, setCurrentIdx] = useState(0);
   const [discussed, setDiscussed] = useState<Set<string>>(new Set());
   const [showEndModal, setShowEndModal] = useState(false);
-  const [quickDecisionText, setQuickDecisionText] = useState('');
+  const [quickDecisionTexts, setQuickDecisionTexts] = useState<Record<string, string>>({});
   const [decisionsMadeCount, setDecisionsMadeCount] = useState(0);
 
   // Warn on accidental close
@@ -85,9 +85,14 @@ export default function MeetingMode({
   };
 
   const handleQuickDecide = (decisionId: string) => {
-    if (quickDecisionText.trim()) {
-      onDecide(decisionId, quickDecisionText.trim());
-      setQuickDecisionText('');
+    const text = quickDecisionTexts[decisionId] || '';
+    if (text.trim()) {
+      onDecide(decisionId, text.trim());
+      setQuickDecisionTexts(prev => {
+        const updated = { ...prev };
+        delete updated[decisionId];
+        return updated;
+      });
       setDecisionsMadeCount(prev => prev + 1);
     }
   };
@@ -160,8 +165,8 @@ export default function MeetingMode({
                       <input
                         type="text"
                         placeholder="Decision..."
-                        value={quickDecisionText}
-                        onChange={(e) => setQuickDecisionText(e.target.value)}
+                        value={quickDecisionTexts[dec.id] || ''}
+                        onChange={(e) => setQuickDecisionTexts(prev => ({ ...prev, [dec.id]: e.target.value }))}
                         onKeyDown={(e) => e.key === 'Enter' && handleQuickDecide(dec.id)}
                         className="flex-1 text-xs border border-gray-200 rounded px-2 py-1 outline-none focus:ring-1 focus:ring-purple-400"
                       />

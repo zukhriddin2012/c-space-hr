@@ -8,7 +8,7 @@ export default async function MetronomeSyncPage() {
   if (!user) redirect('/login');
   if (!hasPermission(user.role, PERMISSIONS.METRONOME_VIEW)) redirect('/dashboard');
 
-  const canEdit = hasPermission(user.role, PERMISSIONS.METRONOME_EDIT_ALL);
+  const canEdit = hasPermission(user.role, PERMISSIONS.METRONOME_EDIT_OWN);
   const canCreate = hasPermission(user.role, PERMISSIONS.METRONOME_CREATE);
   const canRunMeeting = hasPermission(user.role, PERMISSIONS.METRONOME_RUN_MEETING);
   const canManageDates = hasPermission(user.role, PERMISSIONS.METRONOME_MANAGE_DATES);
