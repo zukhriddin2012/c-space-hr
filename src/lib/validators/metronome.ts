@@ -63,6 +63,10 @@ export const ArchiveInitiativeSchema = z.object({
   action: z.enum(['archive', 'restore']),
 });
 
+const actionPriority = z.enum(['urgent', 'important', 'normal'] as const);
+
+const recurrenceRule = z.enum(['weekly', 'biweekly', 'monthly'] as const);
+
 // ═══ ACTION ITEMS ═══
 
 export const CreateActionItemSchema = z.object({
@@ -71,6 +75,7 @@ export const CreateActionItemSchema = z.object({
   assigned_to: uuid.nullish(),
   deadline: isoDate.nullish(),
   status: actionStatus.default('pending'),
+  priority: actionPriority.default('normal'),
 }).strict();
 
 export const ToggleActionItemSchema = z.object({
@@ -86,7 +91,12 @@ export const UpdateActionItemSchema = z.object({
   assigned_to: uuid.nullish(),
   deadline: isoDate.nullish(),
   sort_order: z.number().int().min(0).max(9999).optional(),
+  priority: actionPriority.optional(),
 });
+
+export const DeleteActionItemSchema = z.object({
+  id: uuid,
+}).strict();
 
 export const ReorderActionItemsSchema = z.object({
   action: z.literal('reorder'),
@@ -134,7 +144,17 @@ export const CreateKeyDateSchema = z.object({
   category: keyDateCategory.default('event'),
   initiative_id: uuid.nullish(),
   is_recurring: z.boolean().default(false),
-}).strict();
+  recurrence_rule: recurrenceRule.nullish(),
+  recurrence_end: isoDate.nullish(),
+}).strict().refine(
+  (data) => {
+    if (data.recurrence_end && data.date) {
+      return new Date(data.recurrence_end) > new Date(data.date);
+    }
+    return true;
+  },
+  { message: 'Recurrence end date must be after the event date', path: ['recurrence_end'] }
+);
 
 export const DeleteKeyDateSchema = z.object({
   id: uuid,
@@ -146,6 +166,14 @@ const focusAreaEntry = z.object({
   person: z.string().min(1).max(255),
   items: z.array(z.string().max(500)).max(20),
 });
+
+export const UpdateSyncSchema = z.object({
+  next_sync_date: isoDate.optional(),
+  next_sync_focus: z.string().max(2000).optional(),
+}).refine(
+  (data) => data.next_sync_date !== undefined || data.next_sync_focus !== undefined,
+  { message: 'At least one field must be provided' }
+);
 
 export const CreateSyncSchema = z.object({
   sync_date: isoDate,

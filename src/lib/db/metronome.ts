@@ -31,6 +31,10 @@ export type MetronomePriority =
 export type MetronomeActionStatus =
   | 'pending' | 'in_progress' | 'done' | 'blocked';
 
+export type MetronomeActionPriority = 'urgent' | 'important' | 'normal';
+
+export type MetronomeRecurrenceRule = 'weekly' | 'biweekly' | 'monthly';
+
 export type MetronomeDecisionStatus =
   | 'open' | 'decided' | 'deferred';
 
@@ -62,6 +66,7 @@ export interface MetronomeActionItemRow {
   initiative_id: string;
   title: string;
   status: MetronomeActionStatus;
+  priority: MetronomeActionPriority;
   assigned_to: string | null;
   deadline: string | null;
   completed_at: string | null;
@@ -117,6 +122,8 @@ export interface MetronomeKeyDateRow {
   category: MetronomeKeyDateCategory;
   initiative_id: string | null;
   is_recurring: boolean;
+  recurrence_rule: MetronomeRecurrenceRule | null;
+  recurrence_end: string | null;
   created_by: string;
   created_at: string;
 }
@@ -148,6 +155,7 @@ export interface MetronomeActionItem {
   initiativeId: string;
   title: string;
   status: MetronomeActionStatus;
+  priority: MetronomeActionPriority;
   assignedTo: string | null;
   deadline: string | null;
   completedAt: string | null;
@@ -192,6 +200,8 @@ export interface MetronomeKeyDate {
   category: MetronomeKeyDateCategory;
   initiativeId: string | null;
   isRecurring: boolean;
+  recurrenceRule: MetronomeRecurrenceRule | null;
+  recurrenceEnd: string | null;
 }
 
 export interface MetronomeSummary {
@@ -734,6 +744,53 @@ export async function createMetronomeSync(
   }
 
   return { success: true, sync: result };
+}
+
+export async function getMetronomeSyncById(
+  id: string
+): Promise<MetronomeSyncRow | null> {
+  if (!isSupabaseAdminConfigured()) {
+    console.error('Supabase not configured');
+    return null;
+  }
+
+  const { data, error } = await supabaseAdmin!
+    .from('metronome_syncs')
+    .select('*')
+    .eq('id', id)
+    .maybeSingle();
+
+  if (error) {
+    console.error('Error fetching sync by ID:', error);
+    return null;
+  }
+  return data;
+}
+
+export async function updateMetronomeSync(
+  id: string,
+  updates: Partial<Pick<MetronomeSyncRow, 'next_sync_date' | 'next_sync_focus'>>
+): Promise<{ success: boolean; error?: string }> {
+  if (!isSupabaseAdminConfigured()) {
+    return { success: false, error: 'Database not configured' };
+  }
+
+  try {
+    const { error } = await supabaseAdmin!
+      .from('metronome_syncs')
+      .update(updates)
+      .eq('id', id);
+
+    if (error) {
+      console.error('Error updating sync:', error);
+      return { success: false, error: 'Failed to update sync' };
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error('Error updating sync:', error);
+    return { success: false, error: 'Failed to update sync' };
+  }
 }
 
 

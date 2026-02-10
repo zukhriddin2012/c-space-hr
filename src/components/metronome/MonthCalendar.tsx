@@ -137,13 +137,13 @@ export default function MonthCalendar({ keyDates, onMonthChange }: MonthCalendar
               <div className="mt-0.5 space-y-0.5 overflow-hidden">
                 {events.slice(0, 2).map(ev => (
                   <div
-                    key={ev.id}
+                    key={ev.id + '-' + cell.dateStr}
                     className={`text-[9px] px-1 py-0 rounded truncate leading-tight ${
                       categoryColors[ev.category] || 'bg-gray-200 text-gray-700'
                     }`}
-                    title={ev.title}
+                    title={`${ev.title}${ev.is_recurring ? ' (recurring)' : ''}`}
                   >
-                    {ev.emoji ? `${ev.emoji} ` : ''}{ev.title}
+                    {ev.is_recurring ? '🔄 ' : ''}{ev.emoji ? `${ev.emoji} ` : ''}{ev.title}
                   </div>
                 ))}
                 {events.length > 2 && (

@@ -36,7 +36,7 @@ export const POST = withAuth(async (request: NextRequest, { user }) => {
       return NextResponse.json({ error: 'Invalid input', details: parsed.error.flatten().fieldErrors }, { status: 400 });
     }
 
-    const { date, title, emoji, category, initiative_id, is_recurring } = parsed.data;
+    const { date, title, emoji, category, initiative_id, is_recurring, recurrence_rule, recurrence_end } = parsed.data;
 
     const result = await createMetronomeKeyDate({
       date,
@@ -45,6 +45,8 @@ export const POST = withAuth(async (request: NextRequest, { user }) => {
       category: category || 'event',
       initiative_id: initiative_id || null,
       is_recurring: is_recurring || false,
+      recurrence_rule: recurrence_rule || null,
+      recurrence_end: recurrence_end || null,
       created_by: user.id,
     });
 

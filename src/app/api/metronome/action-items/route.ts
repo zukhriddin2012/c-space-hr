@@ -7,6 +7,7 @@ import {
   getMetronomeInitiativeById,
   createActionItem,
   updateActionItem,
+  deleteActionItem,
   reorderActionItems,
 } from '@/lib/db';
 import {
@@ -14,6 +15,7 @@ import {
   ToggleActionItemSchema,
   UpdateActionItemSchema,
   ReorderActionItemsSchema,
+  DeleteActionItemSchema,
 } from '@/lib/validators/metronome';
 import type { MetronomeActionStatus } from '@/lib/db/metronome';
 
@@ -47,7 +49,7 @@ export const POST = withAuth(async (request: NextRequest, { user }) => {
       return NextResponse.json({ error: 'Invalid input', details: parsed.error.flatten().fieldErrors }, { status: 400 });
     }
 
-    const { initiative_id, title, assigned_to, deadline, status } = parsed.data;
+    const { initiative_id, title, assigned_to, deadline, status, priority } = parsed.data;
 
     // SEC-C2: Ownership check — verify user owns or is accountable for the initiative
     const canEditAll = hasPermission(user.role, PERMISSIONS.METRONOME_EDIT_ALL);
@@ -65,6 +67,7 @@ export const POST = withAuth(async (request: NextRequest, { user }) => {
       initiative_id,
       title,
       status: status || 'pending',
+      priority: priority || 'normal',
       assigned_to: assigned_to || null,
       deadline: deadline || null,
       sort_order: 0,
@@ -158,7 +161,7 @@ export const PATCH = withAuth(async (request: NextRequest, { user }) => {
 
         const { id, action: _action, ...fields } = parsed.data;
         const allowedFields: Record<string, unknown> = {};
-        const editableKeys = ['title', 'status', 'assigned_to', 'deadline', 'sort_order'];
+        const editableKeys = ['title', 'status', 'assigned_to', 'deadline', 'sort_order', 'priority'];
         for (const key of editableKeys) {
           if (key in fields) {
             allowedFields[key] = (fields as Record<string, unknown>)[key];
@@ -200,5 +203,54 @@ export const PATCH = withAuth(async (request: NextRequest, { user }) => {
   } catch (error) {
     console.error('Error in PATCH /api/metronome/action-items:', error);
     return NextResponse.json({ error: 'Failed to update action item' }, { status: 500 });
+  }
+}, { permission: PERMISSIONS.METRONOME_EDIT_OWN });
+
+// DELETE /api/metronome/action-items - Delete action item (AT-07)
+export const DELETE = withAuth(async (request: NextRequest, { user }) => {
+  try {
+    const body = await request.json();
+    const parsed = DeleteActionItemSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: 'Invalid input', details: parsed.error.flatten().fieldErrors },
+        { status: 400 }
+      );
+    }
+
+    const { id } = parsed.data;
+
+    // SEC-H1: Single-row lookup
+    const actionItem = await getActionItemById(id);
+    if (!actionItem) {
+      return NextResponse.json({ error: 'Action item not found' }, { status: 404 });
+    }
+
+    // SEC-C2: Ownership check via parent initiative
+    const initiative = await getMetronomeInitiativeById(actionItem.initiative_id);
+    if (!initiative) {
+      return NextResponse.json({ error: 'Parent initiative not found' }, { status: 404 });
+    }
+
+    const canEditAll = hasPermission(user.role, PERMISSIONS.METRONOME_EDIT_ALL);
+    const isOwner = initiative.created_by === user.id;
+    const isAccountable = initiative.accountable_ids?.includes(user.id);
+
+    if (!canEditAll && !isOwner && !isAccountable) {
+      return NextResponse.json(
+        { error: 'You can only delete action items in your own initiatives' },
+        { status: 403 }
+      );
+    }
+
+    const result = await deleteActionItem(id);
+    if (!result.success) {
+      return NextResponse.json({ error: 'Failed to delete action item' }, { status: 400 });
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('Error in DELETE /api/metronome/action-items:', error);
+    return NextResponse.json({ error: 'Failed to delete action item' }, { status: 500 });
   }
 }, { permission: PERMISSIONS.METRONOME_EDIT_OWN });
