@@ -1,0 +1,701 @@
+{
+  "_meta": {
+    "version": "3.0.0",
+    "schema": "z-productive-context",
+    "generatedBy": "deep-architecture-audit",
+    "createdAt": "2026-02-05",
+    "lastUpdated": "2026-02-10"
+  },
+  "project": {
+    "id": "c839c282-d80b-4817-9764-ca4ad1cab09a",
+    "name": "C-Space Niya",
+    "prefix": "CSN",
+    "tagline": "Business operations platform for C-Space coworking",
+    "description": "Comprehensive HR and business operations platform for C-Space, a coworking company with 15 branches across Tashkent, Uzbekistan. Manages ~200 employees with modules for staff management, GPS/IP-verified attendance, recruitment pipelines, accounting workflows, reception kiosk operations, legal request management, maintenance tracking, and shift planning. Supports three languages (EN/RU/UZ) with Telegram bot integration.",
+    "category": "Web App",
+    "status": "active",
+    "productionUrl": "https://niya.cspace.uz",
+    "repository": "https://github.com/zukhriddin2012/c-space-niya"
+  },
+  "problem": {
+    "statement": "C-Space coworking company needs an integrated internal platform to manage employee lifecycle, attendance verification, payroll processing, legal document workflows, maintenance tracking, and branch operations across 15 locations with ~200 staff members using multiple legal entities.",
+    "painPoints": [
+      "Manual attendance tracking across 15 branches with no verification",
+      "Complex payroll with employees split across multiple legal entities",
+      "No centralized recruitment pipeline management",
+      "Paper-based expense tracking at reception desks",
+      "Difficult to track employee data and organizational hierarchy",
+      "Multi-language support needed (English, Russian, Uzbek)",
+      "No self-service portal for employees to view their own data",
+      "Legal requests handled via phone calls and Telegram messages",
+      "Maintenance issues reported informally with no SLA tracking",
+      "Branch managers context-switch between 4+ interfaces for daily operations"
+    ],
+    "targetUser": "C-Space coworking company internal staff including HR managers, branch managers, recruiters, accountants, legal managers, receptionists, and ~200 employees who need self-service access"
+  },
+  "solution": {
+    "concept": "A unified Next.js web application with role-based access control, GPS/IP-verified attendance, multi-entity payroll workflows, Kanban-style recruitment, legal request management, maintenance tracking, and a dedicated Reception Mode (including standalone kiosk) for branch operations - all with trilingual support (EN/RU/UZ).",
+    "keyFeatures": [
+      {
+        "name": "Employee Management",
+        "description": "CRUD operations, multi-entity wage distribution (primary + branch wages), employment lifecycle tracking, Telegram PIN delivery, org chart visualization, salary history, level badges (junior/middle/senior/executive)"
+      },
+      {
+        "name": "Attendance System",
+        "description": "GPS geofencing and IP verification for check-in/out, remote work support, multi-session tracking, late/early detection with shared attendance-utils, Telegram reminders, weekly summary charts, attendance sheet export"
+      },
+      {
+        "name": "Recruitment Pipeline",
+        "description": "Kanban board with stages (screening → interview1 → interview2 → underReview → probation → hired/rejected), candidate profiles with comments, resume uploads, term sheet generation (standard + probation), bulk actions, stage duration tracking"
+      },
+      {
+        "name": "Accounting Workflows",
+        "description": "Payment request workflow (Draft → Pending → Approved → Paid), accounting requests (reconciliation, payment verification, confirmation), multi-level approval (chief accountant for <10M, executive for >10M UZS), advance vs wage separation, Excel export, SLA tracking, duplicate prevention"
+      },
+      {
+        "name": "Reception Mode",
+        "description": "Full-screen branch interface for transaction recording, expense tracking, client management with autocomplete, daily financial dashboard (income/expenses/profit), legal request submission, maintenance issue reporting, operator switching via PIN (R6a), standalone kiosk mode with password gate, cross-branch operator assignments"
+      },
+      {
+        "name": "Reception Kiosk",
+        "description": "Standalone kiosk page at /kiosk with independent password authentication, branch-scoped session, auto-logout, and all Reception Mode features without the main sidebar"
+      },
+      {
+        "name": "Legal Requests",
+        "description": "5 request types (contract preparation, supplementary agreement, contract termination, website registration, guarantee letter), status workflow (submitted → under review → in progress → ready → completed), attachments, comments, SLA deadline tracking, legal team dashboard"
+      },
+      {
+        "name": "Maintenance Issues",
+        "description": "8 categories (HVAC, plumbing, electrical, furniture, cleaning, building, IT/network, safety), priority levels (critical/high/medium/low), SLA tracking, photo attachments, status workflow (open → in progress → resolved)"
+      },
+      {
+        "name": "Shift Planning",
+        "description": "Weekly grid for 15 branches, employee assignments with searchable selector, day shift (09:00-18:00) and night shift (18:00-09:00), coverage indicators vs requirements, draft/publish/lock workflow, week navigation, 10-day advance planning horizon"
+      },
+      {
+        "name": "My Portal (Self-Service)",
+        "description": "Employee self-service for attendance history, leave requests, payslips, profile editing (phone, email, emergency contact), personal schedule view"
+      },
+      {
+        "name": "Approvals Hub",
+        "description": "Centralized approval dashboard supporting 3 request types (terminations, wage changes, payments), role-based visibility, unified interface at /approvals"
+      },
+      {
+        "name": "Metronome Sync",
+        "description": "Leadership initiative tracker with sync meeting agenda tool. Tracks initiatives by function (BD/Construction/HR/Finance/Legal/Strategy/Service), decisions, action items, key dates calendar, and meeting mode with timer. 4 leadership roles (general_manager, ceo, hr, branch_manager)."
+      },
+      {
+        "name": "Dev Board",
+        "description": "Internal development board with sprints, tasks, comments, AI sync via Jarvis CLI, export capabilities"
+      }
+    ],
+    "uniqueValue": "Telegram-native attendance verification (GPS/IP/Remote) combined with full Reception Mode and standalone kiosk for branch-level financial + legal + maintenance tracking, all in three languages with comprehensive security hardening"
+  },
+  "techStack": {
+    "frontend": [
+      "Next.js 16.1.2 (App Router)",
+      "React 19.2.3",
+      "TypeScript 5",
+      "Tailwind CSS 4",
+      "Lucide React 0.562.0 (icons)",
+      "Leaflet 1.9.4 (maps)"
+    ],
+    "backend": [
+      "Next.js API Routes (173 route files, 284 endpoints)",
+      "JOSE 6.1.3 (JWT with minimal payload - sub + jti only)",
+      "bcryptjs 3.0.3 (password hashing, 10 salt rounds)",
+      "Zod 4.3.6 (validation)"
+    ],
+    "database": [
+      "Supabase (PostgreSQL) with supabaseAdmin client",
+      "48+ SQL migrations",
+      "Row-Level Security (RLS) policies",
+      "27 domain-specific DB modules"
+    ],
+    "state": [
+      "React Context: AuthContext (user + permissions), LanguageContext (EN/RU/UZ with DB sync), ReceptionModeContext (branch + operator + kiosk), SidebarContext (collapse + responsive), ToastContext (notifications)",
+      "Server Components for data fetching",
+      "sessionStorage for reception kiosk sessions"
+    ],
+    "security": [
+      "JWT with refresh token rotation (1h access + 7d refresh)",
+      "CSRF double-submit cookie pattern (stateless)",
+      "Sliding window rate limiting (5/15min login, 100/min API)",
+      "Input sanitization (ILIKE escape, string length, file validation)",
+      "Branch-level isolation (IDOR prevention)",
+      "Operator session validation (8h max)",
+      "Audit logging (non-blocking, all sensitive actions)",
+      "Error sanitization (never expose stack traces)",
+      "CORS whitelist (3 origins)",
+      "Password validation (10 chars, mixed case, number, special)"
+    ],
+    "infrastructure": [
+      "Vercel (hosting)",
+      "Supabase (database + storage + RLS)",
+      "Telegram Bot API (notifications + webhook + mini-app)"
+    ],
+    "tools": [
+      "Vitest 4.0.18 (testing)",
+      "React Testing Library 16.3.2",
+      "MSW 2.12.7 (API mocking)",
+      "ExcelJS 4.4.0 (exports)",
+      "pdf-lib 1.17.1 + jsPDF 4.0.0 (PDF generation)",
+      "Vercel Speed Insights 1.3.1",
+      "Jarvis CLI (AI dev board sync)"
+    ]
+  },
+  "architecture": {
+    "type": "Modular Monolith",
+    "overview": "Next.js App Router application with feature-based code organization. 4 route groups: (dashboard) for protected routes, (auth) for login, (public) for document signing, (reception) for standalone kiosk. Server Components for data-fetching pages, Client Components for interactivity. Database layer split into 26 domain modules. Role-based access control with 11 permission levels and 140+ granular permissions. 4 feature modules (accounting, legal, maintenance, reception) with typed business logic.",
+    "apiStats": {
+      "totalRouteFiles": 180,
+      "totalEndpoints": 298,
+      "totalDomains": 36,
+      "httpMethods": {
+        "GET": 124,
+        "POST": 90,
+        "DELETE": 32,
+        "PUT": 27,
+        "PATCH": 11
+      },
+      "largestDomains": [
+        { "name": "reception", "routes": 34, "description": "Reception & kiosk management" },
+        { "name": "employees", "routes": 16, "description": "Employee data & payroll" },
+        { "name": "candidates", "routes": 14, "description": "Recruitment & hiring" },
+        { "name": "telegram-bot", "routes": 13, "description": "Telegram integration" },
+        { "name": "dev-board", "routes": 10, "description": "Development board" },
+        { "name": "metronome", "routes": 7, "description": "Metronome Sync leadership dashboard" }
+      ]
+    },
+    "componentStats": {
+      "totalFolders": 12,
+      "totalFiles": "87+",
+      "folders": [
+        "attendance (map visualization)",
+        "auth (session, role guard, password strength)",
+        "branch (map visualization)",
+        "employee (table, add/edit modals, wages, payslips, trend chart)",
+        "layout (sidebar, mobile nav, reception header, quick switch, notification bell)",
+        "profile (view + edit modal)",
+        "reception (dashboard, transactions, expenses, requests, shifts, settings, kiosk, PIN overlay, client autocomplete, branch selector)",
+        "recruitment (candidate detail, term sheets - standard + probation)",
+        "settings (reception admin settings)",
+        "shifts (planning grid, employee selector, week navigator, shift cell, coverage indicator)",
+        "metronome (MetronomeDashboard, PulseBar, MonthCalendar, DecisionCard, InitiativeCard, MeetingMode, MeetingTimer, EndMeetingModal, NewInitiativeModal, FunctionBadge, PriorityIndicator)",
+        "ui (button, input, select, modal, card, badge, tabs, toast, confirmation dialog, language switcher, test banner)"
+      ]
+    },
+    "databaseModules": {
+      "total": 27,
+      "modules": [
+        { "name": "employees.ts", "domain": "Core HR", "description": "Employee CRUD, branch filtering, manager lookup" },
+        { "name": "attendance.ts", "domain": "Core HR", "description": "Check-in/out tracking, overnight shifts, IP/GPS verification" },
+        { "name": "leaves.ts", "domain": "Core HR", "description": "Leave requests with approval workflow" },
+        { "name": "shifts.ts", "domain": "Core HR", "description": "Shift scheduling, assignments, requirements, availability, time-off" },
+        { "name": "branches.ts", "domain": "Core HR", "description": "Branch locations, geofencing, smart lock, class ratings, community managers" },
+        { "name": "departments.ts", "domain": "Core HR", "description": "Department structure with employee count and salary budget" },
+        { "name": "positions.ts", "domain": "Core HR", "description": "Job positions with multilingual names and salary ranges" },
+        { "name": "payroll.ts", "domain": "Compensation", "description": "Payslips, payroll records, tax calculations" },
+        { "name": "wages.ts", "domain": "Compensation", "description": "Primary (bank, 12% tax) + additional (cash, no tax) wages, legal entities" },
+        { "name": "wage-changes.ts", "domain": "Compensation", "description": "Wage adjustment requests with effective dates" },
+        { "name": "payments.ts", "domain": "Compensation", "description": "Payment transactions and disbursements" },
+        { "name": "termination.ts", "domain": "HR Operations", "description": "Termination requests with effective dates and reasons" },
+        { "name": "finances.ts", "domain": "Financial", "description": "Income/expense management, service types, voiding" },
+        { "name": "legal-entities.ts", "domain": "Financial", "description": "Company legal structures, tax IDs, multi-branch entities" },
+        { "name": "legal-requests.ts", "domain": "Legal", "description": "5 legal request types, status workflow, SLA tracking, attachments, comments" },
+        { "name": "recruitment.ts", "domain": "Recruitment", "description": "Candidate pipeline with 6 stages, resumes, notes" },
+        { "name": "growth.ts", "domain": "Recruitment", "description": "Growth team member tracking and visibility" },
+        { "name": "feedback.ts", "domain": "Engagement", "description": "Anonymous/attributed employee feedback" },
+        { "name": "telegram.ts", "domain": "Communication", "description": "Telegram user linking, preferences, templates, button labels" },
+        { "name": "reminders.ts", "domain": "Communication", "description": "Checkout reminders, learning content delivery" },
+        { "name": "documents.ts", "domain": "Records", "description": "Employee documents (contract, passport, diploma, etc.), version tracking" },
+        { "name": "dashboards.ts", "domain": "Admin", "description": "Dashboard configuration and personalization" },
+        { "name": "operator-switch.ts", "domain": "Reception", "description": "PIN management, cross-branch assignments, operator switch logs, session tracking" },
+        { "name": "maintenance-issues.ts", "domain": "Reception", "description": "8 categories, priority levels, SLA deadlines, photo attachments" },
+        { "name": "connection.ts", "domain": "Utility", "description": "Shared DB utilities, timezone helpers, tax calculations (TAX_RATE=0.12)" },
+        { "name": "metronome.ts", "domain": "Leadership", "description": "Metronome Sync: initiatives, decisions, action items, key dates, syncs, dashboard summary" },
+        { "name": "index.ts", "domain": "Utility", "description": "Barrel file re-exporting all modules" }
+      ]
+    },
+    "featureModules": {
+      "total": 4,
+      "modules": [
+        {
+          "name": "accounting",
+          "description": "Financial request management with multi-level approval",
+          "types": "Request types (reconciliation, payment, confirmation), 8 statuses, payment categories, approval levels",
+          "lib": "constants.ts, utils.ts"
+        },
+        {
+          "name": "legal",
+          "description": "Legal document request workflows with type-specific metadata",
+          "types": "5 request types, 6 statuses, discriminated union metadata (ContractPreparationMetadata, SupplementaryAgreementMetadata, etc.)",
+          "lib": "validators with tests"
+        },
+        {
+          "name": "maintenance",
+          "description": "Facility maintenance request tracking",
+          "types": "Basic maintenance type definitions"
+        },
+        {
+          "name": "reception",
+          "description": "Comprehensive reception system - largest module (665 lines of types)",
+          "types": "Admin config (ServiceType, ExpenseType, PaymentMethodConfig), Transactions (TXN-YYYYMM-XXXX), Expenses (EXP-YYYYMM-XXXX), Operator identity (PIN switching, session logs, branch assignments), Filters, Summaries, PaginatedResponse<T>, DB row transform functions",
+          "lib": "constants.ts, pin-lockout.ts (3 attempts, 60s lockout) with tests"
+        }
+      ]
+    },
+    "securityArchitecture": {
+      "authFlow": "Login → JWT (1h, minimal payload: sub+jti) → httpOnly cookie → withAuth() middleware on API → getSession() for server components",
+      "refreshFlow": "Refresh token (7d, hashed in DB) → auto-refresh at 50min → token revocation on logout/password change",
+      "kioskFlow": "Branch password → session in sessionStorage → PIN-based operator switching (8h max) → operator headers on API calls",
+      "securityModules": [
+        "auth.ts (JWT create/verify/revoke)",
+        "auth-server.ts (cookie session management)",
+        "api-auth.ts (withAuth middleware with permission/role/kiosk support)",
+        "permissions.ts (11 roles, 140+ permissions, role hierarchy)",
+        "kiosk-auth.ts (reception kiosk PIN auth)",
+        "security.ts (input validation: ILIKE escape, string length, file metadata, branch access, operator session, pagination, enum validation)",
+        "csrf.ts (double-submit cookie, constant-time comparison)",
+        "password-validation.ts (10 chars, mixed case, number, special)",
+        "rate-limiter.ts (sliding window, 5/15min login, 100/min API)",
+        "audit.ts (non-blocking audit trail for all sensitive actions)",
+        "error-messages.ts (error sanitization, never expose internals)",
+        "cors.ts (whitelist: app URL, Telegram, Vercel)"
+      ],
+      "complianceRefs": "SEC-003 through SEC-025, C-01 through C-05, H-02 through H-07, M-02, M-10, L-05"
+    },
+    "keyDecisions": [
+      {
+        "decision": "App Router with 4 route groups",
+        "rationale": "(dashboard) protected, (auth) login, (public) document signing, (reception) standalone kiosk - clear separation of auth requirements"
+      },
+      {
+        "decision": "Supabase over custom PostgreSQL",
+        "rationale": "Managed database with built-in storage, RLS policies, and easy migrations"
+      },
+      {
+        "decision": "Custom JWT auth over Supabase Auth",
+        "rationale": "More control over employee-specific flow, role management, refresh rotation, and kiosk dual-auth"
+      },
+      {
+        "decision": "Feature-based folder structure",
+        "rationale": "Components organized by feature (employee/, recruitment/, reception/) with barrel exports"
+      },
+      {
+        "decision": "27 domain-specific DB modules",
+        "rationale": "Original 1900+ line db.ts split for clarity, each module handles one business domain"
+      },
+      {
+        "decision": "4 feature modules (accounting, legal, maintenance, reception)",
+        "rationale": "Complex business logic separated from DB layer with typed interfaces and discriminated unions"
+      },
+      {
+        "decision": "Trilingual support (EN/RU/UZ)",
+        "rationale": "Uzbekistan workforce uses all three; custom i18n with type-safe keys, DB-synced preference"
+      },
+      {
+        "decision": "Telegram Bot integration",
+        "rationale": "Telegram is primary messaging in Uzbekistan; used for attendance, reminders, PIN delivery, learning content"
+      },
+      {
+        "decision": "Security-first approach (24 requirements)",
+        "rationale": "Phase 2 hostile audit found 20 findings (7 critical); security sprint prioritized over feature work"
+      },
+      {
+        "decision": "PIN-based operator switching for kiosk",
+        "rationale": "Shared terminals need fast identity switching; 6-digit PIN with bcrypt hashing and 8h session limit"
+      }
+    ],
+    "patterns": [
+      "Server Components for initial data fetching",
+      "Client Components for interactivity",
+      "withAuth() middleware for protected API routes (supports permission, role, kiosk fallback)",
+      "getSession() for server-side auth checks",
+      "Feature-based component folders with barrel exports via index.ts",
+      "Domain-specific database modules imported via @/lib/db",
+      "Discriminated unions for type-safe request variants (legal module)",
+      "DB row transform functions (snake_case → camelCase) in reception module",
+      "Non-blocking audit logging for security events",
+      "CSRF double-submit cookie pattern (stateless)",
+      "Sliding window rate limiting (in-memory, per-IP per-path)",
+      "Tashkent timezone standardization (UTC+5) for all date operations"
+    ]
+  },
+  "conventions": {
+    "code": "TypeScript strict mode, functional components with hooks, async/await for data fetching, centralized types in src/types/index.ts, Zod for API validation",
+    "components": "PascalCase naming, .tsx extension, organized in 11 feature folders (src/components/{feature}/), re-exported via index.ts barrel files",
+    "files": "kebab-case for routes and API endpoints, PascalCase for components, camelCase for utilities and hooks",
+    "styling": "Tailwind CSS utility classes, mobile-first responsive design, purple (#7C3AED) as primary brand color",
+    "git": {
+      "branchPattern": "feature/{feature-name}, fix/{bug-name}, refactor/{area}",
+      "commitPattern": "feat: description, fix: description, refactor: description, docs: description, test: description"
+    },
+    "api": {
+      "naming": "kebab-case, no abbreviations (telegram-action not tg-action)",
+      "pattern": "route.ts in folder structure, PATCH for action consolidation",
+      "auth": "withAuth() middleware for protected routes, allowKiosk option for reception endpoints",
+      "errors": "sanitizeError() from error-messages.ts, never expose stack traces or DB details"
+    },
+    "database": {
+      "import": "Import from @/lib/db (re-exports from modular db/ folder)",
+      "modules": "26 domain-specific files organized by business domain",
+      "security": "escapeIlike() for text searches, validateBranchAccess() for IDOR prevention, parsePagination() with bounds"
+    },
+    "translations": {
+      "workflow": "Add keys to types.ts first, then implement in all 3 language files (en.ts, ru.ts, uz.ts)",
+      "path": "src/lib/i18n/",
+      "scope": "100+ key sections covering all UI strings, form labels, errors, and confirmations"
+    },
+    "testing": {
+      "framework": "Vitest 4.0.18",
+      "pattern": "*.test.ts(x) files alongside source, use test-utils for component tests",
+      "setup": "src/test/setup.ts (mocks next/navigation + next/headers), src/test/mocks/handlers.ts (MSW)",
+      "infrastructure": "206+ tests, 9 pre-existing failures"
+    },
+    "tasks": {
+      "folder": "tasks/",
+      "naming": "{taskId}_{date}_{slug}/ (e.g. PR2-025_2026-02-05_reception-mode/)",
+      "contents": "HANDOVER.md, specs, analysis docs per role (proda, architecta, deva, debuga, testa)"
+    }
+  },
+  "structure": {
+    "src/app/(auth)/": "Login page + reset-password (2 pages)",
+    "src/app/(dashboard)/": "Protected dashboard routes - 23 sections (employees, attendance, recruitment, accounting, reception, shifts, branches, departments, payroll, my-portal, approvals, admin, finances, legal, org-chart, settings, reports, feedback, telegram-bot, dev-board, metronome-sync, wage-change-requests) - 62 pages total",
+    "src/app/(public)/": "Public pages - document signing via token (sign/[token])",
+    "src/app/(reception)/": "Standalone kiosk mode with password gate (kiosk/page.tsx)",
+    "src/app/api/": "API routes organized in 36 domain folders (173 route files, 284 endpoints)",
+    "src/app/telegram/": "Telegram mini-app pages (checkin, checkout-reminder)",
+    "src/components/": "Feature-based components (12 folders, 87+ files)",
+    "src/contexts/": "React contexts (Auth, Language, ReceptionMode, Sidebar, Toast)",
+    "src/hooks/": "Custom hooks (usePermissions)",
+    "src/lib/": "Utilities (20+ root files: auth, security, CSRF, rate limiting, audit, permissions, etc.)",
+    "src/lib/db/": "Modular database functions (27 domain modules)",
+    "src/lib/i18n/": "Translation files (types.ts + en.ts + ru.ts + uz.ts + index.ts)",
+    "src/modules/": "Feature modules with business logic (accounting, legal, maintenance, reception)",
+    "src/data/": "Static data files",
+    "src/proxy.ts": "Proxy configuration",
+    "src/test/": "Test infrastructure (setup, mocks, utils)",
+    "src/types/": "TypeScript type definitions (index.ts: 11 roles, core entities; telegram.d.ts: WebApp API)",
+    "supabase/migrations/": "48+ SQL migration files (security, reception, HR, financial, metronome)",
+    "scripts/": "Utility scripts (hash-passwords.ts, jarvis.js AI CLI, register-webhook.ts)",
+    "data/": "Import CSV files (employee credentials, salary history - 6 files)",
+    "docs/": "Specs (SPEC-007 shift planning, BACKLOG.md with P0-P3), mockups (5 HTML files), dev board history",
+    "qa-reports/": "QA framework (template, sample reports, README)",
+    "tasks/": "Task documentation (13 folders with handovers, specs, analysis per task)",
+    "public/": "Static assets (SVG logos, favicons, images)",
+    "archive/": "Historical project context backup",
+    "claude_starter/": "AI context files (context.json, CLAUDE.md)"
+  },
+  "currentState": {
+    "phase": "Active Development + Security Hardening",
+    "completedMilestones": [
+      "Core employee management CRUD with level badges",
+      "GPS/IP attendance verification system with shared attendance-utils",
+      "Remote work check-in support",
+      "Recruitment Kanban board with term sheets",
+      "Payment request workflow with approval levels",
+      "Reception Mode v1 (transactions + expenses + clients)",
+      "Reception Mode v2 (legal requests + maintenance + operator switch + kiosk)",
+      "Reception Mode i18n (90+ keys)",
+      "Reception Mode v2 bug fixes (7 bugs found and fixed)",
+      "Component refactoring (24 components → 11 feature folders)",
+      "Database modularization (db.ts → 26 domain modules)",
+      "4 feature modules (accounting, legal, maintenance, reception)",
+      "Vitest testing infrastructure (206+ tests)",
+      "Org chart with manager hierarchy",
+      "Shift Planning (database schema + API routes + Grid UI)",
+      "Client management with historical import",
+      "Approvals Hub (centralized for terminations, wage changes, payments)",
+      "Security audit (20 findings: 7 critical, 6 high, 5 medium, 2 low)",
+      "Security PRD (24 requirements: SEC-001 to SEC-024 across 4 sprints)",
+      "Security deployment runbook + rollback migrations",
+      "Salary on employee info editing bug fix (phantom salary)",
+      "Late vs on-time attendance bug fix (off-by-one operator)",
+      "Jan-Feb 2026 Labzak transaction data import (146 transactions, 137.9M UZS)",
+      "Telegram PIN delivery feature (API + UI + i18n)",
+      "Language switching fixes for auth, settings, reports pages (~104 new translation keys)",
+      "Dev Board with Jarvis AI CLI sync",
+      "Metronome Sync leadership dashboard (PR2-045: 7 phases, 27 files, 10 components, 14 API endpoints, 5 DB tables, security audit + remediation, bug hunting, QA testing)"
+    ],
+    "currentMilestone": "Security deployment + i18n completion + Reception Mode stabilization",
+    "activeWork": [
+      "Security deployment (runbook ready, 6 rollback migrations prepared, 206 tests passing)",
+      "i18n completeness - remaining sections: Accounting, Attendance sheet, Reception shifts, Telegram bot page, TestBanner, ReceptionAdminSettings",
+      "Reception Mode v2 Phase 2 (debug + deployment readiness)",
+      "Wages section improvements (PRD complete: duplicate prevention, delete, manual notify, bulk notify)",
+      "Historical attendance data correction (Ibrohim Oripov lateness records)",
+      "Client deduplication (668 potential duplicates)"
+    ],
+    "blockers": [
+      "Security deployment requires CEO approval to pause feature work (Sprints 1-2)",
+      "6 of 12 i18n sections still have hardcoded text",
+      "Client deduplication needed (668 potential duplicates)",
+      "PR2-044 Telegram PIN component needs i18n wiring",
+      "9 pre-existing test failures need attention"
+    ],
+    "technicalDebt": [
+      "6 sections with hardcoded English text need i18n",
+      "Test coverage at 206 tests with 9 pre-existing failures",
+      "Rate limiter is in-memory (needs Vercel KV for multi-instance)",
+      "Some historical attendance records have incorrect late/on-time status",
+      "Employee edit page wage filtering by source_type was recently fixed",
+      "PL/pgSQL attendance function still uses hardcoded thresholds (needs shift-aware update)"
+    ],
+    "recentlyCompleted": {
+      "date": "2026-02-06",
+      "tasks": [
+        { "id": "PR2-041", "title": "Salary on employee info editing (phantom salary fix)", "status": "completed" },
+        { "id": "PR2-042", "title": "Being late vs being on time (off-by-one + shift resolution)", "status": "completed" },
+        { "id": "PR2-043", "title": "Labzak data import (146 transactions)", "status": "completed" },
+        { "id": "PR2-044", "title": "Send PIN to Telegram (API + UI)", "status": "completed" },
+        { "id": "T015", "title": "Language switching fixes (auth, settings, reports)", "status": "completed" },
+        { "id": "DEB-025", "title": "Reception Mode v2 bug hunt (7 bugs fixed)", "status": "completed" },
+        { "id": "PR2-026-v2", "title": "Security deployment runbook + rollback migrations", "status": "ready_for_deployment" }
+      ]
+    }
+  },
+  "backlog": {
+    "epics": [
+      {
+        "id": "E000",
+        "title": "Security Hardening",
+        "description": "24 security requirements across 4 sprints: credential purge, auth hardening, rate limiting/CSRF, permission consolidation/RLS",
+        "priority": "P0",
+        "status": "ready_for_deployment",
+        "effort": "4-8 weeks",
+        "sprints": [
+          "Sprint 1 (Week 1): Credential purge - bcrypt, remove DEMO_USERS, JWT secret, key rotation, remove run-sql/test endpoints, force password reset",
+          "Sprint 2 (Weeks 2-3): Auth - Telegram webhook auth, attendance endpoint auth, CORS, env vars, middleware, password hashing",
+          "Sprint 3 (Weeks 4-6): Rate limiting, CSRF, token refresh, JWT payload minimization, debug endpoint removal, error sanitization",
+          "Sprint 4 (Weeks 7-8): Permission consolidation, Supabase RLS, timezone standardization"
+        ]
+      },
+      {
+        "id": "E001",
+        "title": "Shift Management System",
+        "description": "Visual calendar, recurring shifts, availability, swap requests, time-off approval",
+        "priority": "P1",
+        "status": "in_progress",
+        "spec": "docs/specs/SPEC-007-SHIFT-PLANNING.md"
+      },
+      {
+        "id": "E005",
+        "title": "Reception Mode v2 Completion",
+        "description": "Accounting request submission/tracking, enhanced dashboard, request templates, notifications",
+        "priority": "P1",
+        "status": "in_progress",
+        "phases": "Phase 1a (3-4 weeks): core features | Phase 1b (2-3 weeks): nice-to-haves"
+      },
+      {
+        "id": "E006",
+        "title": "Wages Section Improvements",
+        "description": "Duplicate payment prevention, delete non-paid requests, manual Telegram notifications, bulk notifications",
+        "priority": "P1",
+        "status": "prd_complete",
+        "effort": "~11 hours (1.5 dev days)"
+      },
+      {
+        "id": "E002",
+        "title": "1:1 Meetings Module",
+        "description": "Meeting tracking, notes, agendas, private notes",
+        "priority": "P2",
+        "status": "planned"
+      },
+      {
+        "id": "E003",
+        "title": "Performance & Goals",
+        "description": "OKRs/KPIs, performance reviews, skills matrix, career development",
+        "priority": "P3",
+        "status": "planned"
+      },
+      {
+        "id": "E004",
+        "title": "Calendar Integration",
+        "description": "Google Calendar sync, team calendar, meeting scheduling",
+        "priority": "P3",
+        "status": "planned"
+      }
+    ],
+    "tasks": [
+      {
+        "id": "CSN-015",
+        "title": "Language switching fixes - remaining sections",
+        "priority": "High",
+        "status": "in_progress",
+        "role": "deva",
+        "notes": "Auth/Settings/Reports done. Remaining: Accounting, Attendance sheet, Reception shifts, Telegram bot page, TestBanner, ReceptionAdminSettings"
+      },
+      {
+        "id": "CSN-016",
+        "title": "Security Sprint 1 deployment",
+        "priority": "Critical",
+        "status": "ready",
+        "role": "devopsa",
+        "notes": "Runbook ready, 6 rollback migrations prepared, 206 tests passing. Execute 8-step runbook (~65 min). Employee password reset by Feb 20."
+      },
+      {
+        "id": "CSN-017",
+        "title": "Wages section improvements (PR2-017)",
+        "priority": "High",
+        "status": "prd_complete",
+        "role": "deva",
+        "notes": "4 requirements: duplicate prevention → delete → manual notify → bulk notify. ~11h effort."
+      },
+      {
+        "id": "CSN-005",
+        "title": "Employee profile editing improvements",
+        "priority": "High",
+        "status": "pending",
+        "role": "designa",
+        "notes": "Improve edit form UX"
+      },
+      {
+        "id": "CSN-006",
+        "title": "Recruitment pipeline filters",
+        "priority": "Medium",
+        "status": "pending",
+        "role": "deva",
+        "notes": "Filter by position, date, source"
+      },
+      {
+        "id": "CSN-007",
+        "title": "Shift notes feature",
+        "priority": "Medium",
+        "status": "pending",
+        "role": "deva",
+        "notes": "Allow managers to add notes to shifts"
+      },
+      {
+        "id": "CSN-008",
+        "title": "Attendance export to Excel",
+        "priority": "Low",
+        "status": "pending",
+        "role": "deva",
+        "notes": "Export filtered attendance data"
+      },
+      {
+        "id": "CSN-018",
+        "title": "Client deduplication",
+        "priority": "Medium",
+        "status": "pending",
+        "role": "deva",
+        "notes": "668 potential duplicates need resolution"
+      },
+      {
+        "id": "CSN-019",
+        "title": "Wire i18n in Telegram PIN component",
+        "priority": "Low",
+        "status": "pending",
+        "role": "deva",
+        "notes": "10 translation keys added but component not yet wired to use them"
+      },
+      {
+        "id": "CSN-020",
+        "title": "Historical attendance data correction",
+        "priority": "Low",
+        "status": "pending",
+        "role": "deva",
+        "notes": "Fix Ibrohim Oripov lateness records + update PL/pgSQL function for shift-aware thresholds"
+      }
+    ]
+  },
+  "roles": {
+    "proda": {
+      "active": true,
+      "currentFocus": "Feature specifications, backlog prioritization, user story writing, PRD creation for wages/reception/security",
+      "tools": ["FEATURE_SPEC_TEMPLATE.md", "BACKLOG.md", "docs/specs/"],
+      "recentWork": "Completed PRDs for PR2-017 (wages), PR2-025 (reception v2), PR2-026 (security)"
+    },
+    "architecta": {
+      "active": true,
+      "currentFocus": "Security architecture (24 SEC requirements), database schema design (47+ migrations), API structure (173 routes), performance optimization",
+      "tools": ["context.json", "CLAUDE.md", "supabase/migrations/", "src/lib/"],
+      "recentWork": "Designed security architecture (CSRF, rate limiting, audit, RLS), reception kiosk auth flow, operator switching session model"
+    },
+    "deva": {
+      "active": true,
+      "currentFocus": "TypeScript/React implementation, security hardening, i18n completion, bug fixes",
+      "tools": ["src/", "Next.js 16.1.2", "Tailwind CSS 4", "Supabase", "Vitest"],
+      "recentWork": "Implemented attendance-utils.ts, PIN delivery API, language switching fixes, reception bug fixes"
+    },
+    "debuga": {
+      "active": true,
+      "currentFocus": "Bug investigation, error tracking, performance issues, reception mode stabilization",
+      "tools": ["Vitest", "Console logs", "Supabase logs"],
+      "recentWork": "Found and fixed 7 reception mode bugs (DEB-025), phantom salary bug (PR2-041), lateness detection bug (PR2-042)"
+    },
+    "designa": {
+      "active": true,
+      "currentFocus": "UI/UX design, mobile-first layouts, purple (#7C3AED) primary color, reception kiosk UX",
+      "tools": ["Tailwind CSS 4", "Lucide icons 0.562.0", "Leaflet maps 1.9.4"]
+    },
+    "testa": {
+      "active": true,
+      "currentFocus": "Test case writing, EN/RU/UZ translation verification, mobile responsiveness, security testing",
+      "tools": ["Vitest 4.0.18", "React Testing Library 16.3.2", "MSW 2.12.7", "QA-TESTING-CHECKLIST.md"],
+      "recentWork": "206+ tests passing (9 pre-existing failures), QA framework with report templates"
+    },
+    "devopsa": {
+      "active": true,
+      "currentFocus": "Security deployment (8-step runbook), Supabase migration execution, Vercel environment configuration",
+      "tools": ["Vercel", "Supabase CLI", "DEPLOYMENT-RUNBOOK.md"],
+      "recentWork": "Prepared deployment runbook, 6 rollback migration scripts, .env.local.example template"
+    },
+    "secura": {
+      "active": true,
+      "currentFocus": "Security implementation and verification, 24 SEC requirements compliance, ongoing audit",
+      "tools": ["JOSE 6.1.3", "bcryptjs 3.0.3", "Supabase RLS", "security.ts", "csrf.ts", "rate-limiter.ts", "audit.ts"],
+      "recentWork": "Hostile security audit (20 findings), security PRD (24 requirements), implemented: CSRF, rate limiting, input sanitization, audit logging, error sanitization, CORS, password validation"
+    }
+  },
+  "systemRoles": [
+    { "name": "general_manager", "level": 100, "description": "Full system access (was super_admin)" },
+    { "name": "ceo", "level": 95, "description": "Executive access" },
+    { "name": "chief_accountant", "level": 80, "description": "Accounting head, approves >10M UZS" },
+    { "name": "hr", "level": 75, "description": "HR management" },
+    { "name": "accountant", "level": 70, "description": "Accounting staff, approves <10M UZS" },
+    { "name": "legal_manager", "level": 65, "description": "Legal request management" },
+    { "name": "reports_manager", "level": 62, "description": "Reports and analytics access" },
+    { "name": "branch_manager", "level": 60, "description": "Branch-specific access" },
+    { "name": "recruiter", "level": 50, "description": "Recruitment only" },
+    { "name": "employee", "level": 10, "description": "Self-service only" },
+    { "name": "reception_kiosk", "level": 5, "description": "Kiosk-only access (PIN-based)" }
+  ],
+  "company": {
+    "name": "C-Space",
+    "purpose": "We create the right environment so that the right people feel empowered",
+    "bhag": "1,200 Partnerships by December 2040",
+    "strategy": "Vertical Integration",
+    "xFactor": "6-Day Decision (10x faster than industry)",
+    "branches": 15,
+    "employees": 200,
+    "location": "Tashkent, Uzbekistan",
+    "currency": "UZS (Uzbek Som)",
+    "timezone": "UTC+5 (Tashkent)"
+  },
+  "taskHistory": {
+    "totalTasks": 15,
+    "completed": 9,
+    "inProgress": 1,
+    "readyForDeployment": 3,
+    "documentationComplete": 2,
+    "recentTasks": [
+      { "id": "PR2-010", "title": "Approvals Hub", "date": "2026-02-05", "status": "completed" },
+      { "id": "PR2-017", "title": "Wages section improvements PRD", "date": "2026-02-05", "status": "prd_complete" },
+      { "id": "PR2-025-v1", "title": "Reception Mode v2 PRD", "date": "2026-02-05", "status": "prd_complete" },
+      { "id": "PR2-025-v2", "title": "Reception Mode v2 debug/deploy", "date": "2026-02-06", "status": "in_progress" },
+      { "id": "PR2-026-v1", "title": "Security PRD (24 requirements)", "date": "2026-02-05", "status": "completed" },
+      { "id": "PR2-026-v2", "title": "Security deployment runbook", "date": "2026-02-06", "status": "ready_for_deployment" },
+      { "id": "PR2-041", "title": "Phantom salary bug fix", "date": "2026-02-06", "status": "completed" },
+      { "id": "PR2-042", "title": "Late vs on-time bug fix", "date": "2026-02-06", "status": "completed" },
+      { "id": "PR2-043", "title": "Labzak data import", "date": "2026-02-06", "status": "completed" },
+      { "id": "PR2-044", "title": "Telegram PIN delivery", "date": "2026-02-06", "status": "completed" },
+      { "id": "T015", "title": "Language switching fixes", "date": "2026-02-06", "status": "completed" },
+      { "id": "DEB-025", "title": "Reception Mode bug hunt", "date": "2026-02-06", "status": "completed" },
+      { "id": "Security_Inspection", "title": "Hostile security audit", "date": "2026-02-05", "status": "completed" },
+      { "id": "PR2-045", "title": "Metronome Sync leadership dashboard (7 phases: PRD→DES→ARC→DEV→SEC→DEB→TEST)", "date": "2026-02-10", "status": "deployed" },
+      { "id": "PR2-046", "title": "Metronome JSON Export/Import PRD", "date": "2026-02-10", "status": "prd_complete" }
+    ]
+  }
+}
