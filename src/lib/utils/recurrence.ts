@@ -82,9 +82,17 @@ function advanceDate(date: Date, rule: MetronomeRecurrenceRule): Date {
     case 'biweekly':
       next.setDate(next.getDate() + 14);
       break;
-    case 'monthly':
-      next.setMonth(next.getMonth() + 1);
+    case 'monthly': {
+      // Fix: Clamp to last day of target month to prevent month-end overflow
+      // e.g., Jan 31 → setMonth(1) would overflow to Mar 2/3 without clamping
+      const targetMonth = next.getMonth() + 1;
+      next.setMonth(targetMonth);
+      // If overflow occurred (e.g., Feb 31 → Mar 3), clamp to last day of intended month
+      if (next.getMonth() !== targetMonth % 12) {
+        next.setDate(0); // Sets to last day of previous month (the intended month)
+      }
       break;
+    }
   }
   return next;
 }

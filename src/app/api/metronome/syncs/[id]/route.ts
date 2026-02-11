@@ -8,7 +8,7 @@ const isValidUUID = (str: string) =>
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
 
 // PATCH /api/metronome/syncs/[id] - Update sync planning fields (AT-08)
-export const PATCH = withAuth(async (request: NextRequest, { user, params }) => {
+export const PATCH = withAuth(async (request: NextRequest, { params }) => {
   try {
     const id = params?.id;
 
