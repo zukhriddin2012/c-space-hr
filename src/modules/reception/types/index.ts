@@ -131,6 +131,9 @@ export interface Transaction {
   // Notes (Столбец 1 - room numbers, periods, etc.)
   notes?: string;
 
+  // Cash management (PR2-066)
+  isInkasso?: boolean | null;  // null=non-cash, false=cash-no-receipt, true=cash-with-receipt
+
   // Voiding
   isVoided: boolean;
   voidedAt?: string;
@@ -154,6 +157,7 @@ export interface CreateTransactionInput {
   branchId?: string;  // Optional - will default to user's branch
   notes?: string;
   transactionDate?: string;
+  isInkasso?: boolean;  // Cash only: true = has official receipt
 }
 
 export interface UpdateTransactionInput {
@@ -661,4 +665,139 @@ export interface EmployeeSearchResult {
   branchName: string;
   role: string;
   hasPinSet: boolean;
+}
+
+// ============================================
+// CASH MANAGEMENT (PR2-066: AT-1 through AT-9)
+// ============================================
+
+// Branch cash settings (AT-3)
+export interface BranchCashSettings {
+  branchId: string;
+  opexPercentage: number;
+  marketingPercentage: number;
+  transferThreshold: number;
+}
+
+export interface UpdateCashSettingsInput {
+  branchId: string;
+  marketingPercentage: 2.5 | 5.0;
+  transferThreshold: number;
+}
+
+// Cash allocation balance (AT-4)
+export interface AllocationBox {
+  allocated: number;
+  spent: number;
+  available: number;
+  percentage: number;
+}
+
+export interface CashAllocationBalance {
+  branchId: string;
+  lastTransferDate: string | null;
+  totalNonInkassoCash: number;
+  settings: BranchCashSettings;
+  allocation: {
+    opex: AllocationBox;
+    marketing: AllocationBox;
+    dividend: AllocationBox;
+  };
+  thresholdExceeded: boolean;
+  inkassoPending: { amount: number; count: number };
+}
+
+// Inkasso delivery (AT-6)
+export interface InkassoDelivery {
+  id: string;
+  branchId: string;
+  deliveredDate: string;
+  deliveredByName: string;
+  totalAmount: number;
+  transactionCount: number;
+  notes?: string;
+  createdAt: string;
+}
+
+export interface CreateInkassoDeliveryInput {
+  branchId: string;
+  transactionIds: string[];
+  deliveredDate?: string;
+  notes?: string;
+}
+
+// Cash transfer (AT-7)
+export interface CashTransfer {
+  id: string;
+  branchId: string;
+  branchName?: string;
+  dividendAmount: number;
+  marketingAmount: number;
+  totalAmount: number;
+  transferredByName: string;
+  transferDate: string;
+  notes?: string;
+  createdAt: string;
+}
+
+export interface CreateCashTransferInput {
+  branchId: string;
+  dividendAmount: number;
+  marketingAmount: number;
+  transferDate?: string;
+  notes?: string;
+}
+
+// Dividend spend request (AT-8)
+export type DividendSpendStatus = 'pending' | 'approved' | 'rejected';
+
+export interface DividendSpendRequest {
+  id: string;
+  branchId: string;
+  branchName?: string;
+  expenseSubject: string;
+  expenseAmount: number;
+  expenseTypeId: string;
+  expenseTypeName?: string;
+  expenseDate: string;
+  opexPortion: number;
+  dividendPortion: number;
+  reason: string;
+  requestedBy: string;
+  requestedByName?: string;
+  requestedAt: string;
+  status: DividendSpendStatus;
+  reviewedBy?: string;
+  reviewedByName?: string;
+  reviewedAt?: string;
+  reviewNote?: string;
+  expenseId?: string;
+}
+
+export interface CreateDividendSpendInput {
+  branchId: string;
+  expenseSubject: string;
+  expenseAmount: number;
+  expenseTypeId: string;
+  expenseDate?: string;
+  opexPortion: number;
+  dividendPortion: number;
+  reason: string;
+}
+
+export interface ReviewDividendSpendInput {
+  requestId: string;
+  action: 'approve' | 'reject';
+  reviewNote?: string;
+}
+
+// Cash position summary (AT-9)
+export interface CashPositionSummary {
+  balance: CashAllocationBalance;
+  inkasso: {
+    pending: { amount: number; count: number };
+    deliveredThisMonth: { amount: number; count: number };
+  };
+  recentTransfers: CashTransfer[];
+  pendingDividendRequests: { count: number; totalAmount: number };
 }

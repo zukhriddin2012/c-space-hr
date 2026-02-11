@@ -1,11 +1,11 @@
 'use client';
 
-import { Receipt, LayoutDashboard, ArrowLeftRight, Wallet, Settings, X, User, FileText, Calendar, UserCog } from 'lucide-react';
+import { Receipt, LayoutDashboard, ArrowLeftRight, Wallet, Settings, X, User, FileText, Calendar, UserCog, Banknote } from 'lucide-react';
 import { useReceptionMode } from '@/contexts/ReceptionModeContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { BranchSelector } from '@/components/reception/BranchSelector';
 
-export type ReceptionTab = 'dashboard' | 'transactions' | 'expenses' | 'requests' | 'shifts' | 'settings';
+export type ReceptionTab = 'dashboard' | 'transactions' | 'expenses' | 'cash-management' | 'requests' | 'shifts' | 'settings';
 
 interface ReceptionHeaderProps {
   activeTab: ReceptionTab;
@@ -17,6 +17,7 @@ const tabs = [
   { id: 'dashboard' as const, label: 'Dashboard', icon: LayoutDashboard },
   { id: 'transactions' as const, label: 'Transactions', icon: ArrowLeftRight },
   { id: 'expenses' as const, label: 'Expenses', icon: Wallet },
+  { id: 'cash-management' as const, label: 'Cash', icon: Banknote },
   { id: 'requests' as const, label: 'Requests', icon: FileText },
   { id: 'shifts' as const, label: 'Shifts', icon: Calendar },
   { id: 'settings' as const, label: 'Settings', icon: Settings },

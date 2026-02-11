@@ -139,6 +139,13 @@ export const PERMISSIONS = {
   OPERATOR_PIN_MANAGE: 'operator:pin:manage',       // Admin: reset others' PINs
   OPERATOR_SWITCH_AUDIT: 'operator:switch:audit',    // View switch logs
 
+  // Reception — Cash Management
+  RECEPTION_CASH_VIEW: 'reception:cash:view',
+  RECEPTION_CASH_SETTINGS: 'reception:cash:settings',
+  RECEPTION_CASH_TRANSFER: 'reception:cash:transfer',
+  RECEPTION_CASH_DIVIDEND_REQUEST: 'reception:cash:dividend:request',
+  RECEPTION_CASH_DIVIDEND_APPROVE: 'reception:cash:dividend:approve',
+
   // Metronome Sync
   METRONOME_VIEW: 'metronome:view',
   METRONOME_EDIT_OWN: 'metronome:edit_own',
@@ -263,6 +270,12 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     PERMISSIONS.RECEPTION_SHIFTS_VIEW,
     PERMISSIONS.OPERATOR_PIN_MANAGE,
     PERMISSIONS.OPERATOR_SWITCH_AUDIT,
+    // Cash Management - Full access
+    PERMISSIONS.RECEPTION_CASH_VIEW,
+    PERMISSIONS.RECEPTION_CASH_SETTINGS,
+    PERMISSIONS.RECEPTION_CASH_TRANSFER,
+    PERMISSIONS.RECEPTION_CASH_DIVIDEND_REQUEST,
+    PERMISSIONS.RECEPTION_CASH_DIVIDEND_APPROVE,
     // Metronome Sync - Full access
     PERMISSIONS.METRONOME_VIEW,
     PERMISSIONS.METRONOME_EDIT_OWN,
@@ -326,6 +339,8 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     PERMISSIONS.MAINTENANCE_VIEW_ALL,
     PERMISSIONS.RECEPTION_SHIFTS_VIEW,
     PERMISSIONS.OPERATOR_SWITCH_AUDIT,
+    // Cash Management - View only
+    PERMISSIONS.RECEPTION_CASH_VIEW,
     // Metronome Sync - View + edit own + run meeting + manage dates
     PERMISSIONS.METRONOME_VIEW,
     PERMISSIONS.METRONOME_EDIT_OWN,
@@ -426,6 +441,10 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     PERMISSIONS.RECEPTION_MAINTENANCE_REPORT,
     PERMISSIONS.RECEPTION_MAINTENANCE_VIEW,
     PERMISSIONS.RECEPTION_SHIFTS_VIEW,
+    // Cash Management - View, settings, request dividend
+    PERMISSIONS.RECEPTION_CASH_VIEW,
+    PERMISSIONS.RECEPTION_CASH_SETTINGS,
+    PERMISSIONS.RECEPTION_CASH_DIVIDEND_REQUEST,
     // Metronome Sync - View + edit own
     PERMISSIONS.METRONOME_VIEW,
     PERMISSIONS.METRONOME_EDIT_OWN,
@@ -496,6 +515,8 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     PERMISSIONS.RECEPTION_TRANSACTIONS_VIEW,
     PERMISSIONS.RECEPTION_EXPENSES_VIEW,
     PERMISSIONS.RECEPTION_REPORTS,
+    // Cash Management - View
+    PERMISSIONS.RECEPTION_CASH_VIEW,
     // Reception v2 — Accounting view
     PERMISSIONS.RECEPTION_ACCOUNTING_VIEW,
   ],
@@ -578,6 +599,9 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     PERMISSIONS.RECEPTION_MAINTENANCE_REPORT,
     PERMISSIONS.RECEPTION_MAINTENANCE_VIEW,
     PERMISSIONS.RECEPTION_SHIFTS_VIEW,
+    // Cash Management - View + request dividend
+    PERMISSIONS.RECEPTION_CASH_VIEW,
+    PERMISSIONS.RECEPTION_CASH_DIVIDEND_REQUEST,
   ],
 };
 
@@ -757,6 +781,13 @@ export const PERMISSION_GROUPS = {
   'Operator Switch': [
     { key: PERMISSIONS.OPERATOR_PIN_MANAGE, label: 'Manage Employee PINs' },
     { key: PERMISSIONS.OPERATOR_SWITCH_AUDIT, label: 'View Switch Audit Logs' },
+  ],
+  'Cash Management': [
+    { key: PERMISSIONS.RECEPTION_CASH_VIEW, label: 'View Cash Dashboard' },
+    { key: PERMISSIONS.RECEPTION_CASH_SETTINGS, label: 'Manage Cash Settings' },
+    { key: PERMISSIONS.RECEPTION_CASH_TRANSFER, label: 'Record Safe Transfers' },
+    { key: PERMISSIONS.RECEPTION_CASH_DIVIDEND_REQUEST, label: 'Request Dividend Spend' },
+    { key: PERMISSIONS.RECEPTION_CASH_DIVIDEND_APPROVE, label: 'Approve Dividend Spend' },
   ],
   'Metronome Sync': [
     { key: PERMISSIONS.METRONOME_VIEW, label: 'View Metronome Dashboard' },

@@ -25,6 +25,7 @@ export const GET = withAuth(async (request: NextRequest, { user }) => {
     const dateTo = searchParams.get('dateTo');
     const search = searchParams.get('search');
     const includeVoided = searchParams.get('includeVoided') === 'true';
+    const cashStatus = searchParams.get('cashStatus'); // 'all_cash', 'inkasso', 'non_inkasso'
     const sortBy = searchParams.get('sortBy') || 'date'; // 'date', 'amount', 'created'
     const sortOrder = searchParams.get('sortOrder') || 'desc'; // 'asc', 'desc'
 
@@ -65,6 +66,14 @@ export const GET = withAuth(async (request: NextRequest, { user }) => {
     }
     if (search) {
       query = query.or(`customer_name.ilike.%${search}%,transaction_number.ilike.%${search}%,notes.ilike.%${search}%`);
+    }
+    // Cash status filter (AT-2)
+    if (cashStatus === 'all_cash') {
+      query = query.not('is_inkasso', 'is', null); // is_inkasso is not null = cash payment
+    } else if (cashStatus === 'inkasso') {
+      query = query.eq('is_inkasso', true);
+    } else if (cashStatus === 'non_inkasso') {
+      query = query.eq('is_inkasso', false);
     }
 
     // Apply sorting based on sortBy parameter
@@ -112,6 +121,7 @@ export const GET = withAuth(async (request: NextRequest, { user }) => {
       agentId: row.agent_id,
       agentName: (row.agent as { full_name: string } | null)?.full_name,
       notes: row.notes,
+      isInkasso: row.is_inkasso,
       isVoided: row.is_voided,
       voidedAt: row.voided_at,
       voidReason: row.void_reason,
@@ -167,10 +177,10 @@ export const POST = withAuth(async (request: NextRequest, { employee }) => {
       return NextResponse.json({ error: 'Validation failed', details: errors }, { status: 400 });
     }
 
-    // Check if payment method requires transaction code
+    // Check if payment method requires transaction code and determine if cash
     const { data: paymentMethod } = await supabaseAdmin!
       .from('payment_methods')
-      .select('requires_code')
+      .select('requires_code, code')
       .eq('id', body.paymentMethodId)
       .single();
 
@@ -184,6 +194,10 @@ export const POST = withAuth(async (request: NextRequest, { employee }) => {
     if (!branchId) {
       return NextResponse.json({ error: 'Branch is required' }, { status: 400 });
     }
+
+    // Determine is_inkasso: null for non-cash, false for cash (default), true if toggled
+    const isCashPayment = paymentMethod?.code === 'cash';
+    const isInkasso = isCashPayment ? (body.isInkasso === true) : null;
 
     // Insert transaction
     const { data, error } = await supabaseAdmin!
@@ -201,6 +215,7 @@ export const POST = withAuth(async (request: NextRequest, { employee }) => {
         agent_id: employee.id,
         notes: body.notes?.trim() || null,
         transaction_date: body.transactionDate || new Date().toISOString().split('T')[0],
+        is_inkasso: isInkasso,
       })
       .select(`
         *,
@@ -225,6 +240,7 @@ export const POST = withAuth(async (request: NextRequest, { employee }) => {
       paymentMethod: data.payment_method,
       agentName: data.agent?.full_name,
       branchName: data.branch?.name,
+      isInkasso: data.is_inkasso,
       transactionDate: data.transaction_date,
       createdAt: data.created_at,
     }, { status: 201 });
