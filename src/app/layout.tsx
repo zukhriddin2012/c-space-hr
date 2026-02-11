@@ -4,7 +4,7 @@ import { ToastProvider } from "@/contexts/ToastContext";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "C-Space Niya",
+  title: "C-Space Niya (Beta)",
   description: "HR & Operations Platform for C-Space Coworking",
   icons: {
     icon: "/favicon.svg",

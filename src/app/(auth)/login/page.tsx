@@ -69,7 +69,10 @@ export default function LoginPage() {
           height={80}
           className="mb-4"
         />
-        <h1 className="text-2xl font-semibold text-gray-900">C-Space Niya</h1>
+        <div className="flex items-center gap-2">
+          <h1 className="text-2xl font-semibold text-gray-900">C-Space Niya</h1>
+          <span className="px-2 py-0.5 text-[11px] font-bold uppercase rounded-full bg-amber-100 text-amber-700 leading-none">Beta</span>
+        </div>
         <p className="text-gray-500 mt-1">{t.auth.platformSubtitle}</p>
       </div>
 

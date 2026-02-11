@@ -108,7 +108,10 @@ export default function ResetPasswordPage() {
               height={54}
               className="mb-3"
             />
-            <h1 className="text-lg font-semibold text-gray-900">C-Space Niya</h1>
+            <div className="flex items-center gap-1.5">
+              <h1 className="text-lg font-semibold text-gray-900">C-Space Niya</h1>
+              <span className="px-1.5 py-0.5 text-[10px] font-bold uppercase rounded-full bg-amber-100 text-amber-700 leading-none">Beta</span>
+            </div>
             <p className="text-gray-500 text-sm">{t.auth.platformSubtitle}</p>
           </div>
 
