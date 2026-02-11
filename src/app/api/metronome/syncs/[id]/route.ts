@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth } from '@/lib/api-auth';
-import { PERMISSIONS, hasPermission } from '@/lib/permissions';
+import { PERMISSIONS } from '@/lib/permissions';
 import { getMetronomeSyncById, updateMetronomeSync } from '@/lib/db';
 import { UpdateSyncSchema } from '@/lib/validators/metronome';
 
@@ -26,16 +26,8 @@ export const PATCH = withAuth(async (request: NextRequest, { user, params }) => 
     }
 
     // Permission: METRONOME_RUN_MEETING or METRONOME_EDIT_ALL
+    // Enforced by withAuth middleware (permissions array with requireAll: false)
     // No ownership check — sync records are organizational
-    const canEdit =
-      hasPermission(user.role, PERMISSIONS.METRONOME_RUN_MEETING) ||
-      hasPermission(user.role, PERMISSIONS.METRONOME_EDIT_ALL);
-    if (!canEdit) {
-      return NextResponse.json(
-        { error: 'Only meeting runners can edit syncs' },
-        { status: 403 }
-      );
-    }
 
     const existingSync = await getMetronomeSyncById(id);
     if (!existingSync) {
@@ -54,4 +46,4 @@ export const PATCH = withAuth(async (request: NextRequest, { user, params }) => 
     console.error('Error in PATCH /api/metronome/syncs/[id]:', error);
     return NextResponse.json({ error: 'Failed to update sync' }, { status: 500 });
   }
-}, { permission: PERMISSIONS.METRONOME_RUN_MEETING });
+}, { permissions: [PERMISSIONS.METRONOME_RUN_MEETING, PERMISSIONS.METRONOME_EDIT_ALL], requireAll: false });

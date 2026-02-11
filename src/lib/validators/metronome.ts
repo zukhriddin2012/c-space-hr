@@ -154,6 +154,15 @@ export const CreateKeyDateSchema = z.object({
     return true;
   },
   { message: 'Recurrence end date must be after the event date', path: ['recurrence_end'] }
+).refine(
+  (data) => {
+    // SEC-C4: Cross-field consistency — recurrence_rule requires is_recurring=true
+    if (data.recurrence_rule && !data.is_recurring) {
+      return false;
+    }
+    return true;
+  },
+  { message: 'is_recurring must be true when recurrence_rule is set', path: ['is_recurring'] }
 );
 
 export const DeleteKeyDateSchema = z.object({

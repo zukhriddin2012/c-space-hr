@@ -189,6 +189,32 @@ export const PATCH = withAuth(async (request: NextRequest, { user }) => {
           return NextResponse.json({ error: 'Invalid input', details: parsed.error.flatten().fieldErrors }, { status: 400 });
         }
 
+        // SEC-C2: Ownership check — verify all items belong to one initiative the user owns
+        if (!canEditAll) {
+          // Fetch the first item to determine the parent initiative
+          const firstItem = await getActionItemById(parsed.data.items[0].id);
+          if (!firstItem) {
+            return NextResponse.json({ error: 'Action item not found' }, { status: 404 });
+          }
+
+          // Verify all items belong to the same initiative (prevents cross-initiative reorder)
+          for (const entry of parsed.data.items.slice(1)) {
+            const item = await getActionItemById(entry.id);
+            if (!item || item.initiative_id !== firstItem.initiative_id) {
+              return NextResponse.json({ error: 'All items must belong to the same initiative' }, { status: 400 });
+            }
+          }
+
+          // Check ownership of the parent initiative
+          const initiative = await getMetronomeInitiativeById(firstItem.initiative_id);
+          if (!initiative) {
+            return NextResponse.json({ error: 'Parent initiative not found' }, { status: 404 });
+          }
+          if (initiative.created_by !== user.id && !initiative.accountable_ids.includes(user.id)) {
+            return NextResponse.json({ error: 'You can only reorder action items on your own initiatives' }, { status: 403 });
+          }
+        }
+
         const result = await reorderActionItems(parsed.data.items);
         if (!result.success) {
           return NextResponse.json({ error: 'Failed to reorder action items' }, { status: 400 });
