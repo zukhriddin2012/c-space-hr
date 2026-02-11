@@ -311,17 +311,18 @@ export async function resolveOperatorEmployee(
       console.warn('[resolveOperatorEmployee] Operator ID validated but employee not found:', opValidation.operatorId);
     }
 
-    // 1b. Kiosk fallback: the switch log insert may fail (session_user_id is non-UUID for kiosk),
-    //     but the operator ID was already PIN-verified server-side before being returned to the client.
-    //     Trust the operator UUID directly for kiosk users.
+    // 1b. Kiosk fallback: the switch log insert is skipped for kiosk sessions (session_user_id
+    //     is non-UUID like "kiosk:elbek"), so validateOperatorSession won't find a log entry.
+    //     The operator ID was already PIN-verified server-side before being returned to the client.
+    //     Trust the operator UUID directly for kiosk users — this is the expected path.
     if (isKioskUser && rawOperatorId && isValidUUID(rawOperatorId) && !opValidation.valid) {
-      console.warn('[resolveOperatorEmployee] Kiosk fallback — switch log validation failed, looking up operator directly:', rawOperatorId);
       const { data } = await db
         .from('employees')
         .select('id, branch_id')
         .eq('id', rawOperatorId)
         .single();
       if (data) return { id: data.id, branchId: data.branch_id };
+      // Only warn if the fallback itself fails — operator UUID doesn't match any employee
       console.warn('[resolveOperatorEmployee] Kiosk fallback — employee not found for operator:', rawOperatorId);
     }
 
@@ -362,8 +363,12 @@ export async function resolveOperatorEmployee(
       }
     }
 
-    console.warn('[resolveOperatorEmployee] Could not resolve employee. user.id=%s, user.email=%s, operatorId=%s, branchId=%s, opValid=%s',
-      user.id, user.email || '(empty)', rawOperatorId || '(none)', branchId, opValidation.valid);
+    // Only log a warning for non-kiosk users, or kiosk users without an operator ID.
+    // Kiosk users with an operator ID already logged a specific warning in the fallback block above.
+    if (!isKioskUser) {
+      console.warn('[resolveOperatorEmployee] Could not resolve employee. user.id=%s, user.email=%s, operatorId=%s, branchId=%s, opValid=%s',
+        user.id, user.email || '(empty)', rawOperatorId || '(none)', branchId, opValidation.valid);
+    }
     return null;
   } catch (error) {
     console.error('[resolveOperatorEmployee] Unexpected error:', error);

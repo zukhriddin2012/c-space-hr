@@ -346,7 +346,7 @@ export const GET = withAuth(async (request: NextRequest) => {
       },
       recentActivity,
       showBranchColumn,
-    });
+    }, { status: 200 });
   } catch (error) {
     console.error('Server error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

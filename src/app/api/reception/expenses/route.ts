@@ -123,7 +123,7 @@ export const GET = withAuth(async (request: NextRequest) => {
         totalPages: Math.ceil((count || 0) / pageSize),
       },
       showBranchColumn: !branchId || branchId === 'all',
-    });
+    }, { status: 200 });
   } catch (error) {
     console.error('Server error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

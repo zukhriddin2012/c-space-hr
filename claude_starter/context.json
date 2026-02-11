@@ -4,7 +4,7 @@
     "schema": "z-productive-context",
     "generatedBy": "deep-architecture-audit",
     "createdAt": "2026-02-05",
-    "lastUpdated": "2026-02-10"
+    "lastUpdated": "2026-02-11"
   },
   "project": {
     "id": "c839c282-d80b-4817-9764-ca4ad1cab09a",
@@ -82,7 +82,7 @@
       },
       {
         "name": "Metronome Sync",
-        "description": "Leadership initiative tracker with sync meeting agenda tool. Tracks initiatives by function (BD/Construction/HR/Finance/Legal/Strategy/Service), decisions, action items, key dates calendar, and meeting mode with timer. 4 leadership roles (general_manager, ceo, hr, branch_manager)."
+        "description": "Leadership initiative tracker with sync meeting agenda tool. Two-tab layout (Decide & Track / Calendar & Plan) with URL hash persistence. Features: initiative resolve/restore workflow, full action item CRUD (inline add/edit/delete, 3-state status toggle, priority tags, deadline management), editable next sync in PulseBar, 7-step onboarding spotlight, recurring key dates with client-side event expansion engine, month calendar with event indicators. 6 permissions, SEC-C2 ownership checks, Zod validation. 4 leadership roles (general_manager, ceo, hr, branch_manager)."
       },
       {
         "name": "Dev Board",
@@ -164,7 +164,7 @@
         { "name": "candidates", "routes": 14, "description": "Recruitment & hiring" },
         { "name": "telegram-bot", "routes": 13, "description": "Telegram integration" },
         { "name": "dev-board", "routes": 10, "description": "Development board" },
-        { "name": "metronome", "routes": 7, "description": "Metronome Sync leadership dashboard" }
+        { "name": "metronome", "routes": 8, "description": "Metronome Sync leadership dashboard" }
       ]
     },
     "componentStats": {
@@ -181,7 +181,7 @@
         "recruitment (candidate detail, term sheets - standard + probation)",
         "settings (reception admin settings)",
         "shifts (planning grid, employee selector, week navigator, shift cell, coverage indicator)",
-        "metronome (MetronomeDashboard, PulseBar, MonthCalendar, DecisionCard, InitiativeCard, MeetingMode, MeetingTimer, EndMeetingModal, NewInitiativeModal, FunctionBadge, PriorityIndicator)",
+        "metronome (MetronomeDashboard, PulseBar, MonthCalendar, DecisionCard, InitiativeCard, MeetingMode, MeetingTimer, EndMeetingModal, NewInitiativeModal, FunctionBadge, PriorityIndicator, OnboardingOverlay)",
         "ui (button, input, select, modal, card, badge, tabs, toast, confirmation dialog, language switcher, test banner)"
       ]
     },
@@ -213,7 +213,7 @@
         { "name": "operator-switch.ts", "domain": "Reception", "description": "PIN management, cross-branch assignments, operator switch logs, session tracking" },
         { "name": "maintenance-issues.ts", "domain": "Reception", "description": "8 categories, priority levels, SLA deadlines, photo attachments" },
         { "name": "connection.ts", "domain": "Utility", "description": "Shared DB utilities, timezone helpers, tax calculations (TAX_RATE=0.12)" },
-        { "name": "metronome.ts", "domain": "Leadership", "description": "Metronome Sync: initiatives, decisions, action items, key dates, syncs, dashboard summary" },
+        { "name": "metronome.ts", "domain": "Leadership", "description": "Metronome Sync: initiatives (resolve/restore), decisions, action items (CRUD + priority + reorder), key dates (recurring), syncs (editable), dashboard summary" },
         { "name": "index.ts", "domain": "Utility", "description": "Barrel file re-exporting all modules" }
       ]
     },
@@ -416,7 +416,8 @@
       "Telegram PIN delivery feature (API + UI + i18n)",
       "Language switching fixes for auth, settings, reports pages (~104 new translation keys)",
       "Dev Board with Jarvis AI CLI sync",
-      "Metronome Sync leadership dashboard (PR2-045: 7 phases, 27 files, 10 components, 14 API endpoints, 5 DB tables, security audit + remediation, bug hunting, QA testing)"
+      "Metronome Sync leadership dashboard (PR2-045: 7 phases, 27 files, 10 components, 14 API endpoints, 5 DB tables, security audit + remediation, bug hunting, QA testing)",
+      "Metronome Sync UX improvements (PR2-053: 10 phases, 9 features, 24 atomic tasks, tab layout, action item CRUD, priority tags, recurring events, onboarding overlay, 143/143 QA tests)"
     ],
     "currentMilestone": "Security deployment + i18n completion + Reception Mode stabilization",
     "activeWork": [
@@ -675,8 +676,8 @@
     "timezone": "UTC+5 (Tashkent)"
   },
   "taskHistory": {
-    "totalTasks": 15,
-    "completed": 9,
+    "totalTasks": 16,
+    "completed": 10,
     "inProgress": 1,
     "readyForDeployment": 3,
     "documentationComplete": 2,
@@ -695,7 +696,8 @@
       { "id": "DEB-025", "title": "Reception Mode bug hunt", "date": "2026-02-06", "status": "completed" },
       { "id": "Security_Inspection", "title": "Hostile security audit", "date": "2026-02-05", "status": "completed" },
       { "id": "PR2-045", "title": "Metronome Sync leadership dashboard (7 phases: PRD→DES→ARC→DEV→SEC→DEB→TEST)", "date": "2026-02-10", "status": "deployed" },
-      { "id": "PR2-046", "title": "Metronome JSON Export/Import PRD", "date": "2026-02-10", "status": "prd_complete" }
+      { "id": "PR2-046", "title": "Metronome JSON Export/Import PRD", "date": "2026-02-10", "status": "prd_complete" },
+      { "id": "PR2-053", "title": "Metronome Sync UX improvements (9 features, 24 AT tasks, 10 phases: PRD→DES→ARC→DEV→SEC→DEV-iter→DEB→ARC-review→TST→OPS)", "date": "2026-02-11", "status": "deployed" }
     ]
   }
 }

@@ -201,7 +201,7 @@ export const GET = withAuth(async (request, { user }) => {
       defaultBranchId: assignedBranchId,
       canSeeAllBranches,
       totalBranchCount: branches.filter(b => !b.isAllBranches).length,
-    });
+    }, { status: 200 });
   } catch (error) {
     console.error('Error in GET /api/reception/branches:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
