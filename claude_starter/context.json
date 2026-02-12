@@ -645,6 +645,13 @@
       "tools": ["Vercel", "Supabase CLI", "DEPLOYMENT-RUNBOOK.md"],
       "recentWork": "Prepared deployment runbook, 6 rollback migration scripts, .env.local.example template"
     },
+    "atrophya": {
+      "active": true,
+      "meta_role": true,
+      "currentFocus": "Auto-generating teaching tasks after workflow phases to explain what was built in plain language",
+      "tools": ["Previous phase handovers", "Source files referenced in handover"],
+      "recentWork": "Initial role installation (CSN-021)"
+    },
     "secura": {
       "active": true,
       "currentFocus": "Security implementation and verification, 24 SEC requirements compliance, ongoing audit",
