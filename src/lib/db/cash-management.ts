@@ -144,21 +144,29 @@ export async function getCashAllocationBalance(branchId: string): Promise<CashAl
   const totalDividendSpends = (divRows || []).reduce((sum, r) => sum + Number(r.dividend_portion), 0);
 
   // Step 7: Inkasso pending (manual calculation)
+  // BUG-2 FIX: Only count inkasso transactions since last transfer (consistent with other queries)
   let inkassoPendingAmount = 0;
   let inkassoPendingCount = 0;
 
-  const { data: pendingInkasso } = await supabaseAdmin!
+  let inkassoQuery = supabaseAdmin!
     .from('transactions')
     .select('id, amount')
     .eq('branch_id', branchId)
     .eq('is_inkasso', true)
     .eq('is_voided', false);
 
+  if (lastTransferDate) {
+    inkassoQuery = inkassoQuery.gt('transaction_date', lastTransferDate.split('T')[0]);
+  }
+
+  const { data: pendingInkasso } = await inkassoQuery;
+
   if (pendingInkasso && pendingInkasso.length > 0) {
-    // Filter out those already delivered
+    // BUG-3/4 FIX: Filter delivered items scoped to this branch via delivery join
     const { data: deliveredItems } = await supabaseAdmin!
       .from('inkasso_delivery_items')
-      .select('transaction_id');
+      .select('transaction_id, delivery:inkasso_deliveries!delivery_id(branch_id)')
+      .eq('delivery.branch_id', branchId);
 
     const deliveredSet = new Set((deliveredItems || []).map(d => d.transaction_id));
 
@@ -232,9 +240,11 @@ export async function getUndeliveredInkassoTransactions(branchId: string) {
   if (error) throw new Error(`Failed to get inkasso transactions: ${error.message}`);
 
   // Filter out already-delivered ones
+  // BUG-3 FIX: Scope to branch via delivery join instead of full table scan
   const { data: deliveredItems } = await supabaseAdmin!
     .from('inkasso_delivery_items')
-    .select('transaction_id');
+    .select('transaction_id, delivery:inkasso_deliveries!delivery_id(branch_id)')
+    .eq('delivery.branch_id', branchId);
 
   const deliveredSet = new Set((deliveredItems || []).map(d => d.transaction_id));
 
@@ -301,73 +311,59 @@ export async function createInkassoDelivery(
   input: CreateInkassoDeliveryInput,
   employeeId: string
 ): Promise<InkassoDelivery> {
-  // 1. Verify all transactions exist, are inkasso=true, not voided, not already delivered
-  const { data: txns, error: txnError } = await supabaseAdmin!
-    .from('transactions')
-    .select('id, amount, is_inkasso, is_voided, branch_id')
-    .in('id', input.transactionIds);
+  // BUG-5/10 FIX: Use atomic RPC function (single PG transaction with advisory lock)
+  // Prevents orphan delivery headers and concurrent delivery race conditions
+  const { data: deliveryId, error: rpcError } = await supabaseAdmin!
+    .rpc('create_inkasso_delivery_atomic', {
+      p_branch_id: input.branchId,
+      p_transaction_ids: input.transactionIds,
+      p_delivered_by: employeeId,
+      p_delivered_date: input.deliveredDate || new Date().toISOString().split('T')[0],
+      p_notes: input.notes || null,
+    });
 
-  if (txnError) throw new Error(`Failed to verify transactions: ${txnError.message}`);
-  if (!txns || txns.length !== input.transactionIds.length) {
-    throw new Error('Some transactions were not found');
+  if (rpcError) {
+    // Map PG exceptions to safe error messages
+    const msg = rpcError.message || '';
+    if (msg.includes('not found')) {
+      throw new Error('Some transactions were not found');
+    }
+    if (msg.includes('not inkasso')) {
+      throw new Error('One or more transactions are not inkasso');
+    }
+    if (msg.includes('voided')) {
+      throw new Error('One or more transactions are voided');
+    }
+    if (msg.includes('another branch')) {
+      throw new Error('One or more transactions belong to another branch');
+    }
+    if (msg.includes('already been delivered')) {
+      throw new Error('Some transactions have already been delivered');
+    }
+    throw new Error('Failed to create inkasso delivery');
   }
 
-  for (const txn of txns) {
-    if (!txn.is_inkasso) throw new Error(`Transaction ${txn.id} is not inkasso`);
-    if (txn.is_voided) throw new Error(`Transaction ${txn.id} is voided`);
-    if (txn.branch_id !== input.branchId) throw new Error(`Transaction ${txn.id} belongs to another branch`);
-  }
-
-  // Check for already-delivered
-  const { data: existing } = await supabaseAdmin!
-    .from('inkasso_delivery_items')
-    .select('transaction_id')
-    .in('transaction_id', input.transactionIds);
-
-  if (existing && existing.length > 0) {
-    throw new Error(`Transactions already delivered: ${existing.map(e => e.transaction_id).join(', ')}`);
-  }
-
-  const totalAmount = txns.reduce((sum, t) => sum + Number(t.amount), 0);
-
-  // 2. Create delivery
-  const { data: delivery, error: deliveryError } = await supabaseAdmin!
+  // Fetch the created delivery with joins
+  const { data, error } = await supabaseAdmin!
     .from('inkasso_deliveries')
-    .insert({
-      branch_id: input.branchId,
-      delivered_date: input.deliveredDate || new Date().toISOString().split('T')[0],
-      delivered_by: employeeId,
-      total_amount: totalAmount,
-      transaction_count: input.transactionIds.length,
-      notes: input.notes || null,
-    })
-    .select('*')
+    .select(`
+      *,
+      delivered_by_employee:employees!delivered_by(full_name)
+    `)
+    .eq('id', deliveryId)
     .single();
 
-  if (deliveryError) throw new Error(`Failed to create delivery: ${deliveryError.message}`);
-
-  // 3. Create delivery items
-  const items = input.transactionIds.map(txnId => ({
-    delivery_id: delivery.id,
-    transaction_id: txnId,
-    amount: Number(txns.find(t => t.id === txnId)?.amount || 0),
-  }));
-
-  const { error: itemsError } = await supabaseAdmin!
-    .from('inkasso_delivery_items')
-    .insert(items);
-
-  if (itemsError) throw new Error(`Failed to create delivery items: ${itemsError.message}`);
+  if (error) throw new Error('Failed to fetch created delivery');
 
   return {
-    id: delivery.id,
-    branchId: delivery.branch_id,
-    deliveredDate: delivery.delivered_date,
-    deliveredByName: '', // Will be resolved by caller
-    totalAmount: Number(delivery.total_amount),
-    transactionCount: delivery.transaction_count,
-    notes: delivery.notes || undefined,
-    createdAt: delivery.created_at,
+    id: data.id,
+    branchId: data.branch_id,
+    deliveredDate: data.delivered_date,
+    deliveredByName: (data.delivered_by_employee as { full_name: string } | null)?.full_name || '',
+    totalAmount: Number(data.total_amount),
+    transactionCount: data.transaction_count,
+    notes: data.notes || undefined,
+    createdAt: data.created_at,
   };
 }
 
@@ -561,12 +557,22 @@ export async function createDividendSpendRequest(
   input: CreateDividendSpendInput,
   employeeId: string
 ): Promise<DividendSpendRequest> {
+  // BUG-11 FIX: Validate funding breakdown sums to expense amount
+  const portionSum = input.opexPortion + input.dividendPortion;
+  if (Math.abs(portionSum - input.expenseAmount) > 0.01) {
+    throw new Error('OpEx portion + dividend portion must equal expense amount');
+  }
+
   // Verify balance availability
   const balance = await getCashAllocationBalance(input.branchId);
 
   if (input.opexPortion > balance.allocation.opex.available) {
     // SEC-066-08: Don't leak exact balance amounts in errors
     throw new Error('Insufficient OpEx balance for requested portion');
+  }
+
+  if (input.dividendPortion > balance.allocation.dividend.available) {
+    throw new Error('Insufficient dividend balance for requested portion');
   }
 
   const { data, error } = await supabaseAdmin!

@@ -2,7 +2,8 @@
 -- PR2-066 SEC: Cash Management Security Hardening
 -- Migration: 20260212_cash_management_security.sql
 -- ============================================
--- Fixes: SEC-066-02 (non-atomic approval), SEC-066-03 (transfer TOCTOU)
+-- Fixes: SEC-066-02 (non-atomic approval), SEC-066-03 (transfer TOCTOU),
+--         DEB-066 BUG-5/10 (non-atomic inkasso delivery)
 -- ============================================
 
 -- ============================================
@@ -68,7 +69,78 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- ============================================
--- 2. Atomic cash transfer with balance lock (SEC-066-03)
+-- 2. Atomic inkasso delivery (DEB-066 BUG-5/10)
+-- ============================================
+-- Wraps delivery header + items in a single transaction.
+-- Uses advisory lock per branch to prevent concurrent delivery of same transactions.
+-- Returns the created delivery ID.
+
+CREATE OR REPLACE FUNCTION create_inkasso_delivery_atomic(
+  p_branch_id VARCHAR,
+  p_transaction_ids UUID[],
+  p_delivered_by UUID,
+  p_delivered_date DATE DEFAULT CURRENT_DATE,
+  p_notes TEXT DEFAULT NULL
+) RETURNS UUID AS $$
+DECLARE
+  v_delivery_id UUID;
+  v_txn RECORD;
+  v_total_amount DECIMAL(18,2) := 0;
+  v_count INTEGER := 0;
+  v_existing_count INTEGER;
+BEGIN
+  -- Advisory lock per branch prevents concurrent deliveries from racing
+  PERFORM pg_advisory_xact_lock(hashtext('inkasso_delivery_' || p_branch_id));
+
+  -- Validate all transactions: exist, inkasso=true, not voided, belong to branch
+  FOR v_txn IN
+    SELECT id, amount, is_inkasso, is_voided, branch_id
+    FROM transactions
+    WHERE id = ANY(p_transaction_ids)
+  LOOP
+    IF v_txn.branch_id != p_branch_id THEN
+      RAISE EXCEPTION 'Transaction % belongs to another branch', v_txn.id;
+    END IF;
+    IF NOT v_txn.is_inkasso THEN
+      RAISE EXCEPTION 'Transaction % is not inkasso', v_txn.id;
+    END IF;
+    IF v_txn.is_voided THEN
+      RAISE EXCEPTION 'Transaction % is voided', v_txn.id;
+    END IF;
+    v_total_amount := v_total_amount + v_txn.amount;
+    v_count := v_count + 1;
+  END LOOP;
+
+  IF v_count != array_length(p_transaction_ids, 1) THEN
+    RAISE EXCEPTION 'Some transactions were not found';
+  END IF;
+
+  -- Check for already-delivered transactions
+  SELECT COUNT(*) INTO v_existing_count
+  FROM inkasso_delivery_items
+  WHERE transaction_id = ANY(p_transaction_ids);
+
+  IF v_existing_count > 0 THEN
+    RAISE EXCEPTION 'Some transactions have already been delivered';
+  END IF;
+
+  -- Create delivery header
+  INSERT INTO inkasso_deliveries (branch_id, delivered_date, delivered_by, total_amount, transaction_count, notes)
+  VALUES (p_branch_id, p_delivered_date, p_delivered_by, v_total_amount, v_count, p_notes)
+  RETURNING id INTO v_delivery_id;
+
+  -- Create delivery items (atomically with header)
+  INSERT INTO inkasso_delivery_items (delivery_id, transaction_id, amount)
+  SELECT v_delivery_id, t.id, t.amount
+  FROM transactions t
+  WHERE t.id = ANY(p_transaction_ids);
+
+  RETURN v_delivery_id;
+END;
+$$ LANGUAGE plpgsql;
+
+-- ============================================
+-- 3. Atomic cash transfer with balance lock (SEC-066-03)
 -- ============================================
 -- Uses advisory lock keyed on branch_id to prevent concurrent
 -- transfers from overdrawing the balance.
