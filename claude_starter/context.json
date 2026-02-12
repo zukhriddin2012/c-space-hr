@@ -4,7 +4,7 @@
     "schema": "z-productive-context",
     "generatedBy": "deep-architecture-audit",
     "createdAt": "2026-02-05",
-    "lastUpdated": "2026-02-11"
+    "lastUpdated": "2026-02-12"
   },
   "project": {
     "id": "c839c282-d80b-4817-9764-ca4ad1cab09a",
@@ -54,7 +54,7 @@
       },
       {
         "name": "Reception Mode",
-        "description": "Full-screen branch interface for transaction recording, expense tracking, client management with autocomplete, daily financial dashboard (income/expenses/profit), legal request submission, maintenance issue reporting, operator switching via PIN (R6a), standalone kiosk mode with password gate, cross-branch operator assignments"
+        "description": "Full-screen branch interface for transaction recording (with inkasso/non-inkasso tracking), expense tracking, cash management (OpEx/Marketing/Dividend allocation, safe transfers, dividend spend approval), client management with autocomplete, daily financial dashboard (income/expenses/profit), legal request submission, maintenance issue reporting, operator switching via PIN (R6a), standalone kiosk mode with password gate, cross-branch operator assignments"
       },
       {
         "name": "Reception Kiosk",
@@ -108,9 +108,9 @@
     ],
     "database": [
       "Supabase (PostgreSQL) with supabaseAdmin client",
-      "48+ SQL migrations",
+      "49+ SQL migrations",
       "Row-Level Security (RLS) policies",
-      "27 domain-specific DB modules"
+      "28 domain-specific DB modules"
     ],
     "state": [
       "React Context: AuthContext (user + permissions), LanguageContext (EN/RU/UZ with DB sync), ReceptionModeContext (branch + operator + kiosk), SidebarContext (collapse + responsive), ToastContext (notifications)",
@@ -146,20 +146,20 @@
   },
   "architecture": {
     "type": "Modular Monolith",
-    "overview": "Next.js App Router application with feature-based code organization. 4 route groups: (dashboard) for protected routes, (auth) for login, (public) for document signing, (reception) for standalone kiosk. Server Components for data-fetching pages, Client Components for interactivity. Database layer split into 26 domain modules. Role-based access control with 11 permission levels and 140+ granular permissions. 4 feature modules (accounting, legal, maintenance, reception) with typed business logic.",
+    "overview": "Next.js App Router application with feature-based code organization. 4 route groups: (dashboard) for protected routes, (auth) for login, (public) for document signing, (reception) for standalone kiosk. Server Components for data-fetching pages, Client Components for interactivity. Database layer split into 28 domain modules. Role-based access control with 11 permission levels and 145+ granular permissions. 4 feature modules (accounting, legal, maintenance, reception) with typed business logic.",
     "apiStats": {
-      "totalRouteFiles": 180,
-      "totalEndpoints": 298,
-      "totalDomains": 36,
+      "totalRouteFiles": 187,
+      "totalEndpoints": 308,
+      "totalDomains": 37,
       "httpMethods": {
-        "GET": 124,
-        "POST": 90,
+        "GET": 132,
+        "POST": 94,
         "DELETE": 32,
-        "PUT": 27,
-        "PATCH": 11
+        "PUT": 28,
+        "PATCH": 12
       },
       "largestDomains": [
-        { "name": "reception", "routes": 34, "description": "Reception & kiosk management" },
+        { "name": "reception", "routes": 41, "description": "Reception, kiosk & cash management" },
         { "name": "employees", "routes": 16, "description": "Employee data & payroll" },
         { "name": "candidates", "routes": 14, "description": "Recruitment & hiring" },
         { "name": "telegram-bot", "routes": 13, "description": "Telegram integration" },
@@ -177,7 +177,7 @@
         "employee (table, add/edit modals, wages, payslips, trend chart)",
         "layout (sidebar, mobile nav, reception header, quick switch, notification bell)",
         "profile (view + edit modal)",
-        "reception (dashboard, transactions, expenses, requests, shifts, settings, kiosk, PIN overlay, client autocomplete, branch selector)",
+        "reception (dashboard, transactions, expenses, cash-management [dashboard, inkasso, transfers, dividends], requests, shifts, settings, kiosk, PIN overlay, client autocomplete, branch selector)",
         "recruitment (candidate detail, term sheets - standard + probation)",
         "settings (reception admin settings)",
         "shifts (planning grid, employee selector, week navigator, shift cell, coverage indicator)",
@@ -186,7 +186,7 @@
       ]
     },
     "databaseModules": {
-      "total": 27,
+      "total": 28,
       "modules": [
         { "name": "employees.ts", "domain": "Core HR", "description": "Employee CRUD, branch filtering, manager lookup" },
         { "name": "attendance.ts", "domain": "Core HR", "description": "Check-in/out tracking, overnight shifts, IP/GPS verification" },
@@ -214,6 +214,7 @@
         { "name": "maintenance-issues.ts", "domain": "Reception", "description": "8 categories, priority levels, SLA deadlines, photo attachments" },
         { "name": "connection.ts", "domain": "Utility", "description": "Shared DB utilities, timezone helpers, tax calculations (TAX_RATE=0.12)" },
         { "name": "metronome.ts", "domain": "Leadership", "description": "Metronome Sync: initiatives (resolve/restore), decisions, action items (CRUD + priority + reorder), key dates (recurring), syncs (editable), dashboard summary" },
+        { "name": "cash-management.ts", "domain": "Reception", "description": "Cash allocation balance, inkasso deliveries, safe transfers, dividend spend requests, cash settings" },
         { "name": "index.ts", "domain": "Utility", "description": "Barrel file re-exporting all modules" }
       ]
     },
@@ -239,8 +240,8 @@
         },
         {
           "name": "reception",
-          "description": "Comprehensive reception system - largest module (665 lines of types)",
-          "types": "Admin config (ServiceType, ExpenseType, PaymentMethodConfig), Transactions (TXN-YYYYMM-XXXX), Expenses (EXP-YYYYMM-XXXX), Operator identity (PIN switching, session logs, branch assignments), Filters, Summaries, PaginatedResponse<T>, DB row transform functions",
+          "description": "Comprehensive reception system - largest module (800+ lines of types)",
+          "types": "Admin config (ServiceType, ExpenseType, PaymentMethodConfig), Transactions (TXN-YYYYMM-XXXX, isInkasso), Expenses (EXP-YYYYMM-XXXX), Cash Management (BranchCashSettings, CashAllocationBalance, InkassoDelivery, CashTransfer, DividendSpendRequest, CashPositionSummary), Operator identity (PIN switching, session logs, branch assignments), Filters, Summaries, PaginatedResponse<T>, DB row transform functions",
           "lib": "constants.ts, pin-lockout.ts (3 attempts, 60s lockout) with tests"
         }
       ]
@@ -253,7 +254,7 @@
         "auth.ts (JWT create/verify/revoke)",
         "auth-server.ts (cookie session management)",
         "api-auth.ts (withAuth middleware with permission/role/kiosk support)",
-        "permissions.ts (11 roles, 140+ permissions, role hierarchy)",
+        "permissions.ts (11 roles, 145+ permissions, role hierarchy)",
         "kiosk-auth.ts (reception kiosk PIN auth)",
         "security.ts (input validation: ILIKE escape, string length, file metadata, branch access, operator session, pagination, enum validation)",
         "csrf.ts (double-submit cookie, constant-time comparison)",
@@ -339,7 +340,7 @@
     },
     "database": {
       "import": "Import from @/lib/db (re-exports from modular db/ folder)",
-      "modules": "26 domain-specific files organized by business domain",
+      "modules": "28 domain-specific files organized by business domain",
       "security": "escapeIlike() for text searches, validateBranchAccess() for IDOR prevention, parsePagination() with bounds"
     },
     "translations": {
@@ -370,14 +371,14 @@
     "src/contexts/": "React contexts (Auth, Language, ReceptionMode, Sidebar, Toast)",
     "src/hooks/": "Custom hooks (usePermissions)",
     "src/lib/": "Utilities (20+ root files: auth, security, CSRF, rate limiting, audit, permissions, etc.)",
-    "src/lib/db/": "Modular database functions (27 domain modules)",
+    "src/lib/db/": "Modular database functions (28 domain modules)",
     "src/lib/i18n/": "Translation files (types.ts + en.ts + ru.ts + uz.ts + index.ts)",
     "src/modules/": "Feature modules with business logic (accounting, legal, maintenance, reception)",
     "src/data/": "Static data files",
     "src/proxy.ts": "Proxy configuration",
     "src/test/": "Test infrastructure (setup, mocks, utils)",
     "src/types/": "TypeScript type definitions (index.ts: 11 roles, core entities; telegram.d.ts: WebApp API)",
-    "supabase/migrations/": "48+ SQL migration files (security, reception, HR, financial, metronome)",
+    "supabase/migrations/": "49+ SQL migration files (security, reception, HR, financial, metronome, cash management)",
     "scripts/": "Utility scripts (hash-passwords.ts, jarvis.js AI CLI, register-webhook.ts)",
     "data/": "Import CSV files (employee credentials, salary history - 6 files)",
     "docs/": "Specs (SPEC-007 shift planning, BACKLOG.md with P0-P3), mockups (5 HTML files), dev board history",
@@ -417,7 +418,8 @@
       "Language switching fixes for auth, settings, reports pages (~104 new translation keys)",
       "Dev Board with Jarvis AI CLI sync",
       "Metronome Sync leadership dashboard (PR2-045: 7 phases, 27 files, 10 components, 14 API endpoints, 5 DB tables, security audit + remediation, bug hunting, QA testing)",
-      "Metronome Sync UX improvements (PR2-053: 10 phases, 9 features, 24 atomic tasks, tab layout, action item CRUD, priority tags, recurring events, onboarding overlay, 143/143 QA tests)"
+      "Metronome Sync UX improvements (PR2-053: 10 phases, 9 features, 24 atomic tasks, tab layout, action item CRUD, priority tags, recurring events, onboarding overlay, 143/143 QA tests)",
+      "Cash Management on Reception Mode (PR2-066: inkasso/non-inkasso tracking, OpEx/Marketing/Dividend allocation, safe transfers, dividend spend approval, 22 files, 2852 LOC)"
     ],
     "currentMilestone": "Security deployment + i18n completion + Reception Mode stabilization",
     "activeWork": [
@@ -676,8 +678,8 @@
     "timezone": "UTC+5 (Tashkent)"
   },
   "taskHistory": {
-    "totalTasks": 16,
-    "completed": 10,
+    "totalTasks": 17,
+    "completed": 11,
     "inProgress": 1,
     "readyForDeployment": 3,
     "documentationComplete": 2,
@@ -697,7 +699,8 @@
       { "id": "Security_Inspection", "title": "Hostile security audit", "date": "2026-02-05", "status": "completed" },
       { "id": "PR2-045", "title": "Metronome Sync leadership dashboard (7 phases: PRD→DES→ARC→DEV→SEC→DEB→TEST)", "date": "2026-02-10", "status": "deployed" },
       { "id": "PR2-046", "title": "Metronome JSON Export/Import PRD", "date": "2026-02-10", "status": "prd_complete" },
-      { "id": "PR2-053", "title": "Metronome Sync UX improvements (9 features, 24 AT tasks, 10 phases: PRD→DES→ARC→DEV→SEC→DEV-iter→DEB→ARC-review→TST→OPS)", "date": "2026-02-11", "status": "deployed" }
+      { "id": "PR2-053", "title": "Metronome Sync UX improvements (9 features, 24 AT tasks, 10 phases: PRD→DES→ARC→DEV→SEC→DEV-iter→DEB→ARC-review→TST→OPS)", "date": "2026-02-11", "status": "deployed" },
+      { "id": "PR2-066", "title": "Cash Management on Reception Mode (4 phases: PRD→DES→ARC→DEV, 10 AT tasks, inkasso tracking, allocation balances, safe transfers, dividend approval)", "date": "2026-02-12", "status": "implemented" }
     ]
   }
 }

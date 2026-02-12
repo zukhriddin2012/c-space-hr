@@ -61,3 +61,6 @@ ARCHITECTURAL_REVIEW.docx
 calendar-jan-2026.pdf
 ~$CHITECTURAL_REVIEW.docx
 .plan
+scripts/scan-codebase.sh
+claude_starter/context.json
+/claude_starter
