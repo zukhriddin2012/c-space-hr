@@ -13,26 +13,8 @@ export const DELETE = withAuth(async (request: NextRequest, { user, params }) =>
       return NextResponse.json({ error: 'userId and branchId are required' }, { status: 400 });
     }
 
-    // Check permissions
-    const isAdmin = ['ceo', 'general_manager', 'hr'].includes(user.role);
-    const isBranchManager = user.role === 'branch_manager';
-
-    if (!isAdmin && !isBranchManager) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
-    }
-
-    // Branch Managers can only revoke access to their branch
-    if (isBranchManager && !isAdmin) {
-      const { data: employee } = await supabaseAdmin!
-        .from('employees')
-        .select('branch_id')
-        .eq('id', user.id)
-        .single();
-
-      if (employee?.branch_id !== branchId) {
-        return NextResponse.json({ error: 'You can only revoke access to your own branch' }, { status: 403 });
-      }
-    }
+    // CSN-028/SEC-028 S-3: Access enforced by withAuth({ roles: ['general_manager'] }).
+    // Internal role checks removed — only GM can reach this handler.
 
     // Check if the access grant exists
     const { data: existing, error: checkError } = await supabaseAdmin!
@@ -63,4 +45,5 @@ export const DELETE = withAuth(async (request: NextRequest, { user, params }) =>
     console.error('Error in DELETE /api/reception/admin/branch-access:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
-}, { roles: ['general_manager'], allowKiosk: true });
+}, // CSN-028/SEC-028 S-4: allowKiosk removed — kiosk users cannot access admin routes
+{ roles: ['general_manager'] });

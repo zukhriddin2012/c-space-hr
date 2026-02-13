@@ -11,31 +11,9 @@ export const GET = withAuth(async (request, { user }) => {
     const { searchParams } = new URL(request.url);
     const branchId = searchParams.get('branchId');
 
-    // Check permissions
-    const isAdmin = ['ceo', 'general_manager', 'hr'].includes(user.role);
-    const isBranchManager = user.role === 'branch_manager';
-
-    if (!isAdmin && !isBranchManager) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
-    }
-
-    // Branch Managers can only see their branch
-    let targetBranchId = branchId;
-    if (isBranchManager && !isAdmin) {
-      // Get the BM's branch
-      const { data: employee } = await supabaseAdmin!
-        .from('employees')
-        .select('branch_id')
-        .eq('id', user.id)
-        .single();
-
-      targetBranchId = employee?.branch_id;
-
-      // If they requested a different branch, deny
-      if (branchId && branchId !== targetBranchId) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
-      }
-    }
+    // CSN-028/SEC-028 S-3: Access enforced by withAuth({ roles: ['general_manager'] }).
+    // Internal role checks removed — only GM can reach this handler.
+    const targetBranchId = branchId;
 
     // Build query
     let query = supabaseAdmin!
@@ -91,24 +69,16 @@ export const GET = withAuth(async (request, { user }) => {
       };
     });
 
-    // Determine if user can manage branch access
-    // Admins can always manage, BMs can only manage their own branch
-    let canManage = isAdmin;
-    if (isBranchManager && targetBranchId) {
-      const { data: employee } = await supabaseAdmin!
-        .from('employees')
-        .select('branch_id')
-        .eq('id', user.id)
-        .single();
-      canManage = employee?.branch_id === targetBranchId;
-    }
+    // CSN-028/SEC-028 S-3: GM always has manage permission
+    const canManage = true;
 
     return NextResponse.json({ users: accessList, canManage });
   } catch (error) {
     console.error('Error in GET /api/reception/admin/branch-access:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
-}, { roles: ['general_manager'], allowKiosk: true });
+}, // CSN-028/SEC-028 S-4: allowKiosk removed — kiosk users cannot access admin routes
+{ roles: ['general_manager'] });
 
 // POST /api/reception/admin/branch-access
 // Grant branch access to a user (CSN-028: GM only)
@@ -121,26 +91,8 @@ export const POST = withAuth(async (request, { user }) => {
       return NextResponse.json({ error: 'userId and branchId are required' }, { status: 400 });
     }
 
-    // Check permissions
-    const isAdmin = ['ceo', 'general_manager', 'hr'].includes(user.role);
-    const isBranchManager = user.role === 'branch_manager';
-
-    if (!isAdmin && !isBranchManager) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
-    }
-
-    // Branch Managers can only grant access to their branch
-    if (isBranchManager && !isAdmin) {
-      const { data: employee } = await supabaseAdmin!
-        .from('employees')
-        .select('branch_id')
-        .eq('id', user.id)
-        .single();
-
-      if (employee?.branch_id !== branchId) {
-        return NextResponse.json({ error: 'You can only grant access to your own branch' }, { status: 403 });
-      }
-    }
+    // CSN-028/SEC-028 S-3: Access enforced by withAuth({ roles: ['general_manager'] }).
+    // Internal role checks removed — only GM can reach this handler.
 
     // Check if user already has access
     const { data: existing } = await supabaseAdmin!
@@ -194,4 +146,5 @@ export const POST = withAuth(async (request, { user }) => {
     console.error('Error in POST /api/reception/admin/branch-access:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
-}, { roles: ['general_manager'], allowKiosk: true });
+}, // CSN-028/SEC-028 S-4: allowKiosk removed — kiosk users cannot access admin routes
+{ roles: ['general_manager'] });

@@ -114,4 +114,5 @@ export const POST = withAuth(async (request: NextRequest) => {
     console.error('Server error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
-}, { permission: PERMISSIONS.RECEPTION_ADMIN, allowKiosk: true });
+// CSN-028/SEC-028 S-2: GM-only for mutations; allowKiosk removed (kiosk should not create config)
+}, { roles: ['general_manager'], permission: PERMISSIONS.RECEPTION_ADMIN });

@@ -26,20 +26,8 @@ async function handlePost(
       return NextResponse.json({ error: 'password_too_short' }, { status: 400 });
     }
 
-    // Permission check: GM can set for any branch, BM only for their own
-    const isGM = user.role === 'general_manager' || user.role === 'ceo';
-    const isBM = user.role === 'branch_manager';
-
-    if (!isGM && !isBM) {
-      return NextResponse.json({ error: 'insufficient_permissions' }, { status: 403 });
-    }
-
-    if (isBM && user.branchId !== branchId) {
-      return NextResponse.json(
-        { error: 'can_only_manage_own_branch' },
-        { status: 403 }
-      );
-    }
+    // CSN-028/SEC-028 S-3: Access enforced by withAuth({ roles: ['general_manager'] }).
+    // Internal role checks removed — only GM can reach this handler.
 
     // Hash the password
     const passwordHash = await bcrypt.hash(password, 10);
@@ -85,17 +73,8 @@ async function handleDelete(
       return NextResponse.json({ error: 'branch_id_required' }, { status: 400 });
     }
 
-    // Permission check
-    const isGM = user.role === 'general_manager' || user.role === 'ceo';
-    const isBM = user.role === 'branch_manager';
-
-    if (!isGM && !isBM) {
-      return NextResponse.json({ error: 'insufficient_permissions' }, { status: 403 });
-    }
-
-    if (isBM && user.branchId !== branchId) {
-      return NextResponse.json({ error: 'can_only_manage_own_branch' }, { status: 403 });
-    }
+    // CSN-028/SEC-028 S-3: Access enforced by withAuth({ roles: ['general_manager'] }).
+    // Internal role checks removed — only GM can reach this handler.
 
     const { error: updateError } = await supabaseAdmin!
       .from('branches')

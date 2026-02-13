@@ -117,7 +117,8 @@ export const PUT = withAuth(async (request: NextRequest, { params }) => {
     console.error('Server error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
-}, { permission: PERMISSIONS.RECEPTION_ADMIN, allowKiosk: true });
+// CSN-028/SEC-028 S-2: GM-only for mutations
+}, { roles: ['general_manager'], permission: PERMISSIONS.RECEPTION_ADMIN });
 
 // ============================================
 // DELETE /api/reception/admin/payment-methods/[id]
@@ -166,4 +167,5 @@ export const DELETE = withAuth(async (request: NextRequest, { params }) => {
     console.error('Server error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
-}, { permission: PERMISSIONS.RECEPTION_ADMIN, allowKiosk: true });
+// CSN-028/SEC-028 S-2: GM-only for mutations
+}, { roles: ['general_manager'], permission: PERMISSIONS.RECEPTION_ADMIN });
