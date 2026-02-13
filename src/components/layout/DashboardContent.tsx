@@ -13,6 +13,7 @@ const ReceptionExpenses = lazy(() => import('@/components/reception/ReceptionExp
 const ReceptionSettings = lazy(() => import('@/components/reception/ReceptionSettings'));
 const ReceptionRequests = lazy(() => import('@/components/reception/ReceptionRequests'));
 const ReceptionShifts = lazy(() => import('@/components/reception/ReceptionShifts'));
+const CashManagementPage = lazy(() => import('@/app/(dashboard)/reception/cash-management/page'));
 
 interface DashboardContentProps {
   children: React.ReactNode;
@@ -48,6 +49,7 @@ export function DashboardContent({ children }: DashboardContentProps) {
               {activeTab === 'dashboard' && <ReceptionDashboard />}
               {activeTab === 'transactions' && <ReceptionTransactions />}
               {activeTab === 'expenses' && <ReceptionExpenses />}
+              {activeTab === 'cash-management' && <CashManagementPage />}
               {activeTab === 'requests' && <ReceptionRequests />}
               {activeTab === 'shifts' && <ReceptionShifts />}
               {activeTab === 'settings' && <ReceptionSettings />}
