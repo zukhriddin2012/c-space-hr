@@ -212,14 +212,14 @@ export function ShiftsSummaryWidget({ data, isLoading, onNavigate }: ShiftsSumma
         </div>
 
         {/* My Upcoming Shifts */}
-        {data.myShifts.length > 0 && (
-          <div>
-            <div className="flex items-center gap-2 mb-2">
-              <Users className="w-4 h-4 text-purple-600" />
-              <h4 className="text-sm font-semibold text-gray-900">
-                {t.reception.dashboard?.myShifts || 'My Next Shifts'}
-              </h4>
-            </div>
+        <div>
+          <div className="flex items-center gap-2 mb-2">
+            <Users className="w-4 h-4 text-purple-600" />
+            <h4 className="text-sm font-semibold text-gray-900">
+              {t.reception.dashboard?.myShifts || 'My Next Shifts'}
+            </h4>
+          </div>
+          {data.myShifts.length > 0 ? (
             <div className="space-y-1">
               {data.myShifts.slice(0, 3).map((shift, i) => {
                 const d = new Date(shift.date + 'T00:00:00');
@@ -239,8 +239,12 @@ export function ShiftsSummaryWidget({ data, isLoading, onNavigate }: ShiftsSumma
                 );
               })}
             </div>
-          </div>
-        )}
+          ) : (
+            <p className="text-sm text-gray-400 italic">
+              {t.reception.dashboard?.noUpcomingShifts || 'No upcoming shifts'}
+            </p>
+          )}
+        </div>
       </div>
     </div>
   );
