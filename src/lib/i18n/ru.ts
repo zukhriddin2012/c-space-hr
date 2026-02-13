@@ -907,6 +907,27 @@ export const ru: Translations = {
     recordExpenses: 'Учет и управление расходами',
     manageSettings: 'Управление типами услуг, расходов и методами оплаты',
 
+    // CSN-030: Dashboard widgets
+    dashboard: {
+      requestsTitle: 'Заявки',
+      accounting: 'Бухгалтерские заявки',
+      slaBreached: 'SLA нарушен',
+      cashTitle: 'Касса',
+      balance: 'Наличные',
+      inkassoPending: 'Инкассо ожидает',
+      threshold: 'Лимит',
+      overThreshold: 'Наличные превышают лимит перевода',
+      shiftsTitle: 'Обзор смен',
+      todayCoverage: 'Сегодняшнее покрытие',
+      dayShift: 'День',
+      nightShift: 'Ночь',
+      noStaffAssigned: 'Нет назначенных сотрудников',
+      weekOverview: 'Эта неделя',
+      myShifts: 'Мои ближайшие смены',
+      noSchedule: 'Нет опубликованного расписания на эту неделю',
+      noUpcomingShifts: 'Нет предстоящих смен',
+    },
+
     // Date periods
     today: 'Сегодня',
     yesterday: 'Вчера',

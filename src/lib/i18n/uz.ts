@@ -907,6 +907,27 @@ export const uz: Translations = {
     recordExpenses: 'Xarajatlarni qayd etish va boshqarish',
     manageSettings: 'Xizmat turlari, xarajatlar va to\'lov usullarini boshqarish',
 
+    // CSN-030: Dashboard widgets
+    dashboard: {
+      requestsTitle: 'So\'rovlar',
+      accounting: 'Buxgalteriya so\'rovlari',
+      slaBreached: 'SLA buzilgan',
+      cashTitle: 'Kassa',
+      balance: 'Naqd pul',
+      inkassoPending: 'Inkasso kutilmoqda',
+      threshold: 'Chegara',
+      overThreshold: 'Naqd pul o\'tkazma chegarasidan oshdi',
+      shiftsTitle: 'Smenalar',
+      todayCoverage: 'Bugungi qoplash',
+      dayShift: 'Kunduzgi',
+      nightShift: 'Tungi',
+      noStaffAssigned: 'Xodim tayinlanmagan',
+      weekOverview: 'Bu hafta',
+      myShifts: 'Keyingi smenalarim',
+      noSchedule: 'Bu hafta uchun jadval e\'lon qilinmagan',
+      noUpcomingShifts: 'Kelgusi smenalar yo\'q',
+    },
+
     // Date periods
     today: 'Bugun',
     yesterday: 'Kecha',

@@ -911,6 +911,27 @@ export interface Translations {
     recordExpenses: string;
     manageSettings: string;
 
+    // CSN-030: Dashboard widgets
+    dashboard?: {
+      requestsTitle: string;
+      accounting: string;
+      slaBreached: string;
+      cashTitle: string;
+      balance: string;
+      inkassoPending: string;
+      threshold: string;
+      overThreshold: string;
+      shiftsTitle: string;
+      todayCoverage: string;
+      dayShift: string;
+      nightShift: string;
+      noStaffAssigned: string;
+      weekOverview: string;
+      myShifts: string;
+      noSchedule: string;
+      noUpcomingShifts: string;
+    };
+
     // Date periods
     today: string;
     yesterday: string;

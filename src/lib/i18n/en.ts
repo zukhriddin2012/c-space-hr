@@ -911,6 +911,27 @@ export const en: Translations = {
     recordExpenses: 'Record and manage expenses',
     manageSettings: 'Manage service types, expenses, and payment methods',
 
+    // CSN-030: Dashboard widgets
+    dashboard: {
+      requestsTitle: 'Requests',
+      accounting: 'Accounting Requests',
+      slaBreached: 'SLA Breached',
+      cashTitle: 'Cash Summary',
+      balance: 'Cash on Hand',
+      inkassoPending: 'Inkasso Pending',
+      threshold: 'Threshold',
+      overThreshold: 'Cash exceeds transfer threshold',
+      shiftsTitle: 'Shifts Overview',
+      todayCoverage: "Today's Coverage",
+      dayShift: 'Day',
+      nightShift: 'Night',
+      noStaffAssigned: 'No staff assigned',
+      weekOverview: 'This Week',
+      myShifts: 'My Next Shifts',
+      noSchedule: 'No published schedule for this week',
+      noUpcomingShifts: 'No upcoming shifts',
+    },
+
     // Date periods
     today: 'Today',
     yesterday: 'Yesterday',
