@@ -78,18 +78,18 @@ export function CreateAssignmentModal({ isOpen, onClose, onCreated, branches }: 
     setIsSearching(true);
     try {
       const response = await fetch(
-        `/api/reception/operator-switch/search?q=${encodeURIComponent(query)}&branchId=${assignedBranchId || 'all'}`
+        `/api/reception/admin/branch-assignments/search?q=${encodeURIComponent(query)}`
       );
       if (response.ok) {
         const data = await response.json();
-        setSearchResults(data.results || []);
+        setSearchResults(data.employees || []);
       }
     } catch {
       console.error('Search failed');
     } finally {
       setIsSearching(false);
     }
-  }, [assignedBranchId]);
+  }, []);
 
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);

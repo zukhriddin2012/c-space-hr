@@ -296,6 +296,47 @@ export async function searchEmployeesForCrossBranch(
     }));
 }
 
+// CSN-029: Search employees for branch assignment (no PIN requirement)
+export async function searchEmployeesForAssignment(
+  query: string,
+  limit: number = 15
+): Promise<EmployeeSearchResult[]> {
+  if (!isSupabaseAdminConfigured()) {
+    return [];
+  }
+
+  const { data: employees, error: empError } = await supabaseAdmin!
+    .from('employees')
+    .select(
+      `
+      id,
+      full_name,
+      branch_id,
+      role,
+      operator_pin_hash,
+      status,
+      branches!inner(id, name)
+    `
+    )
+    .ilike('full_name', `%${escapeIlike(query)}%`)
+    .eq('status', 'active')
+    .limit(limit);
+
+  if (empError) {
+    console.error('Error searching employees for assignment:', empError);
+    return [];
+  }
+
+  return (employees || []).map((emp: any) => ({
+    id: emp.id,
+    name: emp.full_name,
+    branchId: emp.branch_id,
+    branchName: emp.branches?.name || '',
+    role: emp.role || '',
+    hasPinSet: !!emp.operator_pin_hash,
+  }));
+}
+
 // ============================================
 // BRANCH EMPLOYEE ASSIGNMENTS
 // ============================================

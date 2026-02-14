@@ -61,20 +61,20 @@ export function BulkAssignmentModal({ isOpen, onClose, onCreated, branches }: Bu
     setIsSearching(true);
     try {
       const response = await fetch(
-        `/api/reception/operator-switch/search?q=${encodeURIComponent(query)}&branchId=${assignedBranchId || 'all'}`
+        `/api/reception/admin/branch-assignments/search?q=${encodeURIComponent(query)}`
       );
       if (response.ok) {
         const data = await response.json();
         // Filter out already selected
         const selectedIds = new Set(selectedEmployees.map(e => e.id));
-        setSearchResults((data.results || []).filter((e: EmployeeResult) => !selectedIds.has(e.id)));
+        setSearchResults((data.employees || []).filter((e: EmployeeResult) => !selectedIds.has(e.id)));
       }
     } catch {
       console.error('Search failed');
     } finally {
       setIsSearching(false);
     }
-  }, [assignedBranchId, selectedEmployees]);
+  }, [selectedEmployees]);
 
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
@@ -211,7 +211,6 @@ export function BulkAssignmentModal({ isOpen, onClose, onCreated, branches }: Bu
                     key={emp.id}
                     onClick={() => addEmployee(emp)}
                     className="w-full flex items-center gap-3 p-2 text-left rounded-lg hover:bg-gray-50 text-sm"
-                    disabled={!emp.hasPinSet}
                   >
                     <Users className="w-4 h-4 text-gray-400" />
                     <span className="flex-1 font-medium text-gray-900">{emp.name}</span>
