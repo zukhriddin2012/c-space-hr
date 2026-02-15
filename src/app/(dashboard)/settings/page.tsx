@@ -126,7 +126,7 @@ export default function SettingsPage() {
           </div>
 
           {/* Content Area */}
-          <div className="flex-1">
+          <div className="flex-1 min-w-0">
             {activeTab === 'language' && (
               <div className="bg-white rounded-xl border border-gray-200 p-4 lg:p-6">
                 <h2 className="text-base lg:text-lg font-semibold text-gray-900 mb-2">{t.settings.language}</h2>
@@ -369,7 +369,7 @@ export default function SettingsPage() {
             {/* CSN-028/SEC-028 S-5: Client-side isGM guard on content panel (defense-in-depth).
                 API layer is the authoritative security boundary via withAuth({ roles: ['general_manager'] }). */}
             {activeTab === 'reception' && isGM && (
-              <div className="bg-white rounded-xl border border-gray-200 p-4 lg:p-6">
+              <div className="bg-white rounded-xl border border-gray-200 p-4 lg:p-6 overflow-hidden">
                 <h2 className="text-base lg:text-lg font-semibold text-gray-900 mb-2">ServiceHub Configuration</h2>
                 <p className="text-sm text-gray-500 mb-4 lg:mb-6">
                   Manage branch assignments, service types, expenses, payment methods, operator PINs, and kiosk access.
