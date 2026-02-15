@@ -2,8 +2,9 @@
 
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { useServiceHub } from '@/contexts/ServiceHubContext';
+import { useTranslation } from '@/contexts/LanguageContext';
 import type { EmployeeSearchResult } from '@/modules/reception/types';
-import { Loader2, ChevronLeft, X } from 'lucide-react';
+import { Loader2, ChevronLeft, X, Users } from 'lucide-react';
 
 export interface PinSwitchOverlayProps {
   isOpen: boolean;
@@ -18,6 +19,14 @@ interface ErrorState {
   lockoutSeconds?: number;
 }
 
+// CSN-029 AT-5: Assigned operator for streamlined PIN switch
+interface AssignedOperator {
+  id: string;
+  name: string;
+  homeBranchName: string;
+  assignmentType: string;
+}
+
 export function PinSwitchOverlay({ isOpen, onClose }: PinSwitchOverlayProps) {
   // View and state management
   const [view, setView] = useState<ViewType>('pin');
@@ -29,6 +38,9 @@ export function PinSwitchOverlay({ isOpen, onClose }: PinSwitchOverlayProps) {
   const [selectedEmployee, setSelectedEmployee] = useState<EmployeeSearchResult | null>(null);
   const [isSearching, setIsSearching] = useState(false);
   const [lockoutCountdown, setLockoutCountdown] = useState<number | null>(null);
+  // CSN-029 AT-5: Assigned operators for streamlined switch
+  const [assignedOperators, setAssignedOperators] = useState<AssignedOperator[]>([]);
+  const [isLoadingAssigned, setIsLoadingAssigned] = useState(false);
 
   // Refs
   const searchDebounceRef = useRef<NodeJS.Timeout | null>(null);
@@ -38,6 +50,7 @@ export function PinSwitchOverlay({ isOpen, onClose }: PinSwitchOverlayProps) {
 
   // Context
   const { switchOperator, switchOperatorCrossBranch, selectedBranchId } = useServiceHub();
+  const { t } = useTranslation();
 
   // Reset state when overlay opens/closes
   useEffect(() => {
@@ -45,6 +58,32 @@ export function PinSwitchOverlay({ isOpen, onClose }: PinSwitchOverlayProps) {
       resetOverlayState();
     }
   }, [isOpen]);
+
+  // CSN-029 AT-5: Fetch assigned operators when overlay opens
+  useEffect(() => {
+    if (!isOpen || !selectedBranchId) return;
+    let cancelled = false;
+
+    async function fetchAssigned() {
+      setIsLoadingAssigned(true);
+      try {
+        const response = await fetch(
+          `/api/reception/operator-switch/assigned?branchId=${selectedBranchId}`
+        );
+        if (response.ok && !cancelled) {
+          const data = await response.json();
+          setAssignedOperators(data.operators || []);
+        }
+      } catch {
+        // Silently fail — assigned operators list is a convenience, not critical
+      } finally {
+        if (!cancelled) setIsLoadingAssigned(false);
+      }
+    }
+
+    fetchAssigned();
+    return () => { cancelled = true; };
+  }, [isOpen, selectedBranchId]);
 
   // Auto-focus the hidden PIN input when entering PIN views
   useEffect(() => {
@@ -88,6 +127,8 @@ export function PinSwitchOverlay({ isOpen, onClose }: PinSwitchOverlayProps) {
     setSelectedEmployee(null);
     setIsSearching(false);
     setLockoutCountdown(null);
+    setAssignedOperators([]);
+    setIsLoadingAssigned(false);
     if (searchDebounceRef.current) {
       clearTimeout(searchDebounceRef.current);
       searchDebounceRef.current = null;
@@ -144,18 +185,18 @@ export function PinSwitchOverlay({ isOpen, onClose }: PinSwitchOverlayProps) {
 
           if (result.error === 'invalid_pin') {
             setError({
-              message: 'Incorrect PIN',
+              message: t.operatorSwitch.incorrectPin,
               attemptsRemaining: result.attemptsRemaining || 0,
             });
           } else if (result.error === 'locked') {
             setLockoutCountdown(result.lockoutRemainingSeconds || 300);
             setError({
-              message: 'Too many failed attempts. Account locked.',
+              message: t.operatorSwitch.accountLocked,
               lockoutSeconds: result.lockoutRemainingSeconds || 300,
             });
           } else {
             setError({
-              message: 'An error occurred. Please try again.',
+              message: t.operatorSwitch.unexpectedError,
             });
           }
         }
@@ -174,18 +215,18 @@ export function PinSwitchOverlay({ isOpen, onClose }: PinSwitchOverlayProps) {
 
           if (result.error === 'invalid_pin') {
             setError({
-              message: 'Incorrect PIN',
+              message: t.operatorSwitch.incorrectPin,
               attemptsRemaining: result.attemptsRemaining || 0,
             });
           } else if (result.error === 'locked') {
             setLockoutCountdown(result.lockoutRemainingSeconds || 300);
             setError({
-              message: 'Too many failed attempts. Account locked.',
+              message: t.operatorSwitch.accountLocked,
               lockoutSeconds: result.lockoutRemainingSeconds || 300,
             });
           } else {
             setError({
-              message: 'An error occurred. Please try again.',
+              message: t.operatorSwitch.unexpectedError,
             });
           }
         }
@@ -195,7 +236,7 @@ export function PinSwitchOverlay({ isOpen, onClose }: PinSwitchOverlayProps) {
       playShakeAnimation();
       setTimeout(() => pinInputRef.current?.focus(), 100);
       setError({
-        message: 'An unexpected error occurred. Please try again.',
+        message: t.operatorSwitch.unexpectedError,
       });
     } finally {
       setIsLoading(false);
@@ -225,13 +266,13 @@ export function PinSwitchOverlay({ isOpen, onClose }: PinSwitchOverlayProps) {
           );
           if (response.ok) {
             const data = await response.json();
-            setSearchResults(data.results || []);
+            setSearchResults(data.employees || []);
           } else {
-            setError({ message: 'Search failed. Please try again.' });
+            setError({ message: t.operatorSwitch.searchFailed });
             setSearchResults([]);
           }
         } catch (err) {
-          setError({ message: 'Search failed. Please try again.' });
+          setError({ message: t.operatorSwitch.searchFailed });
           setSearchResults([]);
         } finally {
           setIsSearching(false);
@@ -320,7 +361,7 @@ export function PinSwitchOverlay({ isOpen, onClose }: PinSwitchOverlayProps) {
           <p className="text-sm font-medium text-red-700">{error.message}</p>
           {error.attemptsRemaining !== undefined && error.attemptsRemaining > 0 && (
             <p className="text-xs text-red-600 mt-1">
-              {error.attemptsRemaining} attempt{error.attemptsRemaining > 1 ? 's' : ''} remaining
+              {t.operatorSwitch.attemptsRemaining.replace('{count}', String(error.attemptsRemaining))}
             </p>
           )}
         </div>
@@ -330,7 +371,7 @@ export function PinSwitchOverlay({ isOpen, onClose }: PinSwitchOverlayProps) {
       {lockoutCountdown !== null && (
         <div className="rounded-lg bg-gray-100 p-4 text-center">
           <p className="text-sm font-medium text-gray-700">
-            Account locked for {lockoutCountdown}s
+            {t.operatorSwitch.accountLockedFor.replace('{seconds}', String(lockoutCountdown))}
           </p>
         </div>
       )}
@@ -338,7 +379,7 @@ export function PinSwitchOverlay({ isOpen, onClose }: PinSwitchOverlayProps) {
       {/* Keyboard hint */}
       {!isLoading && lockoutCountdown === null && (
         <p className="text-center text-xs text-gray-400">
-          Type your PIN using the keyboard
+          {t.operatorSwitch.typeYourPin}
         </p>
       )}
     </>
@@ -366,11 +407,61 @@ export function PinSwitchOverlay({ isOpen, onClose }: PinSwitchOverlayProps) {
         {view === 'pin' && (
           <div className="space-y-6">
             <div className="text-center">
-              <h2 className="text-2xl font-bold text-gray-900">Operator Switch</h2>
-              <p className="mt-1 text-sm text-gray-600">Enter your 6-digit PIN</p>
+              <h2 className="text-2xl font-bold text-gray-900">{t.operatorSwitch.title}</h2>
+              <p className="mt-1 text-sm text-gray-600">{t.operatorSwitch.enterPin}</p>
             </div>
 
             {renderPinEntry()}
+
+            {/* CSN-029 AT-5: Assigned operators quick-switch list */}
+            {assignedOperators.length > 0 && (
+              <div className="border-t border-gray-100 pt-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <Users size={14} className="text-gray-400" />
+                  <span className="text-xs font-medium text-gray-500 uppercase">{t.reception.assignedOperators}</span>
+                </div>
+                <div className="space-y-1.5 max-h-40 overflow-y-auto">
+                  {assignedOperators.map((op) => (
+                    <button
+                      key={op.id}
+                      onClick={() => {
+                        setSelectedEmployee({
+                          id: op.id,
+                          name: op.name,
+                          branchName: op.homeBranchName,
+                          branchId: '',
+                          role: '',
+                          hasPinSet: true,
+                        });
+                        setView('cross-branch-pin');
+                        setPin('');
+                        setError(null);
+                      }}
+                      className="w-full flex items-center justify-between rounded-lg border border-gray-200 bg-white px-3 py-2 text-left hover:border-indigo-300 hover:bg-indigo-50 transition-colors"
+                    >
+                      <div>
+                        <p className="text-sm font-medium text-gray-900">{op.name}</p>
+                        <p className="text-xs text-gray-500">{t.reception.fromBranch.replace('{branch}', op.homeBranchName)}</p>
+                      </div>
+                      <span className={`text-[10px] font-semibold uppercase px-1.5 py-0.5 rounded-full ${
+                        op.assignmentType === 'temporary'
+                          ? 'bg-blue-100 text-blue-700'
+                          : op.assignmentType === 'regular'
+                          ? 'bg-amber-100 text-amber-700'
+                          : 'bg-pink-100 text-pink-700'
+                      }`}>
+                        {op.assignmentType}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+            {isLoadingAssigned && (
+              <div className="flex justify-center pt-2">
+                <Loader2 size={16} className="animate-spin text-gray-400" />
+              </div>
+            )}
 
             {/* Cross-branch link */}
             <div className="text-center pt-2">
@@ -378,7 +469,7 @@ export function PinSwitchOverlay({ isOpen, onClose }: PinSwitchOverlayProps) {
                 onClick={handleCrossBranchLink}
                 className="text-sm text-indigo-600 hover:text-indigo-700 font-medium transition-colors"
               >
-                Not from this branch?
+                {t.operatorSwitch.notFromThisBranch}
               </button>
             </div>
           </div>
@@ -396,8 +487,8 @@ export function PinSwitchOverlay({ isOpen, onClose }: PinSwitchOverlayProps) {
                 <ChevronLeft size={20} className="text-gray-600" />
               </button>
               <div>
-                <h2 className="text-2xl font-bold text-gray-900">Find Operator</h2>
-                <p className="text-sm text-gray-600">Search other branches</p>
+                <h2 className="text-2xl font-bold text-gray-900">{t.operatorSwitch.findOperator}</h2>
+                <p className="text-sm text-gray-600">{t.operatorSwitch.searchOtherBranches}</p>
               </div>
             </div>
 
@@ -443,11 +534,11 @@ export function PinSwitchOverlay({ isOpen, onClose }: PinSwitchOverlayProps) {
               </div>
             ) : searchQuery.trim() ? (
               <div className="text-center py-6">
-                <p className="text-sm text-gray-500">No results found</p>
+                <p className="text-sm text-gray-500">{t.operatorSwitch.noResultsFound}</p>
               </div>
             ) : (
               <div className="text-center py-6">
-                <p className="text-sm text-gray-500">Start typing to search...</p>
+                <p className="text-sm text-gray-500">{t.operatorSwitch.startTyping}</p>
               </div>
             )}
           </div>
@@ -465,9 +556,9 @@ export function PinSwitchOverlay({ isOpen, onClose }: PinSwitchOverlayProps) {
                 <ChevronLeft size={20} className="text-gray-600" />
               </button>
               <div>
-                <h2 className="text-xl font-bold text-gray-900">Confirm Identity</h2>
+                <h2 className="text-xl font-bold text-gray-900">{t.operatorSwitch.confirmIdentity}</h2>
                 <p className="text-sm text-gray-600">
-                  {selectedEmployee.name} from {selectedEmployee.branchName}
+                  {selectedEmployee.name} — {selectedEmployee.branchName}
                 </p>
               </div>
             </div>

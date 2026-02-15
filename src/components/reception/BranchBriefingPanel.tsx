@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { ChevronDown, ChevronUp, ArrowLeftRight, Wallet, Users, Wrench, Activity } from 'lucide-react';
+import { useTranslation } from '@/contexts/LanguageContext';
 import type { BranchBriefing } from '@/modules/reception/types';
 
 interface BranchBriefingPanelProps {
@@ -12,11 +13,20 @@ export function BranchBriefingPanel({ branchId }: BranchBriefingPanelProps) {
   const [briefing, setBriefing] = useState<BranchBriefing | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isExpanded, setIsExpanded] = useState(true);
+  const { t } = useTranslation();
+
+  // Track first load to avoid showing skeleton on auto-refresh
+  const isFirstLoadRef = useRef(true);
 
   useEffect(() => {
     let cancelled = false;
+    let intervalId: NodeJS.Timeout | null = null;
+
     async function fetchBriefing() {
-      setIsLoading(true);
+      // Only show loading skeleton on first load
+      if (isFirstLoadRef.current) {
+        setIsLoading(true);
+      }
       try {
         const response = await fetch(`/api/reception/branch-briefing?branchId=${branchId}`);
         if (response.ok && !cancelled) {
@@ -26,11 +36,22 @@ export function BranchBriefingPanel({ branchId }: BranchBriefingPanelProps) {
       } catch {
         console.error('Failed to fetch branch briefing');
       } finally {
-        if (!cancelled) setIsLoading(false);
+        if (!cancelled) {
+          setIsLoading(false);
+          isFirstLoadRef.current = false;
+        }
       }
     }
+
     fetchBriefing();
-    return () => { cancelled = true; };
+
+    // Auto-refresh every 5 minutes
+    intervalId = setInterval(fetchBriefing, 5 * 60 * 1000);
+
+    return () => {
+      cancelled = true;
+      if (intervalId) clearInterval(intervalId);
+    };
   }, [branchId]);
 
   if (isLoading) {
@@ -60,7 +81,7 @@ export function BranchBriefingPanel({ branchId }: BranchBriefingPanelProps) {
         <div className="flex items-center gap-2">
           <Activity className="w-4 h-4 text-purple-600" />
           <h3 className="text-sm font-semibold text-gray-900">
-            {briefing.branchName} — Today&apos;s Briefing
+            {briefing.branchName} — {t.reception.todaysBriefing}
           </h3>
         </div>
         {isExpanded ? (
@@ -78,31 +99,31 @@ export function BranchBriefingPanel({ branchId }: BranchBriefingPanelProps) {
             <div className="bg-green-50 rounded-lg p-3">
               <div className="flex items-center gap-2 mb-1">
                 <ArrowLeftRight className="w-4 h-4 text-green-600" />
-                <span className="text-xs font-medium text-green-700 uppercase">Transactions</span>
+                <span className="text-xs font-medium text-green-700 uppercase">{t.reception.briefingTransactions}</span>
               </div>
               <p className="text-xl font-bold text-green-900">{fmt(briefing.todaySummary.transactionTotal)}</p>
-              <p className="text-xs text-green-600">{briefing.todaySummary.transactionCount} today</p>
+              <p className="text-xs text-green-600">{briefing.todaySummary.transactionCount} {t.reception.briefingToday}</p>
             </div>
 
             {/* Expenses */}
             <div className="bg-red-50 rounded-lg p-3">
               <div className="flex items-center gap-2 mb-1">
                 <Wallet className="w-4 h-4 text-red-600" />
-                <span className="text-xs font-medium text-red-700 uppercase">Expenses</span>
+                <span className="text-xs font-medium text-red-700 uppercase">{t.reception.briefingExpenses}</span>
               </div>
               <p className="text-xl font-bold text-red-900">{fmt(briefing.todaySummary.expenseTotal)}</p>
-              <p className="text-xs text-red-600">{briefing.todaySummary.expenseCount} today</p>
+              <p className="text-xs text-red-600">{briefing.todaySummary.expenseCount} {t.reception.briefingToday}</p>
             </div>
 
             {/* Active Operators */}
             <div className="bg-purple-50 rounded-lg p-3">
               <div className="flex items-center gap-2 mb-1">
                 <Users className="w-4 h-4 text-purple-600" />
-                <span className="text-xs font-medium text-purple-700 uppercase">Operators</span>
+                <span className="text-xs font-medium text-purple-700 uppercase">{t.reception.briefingOperators}</span>
               </div>
               <p className="text-xl font-bold text-purple-900">{briefing.activeOperators.length}</p>
               <p className="text-xs text-purple-600">
-                {briefing.activeOperators.filter(o => o.isCrossBranch).length} cross-branch
+                {briefing.activeOperators.filter(o => o.isCrossBranch).length} {t.reception.briefingCrossBranch}
               </p>
             </div>
           </div>
@@ -110,17 +131,17 @@ export function BranchBriefingPanel({ branchId }: BranchBriefingPanelProps) {
           {/* Settings overview */}
           <div className="flex items-center gap-3 text-xs text-gray-500">
             <Wrench className="w-3.5 h-3.5 text-gray-400" />
-            <span>{briefing.branchSettings.serviceTypeCount} services</span>
+            <span>{briefing.branchSettings.serviceTypeCount} {t.reception.briefingServices}</span>
             <span className="text-gray-300">|</span>
-            <span>{briefing.branchSettings.expenseTypeCount} expense types</span>
+            <span>{briefing.branchSettings.expenseTypeCount} {t.reception.briefingExpenseTypes}</span>
             <span className="text-gray-300">|</span>
-            <span>{briefing.branchSettings.paymentMethodCount} payment methods</span>
+            <span>{briefing.branchSettings.paymentMethodCount} {t.reception.briefingPaymentMethods}</span>
           </div>
 
           {/* Recent Activity */}
           {briefing.recentActivity.length > 0 && (
             <div>
-              <h4 className="text-xs font-medium text-gray-500 uppercase mb-2">Recent Activity</h4>
+              <h4 className="text-xs font-medium text-gray-500 uppercase mb-2">{t.reception.briefingRecentActivity}</h4>
               <div className="space-y-1">
                 {briefing.recentActivity.map((item) => (
                   <div key={item.id} className="flex items-center justify-between text-sm py-1">

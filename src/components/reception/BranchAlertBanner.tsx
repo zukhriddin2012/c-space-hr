@@ -3,10 +3,12 @@
 import React from 'react';
 import { AlertTriangle, Building2, Calendar } from 'lucide-react';
 import { useServiceHub } from '@/contexts/ServiceHubContext';
+import { useTranslation } from '@/contexts/LanguageContext';
 import type { BranchOption } from '@/modules/reception/types';
 
 export function BranchAlertBanner() {
   const { selectedBranch, accessibleBranches } = useServiceHub();
+  const { t } = useTranslation();
 
   if (!selectedBranch || selectedBranch.isAllBranches) return null;
 
@@ -23,10 +25,10 @@ export function BranchAlertBanner() {
   let expiryText = '';
   if (assignmentEndsAt) {
     const diff = Math.ceil((new Date(assignmentEndsAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
-    if (diff <= 0) expiryText = 'Assignment expired';
-    else if (diff === 1) expiryText = 'Assignment ends tomorrow';
-    else if (diff <= 7) expiryText = `Assignment ends in ${diff} days`;
-    else expiryText = `Ends ${new Date(assignmentEndsAt).toLocaleDateString()}`;
+    if (diff <= 0) expiryText = t.reception.assignmentExpired;
+    else if (diff === 1) expiryText = t.reception.assignmentEndsTomorrow;
+    else if (diff <= 7) expiryText = t.reception.assignmentEndsInDays.replace('{days}', String(diff));
+    else expiryText = t.reception.endsOn.replace('{date}', new Date(assignmentEndsAt).toLocaleDateString());
   }
 
   return (
@@ -35,16 +37,16 @@ export function BranchAlertBanner() {
       <div className="flex-1 flex items-center gap-2 text-sm">
         <Building2 className="w-3.5 h-3.5 text-amber-500" />
         <span className="text-amber-800 font-medium">
-          Operating at {selectedBranch.name}
+          {t.reception.operatingAtBranch} {selectedBranch.name}
         </span>
         {isFromAssignment && (
           <span className="inline-flex items-center px-2 py-0.5 text-xs font-medium rounded-full bg-amber-200 text-amber-800">
-            ASSIGNED
+            {t.reception.assignedTag}
           </span>
         )}
         {!isFromAssignment && (
           <span className="inline-flex items-center px-2 py-0.5 text-xs font-medium rounded-full bg-gray-200 text-gray-700">
-            GRANTED
+            {t.reception.grantedTag}
           </span>
         )}
       </div>

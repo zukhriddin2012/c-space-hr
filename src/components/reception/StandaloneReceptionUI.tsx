@@ -14,12 +14,14 @@ import {
   Calendar,
   Clock,
   Banknote,
+  Activity,
 } from 'lucide-react';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { ServiceHubProvider, useServiceHub } from '@/contexts/ServiceHubContext';
 import { PinSwitchOverlay } from '@/components/reception/PinSwitchOverlay';
 import { BranchSwitchModal } from '@/components/reception/BranchSwitchModal';
 import { BranchAlertBanner } from '@/components/reception/BranchAlertBanner';
+import { BranchBriefingPanel } from '@/components/reception/BranchBriefingPanel';
 import type { User as UserType } from '@/types';
 
 // Lazy load reception components
@@ -75,8 +77,15 @@ function KioskInner({ branchId, branchName, expiresAt, onLogout }: StandaloneRec
   const [pendingQuickAction, setPendingQuickAction] = useState<'new-transaction' | 'new-expense' | null>(null);
   // BUG-2 FIX: Track pending request sub-tab for navigation from dashboard cards
   const [pendingRequestSubTab, setPendingRequestSubTab] = useState<string | null>(null);
+  // CSN-029: Branch briefing panel visibility for non-home branches
+  const [showBriefing, setShowBriefing] = useState(true);
 
-  const { currentOperator, setSelectedBranch } = useServiceHub();
+  const { currentOperator, setSelectedBranch, selectedBranchId, accessibleBranches } = useServiceHub();
+
+  // CSN-029: Determine if operating at a non-home branch
+  const isNonHomeBranch = selectedBranchId
+    ? accessibleBranches.some(b => b.id === selectedBranchId && !b.isAllBranches && (b.isFromAssignment || b.isGranted) && !b.isAssigned)
+    : false;
 
   // CSN-030: Quick action handler — switches tab and signals auto-open
   const handleQuickAction = useCallback((action: 'new-transaction' | 'new-expense') => {
@@ -151,6 +160,22 @@ function KioskInner({ branchId, branchName, expiresAt, onLogout }: StandaloneRec
 
             {/* Operator & Actions */}
             <div className="flex items-center gap-3">
+              {/* CSN-029: Branch Info Toggle (non-home branches only) */}
+              {isNonHomeBranch && (
+                <button
+                  onClick={() => setShowBriefing(prev => !prev)}
+                  className={`flex items-center gap-2 px-3 py-1.5 rounded-lg transition-colors text-sm ${
+                    showBriefing
+                      ? 'bg-amber-500/30 hover:bg-amber-500/50 text-amber-100'
+                      : 'bg-white/10 hover:bg-white/20'
+                  }`}
+                  title={showBriefing ? 'Hide Branch Info' : 'Show Branch Info'}
+                >
+                  <Activity className="w-4 h-4" />
+                  <span className="hidden md:inline">Branch Info</span>
+                </button>
+              )}
+
               {/* Operator Switch Button */}
               <button
                 onClick={() => setShowOperatorSwitch(true)}
@@ -213,6 +238,10 @@ function KioskInner({ branchId, branchName, expiresAt, onLogout }: StandaloneRec
         <div className="max-w-7xl mx-auto p-4 sm:p-6 space-y-4">
           {/* CSN-029: Non-home branch alert */}
           <BranchAlertBanner />
+          {/* CSN-029: Branch briefing panel for non-home branches */}
+          {isNonHomeBranch && showBriefing && selectedBranchId && (
+            <BranchBriefingPanel branchId={selectedBranchId} />
+          )}
           <Suspense fallback={<LoadingSpinner />}>
             {activeTab === 'dashboard' && (
               <ReceptionDashboard

@@ -1055,6 +1055,18 @@ export interface Translations {
     briefingOperators: string;
     briefingCrossBranch: string;
     briefingRecentActivity: string;
+    briefingTransactions: string;
+    briefingExpenses: string;
+    briefingServices: string;
+    briefingExpenseTypes: string;
+    briefingPaymentMethods: string;
+    briefingToday: string;
+    branchInfo: string;
+    assignmentEndsTomorrow: string;
+    assignmentEndsInDays: string;
+    endsOn: string;
+    assignedOperators: string;
+    fromBranch: string;
     addNewItem: string;
     editItem: string;
     grantAccess: string;
@@ -1196,6 +1208,18 @@ export interface Translations {
     newPin: string;
     confirmPin: string;
     pinsDoNotMatch: string;
+    notFromThisBranch: string;
+    findOperator: string;
+    searchOtherBranches: string;
+    confirmIdentity: string;
+    typeYourPin: string;
+    incorrectPin: string;
+    accountLockedFor: string;
+    attemptsRemaining: string;
+    noResultsFound: string;
+    startTyping: string;
+    unexpectedError: string;
+    searchFailed: string;
   };
 
   // Shifts
