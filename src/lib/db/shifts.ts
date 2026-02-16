@@ -347,6 +347,25 @@ export async function createAssignment(input: CreateAssignmentInput): Promise<Sh
   return data;
 }
 
+export async function createAssignmentsBulk(inputs: CreateAssignmentInput[]): Promise<ShiftAssignment[]> {
+  if (!isSupabaseAdminConfigured() || inputs.length === 0) return [];
+
+  const { data, error } = await supabaseAdmin!
+    .from('shift_assignments')
+    .insert(inputs)
+    .select(`
+      *,
+      employees(full_name, employee_id, position),
+      branches(name)
+    `);
+
+  if (error) {
+    console.error('Error creating bulk assignments:', error);
+    return [];
+  }
+  return data || [];
+}
+
 export async function updateAssignment(
   assignmentId: string,
   updates: Partial<Pick<ShiftAssignment, 'employee_id' | 'role' | 'notes'>>

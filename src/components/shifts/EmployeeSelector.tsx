@@ -1,9 +1,9 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { Search, User, Star, Loader2, AlertCircle, Building2 } from 'lucide-react';
+import { Search, User, Star, Loader2, AlertCircle, Building2, Check } from 'lucide-react';
 
-interface AvailableEmployee {
+export interface AvailableEmployee {
   id: string;
   full_name: string;
   position: string;
@@ -15,16 +15,16 @@ interface EmployeeSelectorProps {
   date: string;
   shiftType: 'day' | 'night';
   branchId: string;
-  onSelect: (employee: AvailableEmployee) => void;
-  selectedId?: string;
+  onToggle: (employee: AvailableEmployee) => void;
+  selectedIds: string[];
 }
 
 export default function EmployeeSelector({
   date,
   shiftType,
   branchId,
-  onSelect,
-  selectedId,
+  onToggle,
+  selectedIds,
 }: EmployeeSelectorProps) {
   const [employees, setEmployees] = useState<AvailableEmployee[]>([]);
   const [loading, setLoading] = useState(true);
@@ -122,52 +122,64 @@ export default function EmployeeSelector({
             {searchQuery ? 'No employees match your search' : 'No available employees for this shift'}
           </div>
         ) : (
-          filteredEmployees.map((employee) => (
-            <button
-              key={employee.id}
-              type="button"
-              onClick={() => onSelect(employee)}
-              className={`w-full flex items-center gap-3 p-3 text-left hover:bg-purple-50 transition-colors ${
-                selectedId === employee.id ? 'bg-purple-50 border-l-4 border-purple-600' : ''
-              }`}
-            >
-              <div className="w-9 h-9 bg-gray-100 rounded-full flex items-center justify-center flex-shrink-0">
-                <User className="h-5 w-5 text-gray-500" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <span className="font-medium text-gray-900 truncate">
-                    {employee.full_name}
-                  </span>
-                  {employee.primary_branch_id === branchId && (
-                    <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-700" title="This branch">
-                      <Building2 className="h-3 w-3 mr-0.5" />
-                      Branch
-                    </span>
-                  )}
-                  {employee.is_floater && (
-                    <span title="Floater" className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-700">
-                      <Star className="h-3 w-3 mr-0.5" />
-                      Floater
-                    </span>
+          filteredEmployees.map((employee) => {
+            const isSelected = selectedIds.includes(employee.id);
+            return (
+              <button
+                key={employee.id}
+                type="button"
+                onClick={() => onToggle(employee)}
+                className={`w-full flex items-center gap-3 p-3 text-left hover:bg-purple-50 transition-colors ${
+                  isSelected ? 'bg-purple-50' : ''
+                }`}
+              >
+                {/* Checkbox */}
+                <div className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 transition-colors ${
+                  isSelected
+                    ? 'bg-purple-600 border-purple-600'
+                    : 'border-gray-300 bg-white'
+                }`}>
+                  {isSelected && (
+                    <Check className="w-3 h-3 text-white" />
                   )}
                 </div>
-                <p className="text-sm text-gray-500 truncate">{employee.position}</p>
-              </div>
-              {selectedId === employee.id && (
-                <div className="w-5 h-5 bg-purple-600 rounded-full flex items-center justify-center flex-shrink-0">
-                  <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                  </svg>
+
+                <div className="w-9 h-9 bg-gray-100 rounded-full flex items-center justify-center flex-shrink-0">
+                  <User className="h-5 w-5 text-gray-500" />
                 </div>
-              )}
-            </button>
-          ))
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium text-gray-900 truncate">
+                      {employee.full_name}
+                    </span>
+                    {employee.primary_branch_id === branchId && (
+                      <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-700" title="This branch">
+                        <Building2 className="h-3 w-3 mr-0.5" />
+                        Branch
+                      </span>
+                    )}
+                    {employee.is_floater && (
+                      <span title="Floater" className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-700">
+                        <Star className="h-3 w-3 mr-0.5" />
+                        Floater
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-sm text-gray-500 truncate">{employee.position}</p>
+                </div>
+              </button>
+            );
+          })
         )}
       </div>
 
       {/* Summary */}
       <p className="text-xs text-gray-500">
+        {selectedIds.length > 0 && (
+          <span className="font-medium text-purple-700 mr-2">
+            {selectedIds.length} selected
+          </span>
+        )}
         {filteredEmployees.length} employee{filteredEmployees.length !== 1 ? 's' : ''} available
         {employees.some(e => e.is_floater) && (
           <span className="ml-2">

@@ -1,9 +1,10 @@
 'use client';
 
 import React, { useState, useCallback } from 'react';
-import { Calendar, Loader2, Sun, Moon, Clock } from 'lucide-react';
+import { Calendar, Loader2, Sun, Moon, Clock, X } from 'lucide-react';
 import { ShiftPlanningGrid, EmployeeSelector } from '@/components/shifts';
 import { getMonday } from '@/components/shifts/WeekNavigator';
+import type { AvailableEmployee } from '@/components/shifts/EmployeeSelector';
 import { Modal } from '@/components/ui';
 import Button from '@/components/ui/Button';
 
@@ -46,7 +47,7 @@ export default function ShiftsPageClient({
   });
   const [weekStartDate, setWeekStartDate] = useState(() => getMonday(new Date()));
   const [refetchSignal, setRefetchSignal] = useState(0);
-  const [selectedEmployee, setSelectedEmployee] = useState<SelectedEmployee | null>(null);
+  const [selectedEmployees, setSelectedEmployees] = useState<SelectedEmployee[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [currentScheduleId, setCurrentScheduleId] = useState<string | null>(null);
@@ -57,7 +58,7 @@ export default function ShiftsPageClient({
   const [customEndTime, setCustomEndTime] = useState('13:00');
 
   const handleAssignmentAdd = useCallback((branchId: string, date: string, shiftType: 'day' | 'night') => {
-    setSelectedEmployee(null);
+    setSelectedEmployees([]);
     setError(null);
     setUseCustomTime(false);
     setCustomStartTime(shiftType === 'day' ? '09:00' : '18:00');
@@ -68,6 +69,25 @@ export default function ShiftsPageClient({
       date,
       shiftType,
     });
+  }, []);
+
+  const handleToggleEmployee = useCallback((employee: AvailableEmployee) => {
+    setSelectedEmployees((prev) => {
+      const exists = prev.some((e) => e.id === employee.id);
+      if (exists) {
+        return prev.filter((e) => e.id !== employee.id);
+      }
+      return [...prev, {
+        id: employee.id,
+        full_name: employee.full_name,
+        position: employee.position,
+        is_floater: employee.is_floater,
+      }];
+    });
+  }, []);
+
+  const handleRemoveEmployee = useCallback((employeeId: string) => {
+    setSelectedEmployees((prev) => prev.filter((e) => e.id !== employeeId));
   }, []);
 
   const handleAssignmentRemove = useCallback(async (assignmentId: string) => {
@@ -105,24 +125,24 @@ export default function ShiftsPageClient({
 
   const closeModal = () => {
     setAssignmentModal((s) => ({ ...s, open: false }));
-    setSelectedEmployee(null);
+    setSelectedEmployees([]);
     setError(null);
     setUseCustomTime(false);
   };
 
   const handleSubmitAssignment = async () => {
-    if (!selectedEmployee || !currentScheduleId) return;
+    if (selectedEmployees.length === 0 || !currentScheduleId) return;
 
     setSubmitting(true);
     setError(null);
 
     try {
-      const payload: Record<string, string | undefined> = {
+      const payload: Record<string, unknown> = {
         schedule_id: currentScheduleId,
         branch_id: assignmentModal.branchId,
         date: assignmentModal.date,
         shift_type: assignmentModal.shiftType,
-        employee_id: selectedEmployee.id,
+        employee_ids: selectedEmployees.map((e) => e.id),
       };
 
       // Add custom times if enabled
@@ -131,21 +151,34 @@ export default function ShiftsPageClient({
         payload.end_time = customEndTime;
       }
 
-      const res = await fetch('/api/shifts/assignments', {
+      const res = await fetch('/api/shifts/assignments/bulk', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
 
+      const data = await res.json();
+
       if (res.ok) {
-        closeModal();
-        setRefetchSignal((k) => k + 1);
+        // Show partial conflict info if any
+        if (data.conflicts && data.conflicts.length > 0) {
+          const conflictCount = data.conflicts.length;
+          const createdCount = data.created?.length || 0;
+          setError(
+            `${createdCount} assigned successfully. ${conflictCount} already had shifts on this date.`
+          );
+          // Still refresh the grid for the ones that succeeded
+          setRefetchSignal((k) => k + 1);
+          setSelectedEmployees([]);
+        } else {
+          closeModal();
+          setRefetchSignal((k) => k + 1);
+        }
       } else {
-        const data = await res.json();
-        setError(data.error || 'Failed to create assignment');
+        setError(data.error || 'Failed to create assignments');
       }
     } catch (err) {
-      setError('Failed to create assignment');
+      setError('Failed to create assignments');
     } finally {
       setSubmitting(false);
     }
@@ -161,6 +194,10 @@ export default function ShiftsPageClient({
       day: 'numeric',
     });
   };
+
+  const assignButtonText = selectedEmployees.length <= 1
+    ? 'Assign Employee'
+    : `Assign ${selectedEmployees.length} Employees`;
 
   return (
     <div className="space-y-6">
@@ -194,7 +231,7 @@ export default function ShiftsPageClient({
       <Modal
         isOpen={assignmentModal.open}
         onClose={closeModal}
-        title="Assign Employee to Shift"
+        title="Assign Employees to Shift"
       >
         <div className="p-4 space-y-4">
           {/* Shift Info */}
@@ -254,7 +291,7 @@ export default function ShiftsPageClient({
                       className="w-full px-3 py-1.5 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none"
                     />
                   </div>
-                  <span className="text-gray-400 pt-5">→</span>
+                  <span className="text-gray-400 pt-5">&rarr;</span>
                   <div className="flex-1">
                     <label className="block text-xs text-gray-500 mb-1">End</label>
                     <input
@@ -273,27 +310,44 @@ export default function ShiftsPageClient({
           {assignmentModal.open && assignmentModal.date && assignmentModal.branchId && (
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Select Employee
+                Select Employees
               </label>
               <EmployeeSelector
                 date={assignmentModal.date}
                 shiftType={assignmentModal.shiftType}
                 branchId={assignmentModal.branchId}
-                onSelect={setSelectedEmployee}
-                selectedId={selectedEmployee?.id}
+                onToggle={handleToggleEmployee}
+                selectedIds={selectedEmployees.map((e) => e.id)}
               />
             </div>
           )}
 
-          {/* Selected Employee Preview */}
-          {selectedEmployee && (
+          {/* Selected Employees Preview */}
+          {selectedEmployees.length > 0 && (
             <div className="bg-purple-50 border border-purple-200 rounded-lg p-3">
-              <p className="text-sm text-purple-700">
-                <span className="font-medium">{selectedEmployee.full_name}</span> will be assigned to this shift.
-                {selectedEmployee.is_floater && (
-                  <span className="ml-1 text-amber-600">(Floater)</span>
-                )}
+              <p className="text-xs text-purple-600 mb-2 font-medium">
+                {selectedEmployees.length} employee{selectedEmployees.length !== 1 ? 's' : ''} selected:
               </p>
+              <div className="flex flex-wrap gap-1.5">
+                {selectedEmployees.map((emp) => (
+                  <span
+                    key={emp.id}
+                    className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800"
+                  >
+                    {emp.full_name}
+                    {emp.is_floater && (
+                      <span className="text-amber-600">(F)</span>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveEmployee(emp.id)}
+                      className="ml-0.5 hover:text-purple-950 transition-colors"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </span>
+                ))}
+              </div>
             </div>
           )}
 
@@ -316,11 +370,11 @@ export default function ShiftsPageClient({
             <Button
               variant="primary"
               onClick={handleSubmitAssignment}
-              disabled={!selectedEmployee || submitting || !currentScheduleId}
+              disabled={selectedEmployees.length === 0 || submitting || !currentScheduleId}
               className="flex items-center gap-2"
             >
               {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
-              Assign Employee
+              {assignButtonText}
             </Button>
           </div>
         </div>
