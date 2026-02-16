@@ -34,8 +34,12 @@ export interface ShiftAssignment {
   created_at: string;
   updated_at: string;
   // Joined data
-  employees?: { full_name: string; employee_id: string; position: string };
+  employees?: { full_name: string; employee_id: string; position: string; primary_branch_id?: string | null; branch_id?: string | null };
   branches?: { name: string };
+  // Computed cross-branch fields
+  is_cross_branch?: boolean;
+  home_branch_id?: string | null;
+  home_branch_name?: string | null;
 }
 
 export interface BranchShiftRequirement {
@@ -241,7 +245,7 @@ export async function getAssignmentsBySchedule(scheduleId: string): Promise<Shif
     .from('shift_assignments')
     .select(`
       *,
-      employees(full_name, employee_id, position),
+      employees(full_name, employee_id, position, primary_branch_id, branch_id),
       branches(name)
     `)
     .eq('schedule_id', scheduleId)
@@ -252,7 +256,8 @@ export async function getAssignmentsBySchedule(scheduleId: string): Promise<Shif
     console.error('Error fetching assignments:', error);
     return [];
   }
-  return data || [];
+  const enriched = enrichAssignmentsWithCrossBranch(data || []);
+  return enrichAssignmentsWithHomeBranchNames(enriched);
 }
 
 export async function getAssignmentsByBranchAndSchedule(
@@ -265,7 +270,7 @@ export async function getAssignmentsByBranchAndSchedule(
     .from('shift_assignments')
     .select(`
       *,
-      employees(full_name, employee_id, position),
+      employees(full_name, employee_id, position, primary_branch_id, branch_id),
       branches(name)
     `)
     .eq('schedule_id', scheduleId)
@@ -277,7 +282,8 @@ export async function getAssignmentsByBranchAndSchedule(
     console.error('Error fetching branch assignments:', error);
     return [];
   }
-  return data || [];
+  const enriched = enrichAssignmentsWithCrossBranch(data || []);
+  return enrichAssignmentsWithHomeBranchNames(enriched);
 }
 
 export async function getAssignmentsByEmployee(
@@ -313,7 +319,7 @@ export async function getAssignmentsByDate(date: string): Promise<ShiftAssignmen
     .from('shift_assignments')
     .select(`
       *,
-      employees(full_name, employee_id, position),
+      employees(full_name, employee_id, position, primary_branch_id, branch_id),
       branches(name)
     `)
     .eq('date', date)
@@ -324,7 +330,8 @@ export async function getAssignmentsByDate(date: string): Promise<ShiftAssignmen
     console.error('Error fetching assignments by date:', error);
     return [];
   }
-  return data || [];
+  const enriched = enrichAssignmentsWithCrossBranch(data || []);
+  return enrichAssignmentsWithHomeBranchNames(enriched);
 }
 
 export async function createAssignment(input: CreateAssignmentInput): Promise<ShiftAssignment | null> {
@@ -663,6 +670,151 @@ export async function setEmployeeAvailability(
 }
 
 // ============================================
+// CROSS-BRANCH HELPERS
+// ============================================
+
+// Enrich assignments with cross-branch computed fields
+function enrichAssignmentsWithCrossBranch(
+  assignments: ShiftAssignment[]
+): ShiftAssignment[] {
+  if (assignments.length === 0) return [];
+
+  return assignments.map(a => {
+    const homeBranch = a.employees?.primary_branch_id || a.employees?.branch_id || null;
+    const isCrossBranch = homeBranch ? homeBranch !== a.branch_id : false;
+    return {
+      ...a,
+      is_cross_branch: isCrossBranch,
+      home_branch_id: isCrossBranch ? homeBranch : null,
+      home_branch_name: null, // Will be populated by enrichAssignmentsWithHomeBranchNames if needed
+    };
+  });
+}
+
+// Enrich assignments with home branch names (async, for responses that need branch names)
+export async function enrichAssignmentsWithHomeBranchNames(
+  assignments: ShiftAssignment[]
+): Promise<ShiftAssignment[]> {
+  if (assignments.length === 0) return [];
+
+  // Collect unique home branch IDs that differ from assignment branch
+  const homeBranchIds = new Set<string>();
+  assignments.forEach(a => {
+    if (a.is_cross_branch && a.home_branch_id) {
+      homeBranchIds.add(a.home_branch_id);
+    }
+  });
+
+  if (homeBranchIds.size === 0) return assignments;
+
+  // Batch-fetch branch names
+  if (!isSupabaseAdminConfigured()) return assignments;
+  const { data: branches } = await supabaseAdmin!
+    .from('branches')
+    .select('id, name')
+    .in('id', Array.from(homeBranchIds));
+
+  const branchNameMap: Record<string, string> = {};
+  (branches || []).forEach(b => { branchNameMap[b.id] = b.name; });
+
+  return assignments.map(a => ({
+    ...a,
+    home_branch_name: a.is_cross_branch && a.home_branch_id
+      ? (branchNameMap[a.home_branch_id] || null)
+      : null,
+  }));
+}
+
+// Enhanced conflict check that returns conflict details including branch name
+export async function getEmployeeConflictDetails(
+  employeeId: string,
+  date: string,
+  shiftType: ShiftType,
+  excludeAssignmentId?: string
+): Promise<{
+  hasConflict: boolean;
+  conflictBranchName?: string;
+  conflictBranchId?: string;
+  conflictDate?: string;
+  conflictShiftType?: ShiftType;
+}> {
+  if (!isSupabaseAdminConfigured()) return { hasConflict: false };
+
+  let query = supabaseAdmin!
+    .from('shift_assignments')
+    .select('id, branch_id, date, shift_type, branches(name)')
+    .eq('employee_id', employeeId)
+    .eq('date', date)
+    .eq('shift_type', shiftType);
+
+  if (excludeAssignmentId) {
+    query = query.neq('id', excludeAssignmentId);
+  }
+
+  const { data, error } = await query;
+
+  if (error || !data || data.length === 0) {
+    return { hasConflict: false };
+  }
+
+  const conflict = data[0] as any;
+  return {
+    hasConflict: true,
+    conflictBranchName: conflict.branches?.name || 'Unknown',
+    conflictBranchId: conflict.branch_id,
+    conflictDate: conflict.date,
+    conflictShiftType: conflict.shift_type,
+  };
+}
+
+// Get assignments where employees from a specific home branch are working at OTHER branches
+export async function getAwayAssignmentsForBranch(
+  scheduleId: string,
+  homeBranchId: string
+): Promise<Array<{
+  employee_id: string;
+  employee_name: string;
+  date: string;
+  shift_type: ShiftType;
+  away_branch_id: string;
+  away_branch_name: string;
+}>> {
+  if (!isSupabaseAdminConfigured()) return [];
+
+  // Step 1: Get employee IDs belonging to this branch
+  const { data: homeEmployees } = await supabaseAdmin!
+    .from('employees')
+    .select('id')
+    .or(`primary_branch_id.eq.${homeBranchId},branch_id.eq.${homeBranchId}`)
+    .eq('status', 'active');
+
+  const homeEmployeeIds = (homeEmployees || []).map(e => e.id);
+  if (homeEmployeeIds.length === 0) return [];
+
+  // Step 2: Get their assignments at OTHER branches for this schedule
+  const { data, error } = await supabaseAdmin!
+    .from('shift_assignments')
+    .select('employee_id, date, shift_type, branch_id, branches(name), employees(full_name)')
+    .eq('schedule_id', scheduleId)
+    .neq('branch_id', homeBranchId)
+    .in('employee_id', homeEmployeeIds);
+
+  if (error) {
+    console.error('Error fetching away assignments:', error);
+    return [];
+  }
+
+  return (data || []).map((a: any) => ({
+    employee_id: a.employee_id,
+    employee_name: a.employees?.full_name || 'Unknown',
+    date: a.date,
+    shift_type: a.shift_type,
+    away_branch_id: a.branch_id,
+    away_branch_name: a.branches?.name || 'Unknown',
+  }));
+}
+
+// ============================================
 // UTILITY FUNCTIONS
 // ============================================
 
@@ -670,8 +822,9 @@ export async function setEmployeeAvailability(
 export async function getAvailableEmployeesForShift(
   date: string,
   shiftType: ShiftType,
-  branchId?: string
-): Promise<{ id: string; full_name: string; position: string; is_floater: boolean; primary_branch_id: string | null }[]> {
+  branchId?: string,
+  options?: { includeAllBranches?: boolean }
+): Promise<{ id: string; full_name: string; position: string; is_floater: boolean; primary_branch_id: string | null; branch_name: string | null }[]> {
   if (!isSupabaseAdminConfigured()) return [];
 
   // Get day of week (0=Sunday)
@@ -681,7 +834,7 @@ export async function getAvailableEmployeesForShift(
   // Note: primary_branch_id is preferred, but fall back to branch_id for existing employees
   let employeesQuery = supabaseAdmin!
     .from('employees')
-    .select('id, full_name, position, is_floater, primary_branch_id, branch_id, can_work_night')
+    .select('id, full_name, position, is_floater, primary_branch_id, branch_id, can_work_night, home_branch:branches!employees_primary_branch_id_fkey(name)')
     .eq('status', 'active');
 
   // Filter by night shift capability if night shift
@@ -691,7 +844,8 @@ export async function getAvailableEmployeesForShift(
 
   // Filter by branch if specified (include floaters and employees assigned to this branch)
   // Note: Check both primary_branch_id and branch_id for backwards compatibility
-  if (branchId) {
+  // When includeAllBranches is true (admin), skip branch filter to show all employees
+  if (branchId && !options?.includeAllBranches) {
     employeesQuery = employeesQuery.or(`primary_branch_id.eq.${branchId},branch_id.eq.${branchId},is_floater.eq.true`);
   }
 
@@ -750,6 +904,7 @@ export async function getAvailableEmployeesForShift(
       is_floater: emp.is_floater || false,
       // Use primary_branch_id if set, otherwise fall back to branch_id
       primary_branch_id: emp.primary_branch_id || emp.branch_id || null,
+      branch_name: (emp as any).home_branch?.name || null,
     }));
 }
 

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth } from '@/lib/api-auth';
-import { PERMISSIONS } from '@/lib/permissions';
+import { PERMISSIONS, hasPermission } from '@/lib/permissions';
 import { getAvailableEmployeesForShift } from '@/lib/db';
 import type { User } from '@/types';
 
@@ -34,7 +34,12 @@ export const GET = withAuth(async (request: NextRequest, context: { user: User }
       );
     }
 
-    const employees = await getAvailableEmployeesForShift(date, shiftType, branchId);
+    // Admins can see employees from all branches for cross-branch assignment
+    const canEditAll = hasPermission(context.user.role, PERMISSIONS.SHIFTS_EDIT);
+
+    const employees = await getAvailableEmployeesForShift(date, shiftType, branchId, {
+      includeAllBranches: canEditAll,
+    });
 
     return NextResponse.json({ employees });
   } catch (error) {

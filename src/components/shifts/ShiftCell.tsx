@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Plus, X, Check, Clock, Sun, Moon } from 'lucide-react';
+import { Plus, X, Check, Clock, Sun, Moon, Home, ExternalLink } from 'lucide-react';
 
 interface Assignment {
   id: string;
@@ -14,6 +14,18 @@ interface Assignment {
     employee_id: string;
     position: string;
   };
+  // Cross-branch fields
+  is_cross_branch?: boolean;
+  home_branch_name?: string | null;
+}
+
+export interface AwayEmployee {
+  employee_id: string;
+  employee_name: string;
+  date: string;
+  shift_type: 'day' | 'night';
+  away_branch_id: string;
+  away_branch_name: string;
 }
 
 // Format time for display (remove seconds if present)
@@ -32,6 +44,7 @@ interface ShiftCellProps {
   readonly?: boolean;
   onAdd?: () => void;
   onRemove?: (assignmentId: string) => void;
+  awayEmployees?: AwayEmployee[];
 }
 
 export default function ShiftCell({
@@ -44,6 +57,7 @@ export default function ShiftCell({
   readonly = false,
   onAdd,
   onRemove,
+  awayEmployees = [],
 }: ShiftCellProps) {
   const isEmpty = assignments.length === 0;
   const isUnderstaffed = assignments.length > 0 && assignments.length < minRequired;
@@ -106,7 +120,11 @@ export default function ShiftCell({
             return (
               <div
                 key={assignment.id}
-                className="flex items-center justify-between group bg-white rounded px-1.5 py-1 text-xs"
+                className={`flex items-center justify-between group rounded px-1.5 py-1 text-xs ${
+                  assignment.is_cross_branch
+                    ? 'bg-teal-50 border border-dashed border-teal-300'
+                    : 'bg-white'
+                }`}
               >
                 <div className="flex items-center gap-1.5 min-w-0 flex-1">
                   {assignment.confirmed_at ? (
@@ -123,17 +141,51 @@ export default function ShiftCell({
                     </span>
                   )}
                 </div>
-                {!readonly && onRemove && (
-                  <button
-                    onClick={() => onRemove(assignment.id)}
-                    className="opacity-0 group-hover:opacity-100 p-0.5 rounded hover:bg-red-100 text-gray-400 hover:text-red-500 transition-all"
-                  >
-                    <X className="h-3 w-3" />
-                  </button>
-                )}
+                <div className="flex items-center gap-1">
+                  {assignment.is_cross_branch && assignment.home_branch_name && (
+                    <span
+                      className="shrink-0 inline-flex items-center gap-0.5 px-1 py-0.5 rounded text-[9px] font-medium bg-teal-100 text-teal-700"
+                      title={`Home branch: ${assignment.home_branch_name}`}
+                    >
+                      <Home className="h-2.5 w-2.5" />
+                      {assignment.home_branch_name.slice(-1)}
+                    </span>
+                  )}
+                  {!readonly && onRemove && (
+                    <button
+                      onClick={() => onRemove(assignment.id)}
+                      className="opacity-0 group-hover:opacity-100 p-0.5 rounded hover:bg-red-100 text-gray-400 hover:text-red-500 transition-all"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  )}
+                </div>
               </div>
             );
           })}
+        </div>
+      )}
+
+      {/* Away employees (home branch employees working elsewhere) */}
+      {awayEmployees.length > 0 && (
+        <div className="space-y-1 mt-1">
+          {awayEmployees.map(away => (
+            <div
+              key={away.employee_id}
+              className="flex items-center justify-between rounded px-1.5 py-1 text-xs bg-gray-100 border border-gray-200 opacity-60 cursor-default"
+              title={`${away.employee_name} is working at ${away.away_branch_name} today`}
+            >
+              <div className="flex items-center gap-1 min-w-0">
+                <ExternalLink className="h-3 w-3 text-gray-400 shrink-0" />
+                <span className="font-medium truncate text-gray-400 line-through">
+                  {away.employee_name}
+                </span>
+              </div>
+              <span className="shrink-0 inline-flex items-center gap-0.5 px-1 py-0.5 rounded text-[9px] font-medium bg-gray-200 text-gray-500">
+                → {away.away_branch_name.slice(-1)}
+              </span>
+            </div>
+          ))}
         </div>
       )}
 

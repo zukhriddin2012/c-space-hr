@@ -7,7 +7,8 @@ import {
   getAssignmentsByEmployee,
   getAssignmentsByDate,
   createAssignment,
-  checkEmployeeConflict,
+  getEmployeeConflictDetails,
+  getAwayAssignmentsForBranch,
   type CreateAssignmentInput,
   type ShiftType,
 } from '@/lib/db';
@@ -24,6 +25,13 @@ export const GET = withAuth(async (request: NextRequest, context: { user: User }
     const date = searchParams.get('date');
     const fromDate = searchParams.get('from');
     const toDate = searchParams.get('to');
+    const awayForBranch = searchParams.get('away_for_branch');
+
+    // Away assignments for a branch's home employees
+    if (scheduleId && awayForBranch) {
+      const awayAssignments = await getAwayAssignmentsForBranch(scheduleId, awayForBranch);
+      return NextResponse.json({ away_assignments: awayAssignments });
+    }
 
     // By schedule (optionally filtered by branch)
     if (scheduleId) {
@@ -119,6 +127,25 @@ export const POST = withAuth(async (request: NextRequest, context: { user: User 
       }
     }
 
+    // Cross-branch guard: only admins can assign employees from other branches
+    if (!canEditAll && isSupabaseAdminConfigured()) {
+      const { data: employee } = await supabaseAdmin!
+        .from('employees')
+        .select('primary_branch_id, branch_id')
+        .eq('id', body.employee_id)
+        .single();
+
+      if (employee) {
+        const homeBranch = employee.primary_branch_id || employee.branch_id;
+        if (homeBranch && homeBranch !== body.branch_id) {
+          return NextResponse.json(
+            { error: 'Only administrators can assign employees from other branches' },
+            { status: 403 }
+          );
+        }
+      }
+    }
+
     // Check schedule exists and is editable
     if (!isSupabaseAdminConfigured()) {
       return NextResponse.json({ error: 'Database not configured' }, { status: 500 });
@@ -138,16 +165,24 @@ export const POST = withAuth(async (request: NextRequest, context: { user: User 
       return NextResponse.json({ error: 'Cannot modify locked schedule' }, { status: 400 });
     }
 
-    // Check for conflicts
-    const hasConflict = await checkEmployeeConflict(
+    // Check for conflicts with detailed error message
+    const conflict = await getEmployeeConflictDetails(
       body.employee_id,
       body.date,
       body.shift_type as ShiftType
     );
 
-    if (hasConflict) {
+    if (conflict?.hasConflict) {
       return NextResponse.json(
-        { error: 'Employee already assigned to this shift on this date' },
+        {
+          error: `Employee is already assigned to ${conflict.conflictBranchName} on ${body.date} (${body.shift_type} shift)`,
+          conflict: {
+            branch_name: conflict.conflictBranchName,
+            branch_id: conflict.conflictBranchId,
+            date: conflict.conflictDate,
+            shift_type: conflict.conflictShiftType,
+          },
+        },
         { status: 409 }
       );
     }

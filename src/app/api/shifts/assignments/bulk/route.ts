@@ -3,7 +3,7 @@ import { withAuth } from '@/lib/api-auth';
 import { PERMISSIONS, hasPermission } from '@/lib/permissions';
 import {
   createAssignmentsBulk,
-  checkEmployeeConflict,
+  getEmployeeConflictDetails,
   type CreateAssignmentInput,
   type ShiftType,
 } from '@/lib/db';
@@ -77,6 +77,26 @@ export const POST = withAuth(async (request: NextRequest, context: { user: User 
       }
     }
 
+    // Cross-branch guard: only admins can assign employees from other branches
+    if (!canEditAll && isSupabaseAdminConfigured()) {
+      const { data: employees } = await supabaseAdmin!
+        .from('employees')
+        .select('id, primary_branch_id, branch_id')
+        .in('id', body.employee_ids);
+
+      const crossBranchEmployees = (employees || []).filter(emp => {
+        const homeBranch = emp.primary_branch_id || emp.branch_id;
+        return homeBranch && homeBranch !== body.branch_id;
+      });
+
+      if (crossBranchEmployees.length > 0) {
+        return NextResponse.json(
+          { error: 'Only administrators can assign employees from other branches' },
+          { status: 403 }
+        );
+      }
+    }
+
     // Check schedule exists and is editable
     if (!isSupabaseAdminConfigured()) {
       return NextResponse.json({ error: 'Database not configured' }, { status: 500 });
@@ -96,21 +116,23 @@ export const POST = withAuth(async (request: NextRequest, context: { user: User 
       return NextResponse.json({ error: 'Cannot modify locked schedule' }, { status: 400 });
     }
 
-    // Check conflicts for each employee
-    const conflicts: { employee_id: string; reason: string }[] = [];
+    // Check conflicts for each employee with detailed error messages
+    const conflicts: { employee_id: string; reason: string; conflict_branch_name?: string; conflict_branch_id?: string }[] = [];
     const validEmployeeIds: string[] = [];
 
     await Promise.all(
       body.employee_ids.map(async (employeeId) => {
-        const hasConflict = await checkEmployeeConflict(
+        const conflict = await getEmployeeConflictDetails(
           employeeId,
           body.date,
           body.shift_type as ShiftType
         );
-        if (hasConflict) {
+        if (conflict?.hasConflict) {
           conflicts.push({
             employee_id: employeeId,
-            reason: 'Already assigned to this shift on this date',
+            reason: `Already assigned to ${conflict.conflictBranchName} on ${body.date} (${body.shift_type} shift)`,
+            conflict_branch_name: conflict.conflictBranchName,
+            conflict_branch_id: conflict.conflictBranchId,
           });
         } else {
           validEmployeeIds.push(employeeId);

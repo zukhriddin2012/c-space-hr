@@ -1,12 +1,12 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Loader2, Send, Lock, FileText } from 'lucide-react';
+import { Loader2, Send, Lock, FileText, Home, ExternalLink } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
 import Card from '@/components/ui/Card';
 import WeekNavigator from './WeekNavigator';
-import ShiftCell, { type Assignment } from './ShiftCell';
+import ShiftCell, { type Assignment, type AwayEmployee } from './ShiftCell';
 import CoverageIndicator, { type CoverageStatus } from './CoverageIndicator';
 
 interface Branch {
@@ -86,6 +86,7 @@ export default function ShiftPlanningGrid({
   const [requirements, setRequirements] = useState<BranchRequirement[]>([]);
   const [coverage, setCoverage] = useState<CoverageStatus | null>(null);
   const [publishing, setPublishing] = useState(false);
+  const [awayAssignments, setAwayAssignments] = useState<AwayEmployee[]>([]);
 
   // Fetch data
   const fetchData = useCallback(async () => {
@@ -137,12 +138,30 @@ export default function ShiftPlanningGrid({
         const assignData = await assignRes.json();
         setAssignments(assignData.assignments || []);
         setCoverage(assignData.coverage || null);
+
+        // Fetch away assignments for single-branch view
+        if (branchFilter) {
+          try {
+            const awayRes = await fetch(
+              `/api/shifts/assignments?schedule_id=${scheduleData.schedule.id}&away_for_branch=${branchFilter}`
+            );
+            if (awayRes.ok) {
+              const awayData = await awayRes.json();
+              setAwayAssignments(awayData.away_assignments || []);
+            }
+          } catch {
+            setAwayAssignments([]);
+          }
+        } else {
+          setAwayAssignments([]);
+        }
       } else {
         // No schedule for this week yet
         setSchedule(null);
         onScheduleChange?.(null);
         setAssignments([]);
         setCoverage(null);
+        setAwayAssignments([]);
       }
     } catch (err) {
       console.error('Error fetching shift data:', err);
@@ -210,6 +229,13 @@ export default function ShiftPlanningGrid({
     );
   };
 
+  // Get away employees for a specific cell
+  const getAwayForCell = (date: string, shiftType: 'day' | 'night'): AwayEmployee[] => {
+    return awayAssignments.filter(
+      (a) => a.date === date && a.shift_type === shiftType
+    );
+  };
+
   // Get requirement for a branch/shift
   const getRequirement = (branchId: string, shiftType: 'day' | 'night') => {
     return requirements.find(
@@ -224,6 +250,9 @@ export default function ShiftPlanningGrid({
     date.setDate(weekStartDate.getDate() + i);
     weekDates.push(date);
   }
+
+  // Check if there are any cross-branch assignments visible
+  const hasCrossBranchAssignments = assignments.some(a => (a as any).is_cross_branch);
 
   // Status badge
   const getStatusBadge = () => {
@@ -344,6 +373,7 @@ export default function ShiftPlanningGrid({
                         readonly={isReadonly}
                         onAdd={() => onAssignmentAdd?.(branch.id, dateStr, 'day')}
                         onRemove={onAssignmentRemove}
+                        awayEmployees={branchFilter ? getAwayForCell(dateStr, 'day') : undefined}
                       />
                     );
                   })}
@@ -380,6 +410,7 @@ export default function ShiftPlanningGrid({
                           readonly={isReadonly}
                           onAdd={() => onAssignmentAdd?.(branch.id, dateStr, 'night')}
                           onRemove={onAssignmentRemove}
+                          awayEmployees={branchFilter ? getAwayForCell(dateStr, 'night') : undefined}
                         />
                       );
                     })}
@@ -388,6 +419,26 @@ export default function ShiftPlanningGrid({
               </div>
             ))}
           </div>
+
+          {/* Legend Bar */}
+          {(hasCrossBranchAssignments || awayAssignments.length > 0) && (
+            <div className="px-4 py-3 border-t border-gray-100 flex items-center gap-5 text-xs text-gray-500">
+              <div className="flex items-center gap-1.5">
+                <div className="w-5 h-3 rounded border border-gray-300 bg-white" />
+                <span>Home employee</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <div className="w-5 h-3 rounded border border-dashed border-teal-300 bg-teal-50" />
+                <span>Cross-branch (visiting)</span>
+              </div>
+              {branchFilter && awayAssignments.length > 0 && (
+                <div className="flex items-center gap-1.5">
+                  <div className="w-5 h-3 rounded border border-gray-200 bg-gray-100 opacity-60" />
+                  <span>Away (at another branch)</span>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
     </div>

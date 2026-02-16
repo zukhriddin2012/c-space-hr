@@ -318,6 +318,7 @@ export default function ShiftsPageClient({
                 branchId={assignmentModal.branchId}
                 onToggle={handleToggleEmployee}
                 selectedIds={selectedEmployees.map((e) => e.id)}
+                isAdmin={canEdit}
               />
             </div>
           )}
