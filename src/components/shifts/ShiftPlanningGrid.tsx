@@ -5,7 +5,7 @@ import { Loader2, Send, Lock, FileText } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
 import Card from '@/components/ui/Card';
-import WeekNavigator, { getMonday } from './WeekNavigator';
+import WeekNavigator from './WeekNavigator';
 import ShiftCell, { type Assignment } from './ShiftCell';
 import CoverageIndicator, { type CoverageStatus } from './CoverageIndicator';
 
@@ -38,6 +38,9 @@ interface ShiftAssignment extends Assignment {
 }
 
 interface ShiftPlanningGridProps {
+  weekStartDate: Date;
+  onWeekChange: (date: Date) => void;
+  refetchSignal?: number;
   branchFilter?: string; // For Branch Manager view
   readonly?: boolean;
   onAssignmentAdd?: (branchId: string, date: string, shiftType: 'day' | 'night') => void;
@@ -65,6 +68,9 @@ function formatDateString(date: Date): string {
 }
 
 export default function ShiftPlanningGrid({
+  weekStartDate,
+  onWeekChange,
+  refetchSignal = 0,
   branchFilter,
   readonly = false,
   onAssignmentAdd,
@@ -72,7 +78,6 @@ export default function ShiftPlanningGrid({
   onPublish,
   onScheduleChange,
 }: ShiftPlanningGridProps) {
-  const [weekStartDate, setWeekStartDate] = useState(() => getMonday(new Date()));
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [schedule, setSchedule] = useState<Schedule | null>(null);
@@ -145,11 +150,11 @@ export default function ShiftPlanningGrid({
     } finally {
       setLoading(false);
     }
-  }, [weekStartDate, branchFilter]);
+  }, [weekStartDate, branchFilter, onScheduleChange]);
 
   useEffect(() => {
     fetchData();
-  }, [fetchData]);
+  }, [fetchData, refetchSignal]);
 
   // Create schedule for the week
   const handleCreateSchedule = async () => {
@@ -251,7 +256,7 @@ export default function ShiftPlanningGrid({
         <div className="flex items-center gap-4">
           <WeekNavigator
             weekStartDate={weekStartDate}
-            onWeekChange={setWeekStartDate}
+            onWeekChange={onWeekChange}
           />
           {getStatusBadge()}
         </div>

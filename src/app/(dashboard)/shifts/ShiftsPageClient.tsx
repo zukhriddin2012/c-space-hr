@@ -3,6 +3,7 @@
 import React, { useState, useCallback } from 'react';
 import { Calendar, Loader2, Sun, Moon, Clock } from 'lucide-react';
 import { ShiftPlanningGrid, EmployeeSelector } from '@/components/shifts';
+import { getMonday } from '@/components/shifts/WeekNavigator';
 import { Modal } from '@/components/ui';
 import Button from '@/components/ui/Button';
 
@@ -43,7 +44,8 @@ export default function ShiftsPageClient({
     date: '',
     shiftType: 'day',
   });
-  const [refreshKey, setRefreshKey] = useState(0);
+  const [weekStartDate, setWeekStartDate] = useState(() => getMonday(new Date()));
+  const [refetchSignal, setRefetchSignal] = useState(0);
   const [selectedEmployee, setSelectedEmployee] = useState<SelectedEmployee | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -77,7 +79,7 @@ export default function ShiftsPageClient({
       });
 
       if (res.ok) {
-        setRefreshKey((k) => k + 1);
+        setRefetchSignal((k) => k + 1);
       } else {
         const data = await res.json();
         alert(data.error || 'Failed to remove assignment');
@@ -89,7 +91,11 @@ export default function ShiftsPageClient({
 
   const handlePublish = useCallback((scheduleId: string) => {
     // Refresh grid after publish
-    setRefreshKey((k) => k + 1);
+    setRefetchSignal((k) => k + 1);
+  }, []);
+
+  const handleWeekChange = useCallback((date: Date) => {
+    setWeekStartDate(date);
   }, []);
 
   // Track current schedule ID from grid
@@ -133,7 +139,7 @@ export default function ShiftsPageClient({
 
       if (res.ok) {
         closeModal();
-        setRefreshKey((k) => k + 1);
+        setRefetchSignal((k) => k + 1);
       } else {
         const data = await res.json();
         setError(data.error || 'Failed to create assignment');
@@ -173,7 +179,9 @@ export default function ShiftsPageClient({
 
       {/* Grid */}
       <ShiftPlanningGrid
-        key={refreshKey}
+        weekStartDate={weekStartDate}
+        onWeekChange={handleWeekChange}
+        refetchSignal={refetchSignal}
         branchFilter={branchFilter}
         readonly={!canEdit}
         onAssignmentAdd={canEdit ? handleAssignmentAdd : undefined}
