@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { withAuth } from '@/lib/api-auth';
 import { PERMISSIONS } from '@/lib/permissions';
 import { supabaseAdmin, isSupabaseAdminConfigured } from '@/lib/supabase';
-import { escapeIlike, MAX_LENGTH } from '@/lib/security';
+import { validateBranchAccess, escapeIlike, MAX_LENGTH } from '@/lib/security';
 import type { CreateTransactionInput } from '@/modules/reception/types';
 
 // ============================================
@@ -16,9 +16,16 @@ export const GET = withAuth(async (request: NextRequest, { user }) => {
     }
 
     const searchParams = request.nextUrl.searchParams;
+
+    // H-02: Validate branch access (IDOR prevention)
+    const branchAccess = await validateBranchAccess(user, searchParams.get('branchId'));
+    if (branchAccess.error) {
+      return NextResponse.json({ error: branchAccess.error }, { status: branchAccess.status });
+    }
+
     const page = parseInt(searchParams.get('page') || '1');
     const pageSize = parseInt(searchParams.get('pageSize') || '20');
-    const branchId = searchParams.get('branchId');
+    const branchId = branchAccess.branchId;
     const serviceTypeId = searchParams.get('serviceTypeId');
     const paymentMethodId = searchParams.get('paymentMethodId');
     const agentId = searchParams.get('agentId');

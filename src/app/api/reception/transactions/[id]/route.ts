@@ -2,12 +2,13 @@ import { NextRequest, NextResponse } from 'next/server';
 import { withAuth } from '@/lib/api-auth';
 import { PERMISSIONS } from '@/lib/permissions';
 import { supabaseAdmin, isSupabaseAdminConfigured } from '@/lib/supabase';
+import { validateRecordBranchAccess } from '@/lib/security';
 
 // ============================================
 // GET /api/reception/transactions/[id]
 // Get a single transaction
 // ============================================
-export const GET = withAuth(async (request: NextRequest, { params }) => {
+export const GET = withAuth(async (request: NextRequest, { user, params }) => {
   try {
     if (!isSupabaseAdminConfigured()) {
       return NextResponse.json({ error: 'Database not configured' }, { status: 500 });
@@ -37,6 +38,11 @@ export const GET = withAuth(async (request: NextRequest, { params }) => {
       }
       console.error('Database error:', error);
       return NextResponse.json({ error: 'Database error', details: error.message }, { status: 500 });
+    }
+
+    // H-02: Validate branch access (IDOR prevention)
+    if (!validateRecordBranchAccess(user, data.branch_id)) {
+      return NextResponse.json({ error: 'Transaction not found' }, { status: 404 });
     }
 
     return NextResponse.json({
@@ -75,7 +81,7 @@ export const GET = withAuth(async (request: NextRequest, { params }) => {
 // DELETE /api/reception/transactions/[id]
 // Void a transaction (soft delete)
 // ============================================
-export const DELETE = withAuth(async (request: NextRequest, { employee, params }) => {
+export const DELETE = withAuth(async (request: NextRequest, { user, employee, params }) => {
   try {
     if (!isSupabaseAdminConfigured()) {
       return NextResponse.json({ error: 'Database not configured' }, { status: 500 });
@@ -108,11 +114,16 @@ export const DELETE = withAuth(async (request: NextRequest, { employee, params }
     // Check if already voided
     const { data: existing } = await supabaseAdmin!
       .from('transactions')
-      .select('is_voided')
+      .select('is_voided, branch_id')
       .eq('id', id)
       .single();
 
     if (!existing) {
+      return NextResponse.json({ error: 'Transaction not found' }, { status: 404 });
+    }
+
+    // H-02: Validate branch access (IDOR prevention)
+    if (!validateRecordBranchAccess(user, existing.branch_id)) {
       return NextResponse.json({ error: 'Transaction not found' }, { status: 404 });
     }
 
