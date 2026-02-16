@@ -18,7 +18,7 @@ export const GET = withAuth(async (request: NextRequest, { user }) => {
   const { searchParams } = new URL(request.url);
 
   // 1. Branch validation
-  const branchAccess = validateBranchAccess(
+  const branchAccess = await validateBranchAccess(
     user,
     searchParams.get('branchId'),
     PERMISSIONS.RECEPTION_VIEW

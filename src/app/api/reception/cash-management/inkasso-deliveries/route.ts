@@ -14,7 +14,7 @@ export const GET = withAuth(async (request: NextRequest, { user }) => {
     const searchParams = request.nextUrl.searchParams;
 
     // H-02: Validate branch access (IDOR prevention)
-    const branchAccess = validateBranchAccess(user, searchParams.get('branchId'));
+    const branchAccess = await validateBranchAccess(user, searchParams.get('branchId'));
     if (branchAccess.error) {
       return NextResponse.json({ error: branchAccess.error }, { status: branchAccess.status });
     }
@@ -49,7 +49,7 @@ export const POST = withAuth(async (request: NextRequest, { user, employee }) =>
     const { branchId, transactionIds, deliveredDate, notes } = body;
 
     // H-02: Validate branch access (IDOR prevention)
-    const branchAccess = validateBranchAccess(user, branchId);
+    const branchAccess = await validateBranchAccess(user, branchId);
     if (branchAccess.error) {
       return NextResponse.json({ error: branchAccess.error }, { status: branchAccess.status });
     }

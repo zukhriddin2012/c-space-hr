@@ -21,7 +21,7 @@ export const GET = withAuth(async (request: NextRequest, { user }) => {
     );
 
     // H-02: Validate branch access
-    const branchAccess = validateBranchAccess(
+    const branchAccess = await validateBranchAccess(
       user,
       searchParams.get('branchId'),
       PERMISSIONS.MAINTENANCE_VIEW_ALL
@@ -105,7 +105,7 @@ export const POST = withAuth(async (request: NextRequest, { user }) => {
     else if (body.description.length > MAX_LENGTH.DESCRIPTION) errors.push(`Description exceeds ${MAX_LENGTH.DESCRIPTION} characters`);
 
     // H-02: Validate branch access
-    const branchAccess = validateBranchAccess(user, body.branchId?.trim());
+    const branchAccess = await validateBranchAccess(user, body.branchId?.trim());
     if (branchAccess.error) {
       return NextResponse.json({ error: branchAccess.error }, { status: branchAccess.status });
     }

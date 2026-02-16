@@ -144,15 +144,16 @@ export function validateFileMetadata(body: {
 
 /**
  * C-02 / H-02: Validate that a user has access to a specific branch.
- * Non-admin users can only access their own branch.
+ * Non-admin users can access their own branch, granted branches (reception_branch_access),
+ * and assigned branches (branch_employee_assignments).
  * Users with VIEW_ALL permission can access any branch.
  * Returns validated branchId or null if access denied.
  */
-export function validateBranchAccess(
+export async function validateBranchAccess(
   user: User,
   requestedBranchId: string | null | undefined,
   viewAllPermission?: Permission
-): { branchId: string | null; error: string | null; status: number } {
+): Promise<{ branchId: string | null; error: string | null; status: number }> {
   // If user has VIEW_ALL permission, allow any branch
   if (viewAllPermission && hasPermission(user.role as UserRole, viewAllPermission)) {
     // Admin can specify any branch
@@ -163,7 +164,7 @@ export function validateBranchAccess(
     return { branchId: null, error: null, status: 200 };
   }
 
-  // Non-admin: derive branchId from user profile, ignore client-supplied value
+  // Non-admin: derive branchId from user profile
   const userBranchId = user.branchId;
 
   if (!userBranchId) {
@@ -174,16 +175,51 @@ export function validateBranchAccess(
     };
   }
 
-  // If client supplied a different branch, deny access (return 404 to prevent enumeration)
-  if (requestedBranchId && requestedBranchId !== userBranchId) {
-    return {
-      branchId: null,
-      error: 'Not found',
-      status: 404,
-    };
+  // If no specific branch requested or it's the user's own branch, allow
+  if (!requestedBranchId || requestedBranchId === userBranchId) {
+    return { branchId: userBranchId, error: null, status: 200 };
   }
 
-  return { branchId: userBranchId, error: null, status: 200 };
+  // Client requested a different branch — check granted/assigned access
+  if (isSupabaseAdminConfigured()) {
+    const db = supabaseAdmin!;
+    const isValidUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(user.id);
+
+    if (isValidUUID) {
+      // Check reception_branch_access grants
+      const { data: grant } = await db
+        .from('reception_branch_access')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('branch_id', requestedBranchId)
+        .maybeSingle();
+
+      if (grant) {
+        return { branchId: requestedBranchId, error: null, status: 200 };
+      }
+
+      // Check branch_employee_assignments (active only)
+      const { data: assignment } = await db
+        .from('branch_employee_assignments')
+        .select('id')
+        .eq('employee_id', user.id)
+        .eq('assigned_branch_id', requestedBranchId)
+        .is('removed_at', null)
+        .or(`ends_at.is.null,ends_at.gt.${new Date().toISOString()}`)
+        .maybeSingle();
+
+      if (assignment) {
+        return { branchId: requestedBranchId, error: null, status: 200 };
+      }
+    }
+  }
+
+  // No access — return 404 to prevent branch enumeration
+  return {
+    branchId: null,
+    error: 'Not found',
+    status: 404,
+  };
 }
 
 /**

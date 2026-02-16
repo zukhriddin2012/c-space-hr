@@ -239,51 +239,51 @@ describe('validateFileMetadata', () => {
 
 describe('validateBranchAccess', () => {
   describe('non-admin users', () => {
-    it('returns user branchId when no branchId requested', () => {
+    it('returns user branchId when no branchId requested', async () => {
       const user = makeUser({ branchId: 'branch-1' });
-      const result = validateBranchAccess(user, null);
+      const result = await validateBranchAccess(user, null);
       expect(result).toEqual({ branchId: 'branch-1', error: null, status: 200 });
     });
 
-    it('returns user branchId when matching branchId requested', () => {
+    it('returns user branchId when matching branchId requested', async () => {
       const user = makeUser({ branchId: 'branch-1' });
-      const result = validateBranchAccess(user, 'branch-1');
+      const result = await validateBranchAccess(user, 'branch-1');
       expect(result).toEqual({ branchId: 'branch-1', error: null, status: 200 });
     });
 
-    it('returns 404 when different branchId requested (prevents enumeration)', () => {
+    it('returns 404 when different branchId requested and no grants/assignments (prevents enumeration)', async () => {
       const user = makeUser({ branchId: 'branch-1' });
-      const result = validateBranchAccess(user, 'branch-2');
+      const result = await validateBranchAccess(user, 'branch-2');
       expect(result.error).toBe('Not found');
       expect(result.status).toBe(404);
     });
 
-    it('returns 403 when user has no branch assignment', () => {
+    it('returns 403 when user has no branch assignment', async () => {
       const user = makeUser({ branchId: undefined });
-      const result = validateBranchAccess(user, null);
+      const result = await validateBranchAccess(user, null);
       expect(result.error).toContain('no branch assignment');
       expect(result.status).toBe(403);
     });
   });
 
   describe('admin users with VIEW_ALL permission', () => {
-    it('allows specifying any branchId', () => {
+    it('allows specifying any branchId', async () => {
       const admin = makeAdmin();
-      const result = validateBranchAccess(admin, 'branch-99', PERMISSIONS.LEGAL_REQUESTS_VIEW_ALL);
+      const result = await validateBranchAccess(admin, 'branch-99', PERMISSIONS.LEGAL_REQUESTS_VIEW_ALL);
       expect(result).toEqual({ branchId: 'branch-99', error: null, status: 200 });
     });
 
-    it('returns null branchId when no branch specified (all branches)', () => {
+    it('returns null branchId when no branch specified (all branches)', async () => {
       const admin = makeAdmin();
-      const result = validateBranchAccess(admin, null, PERMISSIONS.LEGAL_REQUESTS_VIEW_ALL);
+      const result = await validateBranchAccess(admin, null, PERMISSIONS.LEGAL_REQUESTS_VIEW_ALL);
       expect(result).toEqual({ branchId: null, error: null, status: 200 });
     });
   });
 
   describe('H-02: ignores client-supplied branchId for non-admin', () => {
-    it('employee cannot see another branch data', () => {
+    it('employee cannot see another branch data without grants', async () => {
       const user = makeUser({ branchId: 'branch-1', role: 'employee' });
-      const result = validateBranchAccess(user, 'branch-2');
+      const result = await validateBranchAccess(user, 'branch-2');
       expect(result.branchId).toBeNull();
       expect(result.status).toBe(404);
     });

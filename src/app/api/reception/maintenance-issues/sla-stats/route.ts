@@ -14,7 +14,7 @@ import { validateBranchAccess } from '@/lib/security';
 export const GET = withAuth(async (request: NextRequest, { user }) => {
   try {
     // Check permissions
-    const branchAccess = validateBranchAccess(
+    const branchAccess = await validateBranchAccess(
       user,
       request.nextUrl.searchParams.get('branchId'),
       PERMISSIONS.MAINTENANCE_VIEW_ALL

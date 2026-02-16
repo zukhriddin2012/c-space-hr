@@ -20,7 +20,7 @@ export const GET = withAuth(async (request: NextRequest, { user }) => {
     const searchParams = request.nextUrl.searchParams;
 
     // H-02: Validate branch access (IDOR prevention) — PR2-066 security alignment
-    const branchAccess = validateBranchAccess(user, searchParams.get('branchId'));
+    const branchAccess = await validateBranchAccess(user, searchParams.get('branchId'));
     if (branchAccess.error) {
       return NextResponse.json({ error: branchAccess.error }, { status: branchAccess.status });
     }
@@ -160,7 +160,7 @@ export const POST = withAuth(async (request: NextRequest, { user, employee }) =>
     const body: CreateExpenseInput = await request.json();
 
     // H-02: Validate branch access (IDOR prevention) — PR2-066 security alignment
-    const branchAccess = validateBranchAccess(user, body.branchId || employee.branchId);
+    const branchAccess = await validateBranchAccess(user, body.branchId || employee.branchId);
     if (branchAccess.error) {
       return NextResponse.json({ error: branchAccess.error }, { status: branchAccess.status });
     }

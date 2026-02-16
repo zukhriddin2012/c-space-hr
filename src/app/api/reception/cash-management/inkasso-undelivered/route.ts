@@ -11,7 +11,7 @@ import { validateBranchAccess } from '@/lib/security';
 export const GET = withAuth(async (request: NextRequest, { user }) => {
   try {
     // H-02: Validate branch access (IDOR prevention)
-    const branchAccess = validateBranchAccess(user, request.nextUrl.searchParams.get('branchId'));
+    const branchAccess = await validateBranchAccess(user, request.nextUrl.searchParams.get('branchId'));
     if (branchAccess.error) {
       return NextResponse.json({ error: branchAccess.error }, { status: branchAccess.status });
     }

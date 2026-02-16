@@ -27,7 +27,7 @@ export const GET = withAuth(async (
     const searchParams = request.nextUrl.searchParams;
 
     // H-02: Validate branch access — non-admin users can only see their own branch
-    const branchAccess = validateBranchAccess(
+    const branchAccess = await validateBranchAccess(
       context.user,
       searchParams.get('branchId') || request.headers.get('X-Branch-Id'),
       PERMISSIONS.LEGAL_REQUESTS_VIEW_ALL
@@ -130,7 +130,7 @@ export const POST = withAuth(async (
     }
 
     // H-02: Validate branch access
-    const branchAccess = validateBranchAccess(context.user, branchId as string);
+    const branchAccess = await validateBranchAccess(context.user, branchId as string);
     if (branchAccess.error) {
       return NextResponse.json({ error: branchAccess.error }, { status: branchAccess.status });
     }

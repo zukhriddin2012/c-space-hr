@@ -41,7 +41,7 @@ export const GET = withAuth(async (request: NextRequest, { user }) => {
     const weekStart = searchParams.get('weekStart');
 
     // H-02 / M-06: Validate branch access
-    const branchAccess = validateBranchAccess(
+    const branchAccess = await validateBranchAccess(
       user as User,
       searchParams.get('branchId'),
       PERMISSIONS.SHIFTS_VIEW_ALL

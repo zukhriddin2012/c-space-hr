@@ -18,7 +18,7 @@ export const GET = withAuth(async (request: NextRequest, { user }) => {
     const searchParams = request.nextUrl.searchParams;
 
     // H-02: Validate branch access
-    const branchAccess = validateBranchAccess(
+    const branchAccess = await validateBranchAccess(
       user as User,
       searchParams.get('branchId'),
       PERMISSIONS.ACCOUNTING_REQUESTS_VIEW_ALL
