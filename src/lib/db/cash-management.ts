@@ -114,7 +114,29 @@ export async function getCashAllocationBalance(branchId: string): Promise<CashAl
   const { data: txnRows } = await txnQuery;
   const totalNonInkassoCash = (txnRows || []).reduce((sum, r) => sum + Number(r.amount), 0);
 
-  // Step 5: Sum cash expenses since last transfer
+  // Step 5: Get approved dividend spend requests since last transfer
+  // Fetch expense_id to exclude dividend-generated expenses from regular expense sum
+  let divQuery = supabaseAdmin!
+    .from('dividend_spend_requests')
+    .select('dividend_portion, opex_portion, expense_id')
+    .eq('branch_id', branchId)
+    .eq('status', 'approved');
+
+  if (lastTransferDate) {
+    // Use expense_date (not requested_at) for consistent date filtering with expenses query
+    divQuery = divQuery.gt('expense_date', lastTransferDate.split('T')[0]);
+  }
+
+  const { data: divRows } = await divQuery;
+  const totalDividendSpends = (divRows || []).reduce((sum, r) => sum + Number(r.dividend_portion), 0);
+  const totalOpexFromDividend = (divRows || []).reduce((sum, r) => sum + Number(r.opex_portion), 0);
+
+  // Collect expense IDs created by approved dividend requests (to exclude from regular expenses)
+  const dividendExpenseIds = (divRows || [])
+    .map(r => r.expense_id)
+    .filter((id): id is string => id != null);
+
+  // Step 6: Sum regular cash expenses since last transfer (excluding dividend-generated expenses)
   let expQuery = supabaseAdmin!
     .from('expenses')
     .select('amount')
@@ -125,23 +147,12 @@ export async function getCashAllocationBalance(branchId: string): Promise<CashAl
   if (lastTransferDate) {
     expQuery = expQuery.gt('expense_date', lastTransferDate.split('T')[0]);
   }
-
-  const { data: expRows } = await expQuery;
-  const totalCashExpenses = (expRows || []).reduce((sum, r) => sum + Number(r.amount), 0);
-
-  // Step 6: Sum approved dividend spends since last transfer
-  let divQuery = supabaseAdmin!
-    .from('dividend_spend_requests')
-    .select('dividend_portion')
-    .eq('branch_id', branchId)
-    .eq('status', 'approved');
-
-  if (lastTransferDate) {
-    divQuery = divQuery.gt('requested_at', lastTransferDate);
+  if (dividendExpenseIds.length > 0) {
+    expQuery = expQuery.not('id', 'in', `(${dividendExpenseIds.join(',')})`);
   }
 
-  const { data: divRows } = await divQuery;
-  const totalDividendSpends = (divRows || []).reduce((sum, r) => sum + Number(r.dividend_portion), 0);
+  const { data: expRows } = await expQuery;
+  const totalRegularCashExpenses = (expRows || []).reduce((sum, r) => sum + Number(r.amount), 0);
 
   // Step 7: Inkasso pending (manual calculation)
   // BUG-2 FIX: Only count inkasso transactions since last transfer (consistent with other queries)
@@ -183,9 +194,9 @@ export async function getCashAllocationBalance(branchId: string): Promise<CashAl
   const marketingAllocated = totalNonInkassoCash * (settings.marketingPercentage / 100);
   const dividendAllocated = totalNonInkassoCash - opexAllocated - marketingAllocated;
 
-  // Normal expenses are charged to OpEx (expenses that aren't dividend-funded)
-  const normalExpenses = totalCashExpenses - totalDividendSpends;
-  const opexAvailable = opexAllocated - normalExpenses;
+  // OpEx spent = regular cash expenses + opex_portion from approved dividend requests
+  const opexSpent = totalRegularCashExpenses + totalOpexFromDividend;
+  const opexAvailable = opexAllocated - opexSpent;
   const marketingAvailable = marketingAllocated; // Untouched until transfer
   const dividendAvailable = dividendAllocated - totalDividendSpends;
 
@@ -197,7 +208,7 @@ export async function getCashAllocationBalance(branchId: string): Promise<CashAl
     allocation: {
       opex: {
         allocated: opexAllocated,
-        spent: normalExpenses,
+        spent: opexSpent,
         available: opexAvailable,
         percentage: settings.opexPercentage,
       },
