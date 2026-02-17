@@ -89,7 +89,7 @@ export const en: Translations = {
     developer: 'Developer',
     telegramBot: 'Telegram Bot',
     finances: 'Finances',
-    financesDashboard: 'Dashboard',
+    financesDashboard: 'Finances',
     myBranchFinances: 'My Branch',
     financesTransactions: 'Transactions',
   },

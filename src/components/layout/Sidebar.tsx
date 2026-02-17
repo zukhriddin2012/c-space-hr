@@ -294,7 +294,7 @@ export default function Sidebar({ user }: SidebarProps) {
       departments: t.nav.departments,
       salaryImport: 'Salary Import',
       finances: t.nav.finances || 'Finances',
-      financesDashboard: t.nav.financesDashboard || 'Dashboard',
+      financesDashboard: t.nav.financesDashboard || 'Finances',
       myBranchFinances: t.nav.myBranchFinances || 'My Branch',
       financesTransactions: t.nav.financesTransactions || 'Transactions',
       feedback: t.nav.feedback,

@@ -89,7 +89,7 @@ export const ru: Translations = {
     developer: 'Разработка',
     telegramBot: 'Телеграм бот',
     finances: 'Финансы',
-    financesDashboard: 'Панель',
+    financesDashboard: 'Финансы',
     myBranchFinances: 'Мой филиал',
     financesTransactions: 'Транзакции',
   },

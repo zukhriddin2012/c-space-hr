@@ -89,7 +89,7 @@ export const uz: Translations = {
     developer: 'Dasturchi',
     telegramBot: 'Telegram Bot',
     finances: 'Moliya',
-    financesDashboard: 'Bosh sahifa',
+    financesDashboard: 'Moliya',
     myBranchFinances: 'Mening filialim',
     financesTransactions: 'Tranzaksiyalar',
   },
