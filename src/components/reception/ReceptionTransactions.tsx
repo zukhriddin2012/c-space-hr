@@ -14,6 +14,8 @@ import { ClientAutocomplete, CreateClientModal } from '@/components/reception';
 import type { ClientOption } from '@/components/reception';
 import { PaymentIcon } from './PaymentIcon';
 import { PaymentMethodSelect } from './PaymentMethodSelect';
+import ExportCSVButton from './ExportCSVButton';
+import TransactionSummaryFooter from './TransactionSummaryFooter';
 import type { Transaction, ServiceType, PaymentMethodConfig, CreateTransactionInput } from '@/modules/reception/types';
 
 type QuickDateFilter = 'today' | 'yesterday' | 'week' | 'month' | 'custom' | 'all';
@@ -361,10 +363,35 @@ export default function ReceptionTransactions({ autoOpenCreate, onAutoOpenConsum
           <h1 className="text-2xl font-bold text-gray-900">{t.reception.transactions}</h1>
           <p className="text-gray-500">{t.reception.recordSales}</p>
         </div>
-        <Button onClick={() => setShowAddModal(true)}>
-          <Plus className="w-4 h-4 mr-2" />
-          {t.reception.newTransaction}
-        </Button>
+        <div className="flex items-center gap-2">
+          <ExportCSVButton
+            data={transactions.map(txn => ({
+              transactionNumber: txn.transactionNumber,
+              date: txn.transactionDate,
+              customerName: txn.customerName,
+              serviceType: txn.serviceType?.name || '',
+              amount: txn.amount,
+              paymentMethod: txn.paymentMethod?.name || '',
+              agentName: txn.agentName || '',
+              status: txn.isVoided ? 'Voided' : 'Active',
+            }))}
+            columns={[
+              { key: 'transactionNumber', label: 'TXN #' },
+              { key: 'date', label: 'Date' },
+              { key: 'customerName', label: 'Customer' },
+              { key: 'serviceType', label: 'Service' },
+              { key: 'amount', label: 'Amount' },
+              { key: 'paymentMethod', label: 'Payment' },
+              { key: 'agentName', label: 'Agent' },
+              { key: 'status', label: 'Status' },
+            ]}
+            filename="transactions"
+          />
+          <Button onClick={() => setShowAddModal(true)}>
+            <Plus className="w-4 h-4 mr-2" />
+            {t.reception.newTransaction}
+          </Button>
+        </div>
       </div>
 
       <Card>
@@ -624,6 +651,14 @@ export default function ReceptionTransactions({ autoOpenCreate, onAutoOpenConsum
             </div>
           )}
         </div>
+        <TransactionSummaryFooter
+          branchId={selectedBranchId}
+          dateFrom={effectiveDateRange?.from}
+          dateTo={effectiveDateRange?.to}
+          serviceTypeId={filterServiceType || undefined}
+          paymentMethodId={filterPaymentMethod || undefined}
+          refetchSignal={totalCount}
+        />
       </Card>
 
       <Modal isOpen={showAddModal} onClose={() => { setShowAddModal(false); setFormData(initialFormData); setFormErrors({}); setSelectedClient(null); }} title={t.reception.newTransaction} size="lg">

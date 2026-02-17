@@ -31,8 +31,6 @@ import {
   GitBranch,
   Upload,
   DollarSign,
-  TrendingUp,
-  Receipt,
   Calendar,
   RefreshCw,
   Briefcase,
@@ -183,32 +181,12 @@ const navItems: NavItem[] = [
       },
     ],
   },
-  // Finances group
+  // Finance Dashboard (single entry, no children — PR2-059)
   {
-    nameKey: 'finances',
+    nameKey: 'financesDashboard',
     href: '/finances',
     icon: DollarSign,
     roles: ['general_manager', 'ceo', 'branch_manager', 'reports_manager', 'chief_accountant', 'accountant'],
-    children: [
-      {
-        nameKey: 'financesDashboard',
-        href: '/finances',
-        icon: TrendingUp,
-        roles: ['general_manager', 'ceo', 'reports_manager', 'chief_accountant', 'accountant'],
-      },
-      {
-        nameKey: 'myBranchFinances',
-        href: '/finances/my-branch',
-        icon: Building2,
-        roles: ['branch_manager'],
-      },
-      {
-        nameKey: 'financesTransactions',
-        href: '/finances/transactions',
-        icon: Receipt,
-        roles: ['general_manager', 'ceo', 'branch_manager', 'reports_manager', 'chief_accountant', 'accountant'],
-      },
-    ],
   },
   // Strategy group
   {

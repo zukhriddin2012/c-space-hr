@@ -10,6 +10,8 @@ import Badge from '@/components/ui/Badge';
 import { formatCurrency, EXPENSE_PAYMENT_METHODS_LIST } from '@/modules/reception/lib/constants';
 import { useServiceHub, getOperatorHeaders } from '@/contexts/ServiceHubContext';
 import { useTranslation } from '@/contexts/LanguageContext';
+import ExportCSVButton from './ExportCSVButton';
+import ExpenseSummaryFooter from './ExpenseSummaryFooter';
 import type { Expense, ExpenseType, CreateExpenseInput } from '@/modules/reception/types';
 
 type QuickDateFilter = 'today' | 'yesterday' | 'week' | 'month' | 'custom' | 'all';
@@ -346,10 +348,35 @@ export default function ReceptionExpenses({ autoOpenCreate, onAutoOpenConsumed }
           <h1 className="text-2xl font-bold text-gray-900">{t.reception.expenses}</h1>
           <p className="text-gray-500">{t.reception.recordExpenses}</p>
         </div>
-        <Button onClick={() => setShowAddModal(true)}>
-          <Plus className="w-4 h-4 mr-2" />
-          {t.reception.newExpense}
-        </Button>
+        <div className="flex items-center gap-2">
+          <ExportCSVButton
+            data={expenses.map(exp => ({
+              expenseNumber: exp.expenseNumber,
+              date: exp.expenseDate,
+              subject: exp.subject,
+              amount: exp.amount,
+              category: exp.expenseType?.name || '',
+              paymentMethod: exp.paymentMethod,
+              recordedBy: exp.recordedByName || '',
+              status: exp.isVoided ? 'Voided' : 'Active',
+            }))}
+            columns={[
+              { key: 'expenseNumber', label: 'EXP #' },
+              { key: 'date', label: 'Date' },
+              { key: 'subject', label: 'Subject' },
+              { key: 'amount', label: 'Amount' },
+              { key: 'category', label: 'Category' },
+              { key: 'paymentMethod', label: 'Payment' },
+              { key: 'recordedBy', label: 'Recorded By' },
+              { key: 'status', label: 'Status' },
+            ]}
+            filename="expenses"
+          />
+          <Button onClick={() => setShowAddModal(true)}>
+            <Plus className="w-4 h-4 mr-2" />
+            {t.reception.newExpense}
+          </Button>
+        </div>
       </div>
 
       <Card>
@@ -588,6 +615,14 @@ export default function ReceptionExpenses({ autoOpenCreate, onAutoOpenConsumed }
             </div>
           </div>
         )}
+        <ExpenseSummaryFooter
+          branchId={selectedBranchId}
+          dateFrom={effectiveDateRange?.from}
+          dateTo={effectiveDateRange?.to}
+          expenseTypeId={filterExpenseType || undefined}
+          paymentMethod={filterPaymentMethod || undefined}
+          refetchSignal={totalCount}
+        />
       </Card>
 
       <Modal isOpen={showAddModal} onClose={() => { setShowAddModal(false); setFormData(initialFormData); setFormErrors({}); setOpexAvailable(null); }} title="New Expense" size="lg">
