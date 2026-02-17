@@ -196,6 +196,20 @@ export async function getCashAllocationBalance(branchId: string): Promise<CashAl
 
   // OpEx spent = regular cash expenses + opex_portion from approved dividend requests
   const opexSpent = totalRegularCashExpenses + totalOpexFromDividend;
+
+  // CSN-172 DEBUG: Remove after verifying fix
+  console.log('[CSN-172 DEBUG]', {
+    branchId,
+    lastTransferDate,
+    totalNonInkassoCash,
+    divRowCount: (divRows || []).length,
+    totalDividendSpends,
+    totalOpexFromDividend,
+    dividendExpenseIdsCount: dividendExpenseIds.length,
+    totalRegularCashExpenses,
+    opexAllocated,
+    opexSpent,
+  });
   const opexAvailable = opexAllocated - opexSpent;
   const marketingAvailable = marketingAllocated; // Untouched until transfer
   const dividendAvailable = dividendAllocated - totalDividendSpends;
