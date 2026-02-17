@@ -29,7 +29,7 @@ import type {
 export async function getCashSettings(branchId: string): Promise<BranchCashSettings> {
   const { data, error } = await supabaseAdmin!
     .from('branches')
-    .select('id, cash_opex_percentage, cash_marketing_percentage, cash_transfer_threshold')
+    .select('id, cash_opex_percentage, cash_marketing_percentage, cash_transfer_threshold, cash_management_start_date')
     .eq('id', branchId)
     .single();
 
@@ -40,6 +40,7 @@ export async function getCashSettings(branchId: string): Promise<BranchCashSetti
     opexPercentage: Number(data.cash_opex_percentage),
     marketingPercentage: Number(data.cash_marketing_percentage),
     transferThreshold: Number(data.cash_transfer_threshold),
+    managementStartDate: (data.cash_management_start_date as string) || null,
   };
 }
 
@@ -54,7 +55,7 @@ export async function updateCashSettings(
       cash_transfer_threshold: settings.transferThreshold,
     })
     .eq('id', branchId)
-    .select('id, cash_opex_percentage, cash_marketing_percentage, cash_transfer_threshold')
+    .select('id, cash_opex_percentage, cash_marketing_percentage, cash_transfer_threshold, cash_management_start_date')
     .single();
 
   if (error) throw new Error(`Failed to update cash settings: ${error.message}`);
@@ -64,6 +65,7 @@ export async function updateCashSettings(
     opexPercentage: Number(data.cash_opex_percentage),
     marketingPercentage: Number(data.cash_marketing_percentage),
     transferThreshold: Number(data.cash_transfer_threshold),
+    managementStartDate: (data.cash_management_start_date as string) || null,
   };
 }
 
@@ -86,6 +88,12 @@ export async function getCashAllocationBalance(branchId: string): Promise<CashAl
   // Step 2: Get branch settings
   const settings = await getCashSettings(branchId);
 
+  // Baseline date: last transfer date, or management start date as fallback
+  // When both are null, no date filter is applied (all-time — legacy behavior)
+  const baselineDate = lastTransferDate
+    ? lastTransferDate.split('T')[0]
+    : settings.managementStartDate || null;
+
   // Step 3: Get cash payment method ID
   const { data: cashPm } = await supabaseAdmin!
     .from('payment_methods')
@@ -107,8 +115,10 @@ export async function getCashAllocationBalance(branchId: string): Promise<CashAl
   if (cashPaymentMethodId) {
     txnQuery = txnQuery.eq('payment_method_id', cashPaymentMethodId);
   }
-  if (lastTransferDate) {
-    txnQuery = txnQuery.gt('transaction_date', lastTransferDate.split('T')[0]);
+  if (baselineDate) {
+    txnQuery = lastTransferDate
+      ? txnQuery.gt('transaction_date', baselineDate)
+      : txnQuery.gte('transaction_date', baselineDate);
   }
 
   const { data: txnRows } = await txnQuery;
@@ -122,9 +132,10 @@ export async function getCashAllocationBalance(branchId: string): Promise<CashAl
     .eq('branch_id', branchId)
     .eq('status', 'approved');
 
-  if (lastTransferDate) {
-    // Use expense_date (not requested_at) for consistent date filtering with expenses query
-    divQuery = divQuery.gt('expense_date', lastTransferDate.split('T')[0]);
+  if (baselineDate) {
+    divQuery = lastTransferDate
+      ? divQuery.gt('expense_date', baselineDate)
+      : divQuery.gte('expense_date', baselineDate);
   }
 
   const { data: divRows } = await divQuery;
@@ -144,8 +155,10 @@ export async function getCashAllocationBalance(branchId: string): Promise<CashAl
     .eq('payment_method', 'cash')
     .eq('is_voided', false);
 
-  if (lastTransferDate) {
-    expQuery = expQuery.gt('expense_date', lastTransferDate.split('T')[0]);
+  if (baselineDate) {
+    expQuery = lastTransferDate
+      ? expQuery.gt('expense_date', baselineDate)
+      : expQuery.gte('expense_date', baselineDate);
   }
   if (dividendExpenseIds.length > 0) {
     expQuery = expQuery.not('id', 'in', `(${dividendExpenseIds.join(',')})`);
@@ -166,8 +179,10 @@ export async function getCashAllocationBalance(branchId: string): Promise<CashAl
     .eq('is_inkasso', true)
     .eq('is_voided', false);
 
-  if (lastTransferDate) {
-    inkassoQuery = inkassoQuery.gt('transaction_date', lastTransferDate.split('T')[0]);
+  if (baselineDate) {
+    inkassoQuery = lastTransferDate
+      ? inkassoQuery.gt('transaction_date', baselineDate)
+      : inkassoQuery.gte('transaction_date', baselineDate);
   }
 
   const { data: pendingInkasso } = await inkassoQuery;
@@ -196,20 +211,6 @@ export async function getCashAllocationBalance(branchId: string): Promise<CashAl
 
   // OpEx spent = regular cash expenses + opex_portion from approved dividend requests
   const opexSpent = totalRegularCashExpenses + totalOpexFromDividend;
-
-  // CSN-172 DEBUG: Remove after verifying fix
-  console.log('[CSN-172 DEBUG]', {
-    branchId,
-    lastTransferDate,
-    totalNonInkassoCash,
-    divRowCount: (divRows || []).length,
-    totalDividendSpends,
-    totalOpexFromDividend,
-    dividendExpenseIdsCount: dividendExpenseIds.length,
-    totalRegularCashExpenses,
-    opexAllocated,
-    opexSpent,
-  });
   const opexAvailable = opexAllocated - opexSpent;
   const marketingAvailable = marketingAllocated; // Untouched until transfer
   const dividendAvailable = dividendAllocated - totalDividendSpends;

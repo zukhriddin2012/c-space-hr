@@ -732,6 +732,7 @@ export interface BranchCashSettings {
   opexPercentage: number;
   marketingPercentage: number;
   transferThreshold: number;
+  managementStartDate: string | null;
 }
 
 export interface UpdateCashSettingsInput {
