@@ -5,6 +5,7 @@ import { hasPermission, hasAnyPermission, Permission } from './permissions';
 import { verifyKioskToken, KIOSK_COOKIE_NAME } from './kiosk-auth';
 import { resolveOperatorEmployee, type ResolvedEmployee } from './security';
 import type { User, UserRole } from '@/types';
+import { classifyAction, trackUsage } from '@/lib/db';
 
 const COOKIE_NAME = 'c-space-auth';
 
@@ -158,7 +159,23 @@ export function withAuth(
       }
 
       // Call the handler with authenticated user and resolved employee
-      return handler(request, { user, employee, params: resolvedParams });
+      const response = await handler(request, { user, employee, params: resolvedParams });
+
+      // CSN-186: Fire-and-forget usage tracking (non-blocking)
+      const pathname = new URL(request.url).pathname;
+      const classified = classifyAction(request.method, pathname);
+      if (classified && user) {
+        trackUsage(
+          user.id,
+          classified.module,
+          classified.actionType,
+          pathname,
+          user.branchId,
+          employee ? { operatorId: employee.id } : undefined
+        ).catch(() => {});
+      }
+
+      return response;
     } catch (error) {
       console.error('API auth error:', error);
       return NextResponse.json(
