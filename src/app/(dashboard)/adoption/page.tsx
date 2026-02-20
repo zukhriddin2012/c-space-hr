@@ -128,8 +128,8 @@ export default function AdoptionPage() {
         </div>
       )}
 
-      {/* Data */}
-      {!loading && !error && overview && (
+      {/* Data — only render when there are active users (otherwise show empty state) */}
+      {!loading && !error && overview && overview.activeUsers > 0 && (
         <>
           {/* Stat Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">

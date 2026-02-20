@@ -86,7 +86,7 @@ function periodToDays(period: AdoptionPeriod): number {
 function periodToStartDate(period: AdoptionPeriod): string {
   const days = periodToDays(period);
   const start = new Date();
-  start.setDate(start.getDate() - days);
+  start.setUTCDate(start.getUTCDate() - days);
   return start.toISOString();
 }
 
@@ -201,8 +201,8 @@ export async function getOverviewScore(period: AdoptionPeriod): Promise<Overview
       });
     }
 
-    const depth = depthSum / activeUsers;
-    const frequency = frequencySum / activeUsers;
+    const depth = activeUsers > 0 ? depthSum / activeUsers : 0;
+    const frequency = activeUsers > 0 ? frequencySum / activeUsers : 0;
     const score = breadth * 0.4 + depth * 0.35 + frequency * 0.25;
 
     // 5. Compute module scores
@@ -241,8 +241,9 @@ export async function getOverviewScore(period: AdoptionPeriod): Promise<Overview
       };
     }).sort((a, b) => b.score - a.score);
 
-    // 6. Compute actions today
-    const todayStr = new Date().toISOString().slice(0, 10);
+    // 6. Compute actions today (UTC to match snapshot dates)
+    const todayNow = new Date();
+    const todayStr = `${todayNow.getUTCFullYear()}-${String(todayNow.getUTCMonth() + 1).padStart(2, '0')}-${String(todayNow.getUTCDate()).padStart(2, '0')}`;
     const actionsToday = events.filter(e => e.created_at.slice(0, 10) === todayStr).length;
 
     // 7. Compute trend (compare with previous period)
@@ -264,7 +265,7 @@ export async function getOverviewScore(period: AdoptionPeriod): Promise<Overview
     let scoreDelta = 0;
     try {
       const yesterday = new Date();
-      yesterday.setDate(yesterday.getDate() - 1);
+      yesterday.setUTCDate(yesterday.getUTCDate() - 1);
       const { data: prevSnapshot } = await supabaseAdmin!
         .from('adoption_snapshots')
         .select('score')
@@ -700,7 +701,9 @@ export async function computeAndStoreSnapshot(): Promise<{
     return { success: false, periods: [], error: 'DB not configured' };
   }
 
-  const today = new Date().toISOString().slice(0, 10);
+  // Use UTC to ensure consistent snapshot dates regardless of server timezone
+  const now = new Date();
+  const today = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}-${String(now.getUTCDate()).padStart(2, '0')}`;
   const periods: AdoptionPeriod[] = ['7d', '30d', '90d'];
   const stored: AdoptionPeriod[] = [];
 

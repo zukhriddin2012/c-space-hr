@@ -147,9 +147,10 @@ export function classifyAction(
   // Determine action type from HTTP method
   const actionType = METHOD_ACTION_MAP[method.toUpperCase()] || 'view';
 
-  // Override for specific path patterns
-  if (pathname.includes('/export')) return { module: match.module, actionType: 'export' };
-  if (pathname.includes('/approve')) return { module: match.module, actionType: 'approve' };
+  // Override for specific path segments (segment-based to avoid false positives like "exported-list")
+  const segments = pathname.split('/');
+  if (segments.includes('export')) return { module: match.module, actionType: 'export' };
+  if (segments.includes('approve')) return { module: match.module, actionType: 'approve' };
 
   return { module: match.module, actionType };
 }
