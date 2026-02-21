@@ -68,7 +68,13 @@ export const POST = withAuth(async (request: NextRequest) => {
       }, { status: 404 });
     }
 
-    // 2. Generate events for last 30 days
+    // 2. Clear previously seeded events (identified by the "seeded" marker in endpoint)
+    await supabaseAdmin
+      .from('usage_events')
+      .delete()
+      .eq('endpoint', '/seed');
+
+    // 3. Generate events for last 30 days
     const events: Array<{
       user_id: string;
       module: string;
@@ -99,8 +105,8 @@ export const POST = withAuth(async (request: NextRequest) => {
         const activityMultiplier = 0.5 + Math.random() * 0.7;
         const eventsToday = Math.max(2, Math.round(dailyTarget * activityMultiplier));
 
-        // Some days employees are "absent" (10% chance)
-        if (Math.random() < 0.1) continue;
+        // Some days employees are "absent" (10% chance) — but always present in last 7 days
+        if (daysAgo >= 7 && Math.random() < 0.1) continue;
 
         for (let i = 0; i < eventsToday; i++) {
           // Pick a random module from their accessible modules
@@ -111,7 +117,7 @@ export const POST = withAuth(async (request: NextRequest) => {
             user_id: emp.id,
             module,
             action_type: actionType,
-            endpoint: moduleToEndpoint(module),
+            endpoint: '/seed', // marker to identify seeded events for cleanup
             branch_id: isUUID(emp.branch_id) ? emp.branch_id : null,
             metadata: {},
             created_at: randomTimestamp(date),
