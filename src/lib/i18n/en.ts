@@ -93,6 +93,10 @@ export const en: Translations = {
     financesDashboard: 'Dashboard',
     myBranchFinances: 'My Branch',
     financesTransactions: 'Transactions',
+    sales: 'Sales',
+    salesBoard: 'Board',
+    salesList: 'List',
+    salesAnalytics: 'Analytics',
   },
 
   // Dashboard

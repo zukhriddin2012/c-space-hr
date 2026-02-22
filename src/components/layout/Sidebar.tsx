@@ -163,6 +163,33 @@ const navItems: NavItem[] = [
       },
     ],
   },
+  // Sales group
+  {
+    nameKey: 'sales',
+    href: '/sales',
+    icon: Target,
+    roles: ['sales_manager', 'bd_manager', 'branch_manager', 'general_manager', 'ceo'],
+    children: [
+      {
+        nameKey: 'salesBoard',
+        href: '/sales/board',
+        icon: Kanban,
+        roles: ['sales_manager', 'bd_manager', 'branch_manager', 'general_manager', 'ceo'],
+      },
+      {
+        nameKey: 'salesList',
+        href: '/sales/list',
+        icon: Table,
+        roles: ['sales_manager', 'bd_manager', 'branch_manager', 'general_manager', 'ceo'],
+      },
+      {
+        nameKey: 'salesAnalytics',
+        href: '/sales/analytics',
+        icon: BarChart3,
+        roles: ['sales_manager', 'bd_manager', 'general_manager', 'ceo'],
+      },
+    ],
+  },
   // Accounting group
   {
     nameKey: 'accounting',
@@ -334,6 +361,10 @@ export default function Sidebar({ user }: SidebarProps) {
       shiftPlanning: t.nav.shiftPlanning || 'Shift Planning',
       metronomeSync: t.nav.metronomeSync || 'Metronome Sync',
       operations: t.nav.operations || 'Operations',
+      sales: t.nav.sales || 'Sales',
+      salesBoard: t.nav.salesBoard || 'Board',
+      salesList: t.nav.salesList || 'List',
+      salesAnalytics: t.nav.salesAnalytics || 'Analytics',
       strategy: t.nav.strategy || 'Strategy',
       systemAdoption: t.nav.systemAdoption || 'System Adoption',
       developer: t.nav.developer || 'Developer',

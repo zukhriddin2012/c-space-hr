@@ -93,6 +93,10 @@ export const uz: Translations = {
     financesDashboard: 'Bosh sahifa',
     myBranchFinances: 'Mening filialim',
     financesTransactions: 'Tranzaksiyalar',
+    sales: 'Sotuvlar',
+    salesBoard: 'Doska',
+    salesList: 'Ro\'yxat',
+    salesAnalytics: 'Tahlil',
   },
 
   // Dashboard

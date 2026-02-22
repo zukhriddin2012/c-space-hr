@@ -93,6 +93,10 @@ export const ru: Translations = {
     financesDashboard: 'Панель',
     myBranchFinances: 'Мой филиал',
     financesTransactions: 'Транзакции',
+    sales: 'Продажи',
+    salesBoard: 'Доска',
+    salesList: 'Список',
+    salesAnalytics: 'Аналитика',
   },
 
   // Dashboard

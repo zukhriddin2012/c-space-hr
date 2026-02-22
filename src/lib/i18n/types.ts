@@ -93,6 +93,10 @@ export interface Translations {
     financesDashboard: string;
     myBranchFinances: string;
     financesTransactions: string;
+    sales: string;
+    salesBoard: string;
+    salesList: string;
+    salesAnalytics: string;
   };
 
   // Dashboard
