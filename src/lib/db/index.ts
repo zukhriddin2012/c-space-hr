@@ -30,3 +30,4 @@ export * from './metronome';
 export * from './cash-management';
 export * from './usage-tracking';
 export * from './adoption';
+export * from './sales';
