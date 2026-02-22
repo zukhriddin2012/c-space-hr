@@ -160,3 +160,14 @@ export const LeadQuerySchema = z.object({
 });
 
 export type LeadQueryInput = z.infer<typeof LeadQuerySchema>;
+
+// ============================================
+// CONVERT LEAD → CLIENT
+// ============================================
+
+export const ConvertLeadSchema = z.object({
+  client_name: z.string().min(1).max(255).optional(),
+  client_type: z.enum(['company', 'individual']).optional(),
+}).strict();
+
+export type ConvertLeadInput = z.infer<typeof ConvertLeadSchema>;

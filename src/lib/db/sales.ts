@@ -441,6 +441,116 @@ export async function createLeadActivity(activityData: {
 }
 
 // ============================================
+// LEAD → CLIENT CONVERSION
+// ============================================
+
+export interface ConvertedClient {
+  id: string;
+  name: string;
+  client_type: string;
+  phone: string | null;
+  industry: string | null;
+  branch_id: string;
+}
+
+export async function convertLeadToClient(
+  leadId: string,
+  options: {
+    client_name?: string;
+    client_type?: 'company' | 'individual';
+  },
+  performedBy: string
+): Promise<
+  | { success: true; client: ConvertedClient; isExisting: boolean; lead: Lead }
+  | { success: false; error: string }
+> {
+  if (!isSupabaseAdminConfigured()) {
+    return { success: false, error: 'Database not configured' };
+  }
+
+  // 1. Fetch lead — must exist, not archived, stage must be 'won'
+  const lead = await getLeadById(leadId);
+  if (!lead) {
+    return { success: false, error: 'Lead not found' };
+  }
+  if (lead.is_archived) {
+    return { success: false, error: 'Cannot convert an archived lead' };
+  }
+  if (lead.stage !== 'won') {
+    return { success: false, error: 'Lead must be in "won" stage to convert' };
+  }
+  if (lead.client_id) {
+    return { success: false, error: 'Lead is already converted to a client' };
+  }
+
+  // 2. Derive client attributes
+  const clientName = options.client_name ?? lead.company_name ?? lead.full_name;
+  const clientType = options.client_type ?? (lead.company_name ? 'company' : 'individual');
+  const normalizedName = clientName.trim().toLowerCase().replace(/\s+/g, ' ');
+
+  // 3. Check for existing client by normalized name + branch
+  let client: ConvertedClient | null = null;
+  let isExisting = false;
+
+  const { data: existing } = await supabaseAdmin!
+    .from('clients')
+    .select('id, name, client_type, phone, industry, branch_id')
+    .eq('name_normalized', normalizedName)
+    .eq('branch_id', lead.branch_id)
+    .maybeSingle();
+
+  if (existing) {
+    client = existing;
+    isExisting = true;
+  } else {
+    // 4. Create new client
+    const { data: newClient, error: createError } = await supabaseAdmin!
+      .from('clients')
+      .insert({
+        name: clientName.trim(),
+        name_normalized: normalizedName,
+        client_type: clientType,
+        phone: lead.phone || null,
+        industry: lead.industry || null,
+        branch_id: lead.branch_id,
+        is_active: true,
+      })
+      .select('id, name, client_type, phone, industry, branch_id')
+      .single();
+
+    if (createError) {
+      console.error('Error creating client from lead:', createError);
+      return { success: false, error: createError.message };
+    }
+
+    client = newClient;
+  }
+
+  // 5. Link lead to client
+  const updateResult = await updateLead(leadId, { client_id: client!.id });
+  if (!updateResult.success) {
+    return { success: false, error: updateResult.error ?? 'Failed to link lead to client' };
+  }
+
+  // 6. Log activity
+  await createLeadActivity({
+    lead_id: leadId,
+    activity_type: 'won',
+    description: isExisting
+      ? `Linked to existing client: ${client!.name}`
+      : `Converted to new client: ${client!.name}`,
+    metadata: {
+      client_id: client!.id,
+      client_name: client!.name,
+      is_existing: isExisting,
+    },
+    performed_by: performedBy,
+  });
+
+  return { success: true, client: client!, isExisting, lead: updateResult.lead! };
+}
+
+// ============================================
 // STATS
 // ============================================
 
